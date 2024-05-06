@@ -2,7 +2,6 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.PaymentNotice;
@@ -618,10 +617,10 @@ class TransactionRequestUserReceiptHandlerTest {
     @Test
     void shouldReturnInvalidRequestExceptionForMismatchInPaymentTokens() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
-        List<PaymentNotice> paymentNotices = new ArrayList<>();
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = new ArrayList<>();
         IntStream.range(0, 5).forEach(
                 idx -> paymentNotices.add(
-                        new PaymentNotice(
+                        new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                                 "paymentToken_%s".formatted(idx),
                                 RPT_ID,
                                 DESCRIPTION,
@@ -669,7 +668,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
@@ -705,10 +704,10 @@ class TransactionRequestUserReceiptHandlerTest {
     @Test
     void shouldSendEventForSendPaymentOutcomeOkWithMultiplePaymentNotices() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
-        List<PaymentNotice> paymentNotices = new ArrayList<>();
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = new ArrayList<>();
         IntStream.range(0, 5).forEach(
                 idx -> paymentNotices.add(
-                        new PaymentNotice(
+                        new it.pagopa.ecommerce.commons.documents.PaymentNotice(
                                 "paymentToken_%s".formatted(idx),
                                 RPT_ID,
                                 DESCRIPTION,
@@ -759,7 +758,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData
         );
 
