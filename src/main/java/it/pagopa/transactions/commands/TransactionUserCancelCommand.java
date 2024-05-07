@@ -3,11 +3,13 @@ package it.pagopa.transactions.commands;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 
+import java.util.List;
+
 public final class TransactionUserCancelCommand extends TransactionsCommand<TransactionId> {
     public TransactionUserCancelCommand(
-            RptId rptId,
+            List<RptId> rptIds,
             TransactionId data
     ) {
-        super(rptId, TransactionsCommandCode.USER_CANCEL_REQUEST, data);
+        super(rptIds, TransactionsCommandCode.USER_CANCEL_REQUEST, data);
     }
 }

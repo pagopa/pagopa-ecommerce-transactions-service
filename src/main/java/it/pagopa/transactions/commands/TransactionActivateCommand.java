@@ -6,6 +6,7 @@ import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -19,13 +20,13 @@ public final class TransactionActivateCommand extends TransactionsCommand<NewTra
     private final UUID userId;
 
     public TransactionActivateCommand(
-            RptId rptId,
+            List<RptId> rptIds,
             NewTransactionRequestData data,
             String clientId,
             TransactionId transactionId,
             UUID userId
     ) {
-        super(rptId, TransactionsCommandCode.ACTIVATE, data);
+        super(rptIds, TransactionsCommandCode.ACTIVATE, data);
         this.clientId = clientId;
         this.transactionId = transactionId;
         this.userId = userId;
