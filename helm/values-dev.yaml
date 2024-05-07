@@ -19,6 +19,7 @@ microservice-chart:
       envConfig:
         NODO_HOSTNAME: https://api.dev.platform.pagopa.it
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-beta
+        CHECKOUT_BASE_PATH: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net"
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "1.28.4" #improve
