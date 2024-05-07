@@ -109,7 +109,7 @@ class WebClientsConfigTest {
         String apiKey = "paymentMethodsApiKey";
         // test
         PaymentMethodsApi paymentMethodsApi = webClientsConfig
-                .ecommercePaymentInstrumentsWebClient(basePath, 1000, 1000, apiKey);
+                .ecommercePaymentMethodWebClientV1(basePath, 1000, 1000, apiKey);
         // assertions
         assertEquals(basePath, paymentMethodsApi.getApiClient().getBasePath());
         it.pagopa.generated.ecommerce.paymentmethods.v1.auth.ApiKeyAuth apiKeyAuth = (it.pagopa.generated.ecommerce.paymentmethods.v1.auth.ApiKeyAuth) paymentMethodsApi
