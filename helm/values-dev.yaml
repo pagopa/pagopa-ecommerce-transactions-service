@@ -20,6 +20,12 @@ microservice-chart:
         NODO_HOSTNAME: https://api.dev.platform.pagopa.it
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-beta
         CHECKOUT_BASE_PATH: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net"
+        TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-expiration-queue-b
+        TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-close-payment-retry-queue-b
+        TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-close-payment-queue-b
+        TRANSACTION_REFUND_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-refund-queue-b
+        TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-notifications-queue-b
+        TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-auth-requested-queue-b
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "1.28.4" #improve
