@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 public interface TransactionsViewRepository extends ReactiveCrudRepository<BaseTransactionView, String> {
     Mono<BaseTransactionView> findByTransactionId(String transactionId);
 
-    Mono<BaseTransactionView> findByIdAndUserId(
+    Mono<BaseTransactionView> findByTransactionIdAndUserId(
                                                 String id,
                                                 String userId
     );

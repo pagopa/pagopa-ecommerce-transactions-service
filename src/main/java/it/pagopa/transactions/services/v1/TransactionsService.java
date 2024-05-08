@@ -329,7 +329,7 @@ public class TransactionsService {
     ) {
         log.info("Get Transaction Invoked with id {} ", transactionId);
         return transactionsViewRepository
-                .findByIdAndUserId(transactionId, userId)
+                .findByTransactionIdAndUserId(transactionId, userId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(this::buildTransactionInfoDtoFromView);
     }
@@ -424,7 +424,7 @@ public class TransactionsService {
     @Retry(name = "cancelTransaction")
     public Mono<Void> cancelTransaction(String transactionId, String xUserId) {
         return transactionsViewRepository
-                .findByIdAndUserId(transactionId, xUserId)
+                .findByTransactionIdAndUserId(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transactionDocument -> {
@@ -461,7 +461,7 @@ public class TransactionsService {
             RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
         return transactionsViewRepository
-                .findByIdAndUserId(transactionId, userId)
+                .findByTransactionIdAndUserId(transactionId, userId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transaction -> {
