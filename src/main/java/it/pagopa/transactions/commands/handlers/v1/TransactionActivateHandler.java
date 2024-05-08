@@ -378,7 +378,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         transfer.transferCategory()
                                 )
                         ).toList(),
-                        paymentRequestInfo.isAllCCP()
+                        paymentRequestInfo.isAllCCP(),
+                        paymentRequestInfo.paName()
                 )
         ).toList();
     }

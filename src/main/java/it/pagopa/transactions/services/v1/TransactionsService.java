@@ -260,7 +260,8 @@ public class TransactionsService {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
@@ -644,7 +645,8 @@ public class TransactionsService {
                                                                             transfer.getTransferCategory()
                                                                     )
                                                             ).toList(),
-                                                    paymentNotice.isAllCCP()
+                                                    paymentNotice.isAllCCP(),
+                                                    new CompanyName(paymentNotice.getCompanyName())
                                             )
                                     ).toList(),
                                     transactionsUtils.getEmail(transactionDocument),
