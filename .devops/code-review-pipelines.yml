@@ -90,7 +90,7 @@ stages:
         - checkout: pagopaEcommerceLocal
         - script: | 
             echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
-            sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
+            sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=CHK-2794-send-payment-result-data/" .env
             sed -i "s/^ECOMMERCE_EVENT_DISPATCHER_COMMIT_SHA=.*$/ECOMMERCE_EVENT_DISPATCHER_COMMIT_SHA=CHK-2794-send-payment-result-data/" .env
 
           displayName: 'Change transaction branch name ecommerce-local .env'
