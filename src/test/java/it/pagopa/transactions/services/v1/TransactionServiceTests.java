@@ -280,14 +280,14 @@ class TransactionServiceTests {
                 .authorizationCode("00")
                 .errorCode(null);
 
-        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        when(repository.findByIdAndUserId(TRANSACTION_ID, null)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
-                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID).block(),
+                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
                 expected
         );
 
-        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID))
+        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
     }
@@ -335,25 +335,25 @@ class TransactionServiceTests {
                 .authorizationCode(null)
                 .errorCode(null);
 
-        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        when(repository.findByIdAndUserId(TRANSACTION_ID, null)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
-                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID).block(),
+                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
                 expected
         );
 
-        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID))
+        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
     }
 
     @Test
     void getTransactionThrowsOnTransactionNotFound() {
-        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.empty());
+        when(repository.findByIdAndUserId(TRANSACTION_ID, null)).thenReturn(Mono.empty());
 
         assertThrows(
                 TransactionNotFoundException.class,
-                () -> transactionsServiceV1.getTransactionInfo(TRANSACTION_ID).block(),
+                () -> transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
                 TRANSACTION_ID
         );
     }
@@ -422,7 +422,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any()))
@@ -439,7 +439,7 @@ class TransactionServiceTests {
 
         /* test */
         RequestAuthorizationResponseDto xpayAuthorizationResponse = transactionsServiceV1
-                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest).block();
+                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest).block();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
@@ -527,7 +527,7 @@ class TransactionServiceTests {
                 )
         );
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any()))
@@ -546,7 +546,7 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
@@ -571,12 +571,12 @@ class TransactionServiceTests {
                 .pspId("pspId");
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.empty());
 
         /* test */
         Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsServiceV1
-                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest);
+                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> {
@@ -963,7 +963,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
@@ -978,7 +978,7 @@ class TransactionServiceTests {
 
         /* test */
         RequestAuthorizationResponseDto authorizationResponse = transactionsServiceV1
-                .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest).block();
+                .requestTransactionAuthorization(TRANSACTION_ID, null, "XPAY", authorizationRequest).block();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
@@ -1058,7 +1058,7 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, "XPAY", authorizationRequest)
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, "XPAY", authorizationRequest)
                 )
                 .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException)
                 .verify();
@@ -1117,7 +1117,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
@@ -1135,7 +1135,7 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
                 )
                 .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
                 .verify();
@@ -1185,14 +1185,14 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.just(transaction));
 
         /* test */
 
         StepVerifier.create(
                 transactionsServiceV1
-                        .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                        .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
         )
                 .expectError(PaymentMethodNotFoundException.class)
                 .verify();
@@ -1212,18 +1212,18 @@ class TransactionServiceTests {
                 null,
                 new TransactionId(transactionId)
         );
-        when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
+        when(repository.findByIdAndUserId(transactionId, null)).thenReturn(Mono.just(transaction));
         when(transactionCancelHandlerV1.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
         when(cancellationRequestProjectionHandlerV1.handle(any())).thenReturn(Mono.empty());
-        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId)).expectNext().verifyComplete();
+        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null)).expectNext().verifyComplete();
 
     }
 
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
         String transactionId = UUID.randomUUID().toString();
-        when(repository.findById(transactionId)).thenReturn(Mono.empty());
-        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId))
+        when(repository.findByIdAndUserId(transactionId, null)).thenReturn(Mono.empty());
+        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
                 .expectError(TransactionNotFoundException.class).verify();
 
     }
@@ -2104,7 +2104,7 @@ class TransactionServiceTests {
                 )
         );
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any()))
@@ -2123,7 +2123,7 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
@@ -2201,7 +2201,7 @@ class TransactionServiceTests {
         )
                 .thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
@@ -2217,7 +2217,7 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
@@ -2302,7 +2302,7 @@ class TransactionServiceTests {
         )
                 .thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByIdAndUserId(TRANSACTION_ID, null))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(any(), any()))
@@ -2321,7 +2321,7 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();

@@ -102,9 +102,10 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(
                                                                        String transactionId,
+                                                                       String xUserId,
                                                                        ServerWebExchange exchange
     ) {
-        return transactionsService.getTransactionInfo(transactionId)
+        return transactionsService.getTransactionInfo(transactionId, xUserId)
                 .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
@@ -125,13 +126,19 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  String transactionId,
                                                                                                  Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto,
                                                                                                  String xPgsId,
+                                                                                                 String xUserId,
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
                 .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId))
                 .flatMap(
                         requestAuthorizationRequest -> transactionsService
-                                .requestTransactionAuthorization(transactionId, xPgsId, requestAuthorizationRequest)
+                                .requestTransactionAuthorization(
+                                        transactionId,
+                                        xUserId,
+                                        xPgsId,
+                                        requestAuthorizationRequest
+                                )
                 )
                 .map(ResponseEntity::ok)
                 .contextWrite(
@@ -316,9 +323,10 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<Void>> requestTransactionUserCancellation(
                                                                          String transactionId,
+                                                                         String xUserId,
                                                                          ServerWebExchange exchange
     ) {
-        return transactionsService.cancelTransaction(transactionId)
+        return transactionsService.cancelTransaction(transactionId, xUserId)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(

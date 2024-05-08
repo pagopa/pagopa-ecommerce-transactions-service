@@ -323,10 +323,13 @@ public class TransactionsService {
 
     @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionInfo")
-    public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
+    public Mono<TransactionInfoDto> getTransactionInfo(
+                                                       String transactionId,
+                                                       String userId
+    ) {
         log.info("Get Transaction Invoked with id {} ", transactionId);
         return transactionsViewRepository
-                .findById(transactionId)
+                .findByIdAndUserId(transactionId, userId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(this::buildTransactionInfoDtoFromView);
     }
@@ -419,9 +422,9 @@ public class TransactionsService {
     }
 
     @Retry(name = "cancelTransaction")
-    public Mono<Void> cancelTransaction(String transactionId) {
+    public Mono<Void> cancelTransaction(String transactionId, String xUserId) {
         return transactionsViewRepository
-                .findById(transactionId)
+                .findByIdAndUserId(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transactionDocument -> {
@@ -453,11 +456,12 @@ public class TransactionsService {
     @Retry(name = "requestTransactionAuthorization")
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
             String transactionId,
+            String userId,
             String paymentGatewayId,
             RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
         return transactionsViewRepository
-                .findById(transactionId)
+                .findByIdAndUserId(transactionId, userId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transaction -> {

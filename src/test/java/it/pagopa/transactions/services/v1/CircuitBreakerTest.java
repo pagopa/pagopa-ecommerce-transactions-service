@@ -239,7 +239,7 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.getTransactionInfo("transactionId")
+                        transactionsService.getTransactionInfo("transactionId", null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();
@@ -263,13 +263,14 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionsViewRepository.findById(any(String.class)))
+        Mockito.when(transactionsViewRepository.findByIdAndUserId(any(String.class), null))
                 .thenReturn(Mono.error(thrownException));
 
         StepVerifier
                 .create(
                         transactionsService.requestTransactionAuthorization(
                                 "transactionId",
+                                null,
                                 "",
                                 new RequestAuthorizationRequestDto()
                         )
@@ -330,7 +331,7 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.cancelTransaction("")
+                        transactionsService.cancelTransaction("", null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();
