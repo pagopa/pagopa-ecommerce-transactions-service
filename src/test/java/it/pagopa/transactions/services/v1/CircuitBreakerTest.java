@@ -263,7 +263,7 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionsViewRepository.findByTransactionIdAndUserId(any(String.class), null))
+        Mockito.when(transactionsViewRepository.findById(any(String.class)))
                 .thenReturn(Mono.error(thrownException));
 
         StepVerifier

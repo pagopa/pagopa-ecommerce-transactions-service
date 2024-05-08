@@ -325,11 +325,16 @@ public class TransactionsService {
     @Retry(name = "getTransactionInfo")
     public Mono<TransactionInfoDto> getTransactionInfo(
                                                        String transactionId,
-                                                       String userId
+                                                       String xUserId
     ) {
         log.info("Get Transaction Invoked with id {} ", transactionId);
         return transactionsViewRepository
-                .findByTransactionIdAndUserId(transactionId, userId)
+                .findById(transactionId)
+                .filter(t -> switch (t) {
+                    case it.pagopa.ecommerce.commons.documents.v1.Transaction td -> xUserId == null;
+                    case it.pagopa.ecommerce.commons.documents.v2.Transaction td -> (xUserId == null && td.getUserId() == null) || (td.getUserId().equals(xUserId));
+                    default -> false;
+                })
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(this::buildTransactionInfoDtoFromView);
     }
@@ -424,7 +429,12 @@ public class TransactionsService {
     @Retry(name = "cancelTransaction")
     public Mono<Void> cancelTransaction(String transactionId, String xUserId) {
         return transactionsViewRepository
-                .findByTransactionIdAndUserId(transactionId, xUserId)
+                .findById(transactionId)
+                .filter(t -> switch (t) {
+                    case it.pagopa.ecommerce.commons.documents.v1.Transaction td -> xUserId == null;
+                    case it.pagopa.ecommerce.commons.documents.v2.Transaction td -> (xUserId == null && td.getUserId() == null) || (td.getUserId().equals(xUserId));
+                    default -> false;
+                })
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transactionDocument -> {
@@ -456,12 +466,17 @@ public class TransactionsService {
     @Retry(name = "requestTransactionAuthorization")
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
             String transactionId,
-            String userId,
+            String xUserId,
             String paymentGatewayId,
             RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
         return transactionsViewRepository
-                .findByTransactionIdAndUserId(transactionId, userId)
+                .findById(transactionId)
+                .filter(t -> switch (t) {
+                    case it.pagopa.ecommerce.commons.documents.v1.Transaction td -> xUserId == null;
+                    case it.pagopa.ecommerce.commons.documents.v2.Transaction td -> (xUserId == null && td.getUserId() == null) || (td.getUserId().equals(xUserId));
+                    default -> false;
+                })
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transaction -> {
