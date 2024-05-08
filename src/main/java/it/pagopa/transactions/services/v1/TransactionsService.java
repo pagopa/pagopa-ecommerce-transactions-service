@@ -11,10 +11,7 @@ import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeRequestDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.CalculateFeeResponseDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.TransferListItemDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -499,6 +496,7 @@ public class TransactionsService {
                             );
                             Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
                             String clientId = transactionsUtils.getClientId(transaction);
+                            List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = transactionsUtils.getPaymentNotices(transaction);
                             return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto, clientId)
                                     .flatMap(
                                             paymentSessionData -> ecommercePaymentMethodsClient
@@ -518,29 +516,33 @@ public class TransactionsService {
                                                                                             .getPspId()
                                                                             )
                                                                     )
-                                                                    .paymentAmount(amountTotal.longValue())
-                                                                    .primaryCreditorInstitution(
-                                                                            transactionsUtils.getRptId(transaction, 0)
-                                                                                    .substring(0, 11)
-                                                                    )
-                                                                    .transferList(
-                                                                            transactionsUtils
-                                                                                    .getPaymentNotices(transaction)
-                                                                                    .get(0)
-                                                                                    .getTransferList()
+                                                                    .paymentNotices(
+                                                                            paymentNotices
                                                                                     .stream()
-                                                                                    .map(
-                                                                                            t -> new TransferListItemDto()
-                                                                                                    .creditorInstitution(
-                                                                                                            t.getPaFiscalCode()
+                                                                                    .map(p ->
+                                                                                            new PaymentNoticeDto()
+                                                                                                    .paymentAmount(p.getAmount().longValue())
+                                                                                                    .primaryCreditorInstitution(
+                                                                                                            p.getRptId().substring(0, 11)
                                                                                                     )
-                                                                                                    .digitalStamp(
-                                                                                                            t.getDigitalStamp()
+                                                                                                    .transferList(
+                                                                                                            p.getTransferList()
+                                                                                                                    .stream()
+                                                                                                                    .map(
+                                                                                                                            t -> new TransferListItemDto()
+                                                                                                                                    .creditorInstitution(
+                                                                                                                                            t.getPaFiscalCode()
+                                                                                                                                    )
+                                                                                                                                    .digitalStamp(
+                                                                                                                                            t.getDigitalStamp()
+                                                                                                                                    )
+                                                                                                                                    .transferCategory(
+                                                                                                                                            t.getTransferCategory()
+                                                                                                                                    )
+                                                                                                                    ).toList()
                                                                                                     )
-                                                                                                    .transferCategory(
-                                                                                                            t.getTransferCategory()
-                                                                                                    )
-                                                                                    ).toList()
+                                                                                    )
+                                                                                    .toList()
                                                                     )
                                                                     .isAllCCP(
                                                                             transactionsUtils.isAllCcp(transaction, 0)
@@ -656,7 +658,7 @@ public class TransactionsService {
                                     bundle.getIdChannel(),
                                     paymentMethodName,
                                     paymentMethodDescription,
-                                    bundle.getBundleName(),
+                                    bundle.getPspBusinessName(),
                                     bundle.getOnUs(),
                                     paymentGatewayId,
                                     sessionId,
