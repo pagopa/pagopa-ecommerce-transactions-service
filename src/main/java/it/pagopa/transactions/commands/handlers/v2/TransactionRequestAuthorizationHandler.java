@@ -222,7 +222,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                         )
                                                                                 ),
                                                 authorizationOutput.npgConfirmSessionId().orElse(null),
-                                                null // TODO modification performed just to make code compile
+                                                /* @formatter:off
+                                                 * FIXME walletInfo set to null: this modification is addressed in
+                                                 * PR: https://github.com/pagopa/pagopa-ecommerce-transactions-service/pull/475
+                                                 * @formatter:on
+                                                 */
+                                                null
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
