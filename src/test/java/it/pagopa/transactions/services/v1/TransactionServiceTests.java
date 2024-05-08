@@ -14,6 +14,8 @@ import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
@@ -390,7 +392,7 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED)
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -475,7 +477,7 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED)
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -927,7 +929,9 @@ class TransactionServiceTests {
         /* preconditions */
         CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .paymentMethodName("paymentMethodName")
                 .paymentMethodDescription("paymentMethodDescription")
                 .bundles(
@@ -1081,7 +1085,9 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodDescription("PaymentMethodDescription")
                 .paymentMethodName("PaymentMethodName")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -1152,6 +1158,44 @@ class TransactionServiceTests {
                 .mock(it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.class);
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
         assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(clientId.name()));
+    }
+
+    @Test
+    void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFound() {
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(0)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .fee(0)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(new ApmAuthRequestDetailsDto().detailType("apm"));
+
+        /* preconditions */
+
+        PaymentMethodNotFoundException exception = new PaymentMethodNotFoundException(
+                UUID.randomUUID().toString(),
+                "CHECKOUT"
+        );
+
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        /* test */
+
+        StepVerifier.create(
+                transactionsServiceV1
+                        .requestTransactionAuthorization(TRANSACTION_ID, null, authorizationRequest)
+        )
+                .expectError(PaymentMethodNotFoundException.class)
+                .verify();
     }
 
     @Test
@@ -2007,7 +2051,9 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -2116,7 +2162,9 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .bundles(
                         List.of(
                                 new BundleDto()
@@ -2209,7 +2257,9 @@ class TransactionServiceTests {
                 .belowThreshold(true)
                 .paymentMethodName("PaymentMethodName")
                 .paymentMethodDescription("PaymentMethodDescription")
-                .paymentMethodStatus(PaymentMethodStatusDto.ENABLED)
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED
+                )
                 .bundles(
                         List.of(
                                 new BundleDto()

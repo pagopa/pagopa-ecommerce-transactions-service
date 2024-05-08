@@ -1,6 +1,6 @@
 package it.pagopa.transactions.commands.data;
 
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
 
 import java.util.Map;
 import java.util.Optional;

@@ -21,10 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -899,6 +896,7 @@ class TransactionsControllerTest {
                 )
                 .email("invalidMail")
                 .idCart(TransactionTestUtils.ID_CART);
+
         webTestClient.post()
                 .uri("/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -916,6 +914,51 @@ class TransactionsControllerTest {
                                             "Field error in object 'newTransactionRequestDtoMono' on field 'email'"
                                     )
                             );
+                        }
+                );
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingPaymentMethodInAuthorizationRequest() {
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+        String paymentMethodId = "paymentMethodId";
+        String client = "CHECKOUT";
+        String pgsId = "XPAY";
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(1)
+                .paymentInstrumentId(paymentMethodId)
+                .pspId("pspId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .isAllCCP(false)
+                .details(
+                        new CardsAuthRequestDetailsDto()
+                                .orderId("orderId")
+                                .detailType("cards")
+                );
+
+        /* preconditions */
+        PaymentMethodNotFoundException exception = new PaymentMethodNotFoundException(paymentMethodId, client);
+
+        Mockito.when(transactionsService.requestTransactionAuthorization(transactionId, pgsId, authorizationRequest))
+                .thenReturn(Mono.error(exception));
+
+        /* test */
+        webTestClient.post()
+                .uri("/transactions/{transactionId}/auth-requests", transactionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authorizationRequest)
+                .header("X-Client-Id", client)
+                .header("X-Pgs-Id", pgsId)
+                .exchange()
+                .expectStatus()
+                .isNotFound()
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> {
+                            assertEquals(404, p.getStatus());
+                            assertEquals(exception.getMessage(), p.getDetail());
                         }
                 );
     }
@@ -1075,7 +1118,8 @@ class TransactionsControllerTest {
                                                 .authorizationCode("authorizationCode")
                                 ).timestampOperation(OffsetDateTime.now()),
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                        null
+                        null,
+                        "OK"
                 ),
                 Arguments.of(
                         new UpdateAuthorizationRequestDto()
@@ -1085,7 +1129,8 @@ class TransactionsControllerTest {
                                                 .authorizationCode("authorizationCode")
                                 ).timestampOperation(OffsetDateTime.now()),
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
-                        null
+                        null,
+                        "OK"
                 ),
                 Arguments.of(
                         new UpdateAuthorizationRequestDto()
@@ -1095,7 +1140,8 @@ class TransactionsControllerTest {
                                                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                                 ).timestampOperation(OffsetDateTime.now()),
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
-                        null
+                        null,
+                        "EXECUTED"
                 ),
                 Arguments.of(
                         new UpdateAuthorizationRequestDto()
@@ -1106,7 +1152,8 @@ class TransactionsControllerTest {
                                                 .pspId(TransactionTestUtils.PSP_ID)
                                 ).timestampOperation(OffsetDateTime.now()),
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
-                        TransactionTestUtils.PSP_ID
+                        TransactionTestUtils.PSP_ID,
+                        "OK"
                 )
         );
     }
@@ -1116,7 +1163,8 @@ class TransactionsControllerTest {
     void shouldTraceTransactionUpdateStatusOK(
                                               UpdateAuthorizationRequestDto updateAuthorizationRequest,
                                               UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger,
-                                              String expectedPspId
+                                              String expectedPspId,
+                                              String expectedOutcome
     ) {
 
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
@@ -1175,7 +1223,13 @@ class TransactionsControllerTest {
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                 trigger,
-                Optional.ofNullable(expectedPspId)
+                Optional.ofNullable(expectedPspId),
+                Optional.of(
+                        new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                expectedOutcome,
+                                Optional.empty()
+                        )
+                )
         );
         verify(updateTransactionStatusTracerUtils, times(1))
                 .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
@@ -1266,6 +1320,8 @@ class TransactionsControllerTest {
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
                         new OutcomeXpayGatewayDto()
+                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.KO)
+                                .errorCode(OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1)
                 ).timestampOperation(OffsetDateTime.now());
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
@@ -1307,7 +1363,13 @@ class TransactionsControllerTest {
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 expectedOutcome,
                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                Optional.empty()
+                Optional.empty(),
+                Optional.of(
+                        new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                "KO",
+                                Optional.of("1")
+                        )
+                )
         );
         verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
                 expectedStatusUpdateInfo
@@ -1338,6 +1400,7 @@ class TransactionsControllerTest {
         UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
                 expectedTrigger,
+                Optional.empty(),
                 Optional.empty()
         );
         ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);

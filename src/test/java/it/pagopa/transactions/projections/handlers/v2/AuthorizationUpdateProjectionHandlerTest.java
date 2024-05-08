@@ -251,6 +251,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                         OperationResultDto.EXECUTED,
                         "operationId",
                         "paymentEndToEndId",
+                        null,
                         null
                 )
 
@@ -412,7 +413,8 @@ class AuthorizationUpdateProjectionHandlerTest {
                         OperationResultDto.DECLINED,
                         "operationId",
                         "paymentEndToEndId",
-                        "errorCode"
+                        "errorCode",
+                        null
                 )
 
         );

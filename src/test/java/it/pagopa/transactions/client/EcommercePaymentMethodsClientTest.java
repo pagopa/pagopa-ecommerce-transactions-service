@@ -1,21 +1,23 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeRequestDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentNoticeDto;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,22 +25,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class EcommercePaymentMethodsClientTest {
 
-    @InjectMocks
-    private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
+    private final it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi ecommercePaymentMethodsWebClientV1 = Mockito
+            .mock(it.pagopa.generated.ecommerce.paymentmethods.v1.api.PaymentMethodsApi.class);
+    private final it.pagopa.generated.ecommerce.paymentmethods.v2.api.PaymentMethodsApi ecommercePaymentMethodsWebClientV2 = Mockito
+            .mock(it.pagopa.generated.ecommerce.paymentmethods.v2.api.PaymentMethodsApi.class);
 
-    @Mock
-    private PaymentMethodsApi ecommercePaymentInstrumentsWebClient;
+    private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient = new EcommercePaymentMethodsClient(
+            ecommercePaymentMethodsWebClientV1,
+            ecommercePaymentMethodsWebClientV2
+    );
 
     @Test
     void shouldReturnBundleList() {
         String paymentMethodId = UUID.randomUUID().toString();
         Integer TEST_MAX_OCCURRERNCES = 10;
         CalculateFeeRequestDto calculateFeeRequestDto = new CalculateFeeRequestDto()
-                .paymentAmount(BigInteger.TEN.longValue()).bin("57497554")
-                .touchpoint("CHECKOUT").primaryCreditorInstitution("7777777777").idPspList(List.of("pspId"));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeDto()
+                                .paymentAmount(10L)
+                                .primaryCreditorInstitution("7777777777")
+                )
+                .bin("57497554")
+                .touchpoint("CHECKOUT").idPspList(List.of("pspId"));
 
         CalculateFeeResponseDto bundleOptionDto = new CalculateFeeResponseDto().belowThreshold(true).bundles(
                 List.of(
@@ -48,11 +58,9 @@ class EcommercePaymentMethodsClientTest {
                                 .idBrokerPsp("idBrokerPspTest")
                                 .idBundle("idBundleTest")
                                 .idChannel("idChannelTest")
-                                .idCiBundle("idCiBundleTest")
                                 .idPsp("idPspTest")
                                 .onUs(true)
                                 .paymentMethod("idPaymentMethodTest")
-                                .primaryCiIncurredFee(BigInteger.ZERO.longValue())
                                 .taxPayerFee(BigInteger.ZERO.longValue())
                                 .touchpoint("CHECKOUT")
                 )
@@ -62,7 +70,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         when(
-                ecommercePaymentInstrumentsWebClient
+                ecommercePaymentMethodsWebClientV2
                         .calculateFees(
                                 paymentMethodId,
                                 TransactionTestUtils.TRANSACTION_ID,
@@ -106,7 +114,7 @@ class EcommercePaymentMethodsClientTest {
         /**
          * preconditions
          */
-        when(ecommercePaymentInstrumentsWebClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodsWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .thenReturn(Mono.just(testPaymentMethodResponseDto));
 
         /**
@@ -133,7 +141,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         Mockito.when(
-                ecommercePaymentInstrumentsWebClient
+                ecommercePaymentMethodsWebClientV1
                         .getSessionPaymentMethod(
                                 any(),
                                 any()
@@ -165,7 +173,7 @@ class EcommercePaymentMethodsClientTest {
          * preconditions
          */
         Mockito.when(
-                ecommercePaymentInstrumentsWebClient
+                ecommercePaymentMethodsWebClientV1
                         .getSessionPaymentMethod(
                                 any(),
                                 any()
@@ -203,7 +211,7 @@ class EcommercePaymentMethodsClientTest {
 
         /* preconditions */
         Mockito.when(
-                ecommercePaymentInstrumentsWebClient.updateSession(
+                ecommercePaymentMethodsWebClientV1.updateSession(
                         paymentMethodId,
                         sessionId,
                         new PatchSessionRequestDto().transactionId(transactionId)
@@ -224,7 +232,7 @@ class EcommercePaymentMethodsClientTest {
 
         /* preconditions */
         Mockito.when(
-                ecommercePaymentInstrumentsWebClient.updateSession(
+                ecommercePaymentMethodsWebClientV1.updateSession(
                         paymentMethodId,
                         sessionId,
                         new PatchSessionRequestDto().transactionId(transactionId)
@@ -235,6 +243,66 @@ class EcommercePaymentMethodsClientTest {
         /* test */
         StepVerifier.create(ecommercePaymentMethodsClient.updateSession(paymentMethodId, sessionId, transactionId))
                 .expectError(InvalidRequestException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowInvalidRequestExceptionOnGetPaymentMethodErroring() {
+        String TEST_ID = UUID.randomUUID().toString();
+        String CLIENT_ID = "CHECKOUT";
+
+        /**
+         * preconditions
+         */
+        when(ecommercePaymentMethodsWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        500,
+                                        "Internal Server Error",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
+                        )
+                );
+
+        /**
+         * test
+         */
+        StepVerifier.create(ecommercePaymentMethodsClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+                .expectError(InvalidRequestException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowPaymentMethodNotFoundExceptionOnGetPaymentMethodWhenReturning404() {
+        String TEST_ID = UUID.randomUUID().toString();
+        String CLIENT_ID = "CHECKOUT";
+
+        /**
+         * preconditions
+         */
+        when(ecommercePaymentMethodsWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        404,
+                                        "Not Found",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
+                        )
+                );
+
+        /**
+         * test
+         */
+        StepVerifier.create(ecommercePaymentMethodsClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+                .expectError(PaymentMethodNotFoundException.class)
                 .verify();
     }
 }

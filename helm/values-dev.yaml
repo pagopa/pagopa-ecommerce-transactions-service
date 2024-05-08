@@ -2,9 +2,33 @@ microservice-chart:
   namespace: "ecommerce"
   nameOverride: ""
   fullnameOverride: ""
+  canaryDelivery:
+    create: true
+    ingress:
+      create: true
+      canary:
+        type: bluegreen
+    service:
+      create: true
+    deployment:
+      create: true
+      image:
+        repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
+        tag: "latest"
+        pullPolicy: Always
+      envConfig:
+        NODO_HOSTNAME: https://api.dev.platform.pagopa.it
+        ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-beta
+        CHECKOUT_BASE_PATH: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net"
+        TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-expiration-queue-b
+        TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-close-payment-retry-queue-b
+        TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-close-payment-queue-b
+        TRANSACTION_REFUND_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-refund-queue-b
+        TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-notifications-queue-b
+        TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-auth-requested-queue-b
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.25.0" #improve
+    tag: "1.29.0" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -82,7 +106,6 @@ microservice-chart:
     MONGO_SERVER_SELECTION_TIMEOUT_MS: "2000"
     MONGO_WAITING_QUEUE_MS: "2000"
     MONGO_HEARTBEAT_FREQUENCY_MS: "5000"
-    REDIS_HOST: pagopa-d-weu-ecommerce-redis.redis.cache.windows.net
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
@@ -96,6 +119,7 @@ microservice-chart:
     ECOMMERCE_PAYMENT_METHODS_URI: https://api.dev.platform.pagopa.it/ecommerce/payment-methods-service/v1
     ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
+    ECOMMERCE_PAYMENT_METHODS_URI_V2: https://api.dev.platform.pagopa.it/ecommerce/payment-methods-service/v2
     WALLET_URI: https://api.dev.platform.pagopa.it/payment-wallet-for-ecommerce/v1
     WALLET_READ_TIMEOUT: "10000"
     WALLET_CONNECTION_TIMEOUT: "10000"
@@ -111,6 +135,9 @@ microservice-chart:
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-refund-queue
     TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-notifications-queue
     TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-auth-requested-queue
+    FEATURE_WALLET_USAGE_ENABLED: "true"
+    WALLET_USAGE_QUEUE_NAME: pagopa-d-weu-wallet-usage-update-queue
+    WALLET_USAGE_QUEUE_TTL: "3600"
     PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
@@ -131,7 +158,7 @@ microservice-chart:
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,BNLIITRR"
-    NPG_PAYPAL_PSP_LIST: "BCITITMM"
+    NPG_PAYPAL_PSP_LIST: "BCITITMM,SIGPITM1XXX"
     NPG_MYBANK_PSP_LIST: "BCITITMM"
     NPG_BANCOMATPAY_PSP_LIST: "BCITITMM"
     NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "60"
@@ -150,7 +177,8 @@ microservice-chart:
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
-    REDIS_PASSWORD: redis-ecommerce-password
+    REDIS_PASSWORD: redis-ecommerce-access-key
+    REDIS_HOST: redis-ecommerce-hostname
     NODO_CONNECTION_STRING: nodo-connection-string
     NOTIFICATIONS_SERVICE_API_KEY: notifications-service-api-key
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
@@ -168,6 +196,7 @@ microservice-chart:
     NPG_PAYPAL_PSP_KEYS: npg-paypal-psp-keys
     NPG_BANCOMATPAY_PSP_KEYS: npg-bancomatpay-psp-keys
     NPG_MYBANK_PSP_KEYS: npg-mybank-psp-keys
+    WALLET_STORAGE_CONNECTION_STRING: wallet-storage-connection-string
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
@@ -182,7 +211,3 @@ microservice-chart:
                 operator: In
                 values:
                   - user
-  canaryDelivery:
-    deployment:
-      image:
-        tag: ""

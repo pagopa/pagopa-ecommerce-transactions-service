@@ -71,11 +71,8 @@ public class TransactionsController implements V2Api {
         return newTransactionRequest
                 .flatMap(ntr -> {
                     log.info(
-                            "Create new Transaction for rptId: [{}]. ClientId: [{}] ",
-                            String.join(
-                                    ",",
-                                    ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList()
-                            ),
+                            "Create new Transaction for rptIds: {}. ClientId: [{}] ",
+                            ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList(),
                             xClientId.getValue()
 
                     );
