@@ -8,7 +8,7 @@ public interface TransactionsViewRepository extends ReactiveCrudRepository<BaseT
     Mono<BaseTransactionView> findByTransactionId(String transactionId);
 
     Mono<BaseTransactionView> findByTransactionIdAndUserId(
-                                                String id,
-                                                String userId
+                                                           String id,
+                                                           String userId
     );
 }
