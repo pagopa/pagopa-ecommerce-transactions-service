@@ -1,6 +1,7 @@
 package it.pagopa.transactions.services.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
@@ -28,10 +29,7 @@ import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
-import it.pagopa.transactions.exceptions.TransactionAmountMismatchException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -293,6 +291,75 @@ class TransactionServiceTests {
                 .create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, UUID.fromString(USER_ID)))
                 .expectNext(expected)
                 .verifyComplete();
+    }
+
+    @Test
+    void getTransactionReturnsTransactionV2() {
+
+        final Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+
+        transaction.setPaymentGateway("VPOS");
+        transaction.setSendPaymentResultOutcome(
+                TransactionUserReceiptData.Outcome.OK
+        );
+        transaction.setAuthorizationCode("00");
+        transaction.setAuthorizationErrorCode(null);
+        transaction.setUserId(null);
+
+        final TransactionInfoDto expected = new TransactionInfoDto()
+                .transactionId(TRANSACTION_ID)
+                .payments(
+                        transaction.getPaymentNotices().stream().map(
+                                p -> new PaymentInfoDto()
+                                        .paymentToken(p.getPaymentToken())
+                                        .rptId(p.getRptId())
+                                        .reason(p.getDescription())
+                                        .amount(p.getAmount())
+                                        .isAllCCP(p.isAllCCP())
+                                        .transferList(
+                                                p.getTransferList().stream().map(
+                                                        notice -> new TransferDto()
+                                                                .paFiscalCode(notice.getPaFiscalCode())
+                                                                .digitalStamp(notice.getDigitalStamp())
+                                                                .transferAmount(notice.getTransferAmount())
+                                                                .transferCategory(notice.getTransferCategory())
+                                                ).toList()
+                                        )
+                        ).toList()
+                )
+                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
+                .feeTotal(null)
+                .status(TransactionStatusDto.ACTIVATED)
+                .idCart("ecIdCart")
+                .gateway("VPOS")
+                .sendPaymentResultOutcome(TransactionInfoDto.SendPaymentResultOutcomeEnum.OK)
+                .authorizationCode("00")
+                .errorCode(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
+        assertEquals(
+                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
+                expected
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void getTransactionReturnsUnexpectedClassInstance() {
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(new BaseTransactionView() {
+        }));
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
+                .expectErrorMatches(error -> error instanceof NotImplementedException)
+                .verify();
     }
 
     @Test
