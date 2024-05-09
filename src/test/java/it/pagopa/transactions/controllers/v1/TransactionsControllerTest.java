@@ -200,7 +200,8 @@ class TransactionsControllerTest {
     void shouldCancelTransactionInfo() {
 
         String transactionId = new TransactionId(UUID.randomUUID()).value();
-        Mockito.lenient().when(transactionsService.cancelTransaction(transactionId, null)).thenReturn(Mono.empty());
+        Mockito.lenient().when(transactionsService.cancelTransaction(transactionId, null))
+                .thenReturn(Mono.empty());
 
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
@@ -263,7 +264,8 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                transactionsService
+                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
         )
                 .thenReturn(Mono.just(authorizationResponse));
 
@@ -306,7 +308,8 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                transactionsService
+                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
         )
                 .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
 
@@ -857,7 +860,8 @@ class TransactionsControllerTest {
         for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
                 .values()) {
             response.setStatus(TransactionStatusDto.fromValue(status.toString()));
-            Mockito.when(transactionsService.getTransactionInfo(transactionId, null)).thenReturn(Mono.just(response));
+            Mockito.when(transactionsService.getTransactionInfo(transactionId, null))
+                    .thenReturn(Mono.just(response));
             webTestClient.get()
                     .uri("/transactions/{trnId}", Map.of("trnId", transactionId))
                     .exchange()
@@ -959,7 +963,8 @@ class TransactionsControllerTest {
         PaymentMethodNotFoundException exception = new PaymentMethodNotFoundException(paymentMethodId, client);
 
         Mockito.when(
-                transactionsService.requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                transactionsService
+                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
         )
                 .thenReturn(Mono.error(exception));
 

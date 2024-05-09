@@ -58,6 +58,7 @@ import reactor.test.StepVerifier;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -232,6 +233,7 @@ class TransactionServiceTests {
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
+    final String USER_ID = TransactionTestUtils.USER_ID;
 
     private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
 
@@ -280,14 +282,15 @@ class TransactionServiceTests {
                 .authorizationCode("00")
                 .errorCode(null);
 
-        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
-                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
+                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, UUID.fromString(USER_ID)).block(),
                 expected
         );
 
-        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, UUID.fromString(USER_ID)))
                 .expectNext(expected)
                 .verifyComplete();
     }
@@ -335,14 +338,15 @@ class TransactionServiceTests {
                 .authorizationCode(null)
                 .errorCode(null);
 
-        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
-                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
+                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, UUID.fromString(USER_ID)).block(),
                 expected
         );
 
-        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, UUID.fromString(USER_ID)))
                 .expectNext(expected)
                 .verifyComplete();
     }
@@ -422,6 +426,9 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
+        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Mono.just(transaction));
+
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
@@ -438,7 +445,12 @@ class TransactionServiceTests {
 
         /* test */
         RequestAuthorizationResponseDto xpayPayAuthorizationResponse = transactionsServiceV1
-                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest).block();
+                .requestTransactionAuthorization(
+                        TRANSACTION_ID,
+                        UUID.fromString(USER_ID),
+                        null,
+                        authorizationRequest
+                ).block();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
@@ -523,6 +535,8 @@ class TransactionServiceTests {
                 )
         );
 
+        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Mono.just(transaction));
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
@@ -542,7 +556,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        UUID.fromString(USER_ID),
+                                        null,
+                                        authorizationRequest
+                                )
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
@@ -960,8 +979,10 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
                 .thenReturn(Mono.just(transaction));
+
+        Mockito.when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
 
@@ -975,7 +996,12 @@ class TransactionServiceTests {
 
         /* test */
         RequestAuthorizationResponseDto authorizationResponse = transactionsServiceV1
-                .requestTransactionAuthorization(TRANSACTION_ID, null, "XPAY", authorizationRequest).block();
+                .requestTransactionAuthorization(
+                        TRANSACTION_ID,
+                        UUID.fromString(USER_ID),
+                        "XPAY",
+                        authorizationRequest
+                ).block();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
@@ -1039,7 +1065,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
@@ -1050,7 +1076,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, "XPAY", authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        UUID.fromString(USER_ID),
+                                        "XPAY",
+                                        authorizationRequest
+                                )
                 )
                 .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException)
                 .verify();
@@ -1107,7 +1138,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
@@ -1125,7 +1156,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        UUID.fromString(USER_ID),
+                                        null,
+                                        authorizationRequest
+                                )
                 )
                 .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
                 .verify();
@@ -1162,10 +1198,12 @@ class TransactionServiceTests {
                 null,
                 new TransactionId(transactionId)
         );
-        when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
+        when(repository.findByTransactionIdAndUserId(transactionId, USER_ID)).thenReturn(Mono.just(transaction));
         when(transactionCancelHandlerV2.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
         when(cancellationRequestProjectionHandlerV2.handle(any())).thenReturn(Mono.empty());
-        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null)).expectNext().verifyComplete();
+        StepVerifier
+                .create(transactionsServiceV1.cancelTransaction(transactionId, UUID.fromString(USER_ID)))
+                .expectNext().verifyComplete();
 
     }
 

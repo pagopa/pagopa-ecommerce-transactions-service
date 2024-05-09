@@ -546,7 +546,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        null,
+                                        null,
+                                        authorizationRequest
+                                )
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
@@ -978,7 +983,8 @@ class TransactionServiceTests {
 
         /* test */
         RequestAuthorizationResponseDto authorizationResponse = transactionsServiceV1
-                .requestTransactionAuthorization(TRANSACTION_ID, null, "XPAY", authorizationRequest).block();
+                .requestTransactionAuthorization(TRANSACTION_ID, null, "XPAY", authorizationRequest)
+                .block();
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
@@ -1058,7 +1064,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, "XPAY", authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        null,
+                                        "XPAY",
+                                        authorizationRequest
+                                )
                 )
                 .expectErrorMatches(exception -> exception instanceof TransactionAmountMismatchException)
                 .verify();
@@ -1135,7 +1146,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        null,
+                                        null,
+                                        authorizationRequest
+                                )
                 )
                 .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
                 .verify();
@@ -1215,7 +1231,8 @@ class TransactionServiceTests {
         when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
         when(transactionCancelHandlerV1.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
         when(cancellationRequestProjectionHandlerV1.handle(any())).thenReturn(Mono.empty());
-        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null)).expectNext().verifyComplete();
+        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null)).expectNext()
+                .verifyComplete();
 
     }
 
@@ -2123,7 +2140,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        null,
+                                        null,
+                                        authorizationRequest
+                                )
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
@@ -2217,7 +2239,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        null,
+                                        null,
+                                        authorizationRequest
+                                )
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
@@ -2321,7 +2348,12 @@ class TransactionServiceTests {
         StepVerifier
                 .create(
                         transactionsServiceV1
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                                .requestTransactionAuthorization(
+                                        TRANSACTION_ID,
+                                        null,
+                                        null,
+                                        authorizationRequest
+                                )
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();

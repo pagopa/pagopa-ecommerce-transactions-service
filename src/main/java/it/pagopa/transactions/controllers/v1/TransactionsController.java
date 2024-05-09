@@ -102,7 +102,7 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(
                                                                        String transactionId,
-                                                                       String xUserId,
+                                                                       UUID xUserId,
                                                                        ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionInfo(transactionId, xUserId)
@@ -125,8 +125,8 @@ public class TransactionsController implements TransactionsApi {
     public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(
                                                                                                  String transactionId,
                                                                                                  Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto,
+                                                                                                 UUID xUserId,
                                                                                                  String xPgsId,
-                                                                                                 String xUserId,
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
@@ -323,7 +323,7 @@ public class TransactionsController implements TransactionsApi {
     @Override
     public Mono<ResponseEntity<Void>> requestTransactionUserCancellation(
                                                                          String transactionId,
-                                                                         String xUserId,
+                                                                         UUID xUserId,
                                                                          ServerWebExchange exchange
     ) {
         return transactionsService.cancelTransaction(transactionId, xUserId)
