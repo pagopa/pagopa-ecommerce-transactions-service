@@ -143,7 +143,8 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
@@ -179,7 +180,8 @@ class TransactionActivateHandlerTest {
                                 null,
                                 null,
                                 List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
-                                false
+                                false,
+                                null
                         )
                 )
         );
@@ -274,7 +276,8 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
@@ -310,7 +313,8 @@ class TransactionActivateHandlerTest {
                                 null,
                                 null,
                                 List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
-                                false
+                                false,
+                                null
                         )
                 )
         );
@@ -389,7 +393,8 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
@@ -480,7 +485,8 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
@@ -551,7 +557,8 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
@@ -666,7 +673,8 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
@@ -781,7 +789,8 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         null,
-                                        false
+                                        false,
+                                        null
                                 )
                         ).toList()
                 ),
