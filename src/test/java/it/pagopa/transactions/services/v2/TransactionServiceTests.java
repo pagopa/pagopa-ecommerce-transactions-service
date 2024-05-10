@@ -280,7 +280,7 @@ class TransactionServiceTests {
                 .authorizationCode("00")
                 .errorCode(null);
 
-        when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID)).thenReturn(Mono.just(transaction));
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
                 transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, UUID.fromString(USER_ID)).block(),
@@ -405,7 +405,7 @@ class TransactionServiceTests {
                 .authorizationCode(null)
                 .errorCode(null);
 
-        when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID)).thenReturn(Mono.just(transaction));
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
                 transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, UUID.fromString(USER_ID)).block(),
@@ -493,7 +493,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
@@ -602,7 +602,7 @@ class TransactionServiceTests {
                 )
         );
 
-        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -1047,7 +1047,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
@@ -1133,7 +1133,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
@@ -1206,7 +1206,7 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
-        Mockito.when(repository.findByTransactionIdAndUserId(TRANSACTION_ID, USER_ID))
+        Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
@@ -1266,7 +1266,7 @@ class TransactionServiceTests {
                 null,
                 new TransactionId(transactionId)
         );
-        when(repository.findByTransactionIdAndUserId(transactionId, USER_ID)).thenReturn(Mono.just(transaction));
+        when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
         when(transactionCancelHandlerV2.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
         when(cancellationRequestProjectionHandlerV2.handle(any())).thenReturn(Mono.empty());
         StepVerifier
