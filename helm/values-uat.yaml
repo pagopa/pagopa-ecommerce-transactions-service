@@ -172,7 +172,7 @@ microservice-chart:
     SESSION_URL_NOTIFICATION_URL: "https://api.uat.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
     REDIRECT_PAYMENT_TYPE_CODE_LIST: "BCITITMM-RPIC,POSOIT22XXX-RBPS,PPAYITR1XXX-RBPB,PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,BPPIITRRXXX-RBPR,BPPIITRRXXX-RBPP,BPPIITRRXXX-RBPB"
-    NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/ecommerce/mock/node-forwader/v1/forward"
+    NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/ecommerce/mock/node-forwader/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
   envSecret:
