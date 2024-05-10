@@ -74,8 +74,8 @@ microservice-chart:
       cpu: "500m"
   autoscaling:
     enable: true
-    minReplica: 3
-    maxReplica: 10
+    minReplica: 5
+    maxReplica: 15
     pollingInterval: 30 # seconds
     cooldownPeriod: 300 # seconds
     triggers:
@@ -86,7 +86,7 @@ microservice-chart:
           value: "70"
   deployment:
     create: true
-    replicas: 3
+    replicas: 5
   strategy:
     type: "RollingUpdate"
     rollingUpdate:
