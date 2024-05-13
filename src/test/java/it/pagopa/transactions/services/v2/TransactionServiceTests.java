@@ -294,7 +294,7 @@ class TransactionServiceTests {
     }
 
     @Test
-    void getTransactionReturnsTransactionV2() {
+    void getTransactionReturnsTransactionV2WithNullUserId() {
 
         final Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
