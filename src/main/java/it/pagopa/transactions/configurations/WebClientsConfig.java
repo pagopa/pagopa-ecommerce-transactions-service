@@ -41,7 +41,8 @@ public class WebClientsConfig {
                 .doOnConnected(
                         connection -> connection
                                 .addHandlerLast(new ReadTimeoutHandler(nodoReadTimeout, TimeUnit.MILLISECONDS))
-                );
+                )
+                .resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
 
@@ -93,7 +94,8 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                );
+                )
+                .resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         WebClient webClient = it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
@@ -131,7 +133,7 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                );
+                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         WebClient webClient = it.pagopa.generated.ecommerce.gateway.v1.ApiClient.buildWebClientBuilder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
@@ -169,7 +171,7 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                );
+                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         WebClient webClient = it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient.buildWebClientBuilder()
                 .clientConnector(
@@ -207,7 +209,7 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                );
+                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         WebClient webClient = it.pagopa.generated.wallet.v1.ApiClient.buildWebClientBuilder()
                 .clientConnector(
@@ -283,7 +285,7 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                );
+                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         WebClient webClient = it.pagopa.generated.ecommerce.paymentmethods.v2.ApiClient.buildWebClientBuilder()
                 .clientConnector(
