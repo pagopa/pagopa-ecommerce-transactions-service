@@ -271,18 +271,6 @@ stages:
       - job: make_release
         displayName: Make github release
         steps:
-          - ${{ if eq(parameters['SKIP_RELEASE'], False) }}:
-              - template: templates/node-job-setup/template.yaml@pagopaCommons
-                parameters:
-                  persistCredentials: true
-              - template: azure-templates/maven-github-release.yml
-                parameters:
-                  gitEmail: $(GIT_EMAIL)
-                  gitUsername: $(GIT_USERNAME)
-                  gitHubConnection: $(GITHUB_CONNECTION)
-                  release_branch: main
-                  semver_chart: '${{ parameters.RELEASE_CHART_SEMVER }}'
-                  semver: '${{ parameters.RELEASE_SEMVER }}'
           - template: azure-templates/chart-current-version.yml
 
   - stage: "tag_docker_release"
@@ -294,7 +282,7 @@ stages:
       ne('${{parameters.RELEASE_SEMVER}}', 'none')
       )
     variables:
-      app_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
+      app_version: perf
     jobs:
       - job: "build"
         displayName: 'Build UAT service beta'
@@ -323,7 +311,7 @@ stages:
         in(dependencies.Release.result, 'Succeeded', 'Skipped')
       )
     variables:
-      app_version: $[ stageDependencies.Release.make_release.outputs['chart_current_version.appVersion'] ]
+      app_version: perf
     jobs:
       - deployment: "Green_deployment"
         displayName: "Green deployment"
