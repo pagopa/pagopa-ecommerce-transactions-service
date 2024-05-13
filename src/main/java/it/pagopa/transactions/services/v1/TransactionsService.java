@@ -717,7 +717,7 @@ public class TransactionsService {
                     .filter(transactionDocument -> switch (transactionDocument) {
                         case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
                         case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> xUserId == null ? t.getUserId() == null : t.getUserId().equals(xUserId.toString());
-                        default -> throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass()));
+                        default -> throw new NotImplementedException("Handling for transaction document version: [%s] not implemented yet".formatted(transactionDocument.getClass()));
                     });
     }
 
