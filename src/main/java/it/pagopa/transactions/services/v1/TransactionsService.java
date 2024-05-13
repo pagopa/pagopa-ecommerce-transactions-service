@@ -715,7 +715,7 @@ public class TransactionsService {
     private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
         return transactionsViewRepository.findById(transactionId)
                     .filter(transactionDocument -> switch (transactionDocument) {
-                        case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> true;
+                        case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
                         case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> xUserId == null ? t.getUserId() == null : t.getUserId().equals(xUserId.toString());
                         default -> throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass()));
                     });
