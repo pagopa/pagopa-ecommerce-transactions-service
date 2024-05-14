@@ -240,7 +240,7 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.getTransactionInfo("transactionId")
+                        transactionsService.getTransactionInfo("transactionId", null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();
@@ -271,6 +271,7 @@ class CircuitBreakerTest {
                 .create(
                         transactionsService.requestTransactionAuthorization(
                                 "transactionId",
+                                null,
                                 "",
                                 new RequestAuthorizationRequestDto()
                         )
@@ -331,7 +332,7 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.cancelTransaction("")
+                        transactionsService.cancelTransaction("", null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();

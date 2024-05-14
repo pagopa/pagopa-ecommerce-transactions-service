@@ -324,10 +324,12 @@ public class TransactionsService {
 
     @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionInfo")
-    public Mono<TransactionInfoDto> getTransactionInfo(String transactionId) {
+    public Mono<TransactionInfoDto> getTransactionInfo(
+                                                       String transactionId,
+                                                       UUID xUserId
+    ) {
         log.info("Get Transaction Invoked with id {} ", transactionId);
-        return transactionsViewRepository
-                .findById(transactionId)
+        return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(this::buildTransactionInfoDtoFromView);
     }
@@ -420,9 +422,8 @@ public class TransactionsService {
     }
 
     @Retry(name = "cancelTransaction")
-    public Mono<Void> cancelTransaction(String transactionId) {
-        return transactionsViewRepository
-                .findById(transactionId)
+    public Mono<Void> cancelTransaction(String transactionId, UUID xUserId) {
+        return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transactionDocument -> {
@@ -454,11 +455,11 @@ public class TransactionsService {
     @Retry(name = "requestTransactionAuthorization")
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
             String transactionId,
+            UUID xUserId,
             String paymentGatewayId,
             RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
-        return transactionsViewRepository
-                .findById(transactionId)
+        return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         transaction -> {
@@ -709,6 +710,15 @@ public class TransactionsService {
                             }));
                         }
                 );
+    }
+
+    private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
+        return transactionsViewRepository.findById(transactionId)
+                    .filter(transactionDocument -> switch (transactionDocument) {
+                        case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
+                        case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> xUserId == null ? t.getUserId() == null : t.getUserId().equals(xUserId.toString());
+                        default -> throw new NotImplementedException("Handling for transaction document version: [%s] not implemented yet".formatted(transactionDocument.getClass()));
+                    });
     }
 
     @Retry(name = "updateTransactionAuthorization")

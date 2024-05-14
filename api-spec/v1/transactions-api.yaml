@@ -78,6 +78,12 @@ paths:
       summary: Get transaction information
       description: Return information for the input specific transaction resource
       parameters:
+        - in: header
+          name: x-user-id
+          required: false
+          description: User id (valued for authenticated payments) owner of the transaction
+          schema:
+            $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
           schema:
@@ -108,6 +114,12 @@ paths:
         - transactions
       operationId: requestTransactionUserCancellation
       parameters:
+        - in: header
+          name: x-user-id
+          required: false
+          description: User id (valued for authenticated payments) owner of the transaction
+          schema:
+            $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
           schema:
@@ -144,6 +156,12 @@ paths:
       summary: Request authorization
       description: Request authorization for the transaction identified by payment token
       parameters:
+        - in: header
+          name: x-user-id
+          required: false
+          description: User id (valued for authenticated payments) owner of the transaction
+          schema:
+            $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
           schema:
@@ -1218,6 +1236,10 @@ components:
         - pspId
         - outcome
         - pspTransactionId
+    UserId:
+      description: unique user identifier
+      type: string
+      format: uuid
   requestBodies:
     NewTransactionRequest:
       required: true
