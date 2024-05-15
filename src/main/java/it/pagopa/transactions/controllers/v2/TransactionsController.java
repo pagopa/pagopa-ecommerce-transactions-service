@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.v2.server.api.V2Api;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -28,6 +29,7 @@ import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static it.pagopa.transactions.utils.TransactionsUtils.nodeErrorToV2TransactionsResponseEntityMapping;
 
@@ -234,16 +236,32 @@ public class TransactionsController implements V2Api {
 
     @Warmup
     public void postNewTransactionWarmupMethod() {
-        WebClient
-                .create()
-                .post()
-                .uri("http://localhost:8080/v2/transactions")
-                .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
-                .header("x-correlation-id", UUID.randomUUID().toString())
-                .bodyValue(transactionsUtils.buildWarmupRequestV2())
-                .retrieve()
-                .toBodilessEntity()
-                .block(Duration.ofSeconds(30));
+        IntStream.range(0, 3).forEach(
+                idx -> {
+                    log.info("Performing warmup iteration: {}", idx);
+                    NewTransactionResponseDto newTransactionResponseDto = WebClient
+                            .create()
+                            .post()
+                            .uri("http://localhost:8080/v2/transactions")
+                            .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
+                            .header("x-correlation-id", UUID.randomUUID().toString())
+                            .bodyValue(transactionsUtils.buildWarmupRequestV2())
+                            .retrieve()
+                            .bodyToMono(NewTransactionResponseDto.class)
+                            .block(Duration.ofSeconds(30));
+                    WebClient
+                            .create()
+                            .get()
+                            .uri(
+                                    "http://localhost:8080/transactions/{transactionId}",
+                                    newTransactionResponseDto.getTransactionId()
+                            )
+                            .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
+                            .retrieve()
+                            .toBodilessEntity()
+                            .block(Duration.ofSeconds(30));
+                }
+        );
 
     }
 }
