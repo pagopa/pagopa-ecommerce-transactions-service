@@ -26,10 +26,10 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static it.pagopa.transactions.utils.TransactionsUtils.nodeErrorToV2TransactionsResponseEntityMapping;
 
 @RestController("TransactionsControllerV2")
 @Slf4j
@@ -191,45 +191,28 @@ public class TransactionsController implements V2Api {
         );
     }
 
-    @ExceptionHandler({
-            NodoErrorException.class,
-    })
-    ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
+    @ExceptionHandler(NodoErrorException.class)
+    public ResponseEntity<?> nodoErrorHandler(NodoErrorException e) {
+        String faultCode = e.getFaultCode();
+        ResponseEntity<?> response = nodeErrorToV2TransactionsResponseEntityMapping.getOrDefault(
+                faultCode,
+                new ResponseEntity<>(
+                        new GatewayFaultPaymentProblemJsonDto()
+                                .title("Bad gateway")
+                                .faultCodeCategory(
+                                        GatewayFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.GENERIC_ERROR
+                                )
+                                .faultCodeDetail(faultCode),
+                        HttpStatus.BAD_GATEWAY
+                )
+        );
 
-        return switch (exception.getFaultCode()) {
-            case String s && Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PartyConfigurationFaultPaymentProblemJsonDto()
-                                    .title("EC error")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
-                                    .faultCodeDetail(PartyConfigurationFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s && Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new ValidationFaultPaymentProblemJsonDto()
-                                    .title("Validation Fault")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNKNOWN)
-                                    .faultCodeDetail(ValidationFaultDto.fromValue(s)), HttpStatus.NOT_FOUND);
-            case String s && Arrays.stream(GatewayFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new GatewayFaultPaymentProblemJsonDto()
-                                    .title("Payment unavailable")
-                                    .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                                    .faultCodeDetail(GatewayFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s && Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PartyTimeoutFaultPaymentProblemJsonDto()
-                                    .title("Gateway Timeout")
-                                    .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                                    .faultCodeDetail(PartyTimeoutFaultDto.fromValue(s)), HttpStatus.GATEWAY_TIMEOUT);
-            case String s && Arrays.stream(PaymentStatusFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PaymentStatusFaultPaymentProblemJsonDto()
-                                    .title("Payment Status Fault")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
-                                    .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.CONFLICT);
-            default -> new ResponseEntity<>(
-                    new ProblemJsonDto().title("Bad gateway"), HttpStatus.BAD_GATEWAY);
-        };
+        log.error(
+                "Nodo error processing request with fault code: [" + faultCode + "] mapped to http status code: [" +
+                        response.getStatusCode() + "]",
+                e
+        );
+        return response;
     }
 
     @ExceptionHandler(
