@@ -57,7 +57,8 @@ class TransactionDocumentTest {
                                 TEST_AMOUNT,
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
-                                false
+                                false,
+                                null
                         )
                 ),
                 0,
@@ -79,7 +80,8 @@ class TransactionDocumentTest {
                                 TEST_AMOUNT,
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
-                                false
+                                false,
+                                null
                         )
                 ),
                 0,
@@ -102,7 +104,8 @@ class TransactionDocumentTest {
                                 TEST_AMOUNT,
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
-                                false
+                                false,
+                                null
                         )
                 ),
                 0,
@@ -120,7 +123,8 @@ class TransactionDocumentTest {
                 TEST_AMOUNT,
                 null,
                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
-                false
+                false,
+                null
         );
         differentTransaction.setPaymentNotices(List.of(paymentNotice));
         differentTransaction.setStatus(TEST_STATUS);
@@ -163,7 +167,8 @@ class TransactionDocumentTest {
                                 description,
                                 nullPaymentContextCode,
                                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null)),
-                                false
+                                false,
+                                new CompanyName(null)
                         )
                 ),
                 email,

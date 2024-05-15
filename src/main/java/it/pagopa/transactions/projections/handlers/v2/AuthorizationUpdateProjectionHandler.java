@@ -95,7 +95,8 @@ public class AuthorizationUpdateProjectionHandler
                                                                                 p.getTransferCategory()
                                                                         )
                                                                 ).toList(),
-                                                        paymentNotice.isAllCCP()
+                                                        paymentNotice.isAllCCP(),
+                                                        new CompanyName(paymentNotice.getCompanyName())
                                                 )
                                         ).toList(),
                                 transactionDocument.getEmail(),

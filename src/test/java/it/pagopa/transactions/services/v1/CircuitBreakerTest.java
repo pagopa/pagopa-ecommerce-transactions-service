@@ -190,7 +190,8 @@ class CircuitBreakerTest {
                                         0,
                                         TEST_CCP.toString(),
                                         List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
-                                        false
+                                        false,
+                                        null
                                 )
                         )
                 );
@@ -239,7 +240,7 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.getTransactionInfo("transactionId")
+                        transactionsService.getTransactionInfo("transactionId", null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();
@@ -270,6 +271,7 @@ class CircuitBreakerTest {
                 .create(
                         transactionsService.requestTransactionAuthorization(
                                 "transactionId",
+                                null,
                                 "",
                                 new RequestAuthorizationRequestDto()
                         )
@@ -330,7 +332,7 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.cancelTransaction("")
+                        transactionsService.cancelTransaction("", null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();
@@ -391,7 +393,8 @@ class CircuitBreakerTest {
                                         0,
                                         TEST_CCP.toString(),
                                         List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
-                                        false
+                                        false,
+                                        null
                                 )
                         )
                 );
@@ -452,7 +455,8 @@ class CircuitBreakerTest {
                                         0,
                                         TEST_CCP.toString(),
                                         List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
-                                        false
+                                        false,
+                                        null
                                 )
                         )
                 );

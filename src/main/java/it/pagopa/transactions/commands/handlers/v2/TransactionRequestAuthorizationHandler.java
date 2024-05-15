@@ -221,7 +221,13 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                 HttpStatus.INTERNAL_SERVER_ERROR
                                                                                         )
                                                                                 ),
-                                                authorizationOutput.npgConfirmSessionId().orElse(null)
+                                                authorizationOutput.npgConfirmSessionId().orElse(null),
+                                                /* @formatter:off
+                                                 * FIXME walletInfo set to null: this modification is addressed in
+                                                 * PR: https://github.com/pagopa/pagopa-ecommerce-transactions-service/pull/475
+                                                 * @formatter:on
+                                                 */
+                                                null
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
@@ -333,47 +339,47 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         return redirectionAuthRequestPipeline(authorizationData, touchpoint);
     }
 
-  /**
-   * Emit Wallet Used event on wallet queue. The semantic
-   * of this method is fire-and-forget, so any action performed by this
-   * method is executed asynchronously.
-   * e.g. doOnNext(_ -> fireWalletLastUsageEvent(...))
-   */
+    /**
+     * Emit Wallet Used event on wallet queue. The semantic
+     * of this method is fire-and-forget, so any action performed by this
+     * method is executed asynchronously.
+     * e.g. doOnNext(_ -> fireWalletLastUsageEvent(...))
+     */
     private void fireWalletLastUsageEvent(
             TransactionRequestAuthorizationCommand command,
             TransactionActivated transactionActivated
     ) {
-      final var wallet = switch (command.getData().authDetails()) {
-        case WalletAuthRequestDetailsDto walletData -> Mono.just(walletData);
-        default -> Mono.<WalletAuthRequestDetailsDto>empty();
-      };
+        final var wallet = switch (command.getData().authDetails()) {
+            case WalletAuthRequestDetailsDto walletData -> Mono.just(walletData);
+            default -> Mono.<WalletAuthRequestDetailsDto>empty();
+        };
 
-      walletAsyncQueueClient.ifPresent(
-              queueClient -> wallet.flatMap(walletData -> tracingUtils.traceMono(
-                              this.getClass().getSimpleName(),
-                              (tracingInfo) -> queueClient.fireWalletLastUsageEvent(
-                                      walletData.getWalletId(),
-                                      transactionActivated.getClientId(),
-                                      tracingInfo
-                              )
-                      ).doOnError(
-                              exception -> log.error(
-                                      "Failed to send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
-                                      transactionActivated.getTransactionId(),
-                                      walletData.getWalletId(),
-                                      transactionActivated.getClientId(),
-                                      exception
-                              )
-                      )
-                      .doOnNext(
-                              ignored -> log.info(
-                                      "Send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
-                                      transactionActivated.getTransactionId(),
-                                      walletData.getWalletId(),
-                                      transactionActivated.getClientId()
-                              )
-                      ).then())
-              .subscribeOn(Schedulers.boundedElastic())
-              .subscribe());
+        walletAsyncQueueClient.ifPresent(
+                queueClient -> wallet.flatMap(walletData -> tracingUtils.traceMono(
+                                        this.getClass().getSimpleName(),
+                                        (tracingInfo) -> queueClient.fireWalletLastUsageEvent(
+                                                walletData.getWalletId(),
+                                                transactionActivated.getClientId(),
+                                                tracingInfo
+                                        )
+                                ).doOnError(
+                                        exception -> log.error(
+                                                "Failed to send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
+                                                transactionActivated.getTransactionId(),
+                                                walletData.getWalletId(),
+                                                transactionActivated.getClientId(),
+                                                exception
+                                        )
+                                )
+                                .doOnNext(
+                                        ignored -> log.info(
+                                                "Send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
+                                                transactionActivated.getTransactionId(),
+                                                walletData.getWalletId(),
+                                                transactionActivated.getClientId()
+                                        )
+                                ).then())
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .subscribe());
     }
 }
