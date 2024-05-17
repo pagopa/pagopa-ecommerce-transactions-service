@@ -28,7 +28,7 @@ microservice-chart:
         TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-auth-requested-queue-b
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.30.3" #improve
+    tag: "1.30.4" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
