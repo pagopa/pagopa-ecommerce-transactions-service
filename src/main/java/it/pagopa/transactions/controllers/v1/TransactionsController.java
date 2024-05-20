@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RestController("TransactionsControllerV1")
 @Slf4j
@@ -646,16 +647,29 @@ public class TransactionsController implements TransactionsApi {
 
     @Warmup
     public void postNewTransactionWarmupMethod() {
-        WebClient
-                .create()
-                .post()
-                .uri("http://localhost:8080/transactions")
-                .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
-                .bodyValue(transactionsUtils.buildWarmupRequestV1())
-                .retrieve()
-                .toBodilessEntity()
-                .block(Duration.ofSeconds(30));
-
+        IntStream.range(0, 3).forEach(
+                idx -> {
+                    log.info("Performing warmup iteration: {}", idx);
+                    NewTransactionResponseDto newTransactionResponseDto = WebClient
+                            .create()
+                            .post()
+                            .uri("http://localhost:8080/transactions")
+                            .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
+                            .bodyValue(transactionsUtils.buildWarmupRequestV1())
+                            .retrieve()
+                            .bodyToMono(NewTransactionResponseDto.class)
+                            .block(Duration.ofSeconds(30));
+                    WebClient
+                            .create()
+                            .get()
+                            .uri(
+                                    "http://localhost:8080/transactions/{transactionId}",
+                                    newTransactionResponseDto.getTransactionId()
+                            )
+                            .retrieve()
+                            .toBodilessEntity()
+                            .block(Duration.ofSeconds(30));
+                }
+        );
     }
-
 }
