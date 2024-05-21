@@ -9,11 +9,14 @@ import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,6 +40,8 @@ public class TransactionsUtils {
     private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto> transactionStatusLookupMapV2 = new EnumMap<>(
             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
     );
+
+    public static Map<String, ResponseEntity<?>> nodeErrorToV2TransactionsResponseEntityMapping = new HashMap<>();
 
     @Autowired
     public TransactionsUtils(
@@ -127,6 +132,152 @@ public class TransactionsUtils {
                     enumValue,
                     it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto
                             .fromValue(enumValue.toString())
+            );
+        }
+
+        /*
+         * @formatter:off
+         *
+         * Node error code to 404 for v2 transactions response mapping
+         *
+         * @formatter:on
+         */
+        for (ValidationFaultPaymentUnknownDto faultCode : ValidationFaultPaymentUnknownDto.values()) {
+            nodeErrorToV2TransactionsResponseEntityMapping.put(
+                    faultCode.getValue(),
+                    new ResponseEntity<>(
+                            new ValidationFaultPaymentUnknownProblemJsonDto().title("Payment Status Fault")
+                                    .faultCodeCategory(
+                                            ValidationFaultPaymentUnknownProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_UNKNOWN
+                                    )
+                                    .faultCodeDetail(faultCode),
+                            HttpStatus.NOT_FOUND
+                    )
+            );
+        }
+
+        for (ValidationFaultPaymentDataErrorDto faultCode : ValidationFaultPaymentDataErrorDto.values()) {
+            nodeErrorToV2TransactionsResponseEntityMapping.put(
+                    faultCode.getValue(),
+                    new ResponseEntity<>(
+                            new ValidationFaultPaymentDataErrorProblemJsonDto()
+                                    .title("Payment Status Fault")
+                                    .faultCodeCategory(
+                                            ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
+                                    )
+                                    .faultCodeDetail(faultCode),
+                            HttpStatus.NOT_FOUND
+                    )
+            );
+        }
+
+        /*
+         * @formatter:off
+         *
+         * Node error code to 409 for v2 transactions response mapping
+         *
+         * @formatter:on
+         */
+        for (PaymentOngoingStatusFaultDto faultCode : PaymentOngoingStatusFaultDto.values()) {
+            nodeErrorToV2TransactionsResponseEntityMapping.put(
+                    faultCode.getValue(),
+                    new ResponseEntity<>(
+                            new PaymentOngoingStatusFaultPaymentProblemJsonDto()
+                                    .title("Payment Status Fault")
+                                    .faultCodeCategory(
+                                            PaymentOngoingStatusFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_ONGOING
+                                    )
+                                    .faultCodeDetail(faultCode),
+                            HttpStatus.CONFLICT
+                    )
+            );
+        }
+
+        for (PaymentExpiredStatusFaultDto faultCode : PaymentExpiredStatusFaultDto.values()) {
+            nodeErrorToV2TransactionsResponseEntityMapping.put(
+                    faultCode.getValue(),
+                    new ResponseEntity<>(
+                            new PaymentExpiredStatusFaultPaymentProblemJsonDto()
+                                    .title("Payment Status Fault")
+                                    .faultCodeCategory(
+                                            PaymentExpiredStatusFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_EXPIRED
+                                    )
+                                    .faultCodeDetail(faultCode),
+                            HttpStatus.CONFLICT
+                    )
+            );
+        }
+
+        for (PaymentCanceledStatusFaultDto faultCode : PaymentCanceledStatusFaultDto.values()) {
+            nodeErrorToV2TransactionsResponseEntityMapping.put(
+                    faultCode.getValue(),
+                    new ResponseEntity<>(
+                            new PaymentCanceledStatusFaultPaymentProblemJsonDto()
+                                    .title("Payment Status Fault")
+                                    .faultCodeCategory(
+                                            PaymentCanceledStatusFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_CANCELED
+                                    )
+                                    .faultCodeDetail(faultCode),
+                            HttpStatus.CONFLICT
+                    )
+            );
+        }
+
+        for (PaymentDuplicatedStatusFaultDto faultCode : PaymentDuplicatedStatusFaultDto.values()) {
+            nodeErrorToV2TransactionsResponseEntityMapping.put(
+                    faultCode.getValue(),
+                    new ResponseEntity<>(
+                            new PaymentDuplicatedStatusFaultPaymentProblemJsonDto().title("Payment Status Fault")
+                                    .faultCodeCategory(
+                                            PaymentDuplicatedStatusFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DUPLICATED
+                                    )
+                                    .faultCodeDetail(faultCode),
+                            HttpStatus.CONFLICT
+                    )
+            );
+        }
+
+        /*
+         * @formatter:off
+         *
+         * Node error code to 502 for v2 transactions response mapping
+         *
+         * @formatter:on
+         */
+        for (ValidationFaultPaymentUnavailableDto faultCode : ValidationFaultPaymentUnavailableDto.values()) {
+            nodeErrorToV2TransactionsResponseEntityMapping.put(
+                    faultCode.getValue(),
+                    new ResponseEntity<>(
+                            new ValidationFaultPaymentUnavailableProblemJsonDto()
+                                    .title("Payment unavailable")
+                                    .faultCodeCategory(
+                                            ValidationFaultPaymentUnavailableProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_UNAVAILABLE
+                                    )
+                                    .faultCodeDetail(faultCode),
+                            HttpStatus.BAD_GATEWAY
+                    )
+            );
+        }
+
+        /*
+         * @formatter:off
+         *
+         * Node error code to 503 for v2 transactions response mapping
+         *
+         * @formatter:on
+         */
+        for (PartyConfigurationFaultDto faultCode : PartyConfigurationFaultDto.values()) {
+            nodeErrorToV2TransactionsResponseEntityMapping.put(
+                    faultCode.getValue(),
+                    new ResponseEntity<>(
+                            new PartyConfigurationFaultPaymentProblemJsonDto()
+                                    .title("EC error")
+                                    .faultCodeCategory(
+                                            PartyConfigurationFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.DOMAIN_UNKNOWN
+                                    )
+                                    .faultCodeDetail(faultCode),
+                            HttpStatus.SERVICE_UNAVAILABLE
+                    )
             );
         }
     }

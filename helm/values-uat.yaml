@@ -29,7 +29,7 @@ microservice-chart:
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.30.1"
+    tag: "1.30.5"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -168,8 +168,8 @@ microservice-chart:
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
     REDIRECT_PAYMENT_TYPE_CODE_LIST: "BCITITMM-RPIC,POSOIT22XXX-RBPS,PPAYITR1XXX-RBPB,PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,BPPIITRRXXX-RBPR,BPPIITRRXXX-RBPP,BPPIITRRXXX-RBPB"
     NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-node-forwarder/api/v1"
-    NODE_FORWARDER_READ_TIMEOUT: "10000"
-    NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
+    NODE_FORWARDER_READ_TIMEOUT: "19000"
+    NODE_FORWARDER_CONNECTION_TIMEOUT: "19000"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
