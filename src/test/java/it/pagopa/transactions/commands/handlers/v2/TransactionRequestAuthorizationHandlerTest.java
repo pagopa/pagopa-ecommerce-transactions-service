@@ -72,8 +72,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     private static final String NPG_CHECKOUT_ESITO_PATH = "/esito";
     private static final String NPG_URL_IFRAME = "http://iframe";
-    private static final String NPG_GDI_CHECK_PATH = "/gdi-check#gdiIframeUrl=";
-    private static final String NPG_WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
+    private static final String NPG_ECOMMERCE_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
     private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthorizationHandler;
 
     @Mock
@@ -738,10 +737,10 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(
-                        NPG_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
-                        )
+                        ).concat("&clientId=CHECKOUT&transactionId=").concat(transaction.getTransactionId().value())
                 );
         Hooks.onOperatorDebug();
         /* test */
@@ -2066,10 +2065,10 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(
-                        NPG_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
-                        )
+                        ).concat("&clientId=CHECKOUT&transactionId=").concat(transaction.getTransactionId().value())
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -2238,7 +2237,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(
-                        NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
@@ -3537,7 +3536,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(
-                        NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
@@ -3813,7 +3812,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(
-                        NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())

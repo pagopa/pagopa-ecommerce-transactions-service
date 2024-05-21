@@ -27,8 +27,7 @@ import java.util.Optional;
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
-    private static final String CHECKOUT_GDI_CHECK_PATH = "/gdi-check#gdiIframeUrl=";
-    private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
+    private static final String ECOMMERCE_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
     private static final String CHECKOUT_ESITO_PATH = "/esito";
 
     private final PaymentGatewayClient paymentGatewayClient;
@@ -310,14 +309,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                             );
 
-                                            StringBuilder gdiCheckPathWithFragment = isWalletPayment
-                                                    ? new StringBuilder(
-                                                            WALLET_GDI_CHECK_PATH
-                                                    ).append(base64redirectionUrl).append("&clientId=IO")
-                                                            .append("&transactionId=")
-                                                            .append(authorizationData.transactionId().value())
-                                                    : new StringBuilder(CHECKOUT_GDI_CHECK_PATH)
-                                                            .append(base64redirectionUrl);
+                                            StringBuilder gdiCheckPathWithFragment = new StringBuilder(
+                                                    ECOMMERCE_GDI_CHECK_PATH
+                                            ).append(base64redirectionUrl)
+                                                    .append(isWalletPayment ? "&clientId=IO" : "&clientId=CHECKOUT")
+                                                    .append("&transactionId=")
+                                                    .append(authorizationData.transactionId().value());
 
                                             yield URI.create(checkoutBasePath)
                                                     .resolve(
