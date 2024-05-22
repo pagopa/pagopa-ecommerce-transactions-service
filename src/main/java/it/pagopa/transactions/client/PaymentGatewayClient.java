@@ -550,6 +550,18 @@ public class PaymentGatewayClient {
 
                             RedirectPaymentMethodId idPaymentMethod = RedirectPaymentMethodId
                                     .fromPaymentTypeCode(authorizationData.paymentTypeCode());
+
+                            /*
+                             * `paName` is shown to users on the payment gateway redirect page. If there is
+                             * only one payment notice we use its `companyName` as `paName`, otherwise there
+                             * would be an ambiguity, so we don't pass it into the authorization request
+                             */
+                            String paName = null;
+
+                            if (authorizationData.paymentNotices().size() == 1) {
+                                paName = authorizationData.paymentNotices().get(0).companyName().value();
+                            }
+
                             RedirectUrlRequestDto request = new RedirectUrlRequestDto()
                                     .amount(
                                             authorizationData
@@ -586,7 +598,7 @@ public class PaymentGatewayClient {
                                             redirectMethodsDescriptions.get(idPaymentMethod)
                                     )
                                     .idPaymentMethod(idPaymentMethod.toString())
-                                    .paName(null);// optional
+                                    .paName(paName);// optional
                             Either<RedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
                                     authorizationData.pspId(),
                                     authorizationData.paymentTypeCode()
