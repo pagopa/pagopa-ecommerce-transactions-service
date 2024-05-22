@@ -28,7 +28,7 @@ import java.util.Optional;
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
     private static final String ECOMMERCE_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
-    private static final String CHECKOUT_ESITO_PATH = "/esito";
+    private static final String CHECKOUT_ESITO_PATH = "/ecommerce-fe/esito";
 
     private final PaymentGatewayClient paymentGatewayClient;
 

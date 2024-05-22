@@ -52,7 +52,7 @@ import static org.mockito.ArgumentMatchers.any;
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
 
-    private static final String NPG_CHECKOUT_ESITO_PATH = "/esito";
+    private static final String NPG_CHECKOUT_ESITO_PATH = "/ecommerce-fe/esito";
     private static final String NPG_URL_IFRAME = "http://iframe";
     private static final String NPG_ECOMMERCE_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
     private TransactionRequestAuthorizationHandler requestAuthorizationHandler;
