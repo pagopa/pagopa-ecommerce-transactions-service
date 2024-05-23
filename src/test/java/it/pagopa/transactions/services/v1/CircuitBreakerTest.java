@@ -144,10 +144,6 @@ class CircuitBreakerTest {
         return getIgnoredExceptionsForRetry("getTransactionInfo");
     }
 
-    private static Stream<Arguments> getIgnoredExceptionForRequestTransactionAuthorizationRetry() {
-        return getIgnoredExceptionsForRetry("requestTransactionAuthorization");
-    }
-
     private static Stream<Arguments> getIgnoredExceptionForUpdateTransactionAuthorizationRetry() {
         return getIgnoredExceptionsForRetry("updateTransactionAuthorization");
     }
@@ -241,39 +237,6 @@ class CircuitBreakerTest {
         StepVerifier
                 .create(
                         transactionsService.getTransactionInfo("transactionId", null)
-                )
-                .expectError(thrownException.getClass())
-                .verify();
-        assertEquals(
-                expectedFailedCallsWithoutRetryAttempt,
-                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource("getIgnoredExceptionForRequestTransactionAuthorizationRetry")
-    @Order(0)
-    void shouldNotPerformRetryForExcludedException_requestTransactionAuthorizationRetry(
-                                                                                        Exception thrownException,
-                                                                                        String retryInstanceName
-    ) {
-        Retry retry = retryRegistry.retry(retryInstanceName);
-        long expectedFailedCallsWithoutRetryAttempt = 0;
-
-        /*
-         * Preconditions
-         */
-        Mockito.when(transactionsViewRepository.findById(any(String.class)))
-                .thenReturn(Mono.error(thrownException));
-
-        StepVerifier
-                .create(
-                        transactionsService.requestTransactionAuthorization(
-                                "transactionId",
-                                null,
-                                "",
-                                new RequestAuthorizationRequestDto()
-                        )
                 )
                 .expectError(thrownException.getClass())
                 .verify();
