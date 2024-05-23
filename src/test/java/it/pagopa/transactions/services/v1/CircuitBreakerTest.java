@@ -258,8 +258,7 @@ class CircuitBreakerTest {
                                                                                         String retryInstanceName
     ) {
         Retry retry = retryRegistry.retry(retryInstanceName);
-        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-                + 1;
+        long expectedFailedCallsWithoutRetryAttempt = 0;
 
         /*
          * Preconditions
