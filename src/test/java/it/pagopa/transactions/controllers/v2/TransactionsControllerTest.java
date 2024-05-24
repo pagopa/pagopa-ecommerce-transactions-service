@@ -1,6 +1,8 @@
 package it.pagopa.transactions.controllers.v2;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -43,6 +45,7 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.net.URI;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,6 +91,10 @@ class TransactionsControllerTest {
 
     @Mock
     HttpHeaders mockHeaders;
+
+    private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
+            Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
+    );
 
     @Test
     void shouldGetOk() {
@@ -241,7 +248,9 @@ class TransactionsControllerTest {
     void shouldReturnErrorCircuitBreakerOpen() {
 
         ResponseEntity error = transactionsController.openStateHandler(
-                Mockito.mock(CallNotPermittedException.class)
+                CallNotPermittedException.createCallNotPermittedException(
+                        circuitBreakerRegistry.circuitBreaker("circuit-breaker-test")
+                )
         ).block();
 
         // Verify status code and response

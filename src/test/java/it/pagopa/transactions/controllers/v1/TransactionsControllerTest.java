@@ -1,6 +1,8 @@
 package it.pagopa.transactions.controllers.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
@@ -93,6 +95,10 @@ class TransactionsControllerTest {
 
     @MockBean
     private OpenTelemetryUtils openTelemetryUtils;
+
+    private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
+            Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
+    );
 
     @Mock
     ServerWebExchange mockExchange;
@@ -666,7 +672,9 @@ class TransactionsControllerTest {
     void shouldReturnErrorCircuitBreakerOpen() {
 
         ResponseEntity error = transactionsController.openStateHandler(
-                Mockito.mock(CallNotPermittedException.class)
+                CallNotPermittedException.createCallNotPermittedException(
+                        circuitBreakerRegistry.circuitBreaker("circuit-breaker-test")
+                )
         ).block();
 
         // Verify status code and response
