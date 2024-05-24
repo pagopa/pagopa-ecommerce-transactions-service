@@ -1,5 +1,6 @@
 package it.pagopa.transactions.controllers.v1;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
@@ -12,6 +13,7 @@ import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
+import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
@@ -88,6 +90,9 @@ class TransactionsControllerTest {
 
     @MockBean
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
+
+    @MockBean
+    private OpenTelemetryUtils openTelemetryUtils;
 
     @Mock
     ServerWebExchange mockExchange;
@@ -660,7 +665,9 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnErrorCircuitBreakerOpen() {
 
-        ResponseEntity error = transactionsController.openStateHandler().block();
+        ResponseEntity error = transactionsController.openStateHandler(
+                Mockito.mock(CallNotPermittedException.class)
+        ).block();
 
         // Verify status code and response
         assertEquals(HttpStatus.BAD_GATEWAY, error.getStatusCode());
