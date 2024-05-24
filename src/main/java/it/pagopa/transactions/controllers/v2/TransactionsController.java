@@ -54,7 +54,7 @@ public class TransactionsController implements V2Api {
         }
     )
     public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(CallNotPermittedException error) {
-        log.error("Error - OPEN circuit breaker");
+        log.error("Error - OPEN circuit breaker", error);
         return Mono.just(
                 new ResponseEntity<>(
                         new ProblemJsonDto()
