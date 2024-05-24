@@ -75,10 +75,7 @@ public class TransactionsController implements TransactionsApi {
                 ignored -> openTelemetryUtils.addErrorSpanWithAttributes(
                         OpenTelemetryUtils.CIRCUIT_BREAKER_OPEN_SPAN_NAME
                                 .formatted(error.getCausingCircuitBreakerName()),
-                        Attributes.of(
-                                OpenTelemetryUtils.CIRCUIT_BREAKER_OPEN_NAME_ATTRIBUTE_KEY,
-                                error.getCausingCircuitBreakerName()
-                        )
+                        Attributes.empty()
                 )
         );
     }
