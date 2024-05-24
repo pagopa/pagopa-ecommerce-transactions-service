@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
@@ -27,22 +28,27 @@ import java.util.Optional;
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
-    private static final String ECOMMERCE_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
-    private static final String CHECKOUT_ESITO_PATH = "/ecommerce-fe/esito";
+    private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
 
     private final PaymentGatewayClient paymentGatewayClient;
 
     private final String checkoutBasePath;
+    private final String checkoutNpgGdiUrl;
+    private final String checkoutOutcomeUrl;
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
     protected TransactionRequestAuthorizationHandlerCommon(
             PaymentGatewayClient paymentGatewayClient,
             String checkoutBasePath,
+            String checkoutNpgGdiUrl,
+            String checkoutOutcomeUrl,
             TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
+        this.checkoutNpgGdiUrl = checkoutNpgGdiUrl;
+        this.checkoutOutcomeUrl = checkoutOutcomeUrl;
         this.transactionTemplateWrapper = transactionTemplateWrapper;
     }
 
@@ -309,12 +315,19 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                             );
 
-                                            StringBuilder gdiCheckPathWithFragment = new StringBuilder(
-                                                    ECOMMERCE_GDI_CHECK_PATH
-                                            ).append(base64redirectionUrl)
-                                                    .append(isWalletPayment ? "&clientId=IO" : "&clientId=CHECKOUT")
-                                                    .append("&transactionId=")
-                                                    .append(authorizationData.transactionId().value());
+                                            StringBuilder gdiCheckPathWithFragment = isWalletPayment
+                                                    ? new StringBuilder(
+                                                            WALLET_GDI_CHECK_PATH
+                                                    ).append(base64redirectionUrl).append("&clientId=IO")
+                                                            .append("&transactionId=")
+                                                            .append(authorizationData.transactionId().value())
+                                                    : new StringBuilder(
+                                                            formatGdiCheckUrl(
+                                                                    base64redirectionUrl,
+                                                                    "CHECKOUT",
+                                                                    authorizationData.transactionId()
+                                                            )
+                                                    );
 
                                             yield URI.create(checkoutBasePath)
                                                     .resolve(
@@ -333,7 +346,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             yield npgResponse.getUrl();
                                         }
                                         case PAYMENT_COMPLETE -> URI.create(checkoutBasePath)
-                                                .resolve(CHECKOUT_ESITO_PATH)
+                                                .resolve(checkoutOutcomeUrl)
                                                 .toString();
                                         default -> throw new BadGatewayException(
                                                 "Invalid NPG confirm payment state response: " + npgResponse.getState(),
@@ -429,5 +442,15 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 Optional.ofNullable(redirectUrlResponseDto.getTimeout())
                         )
                 );
+    }
+
+    private String formatGdiCheckUrl(
+                                     String iframeUrl,
+                                     String clientId,
+                                     TransactionId transactionId
+    ) {
+        return this.checkoutNpgGdiUrl.concat("#gdiIframeUrl=").concat(iframeUrl)
+                .concat("&clientId=").concat(clientId)
+                .concat("&transactionId=").concat(transactionId.value());
     }
 }

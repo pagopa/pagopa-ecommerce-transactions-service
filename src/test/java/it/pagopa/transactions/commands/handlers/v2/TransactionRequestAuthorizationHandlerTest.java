@@ -70,9 +70,12 @@ import static org.mockito.ArgumentMatchers.eq;
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
 
-    private static final String NPG_CHECKOUT_ESITO_PATH = "/ecommerce-fe/esito";
+    private static final String CHECKOUT_BASE_PATH = "checkoutUri";
+    private static final String CHECKOUT_NPG_GDI_PATH = "http://checkout.pagopa.it/ecommerce-fe/gdi-check";
+    private static final String CHECKOUT_OUTCOME_PATH = "http://checkout.pagopa.it/esito";
     private static final String NPG_URL_IFRAME = "http://iframe";
-    private static final String NPG_ECOMMERCE_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
+    private static final String NPG_GDI_FRAGMENT = "#gdiIframeUrl=";
+    private static final String NPG_WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
     private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthorizationHandler;
 
     @Mock
@@ -101,7 +104,6 @@ class TransactionRequestAuthorizationHandlerTest {
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
 
-    private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final Set<CardAuthRequestDetailsDto.BrandEnum> testedCardBrands = new HashSet<>();
 
     private static boolean cardsTested = false;
@@ -148,6 +150,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 transactionEventStoreRepository,
                 transactionsUtils,
                 CHECKOUT_BASE_PATH,
+                CHECKOUT_NPG_GDI_PATH,
+                CHECKOUT_OUTCOME_PATH,
                 paymentMethodsClient,
                 transactionTemplateWrapper,
                 transactionAuthorizationRequestedQueueAsyncClient,
@@ -598,7 +602,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
-                .authorizationUrl(NPG_CHECKOUT_ESITO_PATH);
+                .authorizationUrl(CHECKOUT_OUTCOME_PATH);
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
@@ -737,7 +741,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(
-                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        CHECKOUT_NPG_GDI_PATH + NPG_GDI_FRAGMENT + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=CHECKOUT&transactionId=").concat(transaction.getTransactionId().value())
@@ -1926,7 +1930,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
-                .authorizationUrl(NPG_CHECKOUT_ESITO_PATH);
+                .authorizationUrl(CHECKOUT_OUTCOME_PATH);
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -2065,7 +2069,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(
-                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        CHECKOUT_NPG_GDI_PATH + NPG_GDI_FRAGMENT + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=CHECKOUT&transactionId=").concat(transaction.getTransactionId().value())
@@ -2237,7 +2241,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(
-                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
@@ -3536,7 +3540,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(
-                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
@@ -3812,7 +3816,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(
-                        NPG_ECOMMERCE_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                        NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())

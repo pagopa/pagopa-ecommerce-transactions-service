@@ -46,12 +46,16 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
             @Value("${checkout.basePath}") String checkoutBasePath,
+            @Value("${checkout.npg.gdi.url}") String checkoutNpgGdiUrl,
+            @Value("${checkout.outcome.url}") String checkoutOutcomeUrl,
             EcommercePaymentMethodsClient paymentMethodsClient,
             TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         super(
                 paymentGatewayClient,
                 checkoutBasePath,
+                checkoutNpgGdiUrl,
+                checkoutOutcomeUrl,
                 transactionTemplateWrapper
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
