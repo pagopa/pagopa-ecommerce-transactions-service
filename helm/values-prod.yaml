@@ -162,8 +162,6 @@ microservice-chart:
     NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "60"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
-    CHECKOUT_NPG_GDI_URL: "https://checkout.pagopa.it/gdi-check"
-    CHECKOUT_OUTCOME_URL: "https://checkout.pagopa.it/esito"
     ECOMMERCE_EVENT_VERSION: "V1"
     SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
     SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
@@ -178,6 +176,8 @@ microservice-chart:
     FEATURE_WALLET_USAGE_ENABLED: "false"
     WALLET_USAGE_QUEUE_NAME: pagopa-p-weu-wallet-usage-update-queue
     WALLET_USAGE_QUEUE_TTL: "3600"
+    CHECKOUT_NPG_GDI_URL: "https://checkout.pagopa.it/gdi-check"
+    CHECKOUT_OUTCOME_URL: "https://checkout.pagopa.it/esito"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
