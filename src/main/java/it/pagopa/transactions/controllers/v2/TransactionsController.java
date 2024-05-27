@@ -64,10 +64,10 @@ public class TransactionsController implements V2Api {
                         HttpStatus.BAD_GATEWAY
                 )
         ).doOnNext(
-                ignored -> openTelemetryUtils.addErrorSpanWithAttributes(
+                ignored -> openTelemetryUtils.addErrorSpanWithException(
                         OpenTelemetryUtils.CIRCUIT_BREAKER_OPEN_SPAN_NAME
                                 .formatted(error.getCausingCircuitBreakerName()),
-                        Attributes.empty()
+                        error
                 )
         );
     }

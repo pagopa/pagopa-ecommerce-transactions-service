@@ -72,10 +72,10 @@ public class TransactionsController implements TransactionsApi {
                         HttpStatus.BAD_GATEWAY
                 )
         ).doOnNext(
-                ignored -> openTelemetryUtils.addErrorSpanWithAttributes(
+                ignored -> openTelemetryUtils.addErrorSpanWithException(
                         OpenTelemetryUtils.CIRCUIT_BREAKER_OPEN_SPAN_NAME
                                 .formatted(error.getCausingCircuitBreakerName()),
-                        Attributes.empty()
+                        error
                 )
         );
     }
