@@ -33,10 +33,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.AuthRequestDataUtils;
-import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
-import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
+import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -230,6 +227,9 @@ class TransactionServiceTests {
 
     @MockBean
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
+
+    @MockBean
+    private OpenTelemetryUtils openTelemetryUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 

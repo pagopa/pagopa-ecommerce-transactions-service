@@ -35,6 +35,8 @@ public class OpenTelemetryUtils {
     public static final AttributeKey<Long> REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY = AttributeKey
             .longKey("paymentTokenLeftTimeSec");
 
+    public static final String CIRCUIT_BREAKER_OPEN_SPAN_NAME = "Circuit Breaker [%s] open";
+
     private final Tracer openTelemetryTracer;
 
     /**
