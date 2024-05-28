@@ -1,6 +1,7 @@
 package it.pagopa.transactions.controllers.v2;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
@@ -10,6 +11,7 @@ import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v2.TransactionsService;
+import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,13 +45,16 @@ public class TransactionsController implements V2Api {
     @Autowired
     private TransactionsUtils transactionsUtils;
 
+    @Autowired
+    private OpenTelemetryUtils openTelemetryUtils;
+
     @ExceptionHandler(
         {
                 CallNotPermittedException.class
         }
     )
-    public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler() {
-        log.error("Error - OPEN circuit breaker");
+    public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(CallNotPermittedException error) {
+        log.error("Error - OPEN circuit breaker", error);
         return Mono.just(
                 new ResponseEntity<>(
                         new ProblemJsonDto()
@@ -57,6 +62,12 @@ public class TransactionsController implements V2Api {
                                 .title("Bad Gateway")
                                 .detail("Upstream service temporary unavailable. Open circuit breaker."),
                         HttpStatus.BAD_GATEWAY
+                )
+        ).doOnNext(
+                ignored -> openTelemetryUtils.addErrorSpanWithException(
+                        OpenTelemetryUtils.CIRCUIT_BREAKER_OPEN_SPAN_NAME
+                                .formatted(error.getCausingCircuitBreakerName()),
+                        error
                 )
         );
     }

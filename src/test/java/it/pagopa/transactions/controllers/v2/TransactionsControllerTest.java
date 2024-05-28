@@ -1,5 +1,8 @@
 package it.pagopa.transactions.controllers.v2;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -11,6 +14,7 @@ import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v2.TransactionsService;
+import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
@@ -38,10 +42,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import javax.crypto.SecretKey;
 import java.net.URI;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,6 +80,9 @@ class TransactionsControllerTest {
     @MockBean
     private UniqueIdUtils uniqueIdUtils;
 
+    @MockBean
+    private OpenTelemetryUtils openTelemetryUtils;
+
     @Mock
     ServerWebExchange mockExchange;
 
@@ -84,6 +91,10 @@ class TransactionsControllerTest {
 
     @Mock
     HttpHeaders mockHeaders;
+
+    private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
+            Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
+    );
 
     @Test
     void shouldGetOk() {
@@ -236,7 +247,11 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnErrorCircuitBreakerOpen() {
 
-        ResponseEntity error = transactionsController.openStateHandler().block();
+        ResponseEntity error = transactionsController.openStateHandler(
+                CallNotPermittedException.createCallNotPermittedException(
+                        circuitBreakerRegistry.circuitBreaker("circuit-breaker-test")
+                )
+        ).block();
 
         // Verify status code and response
         assertEquals(HttpStatus.BAD_GATEWAY, error.getStatusCode());
