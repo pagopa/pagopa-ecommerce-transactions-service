@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers.v1;
 
 import com.azure.cosmos.implementation.BadRequestException;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionEvent;
@@ -10,6 +11,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
@@ -18,6 +20,7 @@ import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
@@ -41,6 +44,7 @@ import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
@@ -48,6 +52,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
@@ -83,6 +88,12 @@ class TransactionRequestAuthorizationHandlerTest {
     @Captor
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
 
+    private final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
+    private static final int tokenValidityTimeInSeconds = 900;
+    private final SecretKey jwtSecretKey = new SecretsConfigurations().ecommerceSigningKey(
+            "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk"
+    );
+
     private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final Set<CardAuthRequestDetailsDto.BrandEnum> testedCardBrands = new HashSet<>();
 
@@ -113,6 +124,13 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @BeforeEach
     private void init() {
+        Mockito.when(
+                jwtTokenUtils.generateToken(
+                        eq(jwtSecretKey),
+                        eq(tokenValidityTimeInSeconds),
+                        any()
+                )
+        ).thenReturn(Either.right("authToken"));
         requestAuthorizationHandler = new TransactionRequestAuthorizationHandler(
                 paymentGatewayClient,
                 transactionEventStoreRepository,
@@ -121,7 +139,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 CHECKOUT_NPG_GDI_PATH,
                 CHECKOUT_OUTCOME_PATH,
                 paymentMethodsClient,
-                transactionTemplateWrapper
+                transactionTemplateWrapper,
+                jwtTokenUtils,
+                jwtSecretKey,
+                tokenValidityTimeInSeconds
         );
     }
 
@@ -524,6 +545,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=CHECKOUT&transactionId=").concat(transaction.getTransactionId().value())
+                                .concat("&sessionToken=authToken")
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
