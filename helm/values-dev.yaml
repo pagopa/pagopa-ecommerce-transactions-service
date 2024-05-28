@@ -26,6 +26,8 @@ microservice-chart:
         TRANSACTION_REFUND_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-refund-queue-b
         TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-notifications-queue-b
         TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-auth-requested-queue-b
+        CHECKOUT_NPG_GDI_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/gdi-check"
+        CHECKOUT_OUTCOME_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/esito"
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "1.30.7" #improve
@@ -175,6 +177,8 @@ microservice-chart:
     NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
+    CHECKOUT_NPG_GDI_URL: "https://dev.checkout.pagopa.it/gdi-check"
+    CHECKOUT_OUTCOME_URL: "https://dev.checkout.pagopa.it/esito"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
