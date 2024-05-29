@@ -685,16 +685,17 @@ public class PaymentGatewayClient {
 
     private Either<RedirectConfigurationException, URI> searchRedirectUrlForPsp(String... params) {
         String key = String.join("-", params);
-        if(redirectBeApiCallUriMap.containsKey(key))
+        if (redirectBeApiCallUriMap.containsKey(key))
             return Either.right(redirectBeApiCallUriMap.get(key));
-        if(params.length > 1){
+        if (params.length > 1) {
             return searchRedirectUrlForPsp(Arrays.copyOfRange(params, 1, params.length));
         }
         return Either.left(
                 new RedirectConfigurationException(
                         "Missing key for redirect return url with key: [%s]".formatted(key),
                         RedirectConfigurationType.BACKEND_URLS
-                ));
+                )
+        );
     }
 
     private Mono<NpgBuildData> retrieveNpgBuildDataInformation(AuthorizationRequestData authorizationRequestData) {
