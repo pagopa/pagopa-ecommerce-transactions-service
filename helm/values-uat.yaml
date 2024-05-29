@@ -29,7 +29,7 @@ microservice-chart:
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.30.5"
+    tag: "1.30.8"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -170,6 +170,8 @@ microservice-chart:
     NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "19000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "19000"
+    CHECKOUT_NPG_GDI_URL: "https://uat.checkout.pagopa.it/gdi-check"
+    CHECKOUT_OUTCOME_URL: "https://uat.checkout.pagopa.it/esito"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
