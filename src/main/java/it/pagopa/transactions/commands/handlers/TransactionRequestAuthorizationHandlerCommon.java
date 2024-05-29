@@ -27,23 +27,27 @@ import java.util.Optional;
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
-    private static final String CHECKOUT_GDI_CHECK_PATH = "/gdi-check#gdiIframeUrl=";
     private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
-    private static final String CHECKOUT_ESITO_PATH = "/esito";
 
     private final PaymentGatewayClient paymentGatewayClient;
 
     private final String checkoutBasePath;
+    private final String checkoutNpgGdiUrl;
+    private final String checkoutOutcomeUrl;
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
     protected TransactionRequestAuthorizationHandlerCommon(
             PaymentGatewayClient paymentGatewayClient,
             String checkoutBasePath,
+            String checkoutNpgGdiUrl,
+            String checkoutOutcomeUrl,
             TransactionTemplateWrapper transactionTemplateWrapper
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
+        this.checkoutNpgGdiUrl = checkoutNpgGdiUrl;
+        this.checkoutOutcomeUrl = checkoutOutcomeUrl;
         this.transactionTemplateWrapper = transactionTemplateWrapper;
     }
 
@@ -316,8 +320,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     ).append(base64redirectionUrl).append("&clientId=IO")
                                                             .append("&transactionId=")
                                                             .append(authorizationData.transactionId().value())
-                                                    : new StringBuilder(CHECKOUT_GDI_CHECK_PATH)
-                                                            .append(base64redirectionUrl);
+                                                    : new StringBuilder(formatGdiCheckUrl(base64redirectionUrl));
 
                                             yield URI.create(checkoutBasePath)
                                                     .resolve(
@@ -336,7 +339,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             yield npgResponse.getUrl();
                                         }
                                         case PAYMENT_COMPLETE -> URI.create(checkoutBasePath)
-                                                .resolve(CHECKOUT_ESITO_PATH)
+                                                .resolve(checkoutOutcomeUrl)
                                                 .toString();
                                         default -> throw new BadGatewayException(
                                                 "Invalid NPG confirm payment state response: " + npgResponse.getState(),
@@ -432,5 +435,9 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 Optional.ofNullable(redirectUrlResponseDto.getTimeout())
                         )
                 );
+    }
+
+    private String formatGdiCheckUrl(String iframeUrl) {
+        return this.checkoutNpgGdiUrl.concat("#gdiIframeUrl=").concat(iframeUrl);
     }
 }

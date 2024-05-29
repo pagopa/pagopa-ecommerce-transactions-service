@@ -396,18 +396,27 @@ public class PaymentGatewayClient {
                         NpgResponseException.class,
                         exception -> exception
                                 .getStatusCode()
-                                .map(statusCode -> switch (statusCode) {
-                                case UNAUTHORIZED -> new AlreadyProcessedException(
-                                        authorizationData.transactionId()
-                                ); // 401
-                                case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                        "NPG internal server error response received",
-                                        statusCode
-                                ); // 500
-                                default -> new BadGatewayException(
-                                        "Received NPG error response with unmanaged HTTP response status code",
-                                        statusCode
-                                );
+                                .map(statusCode -> {
+                                    log.error(
+                                            "KO performing NPG confirmPayment: HTTP status code: [%s]"
+                                                    .formatted(statusCode),
+                                            exception
+                                    );
+                                    if (statusCode.is4xxClientError()) {
+                                        return new AlreadyProcessedException(
+                                                authorizationData.transactionId()
+                                        );
+                                    } else if (statusCode.is5xxServerError()) {
+                                        return new BadGatewayException(
+                                                "NPG internal server error response received",
+                                                statusCode
+                                        );
+                                    } else {
+                                        return new BadGatewayException(
+                                                "Received NPG error response with unmanaged HTTP response status code",
+                                                statusCode
+                                        );
+                                    }
                                 })
                                 .orElse(
                                         new BadGatewayException(
@@ -500,19 +509,28 @@ public class PaymentGatewayClient {
                                             NpgResponseException.class,
                                             exception -> exception
                                                     .getStatusCode()
-                                                    .map(statusCode -> switch (statusCode) {
-                        case UNAUTHORIZED -> new AlreadyProcessedException(
-                                authorizationData.transactionId()
-                        ); // 401
-                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                "NPG internal server error response received",
-                                statusCode
-                        ); // 500
-                        default -> new BadGatewayException(
-                                "Received NPG error response with unmanaged HTTP response status code",
-                                statusCode
-                        );
-                    })
+                                                    .map(statusCode -> {
+                                                        log.error(
+                                                                "KO performing NPG confirmPayment: HTTP status code: [%s]"
+                                                                        .formatted(statusCode),
+                                                                exception
+                                                        );
+                                                        if (statusCode.is4xxClientError()) {
+                                                            return new AlreadyProcessedException(
+                                                                    authorizationData.transactionId()
+                                                            );
+                                                        } else if (statusCode.is5xxServerError()) {
+                                                            return new BadGatewayException(
+                                                                    "NPG internal server error response received",
+                                                                    statusCode
+                                                            );
+                                                        } else {
+                                                            return new BadGatewayException(
+                                                                    "Received NPG error response with unmanaged HTTP response status code",
+                                                                    statusCode
+                                                            );
+                                                        }
+                                                    })
                                                     .orElse(
                                                             new BadGatewayException(
                                                                     "Received NPG error response with unknown HTTP response status code",
@@ -634,17 +652,23 @@ public class PaymentGatewayClient {
                                                         );
                                                         if (responseHttpStatus.isPresent()) {
                                                             HttpStatus httpStatus = responseHttpStatus.get();
-
-                                                            return switch (httpStatus) {
-                                                                case BAD_REQUEST, UNAUTHORIZED -> new AlreadyProcessedException(
+                                                            if (httpStatus.is4xxClientError()) {
+                                                                return new AlreadyProcessedException(
                                                                         authorizationData.transactionId()
                                                                 );
-                                                                default -> new BadGatewayException(
+                                                            } else if (httpStatus.is5xxServerError()) {
+                                                                return new BadGatewayException(
                                                                         "KO performing redirection URL api call for PSP: [%s]"
                                                                                 .formatted(pspId),
                                                                         httpStatus
                                                                 );
-                                                            };
+                                                            } else {
+                                                                return new BadGatewayException(
+                                                                        "Unhandled error performing redirection URL api call for PSP: [%s]"
+                                                                                .formatted(pspId),
+                                                                        null
+                                                                );
+                                                            }
                                                         } else {
                                                             return new BadGatewayException(
                                                                     "Unhandled error performing redirection URL api call for PSP: [%s]"

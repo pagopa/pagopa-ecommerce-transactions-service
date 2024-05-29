@@ -1,5 +1,8 @@
 package it.pagopa.transactions.controllers.v1;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
@@ -12,6 +15,7 @@ import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
+import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
@@ -88,6 +92,13 @@ class TransactionsControllerTest {
 
     @MockBean
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
+
+    @MockBean
+    private OpenTelemetryUtils openTelemetryUtils;
+
+    private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
+            Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
+    );
 
     @Mock
     ServerWebExchange mockExchange;
@@ -660,7 +671,11 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnErrorCircuitBreakerOpen() {
 
-        ResponseEntity error = transactionsController.openStateHandler().block();
+        ResponseEntity error = transactionsController.openStateHandler(
+                CallNotPermittedException.createCallNotPermittedException(
+                        circuitBreakerRegistry.circuitBreaker("circuit-breaker-test")
+                )
+        ).block();
 
         // Verify status code and response
         assertEquals(HttpStatus.BAD_GATEWAY, error.getStatusCode());
