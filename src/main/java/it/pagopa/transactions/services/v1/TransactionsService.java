@@ -451,7 +451,6 @@ public class TransactionsService {
 
     }
 
-    @CircuitBreaker(name = "transactions-backend")
     @Retry(name = "requestTransactionAuthorization")
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
             String transactionId,
