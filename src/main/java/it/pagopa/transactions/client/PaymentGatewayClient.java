@@ -601,7 +601,8 @@ public class PaymentGatewayClient {
                                     .paName(paName);// optional
                             Either<RedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
                                     authorizationData.pspId(),
-                                    authorizationData.paymentTypeCode()
+                                    authorizationData.paymentTypeCode(),
+                                    authorizationData.pspChannelCode()
                             );
 
                             return pspConfiguredUrl.fold(
@@ -675,19 +676,25 @@ public class PaymentGatewayClient {
 
     private Either<RedirectConfigurationException, URI> getRedirectUrlForPsp(
                                                                              String pspId,
-                                                                             String paymentTypeCode
+                                                                             String paymentTypeCode,
+                                                                             String channelCode
     ) {
-        String urlKey = "%s-%s".formatted(pspId, paymentTypeCode);
-        if (redirectBeApiCallUriMap.containsKey(urlKey)) {
-            return Either.right(redirectBeApiCallUriMap.get(urlKey));
-        } else {
-            return Either.left(
-                    new RedirectConfigurationException(
-                            "Missing key for redirect return url with key: [%s]".formatted(urlKey),
-                            RedirectConfigurationType.BACKEND_URLS
-                    )
-            );
+
+        return searchRedirectUrlForPsp(channelCode, pspId, paymentTypeCode);
+    }
+
+    private Either<RedirectConfigurationException, URI> searchRedirectUrlForPsp(String... params) {
+        String key = String.join("-", params);
+        if(redirectBeApiCallUriMap.containsKey(key))
+            return Either.right(redirectBeApiCallUriMap.get(key));
+        if(params.length > 1){
+            return searchRedirectUrlForPsp(Arrays.copyOfRange(params, 1, params.length));
         }
+        return Either.left(
+                new RedirectConfigurationException(
+                        "Missing key for redirect return url with key: [%s]".formatted(key),
+                        RedirectConfigurationType.BACKEND_URLS
+                ));
     }
 
     private Mono<NpgBuildData> retrieveNpgBuildDataInformation(AuthorizationRequestData authorizationRequestData) {
