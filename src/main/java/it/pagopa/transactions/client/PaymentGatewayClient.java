@@ -713,11 +713,12 @@ public class PaymentGatewayClient {
         return searchResult.<Either<RedirectConfigurationException, URI>>map(Either::right).orElseGet(
                 () -> Either.left(
                         new RedirectConfigurationException(
-                                "Missing key for redirect return url with key: [%s] [%s] [%s]".formatted(
-                                        String.join("-", Arrays.asList(touchpoint.name(), pspId, paymentTypeCode)),
-                                        String.join("-", Arrays.asList(pspId, paymentTypeCode)),
-                                        paymentTypeCode
-                                ),
+                                "Missing key for redirect return url with following search parameters: touchpoint: [%s] pspId: [%s] paymentTypeCode: [%s]"
+                                        .formatted(
+                                                touchpoint,
+                                                pspId,
+                                                paymentTypeCode
+                                        ),
                                 RedirectConfigurationType.BACKEND_URLS
                         )
                 )
