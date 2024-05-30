@@ -3018,10 +3018,12 @@ class PaymentGatewayClientTest {
         assertEquals("Unmanaged payment method with type code: [CC]", exception.getMessage());
     }
 
-
     @ParameterizedTest
     @MethodSource("redirectRetrieveUrlPaymentMethodsTestMethodSource")
-    void shouldReturnErrorDuringSearchRedirectURLforInvalidSearchKey(PaymentGatewayClient.RedirectPaymentMethodId paymentMethodId, String mappedPaymentMethodDescription) {
+    void shouldReturnErrorDuringSearchRedirectURLforInvalidSearchKey(
+                                                                     PaymentGatewayClient.RedirectPaymentMethodId paymentMethodId,
+                                                                     String mappedPaymentMethodDescription
+    ) {
         String pspId = "noId";
         RedirectUrlRequestDto.TouchpointEnum touchpoint = RedirectUrlRequestDto.TouchpointEnum.CHECKOUT;
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -3091,30 +3093,65 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                        client.requestRedirectUrlAuthorization(authorizationData, touchpoint)
-                )
+                client.requestRedirectUrlAuthorization(authorizationData, touchpoint)
+        )
                 .expectNext()
-                .expectErrorMatches(exp -> exp instanceof RedirectConfigurationException &&
-                        exp.getMessage().equals("Error parsing Redirect PSP BACKEND_URLS configuration, cause: Missing key for redirect return url with key: [%s] [%s] [%s]".formatted(
-                                String.join("-", Arrays.asList(touchpoint.name(), pspId, paymentMethodId.name())),
-                                String.join("-", Arrays.asList(pspId, paymentMethodId.name())),
-                                paymentMethodId.name()
-                        )))
+                .expectErrorMatches(
+                        exp -> exp instanceof RedirectConfigurationException &&
+                                exp.getMessage().equals(
+                                        "Error parsing Redirect PSP BACKEND_URLS configuration, cause: Missing key for redirect return url with key: [%s] [%s] [%s]"
+                                                .formatted(
+                                                        String.join(
+                                                                "-",
+                                                                Arrays.asList(
+                                                                        touchpoint.name(),
+                                                                        pspId,
+                                                                        paymentMethodId.name()
+                                                                )
+                                                        ),
+                                                        String.join("-", Arrays.asList(pspId, paymentMethodId.name())),
+                                                        paymentMethodId.name()
+                                                )
+                                )
+                )
                 .verify();
     }
 
-
     private static Stream<Arguments> redirectRetrieveUrlPaymentMethodsTestSearch() throws URISyntaxException {
         return Stream.of(
-                Arguments.of(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT, "psp3", PaymentGatewayClient.RedirectPaymentMethodId.RBPR, "Poste addebito in conto Retail", new URI("http://localhost:8096/redirections1")),
-                Arguments.of(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT, "psp4", PaymentGatewayClient.RedirectPaymentMethodId.RBPR, "Poste addebito in conto Retail", new URI("http://localhost:8096/redirections2")),
-                Arguments.of(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT, null, PaymentGatewayClient.RedirectPaymentMethodId.RBPR, "Poste addebito in conto Retail", new URI("http://localhost:8096/redirections3"))
+                Arguments.of(
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        "psp3",
+                        PaymentGatewayClient.RedirectPaymentMethodId.RBPR,
+                        "Poste addebito in conto Retail",
+                        new URI("http://localhost:8096/redirections1")
+                ),
+                Arguments.of(
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        "psp4",
+                        PaymentGatewayClient.RedirectPaymentMethodId.RBPR,
+                        "Poste addebito in conto Retail",
+                        new URI("http://localhost:8096/redirections2")
+                ),
+                Arguments.of(
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        null,
+                        PaymentGatewayClient.RedirectPaymentMethodId.RBPR,
+                        "Poste addebito in conto Retail",
+                        new URI("http://localhost:8096/redirections3")
+                )
         );
     }
 
     @ParameterizedTest
     @MethodSource("redirectRetrieveUrlPaymentMethodsTestSearch")
-    void shouldReturnURIDuringSearchRedirectURL(RedirectUrlRequestDto.TouchpointEnum touchpoint, String pspId, PaymentGatewayClient.RedirectPaymentMethodId paymentCodeType, String description, URI uri) throws URISyntaxException {
+    void shouldReturnURIDuringSearchRedirectURL(
+                                                RedirectUrlRequestDto.TouchpointEnum touchpoint,
+                                                String pspId,
+                                                PaymentGatewayClient.RedirectPaymentMethodId paymentCodeType,
+                                                String description,
+                                                URI uri
+    ) throws URISyntaxException {
         Map<String, URI> redirectUrlMapping = new HashMap<>();
         redirectUrlMapping.put("CHECKOUT-psp3-RBPR", new URI("http://localhost:8096/redirections1"));
         redirectUrlMapping.put("psp4-RBPR", new URI("http://localhost:8096/redirections2"));
@@ -3204,8 +3241,8 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                        client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
-                )
+                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+        )
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
         verify(nodeForwarderClient, times(1)).proxyRequest(

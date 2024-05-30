@@ -705,23 +705,29 @@ public class PaymentGatewayClient {
     ) {
 
         /*
-        * Search for the key touchpoint-paymentTypeCode-pspId in the redirectUrlMap.
-        * If the key is not found, the method searches for paymentTypeCode-pspId, and
-        * if not found, it searches for pspId.
-        */
+         * Search for the key touchpoint-paymentTypeCode-pspId in the redirectUrlMap. If
+         * the key is not found, the method searches for paymentTypeCode-pspId, and if
+         * not found, it searches for pspId.
+         */
         Optional<URI> searchResult = searchRedirectUrlForPsp(touchpoint.name(), pspId, paymentTypeCode);
-        return searchResult.<Either<RedirectConfigurationException, URI>>map(Either::right).orElseGet(() -> Either.left(
-                new RedirectConfigurationException(
-                        "Missing key for redirect return url with key: [%s] [%s] [%s]".formatted(
-                                String.join("-", Arrays.asList(touchpoint.name(), pspId, paymentTypeCode)),
-                                String.join("-", Arrays.asList(pspId, paymentTypeCode)),
-                                paymentTypeCode),
-                        RedirectConfigurationType.BACKEND_URLS)
-        ));
+        return searchResult.<Either<RedirectConfigurationException, URI>>map(Either::right).orElseGet(
+                () -> Either.left(
+                        new RedirectConfigurationException(
+                                "Missing key for redirect return url with key: [%s] [%s] [%s]".formatted(
+                                        String.join("-", Arrays.asList(touchpoint.name(), pspId, paymentTypeCode)),
+                                        String.join("-", Arrays.asList(pspId, paymentTypeCode)),
+                                        paymentTypeCode
+                                ),
+                                RedirectConfigurationType.BACKEND_URLS
+                        )
+                )
+        );
     }
 
     /**
-     * Execute a recursive search on the redirectBeApiCallUriMap. The recursion method will be called with the key without the first parameter element.
+     * Execute a recursive search on the redirectBeApiCallUriMap. The recursion
+     * method will be called with the key without the first parameter element.
+     *
      * @param params List of parameters that compose the key.
      * @return The found URI or an empty value.
      */
