@@ -32,6 +32,7 @@ import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NpgBuildData;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -80,6 +81,8 @@ public class PaymentGatewayClient {
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
     private final Map<String, URI> redirectBeApiCallUriMap;
+
+    private final Set<String> npgAuthorizationRetryExcludedErrorCodes;
 
     static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
             RedirectPaymentMethodId.RBPR,
@@ -133,7 +136,8 @@ public class PaymentGatewayClient {
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
             Map<String, URI> redirectBeApiCallUriMap,
-            NpgApiKeyConfiguration npgApiKeyConfiguration
+            NpgApiKeyConfiguration npgApiKeyConfiguration,
+            Set<String> npgAuthorizationRetryExcludedErrorCodes
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
@@ -150,6 +154,7 @@ public class PaymentGatewayClient {
         this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
+        this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
     }
 
     public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
@@ -397,11 +402,20 @@ public class PaymentGatewayClient {
                         exception -> exception
                                 .getStatusCode()
                                 .map(statusCode -> {
+                                    List<String> errorCodes = exception.getErrors();
                                     log.error(
-                                            "KO performing NPG confirmPayment: HTTP status code: [%s]"
-                                                    .formatted(statusCode),
+                                            "KO performing NPG buildForm: HTTP status code: [%s], errorCodes: %s"
+                                                    .formatted(statusCode, errorCodes),
                                             exception
                                     );
+                                    if (errorCodes.stream()
+                                            .anyMatch(npgAuthorizationRetryExcludedErrorCodes::contains)) {
+                                        return new NpgNotRetryableErrorException(
+                                                "Npg received error codes: %s, retry excluded error codes: %s"
+                                                        .formatted(errorCodes, npgAuthorizationRetryExcludedErrorCodes),
+                                                statusCode
+                                        );
+                                    }
                                     if (statusCode.is4xxClientError()) {
                                         return new AlreadyProcessedException(
                                                 authorizationData.transactionId()
@@ -510,11 +524,24 @@ public class PaymentGatewayClient {
                                             exception -> exception
                                                     .getStatusCode()
                                                     .map(statusCode -> {
+                                                        List<String> errorCodes = exception.getErrors();
                                                         log.error(
-                                                                "KO performing NPG confirmPayment: HTTP status code: [%s]"
-                                                                        .formatted(statusCode),
+                                                                "KO performing NPG confirmPayment: HTTP status code: [%s], errorCodes: %s"
+                                                                        .formatted(statusCode, errorCodes),
                                                                 exception
                                                         );
+                                                        if (errorCodes.stream().anyMatch(
+                                                                npgAuthorizationRetryExcludedErrorCodes::contains
+                                                        )) {
+                                                            return new NpgNotRetryableErrorException(
+                                                                    "Npg received error codes: %s, retry excluded error codes: %s"
+                                                                            .formatted(
+                                                                                    errorCodes,
+                                                                                    npgAuthorizationRetryExcludedErrorCodes
+                                                                            ),
+                                                                    statusCode
+                                                            );
+                                                        }
                                                         if (statusCode.is4xxClientError()) {
                                                             return new AlreadyProcessedException(
                                                                     authorizationData.transactionId()
