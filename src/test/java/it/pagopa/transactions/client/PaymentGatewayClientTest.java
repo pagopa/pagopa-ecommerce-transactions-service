@@ -18,6 +18,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
+import it.pagopa.ecommerce.commons.utils.RedirectConfigurationKeysConfig;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
@@ -132,12 +133,21 @@ class PaymentGatewayClientTest {
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderClient = Mockito
             .mock(NodeForwarderClient.class);
 
-    private final Map<String, URI> redirectBeApiCallUriMap = Arrays
+    private final Set<String> codeTypeList = Arrays.stream(PaymentGatewayClient.RedirectPaymentMethodId.values())
+            .map(PaymentGatewayClient.RedirectPaymentMethodId::toString)
+            .map("pspId-%s"::formatted).collect(Collectors.toSet());
+
+    private final Map<String, String> redirectBeApiCallUriMap = Arrays
             .stream(PaymentGatewayClient.RedirectPaymentMethodId.values())
             .map(PaymentGatewayClient.RedirectPaymentMethodId::toString)
             .collect(
-                    Collectors.toMap("pspId-%s"::formatted, p -> URI.create("http://redirect/%s".formatted(p)))
+                    Collectors.toMap("pspId-%s"::formatted, "http://redirect/%s"::formatted)
             );
+
+    private final RedirectConfigurationKeysConfig configurationKeysConfig = new RedirectConfigurationKeysConfig(
+            redirectBeApiCallUriMap,
+            codeTypeList
+    );
 
     private final NpgApiKeyConfiguration npgApiKeyHandler = Mockito.mock(NpgApiKeyConfiguration.class);
 
@@ -157,7 +167,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                redirectBeApiCallUriMap,
+                configurationKeysConfig,
                 npgApiKeyHandler
 
         );
@@ -2950,8 +2960,10 @@ class PaymentGatewayClientTest {
         );
 
         Hooks.onOperatorDebug();
-        Map<String, URI> redirectUrlMapping = new HashMap<>(redirectBeApiCallUriMap);
+        Map<String, String> redirectUrlMapping = new HashMap<>(redirectBeApiCallUriMap);
+        Set<String> codeListTypeMapping = new HashSet<>(codeTypeList);
         redirectUrlMapping.remove("pspId-RBPS");
+        codeListTypeMapping.remove("pspId-RBPS");
         PaymentGatewayClient client = new PaymentGatewayClient(
                 xPayInternalApi,
                 creditCardInternalApi,
@@ -2966,7 +2978,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                redirectUrlMapping,
+                new RedirectConfigurationKeysConfig(redirectUrlMapping, codeListTypeMapping),
                 npgApiKeyHandler
         );
         /* test */
@@ -3070,15 +3082,21 @@ class PaymentGatewayClientTest {
                                                                     PaymentGatewayClient.RedirectPaymentMethodId paymentMethodId,
                                                                     URI expectedUri
     ) throws URISyntaxException {
-        Map<String, URI> redirectUrlMapping = Map.of(
+        Map<String, String> redirectUrlMapping = Map.of(
                 "CHECKOUT-psp1-RBPR",
-                new URI("http://localhost:8096/redirections1/CHECKOUT"),
+                "http://localhost:8096/redirections1/CHECKOUT",
                 "IO-psp1-RBPR",
-                new URI("http://localhost:8096/redirections1/IO"),
+                "http://localhost:8096/redirections1/IO",
                 "psp2-RBPB",
-                new URI("http://localhost:8096/redirections2"),
+                "http://localhost:8096/redirections2",
                 "RBPS",
-                new URI("http://localhost:8096/redirections3")
+                "http://localhost:8096/redirections3"
+        );
+        Set<String> codeTypeList = Set.of(
+                "CHECKOUT-psp1-RBPR",
+                "IO-psp1-RBPR",
+                "psp2-RBPB",
+                "RBPS"
         );
         PaymentGatewayClient client = new PaymentGatewayClient(
                 xPayInternalApi,
@@ -3094,7 +3112,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                redirectUrlMapping,
+                new RedirectConfigurationKeysConfig(redirectUrlMapping, codeTypeList),
                 npgApiKeyHandler
         );
 
@@ -3152,15 +3170,21 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldReturnErrorDuringSearchRedirectURLforInvalidSearchKey() throws Exception {
-        Map<String, URI> redirectUrlMapping = Map.of(
+        Map<String, String> redirectUrlMapping = Map.of(
                 "CHECKOUT-psp1-RBPR",
-                new URI("http://localhost:8096/redirections1/CHECKOUT"),
+                "http://localhost:8096/redirections1/CHECKOUT",
                 "IO-psp1-RBPR",
-                new URI("http://localhost:8096/redirections1/IO"),
+                "http://localhost:8096/redirections1/IO",
                 "psp2-RBPB",
-                new URI("http://localhost:8096/redirections2"),
+                "http://localhost:8096/redirections2",
                 "RBPS",
-                new URI("http://localhost:8096/redirections3")
+                "http://localhost:8096/redirections3"
+        );
+        Set<String> codeTypeList = Set.of(
+                "CHECKOUT-psp1-RBPR",
+                "IO-psp1-RBPR",
+                "psp2-RBPB",
+                "RBPS"
         );
         RedirectUrlRequestDto.TouchpointEnum touchpoint = RedirectUrlRequestDto.TouchpointEnum.CHECKOUT;
         String pspId = "pspId";
@@ -3179,7 +3203,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                redirectUrlMapping,
+                new RedirectConfigurationKeysConfig(redirectUrlMapping, codeTypeList),
                 npgApiKeyHandler
         );
 

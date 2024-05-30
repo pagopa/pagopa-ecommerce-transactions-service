@@ -15,6 +15,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
+import it.pagopa.ecommerce.commons.utils.RedirectConfigurationKeysConfig;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -79,7 +80,7 @@ public class PaymentGatewayClient {
     private final SecretKey ecommerceSigningKey;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
-    private final Map<String, URI> redirectBeApiCallUriMap;
+    private final RedirectConfigurationKeysConfig redirectKeysConfig;
 
     static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
             RedirectPaymentMethodId.RBPR,
@@ -132,7 +133,7 @@ public class PaymentGatewayClient {
             SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
-            Map<String, URI> redirectBeApiCallUriMap,
+            RedirectConfigurationKeysConfig redirectKeysConfig,
             NpgApiKeyConfiguration npgApiKeyConfiguration
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
@@ -146,7 +147,7 @@ public class PaymentGatewayClient {
         this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
-        this.redirectBeApiCallUriMap = redirectBeApiCallUriMap;
+        this.redirectKeysConfig = redirectKeysConfig;
         this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
@@ -617,11 +618,12 @@ public class PaymentGatewayClient {
                                     )
                                     .idPaymentMethod(idPaymentMethod.toString())
                                     .paName(paName);// optional
-                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
-                                    touchpoint,
-                                    authorizationData.pspId(),
-                                    authorizationData.paymentTypeCode()
-                            );
+                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = redirectKeysConfig
+                                    .getRedirectUrlForPsp(
+                                            touchpoint.name(),
+                                            authorizationData.pspId(),
+                                            authorizationData.paymentTypeCode()
+                                    );
 
                             return pspConfiguredUrl.fold(
                                     Mono::error,
@@ -696,51 +698,6 @@ public class PaymentGatewayClient {
         }
 
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private Either<RedirectConfigurationException, URI> getRedirectUrlForPsp(
-                                                                             RedirectUrlRequestDto.TouchpointEnum touchpoint,
-                                                                             String pspId,
-                                                                             String paymentTypeCode
-    ) {
-
-        /*
-         * Search for the key touchpoint-paymentTypeCode-pspId in the redirectUrlMap. If
-         * the key is not found, the method searches for paymentTypeCode-pspId, and if
-         * not found, it searches for pspId.
-         */
-        Optional<URI> searchResult = searchRedirectUrlForPsp(touchpoint.name(), pspId, paymentTypeCode);
-        return searchResult.<Either<RedirectConfigurationException, URI>>map(Either::right).orElseGet(
-                () -> Either.left(
-                        new RedirectConfigurationException(
-                                "Missing key for redirect return url with following search parameters: touchpoint: [%s] pspId: [%s] paymentTypeCode: [%s]"
-                                        .formatted(
-                                                touchpoint,
-                                                pspId,
-                                                paymentTypeCode
-                                        ),
-                                RedirectConfigurationType.BACKEND_URLS
-                        )
-                )
-        );
-    }
-
-    /**
-     * Execute a recursive search on the redirectBeApiCallUriMap. The recursion
-     * method will be called with the key without the first parameter element.
-     *
-     * @param params List of parameters that compose the key.
-     * @return The found URI or an empty value.
-     */
-    private Optional<URI> searchRedirectUrlForPsp(String... params) {
-        String key = String.join("-", params);
-        if (redirectBeApiCallUriMap.containsKey(key)) {
-            return Optional.of(redirectBeApiCallUriMap.get(key));
-        }
-        if (params.length > 1) {
-            return searchRedirectUrlForPsp(Arrays.copyOfRange(params, 1, params.length));
-        }
-        return Optional.empty();
     }
 
     private Mono<NpgBuildData> retrieveNpgBuildDataInformation(AuthorizationRequestData authorizationRequestData) {

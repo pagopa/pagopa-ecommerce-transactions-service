@@ -38,6 +38,7 @@ class RedirectConfigurationsBuilderTest {
     void shouldBuildPspBackendUriMapSuccessfully(String pspId) {
         Map<String, URI> mapping = assertDoesNotThrow(
                 () -> checkoutRedirectConfigurationsBuilder.redirectBeApiCallUriMap(pspToHandle, pspUriMap)
+                        .getRedirectBeApiCallUriMap()
         );
         assertEquals("http://localhost/%s/redirectionUrl".formatted(pspId), mapping.get(pspId).toString());
 
