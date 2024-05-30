@@ -3120,24 +3120,21 @@ class PaymentGatewayClientTest {
     private static Stream<Arguments> redirectRetrieveUrlPaymentMethodsTestSearch() throws URISyntaxException {
         return Stream.of(
                 Arguments.of(
-                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
-                        "psp3",
+                        "psp1",
                         PaymentGatewayClient.RedirectPaymentMethodId.RBPR,
                         "Poste addebito in conto Retail",
                         new URI("http://localhost:8096/redirections1")
                 ),
                 Arguments.of(
-                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
-                        "psp4",
-                        PaymentGatewayClient.RedirectPaymentMethodId.RBPR,
-                        "Poste addebito in conto Retail",
+                        "psp2",
+                        PaymentGatewayClient.RedirectPaymentMethodId.RBPB,
+                        "Poste addebito in conto Business",
                         new URI("http://localhost:8096/redirections2")
                 ),
                 Arguments.of(
-                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
                         null,
-                        PaymentGatewayClient.RedirectPaymentMethodId.RBPR,
-                        "Poste addebito in conto Retail",
+                        PaymentGatewayClient.RedirectPaymentMethodId.RBPS,
+                        "SCRIGNO Internet Banking",
                         new URI("http://localhost:8096/redirections3")
                 )
         );
@@ -3146,16 +3143,15 @@ class PaymentGatewayClientTest {
     @ParameterizedTest
     @MethodSource("redirectRetrieveUrlPaymentMethodsTestSearch")
     void shouldReturnURIDuringSearchRedirectURL(
-                                                RedirectUrlRequestDto.TouchpointEnum touchpoint,
                                                 String pspId,
-                                                PaymentGatewayClient.RedirectPaymentMethodId paymentCodeType,
+                                                PaymentGatewayClient.RedirectPaymentMethodId paymentMethodId,
                                                 String description,
                                                 URI uri
     ) throws URISyntaxException {
         Map<String, URI> redirectUrlMapping = new HashMap<>();
-        redirectUrlMapping.put("CHECKOUT-psp3-RBPR", new URI("http://localhost:8096/redirections1"));
-        redirectUrlMapping.put("psp4-RBPR", new URI("http://localhost:8096/redirections2"));
-        redirectUrlMapping.put("RBPR", new URI("http://localhost:8096/redirections3"));
+        redirectUrlMapping.put("CHECKOUT-psp1-RBPR", new URI("http://localhost:8096/redirections1"));
+        redirectUrlMapping.put("psp2-RBPB", new URI("http://localhost:8096/redirections2"));
+        redirectUrlMapping.put("RBPS", new URI("http://localhost:8096/redirections3"));
         PaymentGatewayClient client = new PaymentGatewayClient(
                 xPayInternalApi,
                 creditCardInternalApi,
@@ -3183,7 +3179,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                paymentCodeType.toString(),
+                paymentMethodId.name(),
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -3201,12 +3197,12 @@ class PaymentGatewayClientTest {
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .idPaymentMethod(paymentCodeType.toString())
+                .idPaymentMethod(paymentMethodId.name())
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
-                .touchpoint(touchpoint)
+                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
                 .paymentMethod(description)
                 .paName(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME);
 
@@ -3215,7 +3211,7 @@ class PaymentGatewayClientTest {
                 .build(
                         Map.of(
                                 "clientId",
-                                touchpoint.getValue(),
+                                RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
                                 "transactionId",
                                 authorizationData.transactionId().value(),
                                 "sessionToken",
