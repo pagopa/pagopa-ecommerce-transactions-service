@@ -1,7 +1,6 @@
 package it.pagopa.transactions.controllers.v2;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
@@ -29,7 +28,8 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
-import java.util.*;
+import java.util.HashSet;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
