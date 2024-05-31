@@ -28,12 +28,12 @@ public class RedirectConfigurationsBuilder {
      */
     @Bean
     public RedirectKeysConfiguration redirectKeysConfig(
-                                                             @Value(
-                                                                 "${redirect.paymentTypeCodeList}"
-                                                             ) Set<String> paymentTypeCodeList,
-                                                             @Value(
-                                                                 "#{${redirect.pspUrlMapping}}"
-                                                             ) Map<String, String> pspUrlMapping
+                                                        @Value(
+                                                            "${redirect.paymentTypeCodeList}"
+                                                        ) Set<String> paymentTypeCodeList,
+                                                        @Value(
+                                                            "#{${redirect.pspUrlMapping}}"
+                                                        ) Map<String, String> pspUrlMapping
     ) {
         return new RedirectKeysConfiguration(pspUrlMapping, paymentTypeCodeList);
     }

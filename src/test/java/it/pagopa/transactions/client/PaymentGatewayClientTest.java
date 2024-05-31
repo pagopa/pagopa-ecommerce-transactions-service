@@ -3219,7 +3219,8 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, codeTypeList),
-                npgApiKeyHandler
+                npgApiKeyHandler,
+                npgAuthorizationRetryExcludedErrorCodes
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -3310,7 +3311,8 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, codeTypeList),
-                npgApiKeyHandler
+                npgApiKeyHandler,
+                npgAuthorizationRetryExcludedErrorCodes
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
