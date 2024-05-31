@@ -656,7 +656,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(NpgNotRetryableErrorException.class)
-    ResponseEntity<ProblemJsonDto> nptNotRetryableErrorException(NpgNotRetryableErrorException exception) {
+    ResponseEntity<ProblemJsonDto> npgNotRetryableErrorException(NpgNotRetryableErrorException exception) {
         log.warn(exception.getMessage());
         HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
         return new ResponseEntity<>(
