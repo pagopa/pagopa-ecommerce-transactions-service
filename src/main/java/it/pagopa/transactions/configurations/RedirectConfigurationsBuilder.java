@@ -27,7 +27,7 @@ public class RedirectConfigurationsBuilder {
      * @return a configuration map for every PSPs
      */
     @Bean
-    public RedirectKeysConfiguration redirectBeApiCallUriMap(
+    public RedirectKeysConfiguration redirectKeysConfig(
                                                              @Value(
                                                                  "${redirect.paymentTypeCodeList}"
                                                              ) Set<String> paymentTypeCodeList,
