@@ -25,7 +25,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -1657,6 +1660,57 @@ class TransactionsControllerTest {
         verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
                 expectedStatusUpdateInfo
         );
+    }
+
+    @Test
+    void shouldReturn422UnprocessableEntityForNpgNotRetryableErrorExceptionOnAuthorization() {
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+        String paymentMethodId = "paymentMethodId";
+        String client = "CHECKOUT";
+        String pgsId = "XPAY";
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(1)
+                .paymentInstrumentId(paymentMethodId)
+                .pspId("pspId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .isAllCCP(false)
+                .details(
+                        new CardsAuthRequestDetailsDto()
+                                .orderId("orderId")
+                                .detailType("cards")
+                );
+        HttpStatus gatewayHttpErrorCode = HttpStatus.INTERNAL_SERVER_ERROR;
+        /* preconditions */
+        NpgNotRetryableErrorException exception = new NpgNotRetryableErrorException(
+                "Error description",
+                gatewayHttpErrorCode
+        );
+
+        Mockito.when(
+                transactionsService
+                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+        )
+                .thenReturn(Mono.error(exception));
+
+        /* test */
+        webTestClient.post()
+                .uri("/transactions/{transactionId}/auth-requests", transactionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authorizationRequest)
+                .header("X-Client-Id", client)
+                .header("X-Pgs-Id", pgsId)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(422)
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> {
+                            assertEquals(422, p.getStatus());
+                            assertEquals(exception.getDetail(), p.getDetail());
+                        }
+                );
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {

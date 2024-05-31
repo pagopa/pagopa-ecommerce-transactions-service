@@ -36,6 +36,7 @@ import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NpgNotificationUrlMatcher;
 import it.pagopa.transactions.utils.NpgOutcomeUrlMatcher;
@@ -149,6 +150,8 @@ class PaymentGatewayClientTest {
             codeTypeList
     );
 
+    private final Set<String> npgAuthorizationRetryExcludedErrorCodes = Set.of("GW0035", "GW0004");
+
     private final NpgApiKeyConfiguration npgApiKeyHandler = Mockito.mock(NpgApiKeyConfiguration.class);
 
     @BeforeEach
@@ -168,7 +171,8 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 configurationKeysConfig,
-                npgApiKeyHandler
+                npgApiKeyHandler,
+                npgAuthorizationRetryExcludedErrorCodes
 
         );
 
@@ -2979,7 +2983,8 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, codeListTypeMapping),
-                npgApiKeyHandler
+                npgApiKeyHandler,
+                npgAuthorizationRetryExcludedErrorCodes
         );
         /* test */
         StepVerifier.create(
@@ -3028,6 +3033,107 @@ class PaymentGatewayClientTest {
         );
         verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
         assertEquals("Unmanaged payment method with type code: [CC]", exception.getMessage());
+    }
+
+    private static Stream<List<String>> npgNotRetryableErrorsTestMethodSource() {
+        return Stream.of(
+                List.of("GW0035"),
+                List.of("GW0004"),
+                List.of("GW0035", "GW0004"),
+                List.of("GW0035", "GW0004", "GW0001"),
+                List.of("GW0035", "GW0001"),
+                List.of("GW0004", "GW0001")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("npgNotRetryableErrorsTestMethodSource")
+    void shouldReturnNpgNotRetryableErrorExceptionForConfiguredErrorCodes(List<String> errors) {
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                new PaymentToken("paymentToken"),
+                                new RptId("77777777777111111111111111111"),
+                                new TransactionAmount(100),
+                                new TransactionDescription("description"),
+                                new PaymentContextCode(null),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false,
+                                new CompanyName("companyName")
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+        );
+        CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
+                .orderId(UUID.randomUUID().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                "pspId1",
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
+                "VISA",
+                cardDetails,
+                "http://asset",
+                Optional.of(Map.of("VISA", "http://visaAsset"))
+        );
+        HttpStatus httpStatusErrorCode = HttpStatus.INTERNAL_SERVER_ERROR;
+        /* preconditions */
+        Mockito.when(npgClient.confirmPayment(any(), any(), any(), any()))
+                .thenReturn(
+                        Mono.error(
+                                new NpgResponseException(
+                                        "NPG error",
+                                        errors,
+                                        Optional.of(httpStatusErrorCode),
+                                        new WebClientResponseException(
+                                                "api error",
+                                                httpStatusErrorCode.value(),
+                                                httpStatusErrorCode.name(),
+                                                null,
+                                                null,
+                                                null
+                                        )
+                                )
+                        )
+                );
+
+        Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any())).thenReturn(Either.right("pspKey1"));
+        /* test */
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
+                .consumeErrorWith(
+                        error -> {
+                            assertInstanceOf(NpgNotRetryableErrorException.class, error);
+                            assertEquals(
+                                    "Npg received error codes: %s, retry excluded error codes: %s, HTTP status code: [%s]"
+                                            .formatted(
+                                                    errors,
+                                                    npgAuthorizationRetryExcludedErrorCodes,
+                                                    httpStatusErrorCode.value()
+                                            ),
+                                    error.getMessage()
+                            );
+                        }
+                )
+                .verify();
+        verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId1");
     }
 
     private static Stream<Arguments> redirectRetrieveUrlPaymentMethodsTestSearch() throws URISyntaxException {

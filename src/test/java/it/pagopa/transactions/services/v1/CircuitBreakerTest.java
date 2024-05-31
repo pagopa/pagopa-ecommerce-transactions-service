@@ -34,6 +34,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -93,7 +94,8 @@ class CircuitBreakerTest {
             new TransactionAmountMismatchException(10, 11),
             new NodoErrorException(new CtFaultBean()),
             new InvalidNodoResponseException(""),
-            new PaymentMethodNotFoundException("paymentMethodId", "clientId")
+            new PaymentMethodNotFoundException("paymentMethodId", "clientId"),
+            new NpgNotRetryableErrorException("", HttpStatus.INTERNAL_SERVER_ERROR)
     ).collect(Collectors.toMap(exception -> exception.getClass().getCanonicalName(), Function.identity()));
 
     static {
