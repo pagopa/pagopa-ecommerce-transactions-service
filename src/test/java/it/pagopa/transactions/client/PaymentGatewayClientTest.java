@@ -18,7 +18,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
-import it.pagopa.ecommerce.commons.utils.RedirectConfigurationKeysConfig;
+import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
@@ -144,7 +144,7 @@ class PaymentGatewayClientTest {
                     Collectors.toMap("pspId-%s"::formatted, "http://redirect/%s"::formatted)
             );
 
-    private final RedirectConfigurationKeysConfig configurationKeysConfig = new RedirectConfigurationKeysConfig(
+    private final RedirectKeysConfiguration configurationKeysConfig = new RedirectKeysConfiguration(
             redirectBeApiCallUriMap,
             codeTypeList
     );
@@ -2978,7 +2978,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                new RedirectConfigurationKeysConfig(redirectUrlMapping, codeListTypeMapping),
+                new RedirectKeysConfiguration(redirectUrlMapping, codeListTypeMapping),
                 npgApiKeyHandler
         );
         /* test */
@@ -3081,7 +3081,7 @@ class PaymentGatewayClientTest {
                                                                     String pspId,
                                                                     PaymentGatewayClient.RedirectPaymentMethodId paymentMethodId,
                                                                     URI expectedUri
-    ) throws URISyntaxException {
+    ) {
         Map<String, String> redirectUrlMapping = Map.of(
                 "CHECKOUT-psp1-RBPR",
                 "http://localhost:8096/redirections1/CHECKOUT",
@@ -3112,7 +3112,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                new RedirectConfigurationKeysConfig(redirectUrlMapping, codeTypeList),
+                new RedirectKeysConfiguration(redirectUrlMapping, codeTypeList),
                 npgApiKeyHandler
         );
 
@@ -3169,7 +3169,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnErrorDuringSearchRedirectURLforInvalidSearchKey() throws Exception {
+    void shouldReturnErrorDuringSearchRedirectURLforInvalidSearchKey() {
         Map<String, String> redirectUrlMapping = Map.of(
                 "CHECKOUT-psp1-RBPR",
                 "http://localhost:8096/redirections1/CHECKOUT",
@@ -3203,7 +3203,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                new RedirectConfigurationKeysConfig(redirectUrlMapping, codeTypeList),
+                new RedirectKeysConfiguration(redirectUrlMapping, codeTypeList),
                 npgApiKeyHandler
         );
 

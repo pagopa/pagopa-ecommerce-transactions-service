@@ -1,6 +1,6 @@
 package it.pagopa.transactions.configurations;
 
-import it.pagopa.ecommerce.commons.utils.RedirectConfigurationKeysConfig;
+import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,15 +27,15 @@ public class RedirectConfigurationsBuilder {
      * @return a configuration map for every PSPs
      */
     @Bean
-    public RedirectConfigurationKeysConfig redirectBeApiCallUriMap(
-                                                                   @Value(
-                                                                       "${redirect.paymentTypeCodeList}"
-                                                                   ) Set<String> paymentTypeCodeList,
-                                                                   @Value(
-                                                                       "#{${redirect.pspUrlMapping}}"
-                                                                   ) Map<String, String> pspUrlMapping
+    public RedirectKeysConfiguration redirectBeApiCallUriMap(
+                                                             @Value(
+                                                                 "${redirect.paymentTypeCodeList}"
+                                                             ) Set<String> paymentTypeCodeList,
+                                                             @Value(
+                                                                 "#{${redirect.pspUrlMapping}}"
+                                                             ) Map<String, String> pspUrlMapping
     ) {
-        return new RedirectConfigurationKeysConfig(pspUrlMapping, paymentTypeCodeList);
+        return new RedirectKeysConfiguration(pspUrlMapping, paymentTypeCodeList);
     }
 
 }

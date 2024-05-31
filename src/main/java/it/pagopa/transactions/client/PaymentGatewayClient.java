@@ -15,7 +15,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
-import it.pagopa.ecommerce.commons.utils.RedirectConfigurationKeysConfig;
+import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -80,7 +80,7 @@ public class PaymentGatewayClient {
     private final SecretKey ecommerceSigningKey;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
-    private final RedirectConfigurationKeysConfig redirectKeysConfig;
+    private final RedirectKeysConfiguration redirectKeysConfig;
 
     static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
             RedirectPaymentMethodId.RBPR,
@@ -133,7 +133,7 @@ public class PaymentGatewayClient {
             SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
-            RedirectConfigurationKeysConfig redirectKeysConfig,
+            RedirectKeysConfiguration redirectKeysConfig,
             NpgApiKeyConfiguration npgApiKeyConfiguration
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
