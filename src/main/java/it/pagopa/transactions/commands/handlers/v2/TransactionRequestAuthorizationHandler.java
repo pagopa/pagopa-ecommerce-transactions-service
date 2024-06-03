@@ -155,7 +155,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         .getTransactionGatewayActivationData()instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
                                                 ? transactionGatewayActivationData.getCorrelationId()
                                                 : null,
-                                tx.getClientId().name()
+                                tx.getClientId().name(),
+                                tx.getTransactionActivatedData().getUserId()
                         )
 
                 ).map(

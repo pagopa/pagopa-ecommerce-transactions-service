@@ -2211,7 +2211,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient
-                        .requestNpgBuildSession(authorizationData, correlationId, true, clientId.name())
+                        .requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                clientId.name(),
+                                TransactionTestUtils.USER_ID
+                        )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(
@@ -2354,7 +2360,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         Mockito.verify(paymentGatewayClient, Mockito.times(0))
-                .requestNpgBuildSession(any(), any(), eq(true), eq(Transaction.ClientId.IO.name()));
+                .requestNpgBuildSession(
+                        any(),
+                        any(),
+                        eq(true),
+                        eq(Transaction.ClientId.IO.name()),
+                        eq(TransactionTestUtils.USER_ID)
+                );
         Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgCardsAuthorization(any(), any());
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
         Mockito.verify(transactionTemplateWrapper, Mockito.times(0)).save(any());
@@ -2450,7 +2462,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient
-                        .requestNpgBuildApmPayment(authorizationData, correlationId, true, clientId.name())
+                        .requestNpgBuildApmPayment(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                clientId.name(),
+                                TransactionTestUtils.USER_ID
+                        )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -2583,7 +2601,8 @@ class TransactionRequestAuthorizationHandlerTest {
                         authorizationData,
                         correlationId,
                         false,
-                        Transaction.ClientId.CHECKOUT.name()
+                        Transaction.ClientId.CHECKOUT.name(),
+                        TransactionTestUtils.USER_ID
                 )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
@@ -2719,7 +2738,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient
-                        .requestNpgBuildApmPayment(authorizationData, correlationId, true, clientId.name())
+                        .requestNpgBuildApmPayment(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                clientId.name(),
+                                TransactionTestUtils.USER_ID
+                        )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -3507,7 +3532,13 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(
-                paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true, clientId.name())
+                paymentGatewayClient.requestNpgBuildSession(
+                        authorizationData,
+                        correlationId,
+                        true,
+                        clientId.name(),
+                        TransactionTestUtils.USER_ID
+                )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(
@@ -3783,7 +3814,13 @@ class TransactionRequestAuthorizationHandlerTest {
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(
-                paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true, clientId.name())
+                paymentGatewayClient.requestNpgBuildSession(
+                        authorizationData,
+                        correlationId,
+                        true,
+                        clientId.name(),
+                        TransactionTestUtils.USER_ID
+                )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
         Mockito.when(

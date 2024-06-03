@@ -23,6 +23,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
@@ -104,7 +105,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * @return the authorization output data containing authorization id, redirect URL, session id, confirm payment session id (if present)
      */
     protected Mono<AuthorizationOutput> npgAuthRequestPipeline(
-            AuthorizationRequestData authorizationData, String correlationId, String clientId
+            AuthorizationRequestData authorizationData, String correlationId, String clientId, String userID
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
@@ -113,12 +114,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
                 if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
-                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId, clientId);
+                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId, clientId, userID);
                 } else {
-                    yield npgApmPaymentFlow(authorizationData, correlationId, true, clientId);
+                    yield npgApmPaymentFlow(authorizationData, correlationId, true, clientId, userID);
                 }
             }
-            case ApmAuthRequestDetailsDto ignored -> npgApmPaymentFlow(authorizationData, correlationId, false, clientId);
+            case ApmAuthRequestDetailsDto ignored -> npgApmPaymentFlow(authorizationData, correlationId, false, clientId, userID);
             default -> Mono.empty();
         });
 
@@ -135,9 +136,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     private Mono<AuthorizationOutput> walletNpgCardsPaymentFlow(
                                                                 AuthorizationRequestData authorizationData,
                                                                 String correlationId,
-                                                                String clientId
+                                                                String clientId,
+                                                                String userId
     ) {
-        return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true, clientId)
+        return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true, clientId, userId)
                 .map(orderIdAndFieldsDto -> {
                     transactionTemplateWrapper.save(
                             new TransactionCacheInfo(
@@ -205,10 +207,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         AuthorizationRequestData authorizationData,
                                                         String correlationId,
                                                         boolean isWalletPayment,
-                                                        String clientId
+                                                        String clientId,
+                                                        String userId
     ) {
         return paymentGatewayClient
-                .requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment, clientId)
+                .requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment, clientId, userId)
                 .filter(orderIdAndFieldsDto -> {
                     String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
                     boolean isReturnUrlValued = returnUrl != null && !returnUrl.isEmpty();

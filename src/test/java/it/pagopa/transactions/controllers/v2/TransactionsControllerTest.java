@@ -103,6 +103,7 @@ class TransactionsControllerTest {
             uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
             String RPTID = "77777777777302016723749670035";
             String EMAIL = "mario.rossi@email.com";
+            UUID userId = UUID.randomUUID();
             ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
             NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
             newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
@@ -120,7 +121,7 @@ class TransactionsControllerTest {
                     jwtTokenUtils.generateToken(
                             any(SecretKey.class),
                             anyInt(),
-                            eq(new Claims(transactionId, "orderId", null))
+                            eq(new Claims(transactionId, "orderId", null, userId.toString()))
                     )
             ).thenReturn(Either.right(""));
             Mockito.lenient()
@@ -131,7 +132,7 @@ class TransactionsControllerTest {
                                             clientIdDto,
                                             UUID.randomUUID(),
                                             transactionId,
-                                            UUID.randomUUID()
+                                            userId
                                     )
                     )
                     .thenReturn(Mono.just(response));
