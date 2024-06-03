@@ -49,7 +49,9 @@ import reactor.util.function.Tuples;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
@@ -156,7 +158,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 ? transactionGatewayActivationData.getCorrelationId()
                                                 : null,
                                 tx.getClientId().name(),
-                                tx.getTransactionActivatedData().getUserId()
+                                Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
+                                        .filter(Objects::nonNull).map(t -> UUID.fromString(t)).orElse(null)
                         )
 
                 ).map(

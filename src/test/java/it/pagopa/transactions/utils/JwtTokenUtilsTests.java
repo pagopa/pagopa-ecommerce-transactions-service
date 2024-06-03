@@ -80,7 +80,7 @@ class JwtTokenUtilsTests {
     void shouldGenerateValidJwtTokenWithOrderIdAndTransactionIdAndUserId() {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         String orderId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         String generatedToken = jwtTokenUtils.generateToken(
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
@@ -93,7 +93,7 @@ class JwtTokenUtilsTests {
         assertEquals(transactionId.value(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
         assertEquals(orderId, claims.get(JwtTokenUtils.ORDER_ID_CLAIM, String.class));
         assertNull(claims.get(JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM, String.class));
-        assertNotNull(userId, claims.get(JwtTokenUtils.USER_ID_CLAIM, String.class));
+        assertNotNull(userId.toString(), claims.get(JwtTokenUtils.USER_ID_CLAIM, String.class));
         assertNotNull(claims.getId());
         assertNotNull(claims.getIssuedAt());
         assertNotNull(claims.getExpiration());

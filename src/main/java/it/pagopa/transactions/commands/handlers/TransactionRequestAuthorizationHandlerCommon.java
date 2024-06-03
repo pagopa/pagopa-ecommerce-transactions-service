@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -105,7 +106,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * @return the authorization output data containing authorization id, redirect URL, session id, confirm payment session id (if present)
      */
     protected Mono<AuthorizationOutput> npgAuthRequestPipeline(
-            AuthorizationRequestData authorizationData, String correlationId, String clientId, String userID
+            AuthorizationRequestData authorizationData, String correlationId, String clientId, UUID userID
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
@@ -137,7 +138,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                 AuthorizationRequestData authorizationData,
                                                                 String correlationId,
                                                                 String clientId,
-                                                                String userId
+                                                                UUID userId
     ) {
         return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true, clientId, userId)
                 .map(orderIdAndFieldsDto -> {
@@ -208,7 +209,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         String correlationId,
                                                         boolean isWalletPayment,
                                                         String clientId,
-                                                        String userId
+                                                        UUID userId
     ) {
         return paymentGatewayClient
                 .requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment, clientId, userId)

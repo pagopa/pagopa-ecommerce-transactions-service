@@ -212,7 +212,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, requestDto.getOrderId(), null, userId.toString()))
+                        eq(new Claims(transactionId, requestDto.getOrderId(), null, userId))
                 )
         )
                 .thenReturn(Either.right("authToken"));
@@ -365,7 +365,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId.toString()))
+                        eq(new Claims(transactionId, null, null, userId))
                 )
         )
                 .thenReturn(Either.right("authToken"));
@@ -501,7 +501,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId.toString()))
+                        eq(new Claims(transactionId, null, null, userId))
                 )
         )
                 .thenReturn(Either.right("authToken"));
@@ -774,7 +774,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId.toString()))
+                        eq(new Claims(transactionId, null, null, userId))
                 )
         )
                 .thenReturn(Either.right("authToken"));
@@ -890,7 +890,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId.toString()))
+                        eq(new Claims(transactionId, null, null, userId))
                 )
         )
                 .thenReturn(Either.right("authToken"));
@@ -1000,7 +1000,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId.toString()))
+                        eq(new Claims(transactionId, null, null, userId))
                 )
         )
                 .thenReturn(Either.right("authToken"));

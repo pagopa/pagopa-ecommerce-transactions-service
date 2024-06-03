@@ -2216,7 +2216,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 correlationId,
                                 true,
                                 clientId.name(),
-                                TransactionTestUtils.USER_ID
+                                UUID.fromString(TransactionTestUtils.USER_ID)
                         )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
@@ -2365,7 +2365,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         any(),
                         eq(true),
                         eq(Transaction.ClientId.IO.name()),
-                        eq(TransactionTestUtils.USER_ID)
+                        eq(UUID.fromString(TransactionTestUtils.USER_ID))
                 );
         Mockito.verify(paymentGatewayClient, Mockito.times(0)).requestNpgCardsAuthorization(any(), any());
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
@@ -2467,7 +2467,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 correlationId,
                                 true,
                                 clientId.name(),
-                                TransactionTestUtils.USER_ID
+                                UUID.fromString(TransactionTestUtils.USER_ID)
                         )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
@@ -2602,7 +2602,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         correlationId,
                         false,
                         Transaction.ClientId.CHECKOUT.name(),
-                        TransactionTestUtils.USER_ID
+                        UUID.fromString(TransactionTestUtils.USER_ID)
                 )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
@@ -2743,7 +2743,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 correlationId,
                                 true,
                                 clientId.name(),
-                                TransactionTestUtils.USER_ID
+                                UUID.fromString(TransactionTestUtils.USER_ID)
                         )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
@@ -3537,7 +3537,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         correlationId,
                         true,
                         clientId.name(),
-                        TransactionTestUtils.USER_ID
+                        UUID.fromString(TransactionTestUtils.USER_ID)
                 )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));
@@ -3819,7 +3819,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         correlationId,
                         true,
                         clientId.name(),
-                        TransactionTestUtils.USER_ID
+                        UUID.fromString(TransactionTestUtils.USER_ID)
                 )
         )
                 .thenReturn(Mono.just(responseRequestNpgBuildSession));

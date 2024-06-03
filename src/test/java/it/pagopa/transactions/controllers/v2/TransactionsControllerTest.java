@@ -121,7 +121,7 @@ class TransactionsControllerTest {
                     jwtTokenUtils.generateToken(
                             any(SecretKey.class),
                             anyInt(),
-                            eq(new Claims(transactionId, "orderId", null, userId.toString()))
+                            eq(new Claims(transactionId, "orderId", null, userId))
                     )
             ).thenReturn(Either.right(""));
             Mockito.lenient()

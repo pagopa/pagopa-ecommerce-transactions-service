@@ -222,7 +222,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                         transactionId,
                                                         command.getData().orderId(),
                                                         null,
-                                                        command.getUserId().toString()
+                                                        command.getUserId()
                                                 )
                                         )
                                         .fold(

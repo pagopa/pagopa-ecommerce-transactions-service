@@ -1359,7 +1359,7 @@ class PaymentGatewayClientTest {
         String sessionId = "sessionId";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1511,7 +1511,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1616,7 +1616,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1718,7 +1718,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1821,7 +1821,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1992,7 +1992,7 @@ class PaymentGatewayClientTest {
         String sessionId = "sessionId";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2152,7 +2152,7 @@ class PaymentGatewayClientTest {
         String sessionId = "sessionId";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2296,7 +2296,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String correlationId = UUID.randomUUID().toString();
-        String userId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO;
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,

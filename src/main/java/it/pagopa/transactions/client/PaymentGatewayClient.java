@@ -288,7 +288,7 @@ public class PaymentGatewayClient {
                                                                   String correlationId,
                                                                   boolean isWalletPayment,
                                                                   String clientId,
-                                                                  String userId
+                                                                  UUID userId
 
     ) {
         return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId, userId);
@@ -299,7 +299,7 @@ public class PaymentGatewayClient {
                                                                      String correlationId,
                                                                      boolean isWalletPayment,
                                                                      String clientId,
-                                                                     String userId
+                                                                     UUID userId
     ) {
         return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId, userId);
     }
@@ -310,7 +310,7 @@ public class PaymentGatewayClient {
                                                                    boolean isApmPayment,
                                                                    boolean isWalletPayment,
                                                                    String clientId,
-                                                                   String userId
+                                                                   UUID userId
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
                 : WorkflowStateDto.READY_FOR_PAYMENT;
@@ -720,7 +720,7 @@ public class PaymentGatewayClient {
 
     private Mono<NpgBuildData> retrieveNpgBuildDataInformation(
                                                                AuthorizationRequestData authorizationRequestData,
-                                                               String userId
+                                                               UUID userId
     ) {
         return uniqueIdUtils.generateUniqueId()
                 .flatMap(
