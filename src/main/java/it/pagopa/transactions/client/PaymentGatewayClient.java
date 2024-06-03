@@ -138,7 +138,9 @@ public class PaymentGatewayClient {
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
             RedirectKeysConfiguration redirectKeysConfig,
             NpgApiKeyConfiguration npgApiKeyConfiguration,
-            Set<String> npgAuthorizationRetryExcludedErrorCodes
+            @Value(
+                "${npg.authorization.retry.excluded.error.codes}"
+            ) Set<String> npgAuthorizationRetryExcludedErrorCodes
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
