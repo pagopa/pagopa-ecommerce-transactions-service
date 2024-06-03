@@ -29,7 +29,7 @@ microservice-chart:
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.30.9"
+    tag: "1.30.12"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -178,6 +178,7 @@ microservice-chart:
     WALLET_USAGE_QUEUE_TTL: "3600"
     CHECKOUT_NPG_GDI_URL: "https://checkout.pagopa.it/gdi-check"
     CHECKOUT_OUTCOME_URL: "https://checkout.pagopa.it/esito"
+    NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
