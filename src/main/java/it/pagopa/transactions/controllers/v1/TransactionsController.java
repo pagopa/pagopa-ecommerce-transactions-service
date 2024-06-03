@@ -1,7 +1,6 @@
 package it.pagopa.transactions.controllers.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
@@ -652,6 +651,19 @@ public class TransactionsController implements TransactionsApi {
                         .status(httpStatus.value())
                         .title(httpStatus.getReasonPhrase())
                         .detail(exception.getErrorDescription()),
+                httpStatus
+        );
+    }
+
+    @ExceptionHandler(NpgNotRetryableErrorException.class)
+    ResponseEntity<ProblemJsonDto> npgNotRetryableErrorException(NpgNotRetryableErrorException exception) {
+        log.warn(exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title(httpStatus.getReasonPhrase())
+                        .detail(exception.getDetail()),
                 httpStatus
         );
     }

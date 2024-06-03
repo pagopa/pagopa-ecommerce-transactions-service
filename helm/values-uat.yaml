@@ -29,7 +29,7 @@ microservice-chart:
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.30.9"
+    tag: "1.30.12"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -152,9 +152,9 @@ microservice-chart:
     NPG_URI: "https://stg-ta.nexigroup.com/api/phoenix-0.0"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
-    NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,BNLIITRR"
+    NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,BNLIITRR,PASCITMM"
     NPG_PAYPAL_PSP_LIST: "BCITITMM,SIGPITM1XXX"
-    NPG_MYBANK_PSP_LIST: "BCITITMM"
+    NPG_MYBANK_PSP_LIST: "BCITITMM,UNCRITMM"
     NPG_BANCOMATPAY_PSP_LIST: "BCITITMM"
     NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "60"
     TRANSACTION_DOCUMENT_TTL: "600"
@@ -172,6 +172,7 @@ microservice-chart:
     NODE_FORWARDER_CONNECTION_TIMEOUT: "19000"
     CHECKOUT_NPG_GDI_URL: "https://uat.checkout.pagopa.it/gdi-check"
     CHECKOUT_OUTCOME_URL: "https://uat.checkout.pagopa.it/esito"
+    NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
