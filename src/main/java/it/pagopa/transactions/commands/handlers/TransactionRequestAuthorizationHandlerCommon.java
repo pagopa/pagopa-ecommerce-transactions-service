@@ -106,7 +106,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      * @return the authorization output data containing authorization id, redirect URL, session id, confirm payment session id (if present)
      */
     protected Mono<AuthorizationOutput> npgAuthRequestPipeline(
-            AuthorizationRequestData authorizationData, String correlationId, String clientId, UUID userID
+            AuthorizationRequestData authorizationData, String correlationId, String clientId, UUID userId
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
