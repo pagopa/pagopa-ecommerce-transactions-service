@@ -30,7 +30,7 @@ microservice-chart:
         CHECKOUT_OUTCOME_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/esito"
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.31.0" #improve
+    tag: "1.32.0" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -173,7 +173,7 @@ microservice-chart:
     SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
     SESSION_URL_NOTIFICATION_URL: "https://api.dev.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-    REDIRECT_PAYMENT_TYPE_CODE_LIST: "BCITITMM-RPIC,POSOIT22XXX-RBPS,PPAYITR1XXX-RBPB,PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,BPPIITRRXXX-RBPR,BPPIITRRXXX-RBPP,BPPIITRRXXX-RBPB"
+    REDIRECT_PAYMENT_TYPE_CODE_LIST: "BPPIITRRXXX-RBPR,BPPIITRRXXX-RBPP,BPPIITRRXXX-RBPB,PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,IO-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,RBPS,RPIC"
     NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
