@@ -218,7 +218,12 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         .generateToken(
                                                 ecommerceSigningKey,
                                                 jwtEcommerceValidityTimeInSeconds,
-                                                new Claims(transactionId, command.getData().orderId(), null)
+                                                new Claims(
+                                                        transactionId,
+                                                        command.getData().orderId(),
+                                                        null,
+                                                        command.getUserId()
+                                                )
                                         )
                                         .fold(
                                                 Mono::error,

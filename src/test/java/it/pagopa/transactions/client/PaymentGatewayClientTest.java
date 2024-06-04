@@ -1363,6 +1363,7 @@ class PaymentGatewayClientTest {
         String sessionId = "sessionId";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1437,7 +1438,8 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                userId
                         )
                 )
                 .expectNext(responseRequestNpgBuildSession)
@@ -1513,6 +1515,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1599,7 +1602,8 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                userId
                         )
                 )
                 .expectErrorMatches(
@@ -1616,6 +1620,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1701,7 +1706,8 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                userId
                         )
                 )
                 .expectErrorMatches(
@@ -1716,6 +1722,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1801,7 +1808,8 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                userId
                         )
                 )
                 .expectErrorMatches(
@@ -1817,6 +1825,7 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1887,7 +1896,8 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                userId
                         )
                 )
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
@@ -1986,6 +1996,7 @@ class PaymentGatewayClientTest {
         String sessionId = "sessionId";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2066,7 +2077,8 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                userId
                         )
                 )
                 .expectNext(responseRequestNpgBuildSession)
@@ -2144,6 +2156,7 @@ class PaymentGatewayClientTest {
         String sessionId = "sessionId";
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2268,7 +2281,8 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 true,
-                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name()
+                                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                userId
                         )
                 )
                 .expectError(NpgApiKeyMissingPspRequestedException.class)
@@ -2283,10 +2297,10 @@ class PaymentGatewayClientTest {
 
     @Test
     void shouldReturnBuildSessionResponseForWalletWithNpgForApmMethod() {
-        String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String correlationId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
         Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO;
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
@@ -2366,7 +2380,8 @@ class PaymentGatewayClientTest {
                                 authorizationData,
                                 correlationId,
                                 false,
-                                clientId.name()
+                                clientId.name(),
+                                userId
                         )
                 )
                 .expectNext(responseRequestNpgBuildSession)

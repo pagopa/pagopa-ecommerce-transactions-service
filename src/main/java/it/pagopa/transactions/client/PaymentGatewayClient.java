@@ -294,19 +294,21 @@ public class PaymentGatewayClient {
                                                                   AuthorizationRequestData authorizationData,
                                                                   String correlationId,
                                                                   boolean isWalletPayment,
-                                                                  String clientId
+                                                                  String clientId,
+                                                                  UUID userId
 
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId);
+        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId, userId);
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(
                                                                      AuthorizationRequestData authorizationData,
                                                                      String correlationId,
                                                                      boolean isWalletPayment,
-                                                                     String clientId
+                                                                     String clientId,
+                                                                     UUID userId
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId);
+        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId, userId);
     }
 
     private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -314,11 +316,12 @@ public class PaymentGatewayClient {
                                                                    String correlationId,
                                                                    boolean isApmPayment,
                                                                    boolean isWalletPayment,
-                                                                   String clientId
+                                                                   String clientId,
+                                                                   UUID userId
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
                 : WorkflowStateDto.READY_FOR_PAYMENT;
-        return retrieveNpgBuildDataInformation(authorizationData)
+        return retrieveNpgBuildDataInformation(authorizationData, userId)
                 .flatMap(
                         npgBuildData -> {
                             String orderId = npgBuildData.orderId();
@@ -589,7 +592,8 @@ public class PaymentGatewayClient {
                         new Claims(
                                 authorizationData.transactionId(),
                                 null,
-                                authorizationData.paymentInstrumentId()
+                                authorizationData.paymentInstrumentId(),
+                                null
                         )
                 ).fold(
                         Mono::error,
@@ -743,7 +747,10 @@ public class PaymentGatewayClient {
         }
     }
 
-    private Mono<NpgBuildData> retrieveNpgBuildDataInformation(AuthorizationRequestData authorizationRequestData) {
+    private Mono<NpgBuildData> retrieveNpgBuildDataInformation(
+                                                               AuthorizationRequestData authorizationRequestData,
+                                                               UUID userId
+    ) {
         return uniqueIdUtils.generateUniqueId()
                 .flatMap(
                         orderId -> new JwtTokenUtils()
@@ -753,7 +760,8 @@ public class PaymentGatewayClient {
                                         new Claims(
                                                 authorizationRequestData.transactionId(),
                                                 orderId,
-                                                authorizationRequestData.paymentInstrumentId()
+                                                authorizationRequestData.paymentInstrumentId(),
+                                                userId
                                         )
                                 ).fold(
                                         Mono::error,
@@ -764,7 +772,8 @@ public class PaymentGatewayClient {
                                                         new Claims(
                                                                 authorizationRequestData.transactionId(),
                                                                 orderId,
-                                                                authorizationRequestData.paymentInstrumentId()
+                                                                authorizationRequestData.paymentInstrumentId(),
+                                                                userId
                                                         )
                                                 ).fold(
                                                         Mono::error,

@@ -216,7 +216,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         .generateToken(
                                                 ecommerceSigningKey,
                                                 jwtEcommerceValidityTimeInSeconds,
-                                                new Claims(transactionId, null, null)
+                                                new Claims(transactionId, null, null, null)
                                         )
                                         .fold(
                                                 Mono::error,
