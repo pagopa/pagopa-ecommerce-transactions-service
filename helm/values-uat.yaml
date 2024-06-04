@@ -29,7 +29,7 @@ microservice-chart:
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.30.12"
+    tag: "1.31.0"
     pullPolicy: Always
   livenessProbe:
     httpGet:
