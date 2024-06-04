@@ -530,7 +530,7 @@
                 <configuration>
                     <skipCheckoutIfExists>false</skipCheckoutIfExists>
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
-                    <scmVersionType>branch</scmVersionType>
+                    <scmVersionType>tag</scmVersionType>
                     <scmVersion>CHK-2861-userid-jwttoken</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
