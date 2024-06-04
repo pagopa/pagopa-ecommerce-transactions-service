@@ -17,14 +17,15 @@ import java.util.Set;
 @Slf4j
 public class RedirectConfigurationsBuilder {
     /**
-     * Create a {@link RedirectKeysConfiguration} that will handle, to every handled PSP,
-     * the backend URI to be used to perform Redirect payment flow api call
+     * Create a {@link RedirectKeysConfiguration} that will handle, to every handled
+     * PSP, the backend URI to be used to perform Redirect payment flow api call
      *
      * @param paymentTypeCodeList - set of all redirect payment type codes to be
      *                            handled flow
      * @param pspUrlMapping       - configuration parameter that contains PSP to URI
      *                            mapping
-     * @return an {@link RedirectKeysConfiguration} instance that handle a configuration map for every PSPs
+     * @return an {@link RedirectKeysConfiguration} instance that handle a
+     *         configuration map for every PSPs
      */
     @Bean
     public RedirectKeysConfiguration redirectKeysConfig(
