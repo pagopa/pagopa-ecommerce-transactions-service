@@ -21,6 +21,35 @@
         <ecs-logging-version>1.5.0</ecs-logging-version>
         <mock-web-server.version>4.11.0</mock-web-server.version>
     </properties>
+    <profiles>
+        <profile>
+            <id>compile-commons</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-scm-plugin</artifactId>
+                        <version>2.0.0-M3</version>
+                        <configuration>
+                            <skipCheckoutIfExists>false</skipCheckoutIfExists>
+                            <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
+                            <scmVersionType>tag</scmVersionType>
+                            <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
+                            <goals>install -DskipTests</goals>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>bootstrap</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -522,26 +551,6 @@
                 <configuration>
                     <argLine>${argLine} --enable-preview</argLine>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-plugin</artifactId>
-                <version>2.0.0-M3</version>
-                <configuration>
-                    <skipCheckoutIfExists>false</skipCheckoutIfExists>
-                    <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
-                    <scmVersionType>tag</scmVersionType>
-                    <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
-                    <goals>install -DskipTests</goals>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>bootstrap</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
