@@ -729,7 +729,12 @@ public class PaymentGatewayClient {
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
 
-    private Mono<NpgBuildData> retrieveNpgBuildDataInformation(AuthorizationRequestData authorizationRequestData) {
+
+
+    private Mono<NpgBuildData> retrieveNpgBuildDataInformation(
+            AuthorizationRequestData authorizationRequestData,
+            UUID userId
+    ) {
         return uniqueIdUtils.generateUniqueId()
                 .flatMap(
                         orderId -> new JwtTokenUtils()
@@ -739,7 +744,8 @@ public class PaymentGatewayClient {
                                         new Claims(
                                                 authorizationRequestData.transactionId(),
                                                 orderId,
-                                                authorizationRequestData.paymentInstrumentId()
+                                                authorizationRequestData.paymentInstrumentId(),
+                                                userId
                                         )
                                 ).fold(
                                         Mono::error,
@@ -750,7 +756,8 @@ public class PaymentGatewayClient {
                                                         new Claims(
                                                                 authorizationRequestData.transactionId(),
                                                                 orderId,
-                                                                authorizationRequestData.paymentInstrumentId()
+                                                                authorizationRequestData.paymentInstrumentId(),
+                                                                userId
                                                         )
                                                 ).fold(
                                                         Mono::error,

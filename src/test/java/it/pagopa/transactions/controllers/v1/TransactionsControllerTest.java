@@ -138,7 +138,7 @@ class TransactionsControllerTest {
                     jwtTokenUtils.generateToken(
                             any(SecretKey.class),
                             anyInt(),
-                            eq(new Claims(transactionId, "orderId", null))
+                            eq(new Claims(transactionId, "orderId", null, null))
                     )
             ).thenReturn(Either.right(""));
             Mockito.lenient()
@@ -872,7 +872,7 @@ class TransactionsControllerTest {
                 jwtTokenUtils.generateToken(
                         any(SecretKey.class),
                         anyInt(),
-                        eq(new Claims(new TransactionId(transactionId), null, null))
+                        eq(new Claims(new TransactionId(transactionId), null, null, null))
                 )
         ).thenReturn(Either.right(""));
         for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto

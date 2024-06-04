@@ -92,7 +92,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         tx -> npgAuthRequestPipeline(
                                 authorizationRequestData,
                                 null,
-                                tx.getClientId().name()
+                                tx.getClientId().name(),
+                                null
                         )
                 )
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.NPG));

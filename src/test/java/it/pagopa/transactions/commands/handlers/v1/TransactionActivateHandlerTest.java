@@ -206,7 +206,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null))
+                        eq(new Claims(transactionId, null, null, null))
                 )
         ).thenReturn(Either.right("authToken"));
 
@@ -337,7 +337,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null))
+                        eq(new Claims(transactionId, null, null, null))
                 )
         )
                 .thenReturn(Either.right("authToken"));
@@ -610,7 +610,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null))
+                        eq(new Claims(transactionId, null, null, null))
                 )
         )
                 .thenReturn(Either.right("authToken"));
@@ -726,7 +726,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null))
+                        eq(new Claims(transactionId, null, null, null))
                 )
         )
                 .thenReturn(Either.right("authToken"));
@@ -836,7 +836,7 @@ class TransactionActivateHandlerTest {
                 jwtTokenUtils.generateToken(
                         eq(jwtSecretKey),
                         eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null))
+                        eq(new Claims(transactionId, null, null, null))
                 )
         )
                 .thenReturn(Either.right("authToken"));
