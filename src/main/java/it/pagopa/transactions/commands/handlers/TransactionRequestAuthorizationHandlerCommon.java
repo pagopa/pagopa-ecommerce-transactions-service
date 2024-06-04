@@ -320,7 +320,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             StringBuilder gdiCheckPathWithFragment = clientId.equals("IO")
                                                     ? new StringBuilder(
                                                             WALLET_GDI_CHECK_PATH
-                                                    ).append(base64redirectionUrl).append("&clientId="+clientId)
+                                                    ).append(base64redirectionUrl).append("&clientId=" + clientId)
                                                             .append("&transactionId=")
                                                             .append(authorizationData.transactionId().value())
                                                     : new StringBuilder(formatGdiCheckUrl(base64redirectionUrl));
@@ -341,14 +341,14 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             }
                                             yield npgResponse.getUrl();
                                         }
-                                        case PAYMENT_COMPLETE -> clientId.equals("IO") ?
-                                                new StringBuilder(
-                                                        WALLET_GDI_CHECK_PATH).append("&clientId="+clientId)
-                                                        .append("&transactionId=")
-                                                        .append(authorizationData.transactionId().value()).toString() :
-                                                URI.create(checkoutBasePath)
-                                                .resolve(checkoutOutcomeUrl)
-                                                .toString();
+                                        case PAYMENT_COMPLETE -> clientId.equals("IO") ? new StringBuilder(
+                                                WALLET_GDI_CHECK_PATH
+                                        ).append("&clientId=" + clientId)
+                                                .append("&transactionId=")
+                                                .append(authorizationData.transactionId().value()).toString()
+                                                : URI.create(checkoutBasePath)
+                                                        .resolve(checkoutOutcomeUrl)
+                                                        .toString();
                                         default -> throw new BadGatewayException(
                                                 "Invalid NPG confirm payment state response: " + npgResponse.getState(),
                                                 HttpStatus.BAD_GATEWAY
