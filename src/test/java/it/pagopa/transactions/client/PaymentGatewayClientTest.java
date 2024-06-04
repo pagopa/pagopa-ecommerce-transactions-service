@@ -565,12 +565,12 @@ class PaymentGatewayClientTest {
 
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any())).thenReturn(Either.right("pspKey1"));
         /* test */
-
-        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
+        String correlationId = UUID.randomUUID().toString();
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .expectErrorMatches(
-                        error -> error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getTransactionId()
-                                        .equals(transaction.getTransactionId())
+                        error -> error instanceof NpgNotRetryableErrorException &&
+                                ((NpgNotRetryableErrorException) error).getDetail()
+                                        .equals("Npg received 4xx error for transactionId: " + transaction.getTransactionId().value() + ", correlationId:" + correlationId + ", HTTP status code: [401]")
                 )
                 .verify();
         verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId1");
