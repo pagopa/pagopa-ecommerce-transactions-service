@@ -110,7 +110,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
-                    .getOrderId(), correlationId, false)
+                    .getOrderId(), correlationId, clientId)
             ;
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
@@ -181,7 +181,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 ),
                                 orderIdAndFieldsDto.getT1(),
                                 correlationId,
-                                true
+                                clientId
                         )
                                 .map(
                                         authorizationOutput -> new AuthorizationOutput(
@@ -269,8 +269,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     /**
      * @param authorizationData authorization data
      * @param orderId           order id to be used for confirm payment
-     * @param isWalletPayment   boolean flag for distinguish payment requests coming
-     *                          from wallet or guest flows
+     * @param clientId          clientId from which request is coming
      * @return the authorization output data containing order id, return url and
      *         confirm payment session id
      */
@@ -278,7 +277,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                               AuthorizationRequestData authorizationData,
                                                               String orderId,
                                                               String correlationId,
-                                                              boolean isWalletPayment
+                                                              String clientId
 
     ) {
         return confirmPayment(authorizationData, correlationId)
@@ -318,10 +317,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                             );
 
-                                            StringBuilder gdiCheckPathWithFragment = isWalletPayment
+                                            StringBuilder gdiCheckPathWithFragment = clientId.equals("IO")
                                                     ? new StringBuilder(
                                                             WALLET_GDI_CHECK_PATH
-                                                    ).append(base64redirectionUrl).append("&clientId=IO")
+                                                    ).append(base64redirectionUrl).append("&clientId="+clientId)
                                                             .append("&transactionId=")
                                                             .append(authorizationData.transactionId().value())
                                                     : new StringBuilder(formatGdiCheckUrl(base64redirectionUrl));
@@ -342,7 +341,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             }
                                             yield npgResponse.getUrl();
                                         }
-                                        case PAYMENT_COMPLETE -> URI.create(checkoutBasePath)
+                                        case PAYMENT_COMPLETE -> clientId.equals("IO") ?
+                                                new StringBuilder(
+                                                        WALLET_GDI_CHECK_PATH).append("&clientId="+clientId)
+                                                        .append("&transactionId=")
+                                                        .append(authorizationData.transactionId().value()).toString() :
+                                                URI.create(checkoutBasePath)
                                                 .resolve(checkoutOutcomeUrl)
                                                 .toString();
                                         default -> throw new BadGatewayException(
