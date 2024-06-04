@@ -9,7 +9,10 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.*;
+import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
+import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyConfigurationException;
+import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
+import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
@@ -295,19 +298,21 @@ public class PaymentGatewayClient {
                                                                   AuthorizationRequestData authorizationData,
                                                                   String correlationId,
                                                                   boolean isWalletPayment,
-                                                                  String clientId
+                                                                  String clientId,
+                                                                  UUID userId
 
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId);
+        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId, userId);
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(
                                                                      AuthorizationRequestData authorizationData,
                                                                      String correlationId,
                                                                      boolean isWalletPayment,
-                                                                     String clientId
+                                                                     String clientId,
+                                                                     UUID userId
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId);
+        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId, userId);
     }
 
     private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -315,11 +320,12 @@ public class PaymentGatewayClient {
                                                                    String correlationId,
                                                                    boolean isApmPayment,
                                                                    boolean isWalletPayment,
-                                                                   String clientId
+                                                                   String clientId,
+                                                                   UUID userId
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
                 : WorkflowStateDto.READY_FOR_PAYMENT;
-        return retrieveNpgBuildDataInformation(authorizationData)
+        return retrieveNpgBuildDataInformation(authorizationData, userId)
                 .flatMap(
                         npgBuildData -> {
                             String orderId = npgBuildData.orderId();
@@ -590,7 +596,8 @@ public class PaymentGatewayClient {
                         new Claims(
                                 authorizationData.transactionId(),
                                 null,
-                                authorizationData.paymentInstrumentId()
+                                authorizationData.paymentInstrumentId(),
+                                null
                         )
                 ).fold(
                         Mono::error,
@@ -729,11 +736,9 @@ public class PaymentGatewayClient {
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
 
-
-
     private Mono<NpgBuildData> retrieveNpgBuildDataInformation(
-            AuthorizationRequestData authorizationRequestData,
-            UUID userId
+                                                               AuthorizationRequestData authorizationRequestData,
+                                                               UUID userId
     ) {
         return uniqueIdUtils.generateUniqueId()
                 .flatMap(
