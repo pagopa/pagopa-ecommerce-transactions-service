@@ -9,12 +9,16 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.*;
+import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
+import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyConfigurationException;
+import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
+import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
+import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -80,7 +84,7 @@ public class PaymentGatewayClient {
     private final SecretKey ecommerceSigningKey;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
-    private final Map<String, URI> redirectBeApiCallUriMap;
+    private final RedirectKeysConfiguration redirectKeysConfig;
 
     private final Set<String> npgAuthorizationRetryExcludedErrorCodes;
 
@@ -135,7 +139,7 @@ public class PaymentGatewayClient {
             SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
-            Map<String, URI> redirectBeApiCallUriMap,
+            RedirectKeysConfiguration redirectKeysConfig,
             NpgApiKeyConfiguration npgApiKeyConfiguration,
             @Value(
                 "${npg.authorization.retry.excluded.error.codes}"
@@ -152,7 +156,7 @@ public class PaymentGatewayClient {
         this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
-        this.redirectBeApiCallUriMap = redirectBeApiCallUriMap;
+        this.redirectKeysConfig = redirectKeysConfig;
         this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
@@ -650,10 +654,12 @@ public class PaymentGatewayClient {
                                     )
                                     .idPaymentMethod(idPaymentMethod.toString())
                                     .paName(paName);// optional
-                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
-                                    authorizationData.pspId(),
-                                    authorizationData.paymentTypeCode()
-                            );
+                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = redirectKeysConfig
+                                    .getRedirectUrlForPsp(
+                                            touchpoint.name(),
+                                            authorizationData.pspId(),
+                                            authorizationData.paymentTypeCode()
+                                    );
 
                             return pspConfiguredUrl.fold(
                                     Mono::error,
@@ -728,23 +734,6 @@ public class PaymentGatewayClient {
         }
 
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private Either<RedirectConfigurationException, URI> getRedirectUrlForPsp(
-                                                                             String pspId,
-                                                                             String paymentTypeCode
-    ) {
-        String urlKey = "%s-%s".formatted(pspId, paymentTypeCode);
-        if (redirectBeApiCallUriMap.containsKey(urlKey)) {
-            return Either.right(redirectBeApiCallUriMap.get(urlKey));
-        } else {
-            return Either.left(
-                    new RedirectConfigurationException(
-                            "Missing key for redirect return url with key: [%s]".formatted(urlKey),
-                            RedirectConfigurationType.BACKEND_URLS
-                    )
-            );
-        }
     }
 
     private Mono<NpgBuildData> retrieveNpgBuildDataInformation(
