@@ -115,12 +115,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
                 if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
-                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId, clientId, userID);
+                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId, clientId, userId);
                 } else {
-                    yield npgApmPaymentFlow(authorizationData, correlationId, true, clientId, userID);
+                    yield npgApmPaymentFlow(authorizationData, correlationId, true, clientId, userId);
                 }
             }
-            case ApmAuthRequestDetailsDto ignored -> npgApmPaymentFlow(authorizationData, correlationId, false, clientId, userID);
+            case ApmAuthRequestDetailsDto ignored -> npgApmPaymentFlow(authorizationData, correlationId, false, clientId, userId);
             default -> Mono.empty();
         });
 
