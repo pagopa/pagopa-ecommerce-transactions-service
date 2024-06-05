@@ -423,7 +423,10 @@ public class PaymentGatewayClient {
                                     }
                                     if (statusCode.is4xxClientError()) {
                                         return new NpgNotRetryableErrorException(
-                                                "Npg received 4xx error for transactionId: [%s], correlationId: [%s]".formatted(authorizationData.transactionId().value(), correlationId),
+                                                "Npg 4xx error for transactionId: [%s], correlationId: [%s]".formatted(
+                                                        authorizationData.transactionId().value(),
+                                                        correlationId
+                                                ),
                                                 statusCode
                                         );
                                     } else if (statusCode.is5xxServerError()) {
@@ -550,7 +553,12 @@ public class PaymentGatewayClient {
                                                         }
                                                         if (statusCode.is4xxClientError()) {
                                                             return new NpgNotRetryableErrorException(
-                                                                    "Npg received 4xx error for transactionId: [%s], correlationId: [%s]".formatted(authorizationData.transactionId().value(), correlationId),
+                                                                    "Npg 4xx error for transactionId: [%s], correlationId: [%s]"
+                                                                            .formatted(
+                                                                                    authorizationData.transactionId()
+                                                                                            .value(),
+                                                                                    correlationId
+                                                                            ),
                                                                     statusCode
                                                             );
                                                         } else if (statusCode.is5xxServerError()) {

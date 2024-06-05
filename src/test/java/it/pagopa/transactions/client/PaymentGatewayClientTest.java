@@ -46,6 +46,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
@@ -495,8 +496,15 @@ class PaymentGatewayClientTest {
         verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId1");
     }
 
-    @Test
-    void shouldThrowAlreadyProcessedOn401ForCardsWithNpg() throws Exception {
+    @ParameterizedTest
+    @ValueSource(
+            ints = {
+                    400,
+                    401,
+                    404
+            }
+    )
+    void shouldThrowNpgNotRetryableErrorExceptionOn4xxForCardsWithNpg(Integer npgHttpErrorCode) {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -544,17 +552,18 @@ class PaymentGatewayClientTest {
         );
 
         /* preconditions */
+        HttpStatus npgErrorStatus = HttpStatus.valueOf(npgHttpErrorCode);
         Mockito.when(npgClient.confirmPayment(any(), any(), any(), any()))
                 .thenReturn(
                         Mono.error(
                                 new NpgResponseException(
                                         "NPG error",
                                         List.of(),
-                                        Optional.of(HttpStatus.UNAUTHORIZED),
+                                        Optional.of(npgErrorStatus),
                                         new WebClientResponseException(
                                                 "api error",
-                                                HttpStatus.UNAUTHORIZED.value(),
-                                                "Unauthorized",
+                                                npgErrorStatus.value(),
+                                                npgErrorStatus.getReasonPhrase(),
                                                 null,
                                                 null,
                                                 null
@@ -568,9 +577,16 @@ class PaymentGatewayClientTest {
         String correlationId = UUID.randomUUID().toString();
         StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .expectErrorMatches(
-                        error -> error instanceof NpgNotRetryableErrorException &&
-                                ((NpgNotRetryableErrorException) error).getDetail()
-                                        .equals("Npg received 4xx error for transactionId: " + transaction.getTransactionId().value() + ", correlationId:" + correlationId + ", HTTP status code: [401]")
+                        error -> {
+                            assertTrue(error instanceof NpgNotRetryableErrorException);
+                            assertEquals(
+                                    "Npg 4xx error for transactionId: [" + transaction.getTransactionId().value()
+                                            + "], correlationId: [" + correlationId + "], HTTP status code: ["
+                                            + npgHttpErrorCode + "]",
+                                    error.getMessage()
+                            );
+                            return true;
+                        }
                 )
                 .verify();
         verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, "pspId1");
@@ -1509,8 +1525,15 @@ class PaymentGatewayClientTest {
         verify(npgApiKeyHandler, times(1)).getDefaultApiKey();
     }
 
-    @Test
-    void shouldThrowAlreadyProcessedOn401ForWalletWithNpg() {
+    @ParameterizedTest
+    @ValueSource(
+            ints = {
+                    400,
+                    401,
+                    404
+            }
+    )
+    void shouldThrowNpgNotRetryableErrorExceptionOn4xxForWalletWithNpg(Integer npgHttpErrorCode) {
         String walletId = UUID.randomUUID().toString();
         String orderId = "orderIdGenerated";
         String contractId = "contractId";
@@ -1563,6 +1586,7 @@ class PaymentGatewayClientTest {
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
+        HttpStatus npgErrorStatus = HttpStatus.valueOf(npgHttpErrorCode);
         Mockito.when(
                 npgClient.buildForm(
                         eq(UUID.fromString(correlationId)),
@@ -1582,11 +1606,11 @@ class PaymentGatewayClientTest {
                                 new NpgResponseException(
                                         "NPG error",
                                         List.of(),
-                                        Optional.of(HttpStatus.UNAUTHORIZED),
+                                        Optional.of(npgErrorStatus),
                                         new WebClientResponseException(
                                                 "api error",
-                                                HttpStatus.UNAUTHORIZED.value(),
-                                                "Unauthorized",
+                                                npgErrorStatus.value(),
+                                                npgErrorStatus.getReasonPhrase(),
                                                 null,
                                                 null,
                                                 null
@@ -1607,9 +1631,16 @@ class PaymentGatewayClientTest {
                         )
                 )
                 .expectErrorMatches(
-                        error -> error instanceof AlreadyProcessedException &&
-                                ((AlreadyProcessedException) error).getTransactionId()
-                                        .equals(transaction.getTransactionId())
+                        error -> {
+                            assertTrue(error instanceof NpgNotRetryableErrorException);
+                            assertEquals(
+                                    "Npg 4xx error for transactionId: [" + transaction.getTransactionId().value()
+                                            + "], correlationId: [" + correlationId + "], HTTP status code: ["
+                                            + npgHttpErrorCode + "]",
+                                    error.getMessage()
+                            );
+                            return true;
+                        }
                 )
                 .verify();
     }
