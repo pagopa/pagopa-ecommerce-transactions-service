@@ -30,6 +30,7 @@ import java.util.UUID;
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
     private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
+    private static final String WALLET_ESITO_PATH = "/ecommerce-fe/esito";
 
     private final PaymentGatewayClient paymentGatewayClient;
 
@@ -320,7 +321,9 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             StringBuilder gdiCheckPathWithFragment = clientId.equals("IO")
                                                     ? new StringBuilder(
                                                             WALLET_GDI_CHECK_PATH
-                                                    ).append(base64redirectionUrl).append("&clientId=" + clientId)
+                                                    ).append(base64redirectionUrl)
+                                                            .append("&clientId=")
+                                                            .append(clientId)
                                                             .append("&transactionId=")
                                                             .append(authorizationData.transactionId().value())
                                                     : new StringBuilder(formatGdiCheckUrl(base64redirectionUrl));
@@ -341,11 +344,21 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             }
                                             yield npgResponse.getUrl();
                                         }
-                                        case PAYMENT_COMPLETE -> clientId.equals("IO") ? new StringBuilder(
-                                                WALLET_GDI_CHECK_PATH
-                                        ).append("&clientId=" + clientId)
-                                                .append("&transactionId=")
-                                                .append(authorizationData.transactionId().value()).toString()
+                                        case PAYMENT_COMPLETE -> clientId.equals("IO") ?
+
+                                                URI.create(checkoutBasePath)
+                                                        .resolve(
+                                                                new StringBuilder(
+                                                                        WALLET_ESITO_PATH
+                                                                ).append("#clientId=")
+                                                                        .append(clientId)
+                                                                        .append("&transactionId=")
+                                                                        .append(
+                                                                                authorizationData.transactionId()
+                                                                                        .value()
+                                                                        ).toString()
+                                                        ).toString()
+
                                                 : URI.create(checkoutBasePath)
                                                         .resolve(checkoutOutcomeUrl)
                                                         .toString();
