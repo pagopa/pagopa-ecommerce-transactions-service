@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
@@ -318,7 +319,9 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                             );
 
-                                            StringBuilder gdiCheckPathWithFragment = clientId.equals("IO")
+                                            StringBuilder gdiCheckPathWithFragment = clientId.equals(
+                                                    Transaction.ClientId.IO.toString()
+                                            )
                                                     ? new StringBuilder(
                                                             WALLET_GDI_CHECK_PATH
                                                     ).append(base64redirectionUrl)
@@ -344,7 +347,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             }
                                             yield npgResponse.getUrl();
                                         }
-                                        case PAYMENT_COMPLETE -> clientId.equals("IO") ?
+                                        case PAYMENT_COMPLETE -> clientId.equals(Transaction.ClientId.IO.toString()) ?
 
                                                 URI.create(checkoutBasePath)
                                                         .resolve(
