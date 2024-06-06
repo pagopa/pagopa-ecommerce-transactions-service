@@ -426,8 +426,12 @@ public class PaymentGatewayClient {
                                         );
                                     }
                                     if (statusCode.is4xxClientError()) {
-                                        return new AlreadyProcessedException(
-                                                authorizationData.transactionId()
+                                        return new NpgNotRetryableErrorException(
+                                                "Npg 4xx error for transactionId: [%s], correlationId: [%s]".formatted(
+                                                        authorizationData.transactionId().value(),
+                                                        correlationId
+                                                ),
+                                                statusCode
                                         );
                                     } else if (statusCode.is5xxServerError()) {
                                         return new BadGatewayException(
@@ -552,8 +556,14 @@ public class PaymentGatewayClient {
                                                             );
                                                         }
                                                         if (statusCode.is4xxClientError()) {
-                                                            return new AlreadyProcessedException(
-                                                                    authorizationData.transactionId()
+                                                            return new NpgNotRetryableErrorException(
+                                                                    "Npg 4xx error for transactionId: [%s], correlationId: [%s]"
+                                                                            .formatted(
+                                                                                    authorizationData.transactionId()
+                                                                                            .value(),
+                                                                                    correlationId
+                                                                            ),
+                                                                    statusCode
                                                             );
                                                         } else if (statusCode.is5xxServerError()) {
                                                             return new BadGatewayException(
