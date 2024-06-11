@@ -3032,7 +3032,7 @@ class PaymentGatewayClientTest {
         Set<String> codeListTypeMapping = new HashSet<>(codeTypeList);
         redirectUrlMapping.remove("pspId-RBPS");
         codeListTypeMapping.remove("pspId-RBPS");
-        PaymentGatewayClient client = new PaymentGatewayClient(
+        PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 xPayInternalApi,
                 creditCardInternalApi,
                 objectMapper,
@@ -3052,7 +3052,10 @@ class PaymentGatewayClientTest {
         );
         /* test */
         StepVerifier.create(
-                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+                redirectClient.requestRedirectUrlAuthorization(
+                        authorizationData,
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT
+                )
         )
                 .expectError(RedirectConfigurationException.class)
                 .verify();
@@ -3262,13 +3265,13 @@ class PaymentGatewayClientTest {
                 "RBPS",
                 "http://localhost:8096/redirections3"
         );
-        Set<String> codeTypeList = Set.of(
+        Set<String> redirectCodeTypeList = Set.of(
                 "CHECKOUT-psp1-RBPR",
                 "IO-psp1-RBPR",
                 "psp2-RBPB",
                 "RBPS"
         );
-        PaymentGatewayClient client = new PaymentGatewayClient(
+        PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 xPayInternalApi,
                 creditCardInternalApi,
                 objectMapper,
@@ -3282,7 +3285,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                new RedirectKeysConfiguration(redirectUrlMapping, codeTypeList),
+                new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes
         );
@@ -3327,7 +3330,7 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                client.requestRedirectUrlAuthorization(authorizationData, touchpoint)
+                redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint)
         )
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
@@ -3351,7 +3354,7 @@ class PaymentGatewayClientTest {
                 "RBPS",
                 "http://localhost:8096/redirections3"
         );
-        Set<String> codeTypeList = Set.of(
+        Set<String> redirectCodeTypeList = Set.of(
                 "CHECKOUT-psp1-RBPR",
                 "IO-psp1-RBPR",
                 "psp2-RBPB",
@@ -3360,7 +3363,7 @@ class PaymentGatewayClientTest {
         RedirectUrlRequestDto.TouchpointEnum touchpoint = RedirectUrlRequestDto.TouchpointEnum.CHECKOUT;
         String pspId = "pspId";
         PaymentGatewayClient.RedirectPaymentMethodId redirectPaymentMethodId = PaymentGatewayClient.RedirectPaymentMethodId.RBPP;
-        PaymentGatewayClient client = new PaymentGatewayClient(
+        PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 xPayInternalApi,
                 creditCardInternalApi,
                 objectMapper,
@@ -3374,7 +3377,7 @@ class PaymentGatewayClientTest {
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                new RedirectKeysConfiguration(redirectUrlMapping, codeTypeList),
+                new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes
         );
@@ -3407,7 +3410,7 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                client.requestRedirectUrlAuthorization(authorizationData, touchpoint)
+                redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint)
         )
                 .consumeErrorWith(
                         exp -> assertEquals(
