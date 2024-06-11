@@ -335,7 +335,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnAuthorizationResponseForCreditCardWithVPOS() throws Exception {
+    void shouldReturnAuthorizationResponseForCreditCardWithVPOS() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -437,7 +437,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnAuthorizationResponseForCardsWithNpg() throws Exception {
+    void shouldReturnAuthorizationResponseForCardsWithNpg() {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -603,7 +603,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowGatewayTimeoutExceptionForCardsWithNpg() throws Exception {
+    void shouldThrowGatewayTimeoutExceptionForCardsWithNpg() {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -681,7 +681,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowInternalServerErrorExceptionForCardsWithNpg() throws Exception {
+    void shouldThrowInternalServerErrorExceptionForCardsWithNpg() {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -962,7 +962,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldThrowBadGatewayOn500ForCreditCardWithVPOS() throws Exception {
+    void shouldThrowBadGatewayOn500ForCreditCardWithVPOS() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1160,7 +1160,7 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void fallbackOnEmptyMdcInfoOnMapperErrorForCreditCardWithVPOS() throws Exception {
+    void fallbackOnEmptyMdcInfoOnMapperErrorForCreditCardWithVPOS() throws JsonProcessingException {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
