@@ -794,8 +794,9 @@ public class PaymentGatewayClient {
                                    TransactionId transactionId,
                                    String sessionToken
     ) {
+        URI baseURI = URI.create(npgSessionUrlConfig.basePath());
         return UriComponentsBuilder
-                .fromUriString(npgSessionUrlConfig.basePath().concat(npgSessionUrlConfig.outcomeSuffix()))
+                .fromUri(baseURI.resolve(npgSessionUrlConfig.outcomeSuffix()))
                 .build(
                         Map.of(
                                 "clientId",
