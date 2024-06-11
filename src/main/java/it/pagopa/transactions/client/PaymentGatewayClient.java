@@ -338,7 +338,6 @@ public class PaymentGatewayClient {
                                     outcomeJwtToken
                             );
                             URI merchantUrl = returnUrlBasePath;
-                            URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
 
                             URI notificationUrl = UriComponentsBuilder
                                     .fromHttpUrl(npgSessionUrlConfig.notificationUrl())
@@ -366,7 +365,7 @@ public class PaymentGatewayClient {
                                                     merchantUrl,
                                                     outcomeResultUrl,
                                                     notificationUrl,
-                                                    cancelUrl,
+                                                    outcomeResultUrl,
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
@@ -390,7 +389,7 @@ public class PaymentGatewayClient {
                                                     merchantUrl,
                                                     outcomeResultUrl,
                                                     notificationUrl,
-                                                    cancelUrl,
+                                                    outcomeResultUrl,
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod

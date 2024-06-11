@@ -103,7 +103,6 @@ class PaymentGatewayClientTest {
     private final NpgSessionUrlConfig sessionUrlConfig = new NpgSessionUrlConfig(
             "http://localhost:1234",
             "/ecommerce-fe/esito#clientId={clientId}&transactionId={transactionId}&sessionToken={sessionToken}",
-            "/ecommerce-fe/annulla",
             "https://localhost/ecommerce/{orderId}/outcomes?sessionToken={sessionToken}"
     );
 
@@ -1521,9 +1520,14 @@ class PaymentGatewayClientTest {
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
-                        eq(
-                                URI.create(sessionUrlConfig.basePath())
-                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+
                         ),
                         eq(orderId),
                         eq(null),
@@ -1994,9 +1998,14 @@ class PaymentGatewayClientTest {
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
-                        eq(
-                                URI.create(sessionUrlConfig.basePath())
-                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+
                         ),
                         eq(orderId),
                         eq(null),
@@ -2175,9 +2184,14 @@ class PaymentGatewayClientTest {
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
-                        eq(
-                                URI.create(sessionUrlConfig.basePath())
-                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+
                         ),
                         eq(orderId),
                         eq(null),
@@ -2302,8 +2316,7 @@ class PaymentGatewayClientTest {
                                 )
                         ),
                         eq(
-                                URI.create(sessionUrlConfig.basePath())
-                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                                URI.create(npgOutcomeUrl)
                         ),
                         eq(orderId),
                         eq(null),
@@ -2475,9 +2488,14 @@ class PaymentGatewayClientTest {
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
-                        eq(
-                                URI.create(sessionUrlConfig.basePath())
-                                        .resolve(URI.create(sessionUrlConfig.cancelSuffix()))
+                        argThat(
+                                new NpgOutcomeUrlMatcher(
+                                        outcomeUrlPrefix,
+                                        transactionId.value(),
+                                        orderId,
+                                        authorizationData.paymentInstrumentId()
+                                )
+
                         ),
                         eq(orderId),
                         eq(null),
