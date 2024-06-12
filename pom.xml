@@ -319,6 +319,31 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>transaction-api-v3</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/api-spec/v3/transactions-api.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <library>spring-boot</library>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <configOptions>
+                                <basePackage>it.pagopa.generated.transactions.v3.server</basePackage>
+                                <modelPackage>it.pagopa.generated.transactions.v3.server.model</modelPackage>
+                                <apiPackage>it.pagopa.generated.transactions.v3.server.api</apiPackage>
+                                <configPackage>it.pagopa.generated.transactions.v3.server.config</configPackage>
+                                <interfaceOnly>true</interfaceOnly>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <useSwaggerUI>false</useSwaggerUI>
+                                <reactive>true</reactive>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>payment-methods-api-v1</id>
                         <goals>
                             <goal>generate</goal>
@@ -530,8 +555,8 @@
                 <configuration>
                     <skipCheckoutIfExists>false</skipCheckoutIfExists>
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
-                    <scmVersionType>tag</scmVersionType>
-                    <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
+                    <scmVersionType>branch</scmVersionType>
+                    <scmVersion>mock-confidential-data-manager</scmVersion>
                     <goals>install -DskipTests</goals>
                 </configuration>
                 <executions>

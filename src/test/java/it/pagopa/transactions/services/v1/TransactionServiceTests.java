@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
@@ -20,6 +21,7 @@ import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
+import it.pagopa.transactions.TestConfiguration;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -43,6 +45,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Flux;
@@ -67,6 +70,7 @@ import static org.mockito.Mockito.*;
     {
             it.pagopa.transactions.services.v1.TransactionsService.class,
             it.pagopa.transactions.services.v2.TransactionsService.class,
+            it.pagopa.transactions.services.v3.TransactionsService.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
@@ -94,7 +98,8 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class,
             TransactionsEventStoreRepository.class,
-            UUIDUtils.class
+            UUIDUtils.class,
+            TestConfiguration.class
     }
 )
 @AutoConfigureDataRedis
@@ -230,6 +235,9 @@ class TransactionServiceTests {
 
     @MockBean
     private OpenTelemetryUtils openTelemetryUtils;
+
+    @Autowired
+    private ConfidentialMailUtils confidentialMailUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 

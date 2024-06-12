@@ -41,7 +41,13 @@ public class TransactionsUtils {
             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
     );
 
+    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto> transactionStatusLookupMapV3 = new EnumMap<>(
+            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    );
+
     public static Map<String, ResponseEntity<?>> nodeErrorToV2TransactionsResponseEntityMapping = new HashMap<>();
+
+    public static Map<String, ResponseEntity<?>> nodeErrorToV3TransactionsResponseEntityMapping = new HashMap<>();
 
     @Autowired
     public TransactionsUtils(
@@ -280,6 +286,9 @@ public class TransactionsUtils {
                     )
             );
         }
+
+        // v3 uses the same mapping as v2
+        nodeErrorToV3TransactionsResponseEntityMapping = new HashMap<>(nodeErrorToV2TransactionsResponseEntityMapping);
     }
 
     public Mono<BaseTransaction> reduceEventsV1(TransactionId transactionId) {
@@ -337,6 +346,12 @@ public class TransactionsUtils {
         return transactionStatusLookupMapV2.get(status);
     }
 
+    public it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto convertEnumerationV3(
+                                                                                                      it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+    ) {
+        return transactionStatusLookupMapV3.get(status);
+    }
+
     public NewTransactionRequestDto buildWarmupRequestV1() {
         String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
         int neededPadLength = 18 - noticeCode.length();
@@ -378,6 +393,30 @@ public class TransactionsUtils {
                 .paymentNotices(
                         Collections.singletonList(
                                 new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto()
+                                        .rptId("77777777777%s".formatted(noticeCode))
+                                        .amount(100)
+                        )
+                );
+    }
+
+    public it.pagopa.generated.transactions.v3.server.model.NewTransactionRequestDto buildWarmupRequestV3() {
+        String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
+        int neededPadLength = 18 - noticeCode.length();
+        if (neededPadLength < 0) {
+            noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
+        } else {
+            StringBuilder padBuilder = new StringBuilder();
+            noticeCode = padBuilder
+                    .append(noticeCode)
+                    .append("0".repeat(neededPadLength))
+                    .toString();
+        }
+        return new it.pagopa.generated.transactions.v3.server.model.NewTransactionRequestDto()
+                .emailToken("b397aebf-f61c-4845-9483-67f702aebe36")
+                .orderId("orderId")
+                .paymentNotices(
+                        Collections.singletonList(
+                                new it.pagopa.generated.transactions.v3.server.model.PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
                                         .amount(100)
                         )

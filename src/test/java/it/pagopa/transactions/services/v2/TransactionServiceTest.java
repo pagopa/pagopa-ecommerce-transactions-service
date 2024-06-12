@@ -9,9 +9,12 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -41,11 +44,16 @@ class TransactionServiceTest {
 
     private final TransactionsUtils transactionsUtils = Mockito.mock(TransactionsUtils.class);
 
+    private final ConfidentialDataManager confidentialDataManager = ConfidentialDataManagerTest.getMock();
+
+    private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(confidentialDataManager);
+
     @Autowired
     private final TransactionsService transactionsService = new TransactionsService(
             transactionActivateHandlerV2,
             transactionsActivationProjectionHandlerV2,
-            transactionsUtils
+            transactionsUtils,
+            confidentialMailUtils
     );
 
     @Test

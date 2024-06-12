@@ -22,6 +22,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.SessionPaymentMethodR
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.TestConfiguration;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -66,6 +67,7 @@ import static org.mockito.Mockito.*;
     {
             it.pagopa.transactions.services.v1.TransactionsService.class,
             it.pagopa.transactions.services.v2.TransactionsService.class,
+            it.pagopa.transactions.services.v3.TransactionsService.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class,
@@ -93,7 +95,8 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class,
             TransactionsEventStoreRepository.class,
-            UUIDUtils.class
+            UUIDUtils.class,
+            TestConfiguration.class
     }
 )
 @AutoConfigureDataRedis
@@ -229,6 +232,9 @@ class TransactionServiceTests {
 
     @MockBean
     private OpenTelemetryUtils openTelemetryUtils;
+
+    @Autowired
+    private ConfidentialMailUtils confidentialMailUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
     final String USER_ID = TransactionTestUtils.USER_ID;
