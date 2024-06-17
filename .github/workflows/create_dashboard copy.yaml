@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'api-spec/transactions-api.yaml'
+      - 'api-spec/index.yaml'
       - '.github/workflows/create_dashboard.yaml'
       - '.opex/**'
 
