@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'api-spec/transactions-api.yaml'
+      - 'openapi/**'
       - '.github/workflows/create_dashboard.yaml'
       - '.opex/**'
 
@@ -43,9 +43,9 @@ jobs:
       - uses: pagopa/opex-dashboard-azure-action@v1.1.2
         with:
           environment: ${{ matrix.environment }}
-          api-name: ${{ matrix.product }} # empty to have `.opex/env` directory structure
+          api-name: ${{ matrix.product }}
           config: .opex/${{ matrix.product }}/env/${{ matrix.environment }}/config.yaml
-          client-id: ${{ secrets.CLIENT_ID }}
+          client-id: ${{ secrets.CD_CLIENT_ID }}
           tenant-id: ${{ secrets.TENANT_ID }}
           subscription-id: ${{ secrets.SUBSCRIPTION_ID }}
           # from https://github.com/pagopa/opex-dashboard-azure-action/pkgs/container/opex-dashboard-azure-action
