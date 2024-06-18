@@ -608,6 +608,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.CARD_DATA_COLLECTION);
 
         /* preconditions */
+        Mockito.when(
+                paymentMethodsClient.updateSession(
+                        authorizationData.paymentInstrumentId(),
+                        ((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId(),
+                        transactionId.value()
+                )
+        ).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
@@ -621,7 +628,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
 
-        Mockito.verify(paymentMethodsClient, Mockito.times(0)).updateSession(any(), any(), any());
+        Mockito.verify(paymentMethodsClient, Mockito.times(1)).updateSession(any(), any(), any());
     }
 
     @Test
