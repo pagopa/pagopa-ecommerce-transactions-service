@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
@@ -30,6 +31,7 @@ import java.util.UUID;
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
     private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
+    private static final String WALLET_ESITO_PATH = "/ecommerce-fe/esito";
 
     private final PaymentGatewayClient paymentGatewayClient;
 
@@ -110,7 +112,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
-                    .getOrderId(), correlationId, false)
+                    .getOrderId(), correlationId, clientId)
             ;
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
@@ -181,7 +183,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 ),
                                 orderIdAndFieldsDto.getT1(),
                                 correlationId,
-                                true
+                                clientId
                         )
                                 .map(
                                         authorizationOutput -> new AuthorizationOutput(
@@ -269,8 +271,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     /**
      * @param authorizationData authorization data
      * @param orderId           order id to be used for confirm payment
-     * @param isWalletPayment   boolean flag for distinguish payment requests coming
-     *                          from wallet or guest flows
+     * @param clientId          clientId from which request is coming
      * @return the authorization output data containing order id, return url and
      *         confirm payment session id
      */
@@ -278,7 +279,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                               AuthorizationRequestData authorizationData,
                                                               String orderId,
                                                               String correlationId,
-                                                              boolean isWalletPayment
+                                                              String clientId
 
     ) {
         return confirmPayment(authorizationData, correlationId)
@@ -318,10 +319,14 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                             );
 
-                                            StringBuilder gdiCheckPathWithFragment = isWalletPayment
+                                            StringBuilder gdiCheckPathWithFragment = clientId.equals(
+                                                    Transaction.ClientId.IO.toString()
+                                            )
                                                     ? new StringBuilder(
                                                             WALLET_GDI_CHECK_PATH
-                                                    ).append(base64redirectionUrl).append("&clientId=IO")
+                                                    ).append(base64redirectionUrl)
+                                                            .append("&clientId=")
+                                                            .append(clientId)
                                                             .append("&transactionId=")
                                                             .append(authorizationData.transactionId().value())
                                                     : new StringBuilder(formatGdiCheckUrl(base64redirectionUrl));
@@ -342,9 +347,24 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             }
                                             yield npgResponse.getUrl();
                                         }
-                                        case PAYMENT_COMPLETE -> URI.create(checkoutBasePath)
-                                                .resolve(checkoutOutcomeUrl)
-                                                .toString();
+                                        case PAYMENT_COMPLETE -> clientId.equals(Transaction.ClientId.IO.toString()) ?
+
+                                                URI.create(checkoutBasePath)
+                                                        .resolve(
+                                                                new StringBuilder(
+                                                                        WALLET_ESITO_PATH
+                                                                ).append("#clientId=")
+                                                                        .append(clientId)
+                                                                        .append("&transactionId=")
+                                                                        .append(
+                                                                                authorizationData.transactionId()
+                                                                                        .value()
+                                                                        ).toString()
+                                                        ).toString()
+
+                                                : URI.create(checkoutBasePath)
+                                                        .resolve(checkoutOutcomeUrl)
+                                                        .toString();
                                         default -> throw new BadGatewayException(
                                                 "Invalid NPG confirm payment state response: " + npgResponse.getState(),
                                                 HttpStatus.BAD_GATEWAY
