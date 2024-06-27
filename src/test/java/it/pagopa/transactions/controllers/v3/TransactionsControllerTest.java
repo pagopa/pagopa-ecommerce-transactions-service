@@ -5,8 +5,12 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -92,6 +96,8 @@ class TransactionsControllerTest {
     @Mock
     HttpHeaders mockHeaders;
 
+    private ConfidentialDataManager confidentialDataManager = ConfidentialDataManagerTest.getMock();
+
     private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
             Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
     );
@@ -102,12 +108,13 @@ class TransactionsControllerTest {
         try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
             uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
             String RPTID = "77777777777302016723749670035";
-            String EMAIL = "mario.rossi@email.com";
+            Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("mario.rossi@email.com"))
+                    .block();
             UUID userId = UUID.randomUUID();
             ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
             NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
             newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
-            newTransactionRequestDto.setEmail(EMAIL);
+            newTransactionRequestDto.setEmailToken(confidentialEmail.opaqueData());
             newTransactionRequestDto.orderId("orderId");
             NewTransactionResponseDto response = new NewTransactionResponseDto();
             PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
@@ -261,7 +268,7 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @EnumSource(PartyConfigurationFaultDto.class)
     void shouldReturnResponseEntityWithPartyConfigurationFault(PartyConfigurationFaultDto nodoErrorCode) {
-        String rptId = "77777777777302000100000009424";
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
@@ -269,7 +276,7 @@ class TransactionsControllerTest {
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -299,15 +306,15 @@ class TransactionsControllerTest {
     void shouldReturnResponseEntityWithValidationFaultPaymentUnknown(
                                                                      ValidationFaultPaymentUnknownDto nodoErrorCode
     ) {
-        String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -337,15 +344,15 @@ class TransactionsControllerTest {
     void shouldReturnResponseEntityWithValidationFaultPaymentDataError(
                                                                        ValidationFaultPaymentDataErrorDto nodoErrorCode
     ) {
-        String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -375,15 +382,15 @@ class TransactionsControllerTest {
     void shouldReturnResponseEntityWithValidationFaultPaymentUnavailable(
                                                                          ValidationFaultPaymentUnavailableDto nodoErrorCode
     ) {
-        String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -410,15 +417,15 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @EnumSource(PaymentOngoingStatusFaultDto.class)
     void shouldReturnResponseEntityWithPaymentOngoingStatusFault(PaymentOngoingStatusFaultDto nodoErrorCode) {
-        String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -445,15 +452,15 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @EnumSource(PaymentExpiredStatusFaultDto.class)
     void shouldReturnResponseEntityWithPaymentExpiredStatusFault(PaymentExpiredStatusFaultDto nodoErrorCode) {
-        String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -480,15 +487,15 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @EnumSource(PaymentCanceledStatusFaultDto.class)
     void shouldReturnResponseEntityWithPaymentCanceledStatusFault(PaymentCanceledStatusFaultDto nodoErrorCode) {
-        String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -517,15 +524,15 @@ class TransactionsControllerTest {
     void shouldReturnResponseEntityWithPaymentDuplicatedStatusFault(
                                                                     PaymentDuplicatedStatusFaultDto nodoErrorCode
     ) {
-        String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -551,15 +558,15 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnResponseEntityWithGenericFault() {
-        String rptId = "77777777777302000100000009424";
         CtFaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("email@test.it")
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
 
@@ -639,6 +646,7 @@ class TransactionsControllerTest {
             }
     )
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email(email)).block();
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
                 .thenReturn(Either.right(""));
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -649,7 +657,7 @@ class TransactionsControllerTest {
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email(email)
+                .emailToken(confidentialEmail.opaqueData())
                 .orderId("orderId")
                 .idCart(TransactionTestUtils.ID_CART);
         webTestClient.post()
@@ -664,7 +672,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void shouldReturnBadRequestForInvalidMail() {
+    void shouldReturnBadRequestForNullMail() {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
                 .thenReturn(Either.right(""));
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -675,7 +683,7 @@ class TransactionsControllerTest {
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("invalidMail")
+                .emailToken(null)
                 .idCart(TransactionTestUtils.ID_CART);
         webTestClient.post()
                 .uri("/v3/transactions")
@@ -692,7 +700,7 @@ class TransactionsControllerTest {
                             assertEquals(400, p.getStatus());
                             assertTrue(
                                     p.getDetail().contains(
-                                            "Field error in object 'newTransactionRequestDtoMono' on field 'email'"
+                                            "Field error in object 'newTransactionRequestDtoMono' on field 'emailToken'"
                                     )
                             );
                         }
@@ -701,13 +709,14 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnMissingCorrelationId() {
+        Confidential<Email> confidentialEmail = confidentialDataManager.encrypt(new Email("email@test.it")).block();
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
                 .addPaymentNoticesItem(
                         new PaymentNoticeInfoDto()
                                 .rptId(TransactionTestUtils.RPT_ID)
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
-                .email("invalidMail")
+                .emailToken(confidentialEmail.opaqueData())
                 .idCart(TransactionTestUtils.ID_CART);
         webTestClient.post()
                 .uri("/v3/transactions")

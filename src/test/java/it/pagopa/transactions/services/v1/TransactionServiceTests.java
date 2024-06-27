@@ -10,7 +10,6 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
-import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
@@ -21,7 +20,6 @@ import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
-import it.pagopa.transactions.TestConfiguration;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -45,7 +43,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Flux;
@@ -98,8 +95,7 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class,
             TransactionsEventStoreRepository.class,
-            UUIDUtils.class,
-            TestConfiguration.class
+            UUIDUtils.class
     }
 )
 @AutoConfigureDataRedis
@@ -236,7 +232,7 @@ class TransactionServiceTests {
     @MockBean
     private OpenTelemetryUtils openTelemetryUtils;
 
-    @Autowired
+    @MockBean
     private ConfidentialMailUtils confidentialMailUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
@@ -464,7 +460,6 @@ class TransactionServiceTests {
     @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithNPGCardsDetailFor() {
         String orderId = "orderId";
-        String bin = "exampleBin";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")
@@ -2451,19 +2446,6 @@ class TransactionServiceTests {
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
-
-        TransactionInfoDto expectedResponse = new TransactionInfoDto()
-                .transactionId(transactionDocument.getTransactionId())
-                .payments(
-                        transactionDocument.getPaymentNotices().stream().map(
-                                paymentNotice -> new PaymentInfoDto()
-                                        .amount(paymentNotice.getAmount())
-                                        .reason(paymentNotice.getDescription())
-                                        .paymentToken(paymentNotice.getPaymentToken())
-                                        .rptId(paymentNotice.getRptId())
-                        ).toList()
-                )
-                .status(TransactionStatusDto.CLOSED);
 
         Transaction closedTransactionDocument = new Transaction(
                 transactionDocument.getTransactionId(),

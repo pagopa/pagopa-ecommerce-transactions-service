@@ -22,7 +22,6 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.SessionPaymentMethodR
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.TestConfiguration;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -54,7 +53,6 @@ import reactor.test.StepVerifier;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -95,8 +93,7 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class,
             TransactionsEventStoreRepository.class,
-            UUIDUtils.class,
-            TestConfiguration.class
+            UUIDUtils.class
     }
 )
 @AutoConfigureDataRedis
@@ -233,7 +230,7 @@ class TransactionServiceTests {
     @MockBean
     private OpenTelemetryUtils openTelemetryUtils;
 
-    @Autowired
+    @MockBean
     private ConfidentialMailUtils confidentialMailUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
@@ -535,7 +532,6 @@ class TransactionServiceTests {
     @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithNPGCardsDetailFor() {
         String orderId = "orderId";
-        String bin = "exampleBin";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")
