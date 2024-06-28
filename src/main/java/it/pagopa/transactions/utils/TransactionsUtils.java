@@ -59,7 +59,7 @@ public class TransactionsUtils {
     }
 
     static {
-        Set<String> commonsStatusesV1 = Set
+        Set<String> commonsStatuses = Set
                 .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
@@ -69,14 +69,13 @@ public class TransactionsUtils {
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
-
-        Set<String> commonsStatusesV2 = Set
-                .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
+        Set<String> transactionsStatusesV2 = Set
+                .of(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
-        Set<String> transactionsStatusesV2 = Set
-                .of(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.values())
+        Set<String> transactionsStatusesV3 = Set
+                .of(it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
@@ -90,21 +89,31 @@ public class TransactionsUtils {
          *
          * @formatter:on
          */
-        if (!commonsStatusesV1.equals(transactionsStatusesV1)) {
+        if (!commonsStatuses.equals(transactionsStatusesV1)) {
             Set<String> unknownTransactionsStatuses = transactionsStatusesV1.stream()
-                    .filter(Predicate.not(commonsStatusesV1::contains)).collect(Collectors.toSet());
-            Set<String> unknownCommonStatuses = commonsStatusesV1.stream()
+                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatuses.stream()
                     .filter(Predicate.not(transactionsStatusesV1::contains)).collect(Collectors.toSet());
             throw new IllegalArgumentException(
                     "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
             );
         }
-        if (!commonsStatusesV2.equals(transactionsStatusesV2)) {
+        if (!commonsStatuses.equals(transactionsStatusesV2)) {
             Set<String> unknownTransactionsStatuses = transactionsStatusesV2.stream()
-                    .filter(Predicate.not(commonsStatusesV2::contains)).collect(Collectors.toSet());
-            Set<String> unknownCommonStatuses = commonsStatusesV2.stream()
+                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatuses.stream()
                     .filter(Predicate.not(transactionsStatusesV2::contains)).collect(Collectors.toSet());
+            throw new IllegalArgumentException(
+                    "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
+                            .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
+            );
+        }
+        if (!commonsStatuses.equals(transactionsStatusesV3)) {
+            Set<String> unknownTransactionsStatuses = transactionsStatusesV3.stream()
+                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatuses.stream()
+                    .filter(Predicate.not(transactionsStatusesV3::contains)).collect(Collectors.toSet());
             throw new IllegalArgumentException(
                     "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
@@ -137,6 +146,22 @@ public class TransactionsUtils {
             transactionStatusLookupMapV2.put(
                     enumValue,
                     it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto
+                            .fromValue(enumValue.toString())
+            );
+        }
+
+        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+                .values()) {
+            /*
+             * @formatter:off
+             *
+             * This lookup map handles enumeration conversion from commons and transactions-service for the `TransactionStatusDto` enumeration
+             *
+             * @formatter:on
+             */
+            transactionStatusLookupMapV3.put(
+                    enumValue,
+                    it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto
                             .fromValue(enumValue.toString())
             );
         }
