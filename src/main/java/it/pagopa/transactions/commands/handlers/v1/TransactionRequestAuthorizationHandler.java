@@ -106,6 +106,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 ).orElse(Mono.empty());
 
         return transactionActivated
+                .flatMap(t -> switch (command.getData().authDetails()) {
+                    case CardsAuthRequestDetailsDto authRequestDetails -> paymentMethodsClient.updateSession(
+                            command.getData().paymentInstrumentId(),
+                            authRequestDetails.getOrderId(),
+                            command.getData().transactionId().value()
+                    ).thenReturn(t);
+                    default -> Mono.just(t);
+                })
                 .flatMap(
                         t -> gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                                 .flatMap(authorizationOutputAndGateway -> {
@@ -142,19 +150,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             )
                                     );
 
-                                    Mono<Void> updateSession = Mono.just(command.getData().authDetails())
-                                            .filter(CardsAuthRequestDetailsDto.class::isInstance)
-                                            .cast(CardsAuthRequestDetailsDto.class)
-                                            .flatMap(
-                                                    authRequestDetails -> paymentMethodsClient.updateSession(
-                                                            command.getData().paymentInstrumentId(),
-                                                            authRequestDetails.getOrderId(),
-                                                            command.getData().transactionId().value()
-                                                    )
-                                            );
-
-                                    return updateSession.then(
-                                            transactionEventStoreRepository.save(authorizationEvent)
+                                    return transactionEventStoreRepository.save(authorizationEvent)
                                                     .thenReturn(authorizationOutputAndGateway)
                                                     .map(
                                                             auth -> new RequestAuthorizationResponseDto()
@@ -164,8 +160,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                     .authorizationRequestId(
                                                                             authorizationOutput.authorizationId()
                                                                     )
-                                                    )
-                                    );
+                                                    );
                                 })
                                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 );
