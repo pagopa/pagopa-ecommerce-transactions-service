@@ -41,7 +41,13 @@ public class TransactionsUtils {
             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
     );
 
+    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto> transactionStatusLookupMapV3 = new EnumMap<>(
+            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    );
+
     public static Map<String, ResponseEntity<?>> nodeErrorToV2TransactionsResponseEntityMapping = new HashMap<>();
+
+    public static Map<String, ResponseEntity<?>> nodeErrorToV3TransactionsResponseEntityMapping = new HashMap<>();
 
     @Autowired
     public TransactionsUtils(
@@ -53,7 +59,7 @@ public class TransactionsUtils {
     }
 
     static {
-        Set<String> commonsStatusesV1 = Set
+        Set<String> commonsStatuses = Set
                 .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
@@ -63,14 +69,13 @@ public class TransactionsUtils {
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
-
-        Set<String> commonsStatusesV2 = Set
-                .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
+        Set<String> transactionsStatusesV2 = Set
+                .of(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
-        Set<String> transactionsStatusesV2 = Set
-                .of(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.values())
+        Set<String> transactionsStatusesV3 = Set
+                .of(it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
@@ -84,21 +89,31 @@ public class TransactionsUtils {
          *
          * @formatter:on
          */
-        if (!commonsStatusesV1.equals(transactionsStatusesV1)) {
+        if (!commonsStatuses.equals(transactionsStatusesV1)) {
             Set<String> unknownTransactionsStatuses = transactionsStatusesV1.stream()
-                    .filter(Predicate.not(commonsStatusesV1::contains)).collect(Collectors.toSet());
-            Set<String> unknownCommonStatuses = commonsStatusesV1.stream()
+                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatuses.stream()
                     .filter(Predicate.not(transactionsStatusesV1::contains)).collect(Collectors.toSet());
             throw new IllegalArgumentException(
                     "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
             );
         }
-        if (!commonsStatusesV2.equals(transactionsStatusesV2)) {
+        if (!commonsStatuses.equals(transactionsStatusesV2)) {
             Set<String> unknownTransactionsStatuses = transactionsStatusesV2.stream()
-                    .filter(Predicate.not(commonsStatusesV2::contains)).collect(Collectors.toSet());
-            Set<String> unknownCommonStatuses = commonsStatusesV2.stream()
+                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatuses.stream()
                     .filter(Predicate.not(transactionsStatusesV2::contains)).collect(Collectors.toSet());
+            throw new IllegalArgumentException(
+                    "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
+                            .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
+            );
+        }
+        if (!commonsStatuses.equals(transactionsStatusesV3)) {
+            Set<String> unknownTransactionsStatuses = transactionsStatusesV3.stream()
+                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
+            Set<String> unknownCommonStatuses = commonsStatuses.stream()
+                    .filter(Predicate.not(transactionsStatusesV3::contains)).collect(Collectors.toSet());
             throw new IllegalArgumentException(
                     "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
@@ -131,6 +146,22 @@ public class TransactionsUtils {
             transactionStatusLookupMapV2.put(
                     enumValue,
                     it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto
+                            .fromValue(enumValue.toString())
+            );
+        }
+
+        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+                .values()) {
+            /*
+             * @formatter:off
+             *
+             * This lookup map handles enumeration conversion from commons and transactions-service for the `TransactionStatusDto` enumeration
+             *
+             * @formatter:on
+             */
+            transactionStatusLookupMapV3.put(
+                    enumValue,
+                    it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto
                             .fromValue(enumValue.toString())
             );
         }
@@ -280,6 +311,9 @@ public class TransactionsUtils {
                     )
             );
         }
+
+        // v3 uses the same mapping as v2
+        nodeErrorToV3TransactionsResponseEntityMapping = new HashMap<>(nodeErrorToV2TransactionsResponseEntityMapping);
     }
 
     public Mono<BaseTransaction> reduceEventsV1(TransactionId transactionId) {
@@ -337,6 +371,12 @@ public class TransactionsUtils {
         return transactionStatusLookupMapV2.get(status);
     }
 
+    public it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto convertEnumerationV3(
+                                                                                                      it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+    ) {
+        return transactionStatusLookupMapV3.get(status);
+    }
+
     public NewTransactionRequestDto buildWarmupRequestV1() {
         String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
         int neededPadLength = 18 - noticeCode.length();
@@ -378,6 +418,30 @@ public class TransactionsUtils {
                 .paymentNotices(
                         Collections.singletonList(
                                 new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto()
+                                        .rptId("77777777777%s".formatted(noticeCode))
+                                        .amount(100)
+                        )
+                );
+    }
+
+    public it.pagopa.generated.transactions.v3.server.model.NewTransactionRequestDto buildWarmupRequestV3() {
+        String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
+        int neededPadLength = 18 - noticeCode.length();
+        if (neededPadLength < 0) {
+            noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
+        } else {
+            StringBuilder padBuilder = new StringBuilder();
+            noticeCode = padBuilder
+                    .append(noticeCode)
+                    .append("0".repeat(neededPadLength))
+                    .toString();
+        }
+        return new it.pagopa.generated.transactions.v3.server.model.NewTransactionRequestDto()
+                .emailToken("b397aebf-f61c-4845-9483-67f702aebe36")
+                .orderId("orderId")
+                .paymentNotices(
+                        Collections.singletonList(
+                                new it.pagopa.generated.transactions.v3.server.model.PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
                                         .amount(100)
                         )

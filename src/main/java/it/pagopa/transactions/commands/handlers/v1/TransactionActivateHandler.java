@@ -5,10 +5,7 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
@@ -311,24 +308,23 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     private Mono<BaseTransactionEvent<?>> newTransactionActivatedEvent(
                                                                        List<PaymentRequestInfo> paymentRequestsInfo,
                                                                        String transactionId,
-                                                                       String email,
+                                                                       Mono<Confidential<Email>> email,
                                                                        String clientId,
                                                                        String idCart,
                                                                        Integer paymentTokenTimeout
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
-        Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData> data = confidentialMailUtils
-                .toConfidential(email).map(
-                        e -> new it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData(
-                                e,
-                                paymentNotices,
-                                null,
-                                null,
-                                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.valueOf(clientId),
-                                idCart,
-                                paymentTokenTimeout
-                        )
-                );
+        Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData> data = email.map(
+                e -> new it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData(
+                        e,
+                        paymentNotices,
+                        null,
+                        null,
+                        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.valueOf(clientId),
+                        idCart,
+                        paymentTokenTimeout
+                )
+        );
 
         Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent> transactionActivatedEvent = data.map(
                 d -> new it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent(

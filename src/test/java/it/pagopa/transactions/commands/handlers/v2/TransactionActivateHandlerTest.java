@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
+import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
@@ -18,6 +19,8 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
@@ -101,6 +104,8 @@ class TransactionActivateHandlerTest {
 
     private final UUID userId = UUID.randomUUID();
 
+    private ConfidentialDataManager confidentialDataManager = ConfidentialDataManagerTest.getMock();
+
     private final TransactionActivateHandler handler = new TransactionActivateHandler(
             paymentRequestInfoRedisTemplateWrapper,
             transactionEventActivatedStoreRepository,
@@ -138,7 +143,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         requestDto.getOrderId(),
                         CORRELATION_ID,
                         requestDto.getPaymentNotices().stream().map(
@@ -291,7 +296,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -429,7 +434,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -546,7 +551,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -638,7 +643,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -710,7 +715,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -826,7 +831,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -942,7 +947,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(

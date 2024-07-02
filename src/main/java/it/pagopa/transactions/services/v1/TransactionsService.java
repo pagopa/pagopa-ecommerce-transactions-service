@@ -21,10 +21,7 @@ import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.EventVersion;
-import it.pagopa.transactions.utils.PaymentSessionData;
-import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -112,6 +109,8 @@ public class TransactionsService {
 
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
+    private final ConfidentialMailUtils confidentialMailUtils;
+
     @Autowired
     public TransactionsService(
             @Qualifier(
@@ -193,7 +192,8 @@ public class TransactionsService {
             TransactionsEventStoreRepository<Object> eventsRepository,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${ecommerce.event.version}") EventVersion eventVersion,
-            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper
+            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
+            ConfidentialMailUtils confidentialMailUtils
     ) {
         this.transactionActivateHandlerV1 = transactionActivateHandlerV1;
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
@@ -230,6 +230,7 @@ public class TransactionsService {
         this.paymentTokenValidity = paymentTokenValidity;
         this.eventVersion = eventVersion;
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
+        this.confidentialMailUtils = confidentialMailUtils;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -249,7 +250,7 @@ public class TransactionsService {
                 newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
                 new NewTransactionRequestData(
                         newTransactionRequestDto.getIdCart(),
-                        newTransactionRequestDto.getEmail(),
+                        confidentialMailUtils.toConfidential(newTransactionRequestDto.getEmail()),
                         null,
                         null,
                         newTransactionRequestDto.getPaymentNotices().stream().map(

@@ -12,6 +12,8 @@ import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
@@ -23,10 +25,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.configurations.AzureStorageConfig;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.AuthRequestDataUtils;
-import it.pagopa.transactions.utils.EventVersion;
-import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -139,6 +138,10 @@ class TransactionServiceTest {
 
     private final TracingUtils tracingUtils = Mockito.mock(TracingUtils.class);
 
+    private final ConfidentialDataManager confidentialDataManager = ConfidentialDataManagerTest.getMock();
+
+    private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(confidentialDataManager);
+
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper = Mockito
             .mock(PaymentRequestInfoRedisTemplateWrapper.class);
 
@@ -177,7 +180,8 @@ class TransactionServiceTest {
             transactionsEventStoreRepository,
             10,
             EventVersion.V1,
-            paymentRequestInfoRedisTemplateWrapper
+            paymentRequestInfoRedisTemplateWrapper,
+            confidentialMailUtils
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
@@ -215,7 +219,8 @@ class TransactionServiceTest {
             transactionsEventStoreRepository,
             10,
             EventVersion.V2,
-            paymentRequestInfoRedisTemplateWrapper
+            paymentRequestInfoRedisTemplateWrapper,
+            confidentialMailUtils
     );
 
     @Test
