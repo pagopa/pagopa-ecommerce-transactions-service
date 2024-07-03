@@ -26,7 +26,7 @@ import java.util.UUID;
 @Slf4j
 public class TransactionsService {
 
-    public static final String QUALIFIER_NAME = "TransactionsServiceV2_1";
+    public static final String QUALIFIER_NAME = "TransactionsServiceV2.1";
     private final TransactionActivateHandler transactionActivateHandlerV2;
 
     private final TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2;
