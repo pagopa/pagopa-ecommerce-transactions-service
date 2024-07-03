@@ -1,11 +1,11 @@
-package it.pagopa.transactions.services.v3;
+package it.pagopa.transactions.services.v2_1;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.generated.transactions.v3.server.model.*;
+import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler;
@@ -26,7 +26,7 @@ import java.util.UUID;
 @Slf4j
 public class TransactionsService {
 
-    public static final String QUALIFIER_NAME = "TransactionsServiceV3";
+    public static final String QUALIFIER_NAME = "TransactionsServiceV2_1";
     private final TransactionActivateHandler transactionActivateHandlerV2;
 
     private final TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2;
@@ -158,7 +158,7 @@ public class TransactionsService {
                                         ).toList()
                                 )
                                 .authToken(authToken)
-                                .status(transactionsUtils.convertEnumerationV3(transaction.getStatus()))
+                                .status(transactionsUtils.convertEnumerationV2_1(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId().name()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())

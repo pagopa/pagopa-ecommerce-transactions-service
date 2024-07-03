@@ -41,13 +41,13 @@ public class TransactionsUtils {
             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
     );
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto> transactionStatusLookupMapV3 = new EnumMap<>(
+    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto> transactionStatusLookupMapV2_1 = new EnumMap<>(
             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
     );
 
     public static Map<String, ResponseEntity<?>> nodeErrorToV2TransactionsResponseEntityMapping = new HashMap<>();
 
-    public static Map<String, ResponseEntity<?>> nodeErrorToV3TransactionsResponseEntityMapping = new HashMap<>();
+    public static Map<String, ResponseEntity<?>> nodeErrorToV2_1TransactionsResponseEntityMapping = new HashMap<>();
 
     @Autowired
     public TransactionsUtils(
@@ -74,8 +74,8 @@ public class TransactionsUtils {
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
-        Set<String> transactionsStatusesV3 = Set
-                .of(it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto.values())
+        Set<String> transactionsStatusesV2_1 = Set
+                .of(it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
@@ -109,11 +109,11 @@ public class TransactionsUtils {
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
             );
         }
-        if (!commonsStatuses.equals(transactionsStatusesV3)) {
-            Set<String> unknownTransactionsStatuses = transactionsStatusesV3.stream()
+        if (!commonsStatuses.equals(transactionsStatusesV2_1)) {
+            Set<String> unknownTransactionsStatuses = transactionsStatusesV2_1.stream()
                     .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
             Set<String> unknownCommonStatuses = commonsStatuses.stream()
-                    .filter(Predicate.not(transactionsStatusesV3::contains)).collect(Collectors.toSet());
+                    .filter(Predicate.not(transactionsStatusesV2_1::contains)).collect(Collectors.toSet());
             throw new IllegalArgumentException(
                     "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
@@ -159,9 +159,9 @@ public class TransactionsUtils {
              *
              * @formatter:on
              */
-            transactionStatusLookupMapV3.put(
+            transactionStatusLookupMapV2_1.put(
                     enumValue,
-                    it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto
+                    it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto
                             .fromValue(enumValue.toString())
             );
         }
@@ -312,8 +312,10 @@ public class TransactionsUtils {
             );
         }
 
-        // v3 uses the same mapping as v2
-        nodeErrorToV3TransactionsResponseEntityMapping = new HashMap<>(nodeErrorToV2TransactionsResponseEntityMapping);
+        // v2.1 uses the same mapping as v2
+        nodeErrorToV2_1TransactionsResponseEntityMapping = new HashMap<>(
+                nodeErrorToV2TransactionsResponseEntityMapping
+        );
     }
 
     public Mono<BaseTransaction> reduceEventsV1(TransactionId transactionId) {
@@ -371,10 +373,10 @@ public class TransactionsUtils {
         return transactionStatusLookupMapV2.get(status);
     }
 
-    public it.pagopa.generated.transactions.v3.server.model.TransactionStatusDto convertEnumerationV3(
-                                                                                                      it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+    public it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto convertEnumerationV2_1(
+                                                                                                          it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
     ) {
-        return transactionStatusLookupMapV3.get(status);
+        return transactionStatusLookupMapV2_1.get(status);
     }
 
     public NewTransactionRequestDto buildWarmupRequestV1() {
@@ -424,7 +426,7 @@ public class TransactionsUtils {
                 );
     }
 
-    public it.pagopa.generated.transactions.v3.server.model.NewTransactionRequestDto buildWarmupRequestV3() {
+    public it.pagopa.generated.transactions.v2_1.server.model.NewTransactionRequestDto buildWarmupRequestV2_1() {
         String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
         int neededPadLength = 18 - noticeCode.length();
         if (neededPadLength < 0) {
@@ -436,12 +438,12 @@ public class TransactionsUtils {
                     .append("0".repeat(neededPadLength))
                     .toString();
         }
-        return new it.pagopa.generated.transactions.v3.server.model.NewTransactionRequestDto()
+        return new it.pagopa.generated.transactions.v2_1.server.model.NewTransactionRequestDto()
                 .emailToken("b397aebf-f61c-4845-9483-67f702aebe36")
                 .orderId("orderId")
                 .paymentNotices(
                         Collections.singletonList(
-                                new it.pagopa.generated.transactions.v3.server.model.PaymentNoticeInfoDto()
+                                new it.pagopa.generated.transactions.v2_1.server.model.PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
                                         .amount(100)
                         )

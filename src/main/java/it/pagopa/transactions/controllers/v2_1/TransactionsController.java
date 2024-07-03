@@ -1,15 +1,15 @@
-package it.pagopa.transactions.controllers.v3;
+package it.pagopa.transactions.controllers.v2_1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
-import it.pagopa.generated.transactions.v3.server.api.V3Api;
-import it.pagopa.generated.transactions.v3.server.model.*;
+import it.pagopa.generated.transactions.v2_1.server.api.V21Api;
+import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
-import it.pagopa.transactions.services.v3.TransactionsService;
+import it.pagopa.transactions.services.v2_1.TransactionsService;
 import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +33,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static it.pagopa.transactions.utils.TransactionsUtils.nodeErrorToV3TransactionsResponseEntityMapping;
+import static it.pagopa.transactions.utils.TransactionsUtils.nodeErrorToV2_1TransactionsResponseEntityMapping;
 
-@RestController("TransactionsControllerV3")
+@RestController("TransactionsControllerV2_1")
 @Slf4j
-public class TransactionsController implements V3Api {
+public class TransactionsController implements V21Api {
 
     @Autowired
     private TransactionsService transactionsService;
@@ -207,7 +207,7 @@ public class TransactionsController implements V3Api {
     @ExceptionHandler(NodoErrorException.class)
     public ResponseEntity<?> nodoErrorHandler(NodoErrorException e) {
         String faultCode = e.getFaultCode();
-        ResponseEntity<?> response = nodeErrorToV3TransactionsResponseEntityMapping.getOrDefault(
+        ResponseEntity<?> response = nodeErrorToV2_1TransactionsResponseEntityMapping.getOrDefault(
                 faultCode,
                 new ResponseEntity<>(
                         new GatewayFaultPaymentProblemJsonDto()
@@ -253,10 +253,10 @@ public class TransactionsController implements V3Api {
                     NewTransactionResponseDto newTransactionResponseDto = WebClient
                             .create()
                             .post()
-                            .uri("http://localhost:8080/v3/transactions")
+                            .uri("http://localhost:8080/v2.1/transactions")
                             .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
                             .header("x-correlation-id", UUID.randomUUID().toString())
-                            .bodyValue(transactionsUtils.buildWarmupRequestV3())
+                            .bodyValue(transactionsUtils.buildWarmupRequestV2_1())
                             .retrieve()
                             .bodyToMono(NewTransactionResponseDto.class)
                             .block(Duration.ofSeconds(30));

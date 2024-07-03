@@ -1,4 +1,4 @@
-package it.pagopa.transactions.services.v3;
+package it.pagopa.transactions.services.v2_1;
 
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -10,7 +10,7 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatew
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.transactions.v3.server.model.*;
+import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -37,8 +37,7 @@ class TransactionServiceTest {
 
     private final TransactionsUtils transactionsUtils = Mockito.mock(TransactionsUtils.class);
 
-    @Autowired
-    private final it.pagopa.transactions.services.v3.TransactionsService transactionsService = new TransactionsService(
+    private final it.pagopa.transactions.services.v2_1.TransactionsService transactionsService = new TransactionsService(
             transactionActivateHandlerv2,
             transactionsActivationProjectionHandlerv2,
             transactionsUtils
@@ -115,7 +114,7 @@ class TransactionServiceTest {
                 .thenReturn(Mono.just(response));
         Mockito.when(transactionsActivationProjectionHandlerv2.handle(transactionActivatedEvent))
                 .thenReturn(Mono.just(transactionActivated));
-        Mockito.when(transactionsUtils.convertEnumerationV3(any()))
+        Mockito.when(transactionsUtils.convertEnumerationV2_1(any()))
                 .thenCallRealMethod();
         Hooks.onOperatorDebug();
         StepVerifier

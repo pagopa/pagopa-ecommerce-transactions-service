@@ -1,23 +1,20 @@
-package it.pagopa.transactions.controllers.v3;
+package it.pagopa.transactions.controllers.v2_1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
-import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
-import it.pagopa.generated.transactions.v3.server.model.*;
+import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.services.v3.TransactionsService;
+import it.pagopa.transactions.services.v2_1.TransactionsService;
 import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -25,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -237,7 +233,7 @@ class TransactionsControllerTest {
         Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
                 .thenReturn(Either.right(""));
         webTestClient.post()
-                .uri("/v3/transactions")
+                .uri("/v2.1/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .body(BodyInserters.fromValue("{}"))
@@ -278,7 +274,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -315,7 +311,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -352,7 +348,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -389,7 +385,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -423,7 +419,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -457,7 +453,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -491,7 +487,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -527,7 +523,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -560,7 +556,7 @@ class TransactionsControllerTest {
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenThrow(new NodoErrorException(faultBean));
         webTestClient.post()
-                .uri("/v3/transactions").contentType(MediaType.APPLICATION_JSON)
+                .uri("/v2.1/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
@@ -639,7 +635,7 @@ class TransactionsControllerTest {
                 .emailToken(null)
                 .idCart(TransactionTestUtils.ID_CART);
         webTestClient.post()
-                .uri("/v3/transactions")
+                .uri("/v2.1/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
@@ -671,7 +667,7 @@ class TransactionsControllerTest {
                 .emailToken(UUID.randomUUID().toString())
                 .idCart(TransactionTestUtils.ID_CART);
         webTestClient.post()
-                .uri("/v3/transactions")
+                .uri("/v2.1/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
                 .bodyValue(newTransactionRequestDto)

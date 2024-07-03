@@ -17,7 +17,7 @@ externalDocs:
 servers:
   - url: https://api.platform.pagopa.it/transactions-service
 paths:
-  /v3/transactions:
+  /v2.1/transactions:
     post:
       operationId: newTransaction
       tags:
