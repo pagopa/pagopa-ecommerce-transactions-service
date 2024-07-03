@@ -175,14 +175,31 @@ components:
           description: Cart identifier provided by creditor institution
           type: string
           example: idCartFromCreditorInstitution
-        orderId:
-          description: NPG order id
-          type: string
-          example: orderId
+        details:
+          description: New transaction optional additional details
+          oneOf:
+            - $ref: '#/components/schemas/NewTransactionRequestNpgDetails'
+          discriminator:
+            propertyName: detailType
+            mapping:
+              npg: '#/components/schemas/NewTransactionRequestNpgDetails'
       required:
         - paymentNotices
         - emailToken
+    NewTransactionRequestNpgDetails:
+      type: object
+      description: New transaction additional details for NPG transaction
+      properties:
+        detailType:
+          type: string
+          description: Detail type discriminator, fixed value 'npg'
+        orderId:
+          type: string
+          description: NPG order id
+      required:
+        - detailType
         - orderId
+
     NewTransactionResponse:
       type: object
       description: Transaction data returned when creating a new transaction

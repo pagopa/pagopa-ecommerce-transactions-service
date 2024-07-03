@@ -68,7 +68,9 @@ public class TransactionsService {
                 new NewTransactionRequestData(
                         newTransactionRequestDto.getIdCart(),
                         Mono.just(new Confidential<>(newTransactionRequestDto.getEmailToken())),
-                        newTransactionRequestDto.getOrderId(),
+                        Optional.ofNullable(newTransactionRequestDto.getDetails())
+                                .filter(NewTransactionRequestNpgDetailsDto.class::isInstance)
+                                .map(detail -> ((NewTransactionRequestNpgDetailsDto) detail).getOrderId()).orElse(null),
                         correlationId,
                         newTransactionRequestDto.getPaymentNotices().stream().map(
                                 el -> new PaymentNotice(

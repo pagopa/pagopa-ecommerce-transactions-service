@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.generated.transactions.v2.server.model.*;
+import it.pagopa.generated.transactions.v3.server.model.NewTransactionRequestNpgDetailsDto;
 import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -438,7 +439,7 @@ public class TransactionsUtils {
         }
         return new it.pagopa.generated.transactions.v3.server.model.NewTransactionRequestDto()
                 .emailToken("b397aebf-f61c-4845-9483-67f702aebe36")
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .paymentNotices(
                         Collections.singletonList(
                                 new it.pagopa.generated.transactions.v3.server.model.PaymentNoticeInfoDto()

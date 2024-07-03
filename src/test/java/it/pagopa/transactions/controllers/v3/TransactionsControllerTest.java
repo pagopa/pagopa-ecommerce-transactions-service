@@ -5,12 +5,8 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
-import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
-import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -25,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -111,7 +106,7 @@ class TransactionsControllerTest {
             NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
             newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
             newTransactionRequestDto.setEmailToken(UUID.randomUUID().toString());
-            newTransactionRequestDto.orderId("orderId");
+            newTransactionRequestDto.details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"));
             NewTransactionResponseDto response = new NewTransactionResponseDto();
             PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
             paymentInfoDto.setAmount(10);
@@ -272,7 +267,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -309,7 +304,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -346,7 +341,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -383,7 +378,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -417,7 +412,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -451,7 +446,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -485,7 +480,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -521,7 +516,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
@@ -554,7 +549,7 @@ class TransactionsControllerTest {
                                 .amount(TransactionTestUtils.AMOUNT)
                 )
                 .emailToken(UUID.randomUUID().toString())
-                .orderId("orderId")
+                .details(new NewTransactionRequestNpgDetailsDto().orderId("orderId"))
                 .idCart(TransactionTestUtils.ID_CART);
 
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
