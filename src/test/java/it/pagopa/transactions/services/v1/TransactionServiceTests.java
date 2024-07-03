@@ -67,6 +67,7 @@ import static org.mockito.Mockito.*;
     {
             it.pagopa.transactions.services.v1.TransactionsService.class,
             it.pagopa.transactions.services.v2.TransactionsService.class,
+            it.pagopa.transactions.services.v2_1.TransactionsService.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
@@ -230,6 +231,9 @@ class TransactionServiceTests {
 
     @MockBean
     private OpenTelemetryUtils openTelemetryUtils;
+
+    @MockBean
+    private ConfidentialMailUtils confidentialMailUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 
@@ -456,7 +460,6 @@ class TransactionServiceTests {
     @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithNPGCardsDetailFor() {
         String orderId = "orderId";
-        String bin = "exampleBin";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")
@@ -2443,19 +2446,6 @@ class TransactionServiceTests {
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
-
-        TransactionInfoDto expectedResponse = new TransactionInfoDto()
-                .transactionId(transactionDocument.getTransactionId())
-                .payments(
-                        transactionDocument.getPaymentNotices().stream().map(
-                                paymentNotice -> new PaymentInfoDto()
-                                        .amount(paymentNotice.getAmount())
-                                        .reason(paymentNotice.getDescription())
-                                        .paymentToken(paymentNotice.getPaymentToken())
-                                        .rptId(paymentNotice.getRptId())
-                        ).toList()
-                )
-                .status(TransactionStatusDto.CLOSED);
 
         Transaction closedTransactionDocument = new Transaction(
                 transactionDocument.getTransactionId(),

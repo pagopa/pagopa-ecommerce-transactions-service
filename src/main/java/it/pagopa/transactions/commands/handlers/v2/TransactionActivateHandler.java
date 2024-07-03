@@ -7,10 +7,7 @@ import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
@@ -320,8 +317,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         NewTransactionRequestData newTransactionRequestData = command.getData();
         TransactionId transactionId = command.getTransactionId();
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
-        Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> data = confidentialMailUtils
-                .toConfidential(command.getData().email()).map(
+        Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> data = command.getData().email()
+                .map(
                         e -> new it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData(
                                 e,
                                 paymentNotices,

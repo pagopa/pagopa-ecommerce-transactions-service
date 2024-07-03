@@ -1,4 +1,4 @@
-package it.pagopa.transactions.services.v2;
+package it.pagopa.transactions.services.v2_1;
 
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -9,12 +9,8 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
-import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
-import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.transactions.v2.server.model.*;
-import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -30,30 +26,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.EMAIL_STRING;
 import static org.mockito.ArgumentMatchers.any;
 
 @AutoConfigureDataRedis
 class TransactionServiceTest {
-    private final TransactionsViewRepository transactionsViewRepository = Mockito
-            .mock(TransactionsViewRepository.class);
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2 = Mockito
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerv2 = Mockito
             .mock(it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2 = Mockito
+    private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerv2 = Mockito
             .mock(it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class);
 
     private final TransactionsUtils transactionsUtils = Mockito.mock(TransactionsUtils.class);
 
-    private final ConfidentialDataManager confidentialDataManager = ConfidentialDataManagerTest.getMock();
-
-    private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(confidentialDataManager);
-
-    @Autowired
-    private final TransactionsService transactionsService = new TransactionsService(
-            transactionActivateHandlerV2,
-            transactionsActivationProjectionHandlerV2,
-            transactionsUtils,
-            confidentialMailUtils
+    private final it.pagopa.transactions.services.v2_1.TransactionsService transactionsService = new TransactionsService(
+            transactionActivateHandlerv2,
+            transactionsActivationProjectionHandlerv2,
+            transactionsUtils
     );
 
     @Test
@@ -64,7 +51,7 @@ class TransactionServiceTest {
         UUID TRANSACTION_ID = UUID.randomUUID();
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
-                .email(EMAIL_STRING)
+                .emailToken(TransactionTestUtils.EMAIL.opaqueData())
                 .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(100));
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
@@ -123,11 +110,11 @@ class TransactionServiceTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionActivateHandlerV2.handle(any()))
+        Mockito.when(transactionActivateHandlerv2.handle(any()))
                 .thenReturn(Mono.just(response));
-        Mockito.when(transactionsActivationProjectionHandlerV2.handle(transactionActivatedEvent))
+        Mockito.when(transactionsActivationProjectionHandlerv2.handle(transactionActivatedEvent))
                 .thenReturn(Mono.just(transactionActivated));
-        Mockito.when(transactionsUtils.convertEnumerationV2(any()))
+        Mockito.when(transactionsUtils.convertEnumerationV2_1(any()))
                 .thenCallRealMethod();
         Hooks.onOperatorDebug();
         StepVerifier

@@ -1,20 +1,16 @@
-package it.pagopa.transactions.services.v2;
+package it.pagopa.transactions.services.v2_1;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.PaymentNotice;
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.domain.TransactionAmount;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.generated.transactions.v2.server.model.*;
+import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,14 +26,12 @@ import java.util.UUID;
 @Slf4j
 public class TransactionsService {
 
-    public static final String QUALIFIER_NAME = "TransactionsServiceV2";
-    private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2;
+    public static final String QUALIFIER_NAME = "TransactionsServiceV2.1";
+    private final TransactionActivateHandler transactionActivateHandlerV2;
 
-    private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2;
+    private final TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2;
 
     private final TransactionsUtils transactionsUtils;
-
-    private final ConfidentialMailUtils confidentialMailUtils;
 
     @Autowired
     public TransactionsService(
@@ -47,13 +41,11 @@ public class TransactionsService {
             @Qualifier(
                 TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
-            TransactionsUtils transactionsUtils,
-            ConfidentialMailUtils confidentialMailUtils
+            TransactionsUtils transactionsUtils
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;
         this.transactionsUtils = transactionsUtils;
-        this.confidentialMailUtils = confidentialMailUtils;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -75,7 +67,7 @@ public class TransactionsService {
                 newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
                 new NewTransactionRequestData(
                         newTransactionRequestDto.getIdCart(),
-                        confidentialMailUtils.toConfidential(newTransactionRequestDto.getEmail()),
+                        Mono.just(new Confidential<>(newTransactionRequestDto.getEmailToken())),
                         newTransactionRequestDto.getOrderId(),
                         correlationId,
                         newTransactionRequestDto.getPaymentNotices().stream().map(
@@ -166,7 +158,7 @@ public class TransactionsService {
                                         ).toList()
                                 )
                                 .authToken(authToken)
-                                .status(transactionsUtils.convertEnumerationV2(transaction.getStatus()))
+                                .status(transactionsUtils.convertEnumerationV2_1(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
                                 .clientId(convertClientId(transaction.getClientId().name()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())

@@ -53,7 +53,6 @@ import reactor.test.StepVerifier;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -66,6 +65,7 @@ import static org.mockito.Mockito.*;
     {
             it.pagopa.transactions.services.v1.TransactionsService.class,
             it.pagopa.transactions.services.v2.TransactionsService.class,
+            it.pagopa.transactions.services.v2_1.TransactionsService.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class,
@@ -229,6 +229,9 @@ class TransactionServiceTests {
 
     @MockBean
     private OpenTelemetryUtils openTelemetryUtils;
+
+    @MockBean
+    private ConfidentialMailUtils confidentialMailUtils;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
     final String USER_ID = TransactionTestUtils.USER_ID;
@@ -529,7 +532,6 @@ class TransactionServiceTests {
     @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithNPGCardsDetailFor() {
         String orderId = "orderId";
-        String bin = "exampleBin";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
                 .paymentInstrumentId("paymentInstrumentId")

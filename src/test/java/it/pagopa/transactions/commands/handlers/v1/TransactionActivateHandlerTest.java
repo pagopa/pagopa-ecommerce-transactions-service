@@ -16,6 +16,8 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
+import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -80,6 +82,8 @@ class TransactionActivateHandlerTest {
 
     private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
+    private final ConfidentialDataManager confidentialDataManager = ConfidentialDataManagerTest.getMock();
+
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
 
@@ -132,7 +136,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -265,7 +269,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -382,7 +386,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -474,7 +478,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -546,7 +550,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -662,7 +666,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
@@ -778,7 +782,7 @@ class TransactionActivateHandlerTest {
                 List.of(rptId),
                 new NewTransactionRequestData(
                         requestDto.getIdCart(),
-                        requestDto.getEmail(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
