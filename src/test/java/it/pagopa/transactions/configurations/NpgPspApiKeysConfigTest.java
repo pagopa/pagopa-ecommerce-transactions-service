@@ -135,6 +135,14 @@ class NpgPspApiKeysConfigTest {
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.PAYPAL),
                         pspToHandle
                 ),
+                npgPspApiKeysConfig.npgCardsApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.APPLEPAY),
+                        pspToHandle
+                ),
+                npgPspApiKeysConfig.npgCardsApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
+                        pspToHandle
+                ),
                 expectedDefaultApiKey
         );
         Either<NpgApiKeyConfigurationException, String> apiKey = npgApiKeyHandler
@@ -173,6 +181,14 @@ class NpgPspApiKeysConfigTest {
                 ),
                 npgPspApiKeysConfig.npgCardsApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.PAYPAL),
+                        pspToHandle
+                ),
+                npgPspApiKeysConfig.npgCardsApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.APPLEPAY),
+                        pspToHandle
+                ),
+                npgPspApiKeysConfig.npgCardsApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
                         pspToHandle
                 ),
                 "defaultApiKey"
