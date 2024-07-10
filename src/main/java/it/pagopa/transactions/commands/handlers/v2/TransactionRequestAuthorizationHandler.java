@@ -17,6 +17,7 @@ import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.ApmAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
@@ -46,6 +47,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
@@ -90,14 +92,20 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
             @Value("${npg.authorization.request.timeout.seconds}") Integer npgAuthRequestTimeout,
             TracingUtils tracingUtils,
-            OpenTelemetryUtils openTelemetryUtils
+            OpenTelemetryUtils openTelemetryUtils,
+            JwtTokenUtils jwtTokenUtils,
+            SecretKey ecommerceSigningKey,
+            @Value("${payment.token.validity}") int jwtWebviewValidityTimeInSeconds
     ) {
         super(
                 paymentGatewayClient,
                 checkoutBasePath,
                 checkoutNpgGdiUrl,
                 checkoutOutcomeUrl,
-                transactionTemplateWrapper
+                transactionTemplateWrapper,
+                jwtTokenUtils,
+                ecommerceSigningKey,
+                jwtWebviewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;

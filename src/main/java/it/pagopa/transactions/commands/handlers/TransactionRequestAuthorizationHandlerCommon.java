@@ -3,8 +3,11 @@ package it.pagopa.transactions.commands.handlers;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.domain.Claims;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -23,6 +26,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -42,18 +46,30 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
+    private final JwtTokenUtils jwtTokenUtils;
+
+    private final SecretKey ecommerceSigningKey;
+
+    private final int jwtWebviewValidityTimeInSeconds;
+
     protected TransactionRequestAuthorizationHandlerCommon(
             PaymentGatewayClient paymentGatewayClient,
             String checkoutBasePath,
             String checkoutNpgGdiUrl,
             String checkoutOutcomeUrl,
-            TransactionTemplateWrapper transactionTemplateWrapper
+            TransactionTemplateWrapper transactionTemplateWrapper,
+            JwtTokenUtils jwtTokenUtils,
+            SecretKey ecommerceSigningKey,
+            int jwtWebviewValidityTimeInSeconds
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
         this.checkoutNpgGdiUrl = checkoutNpgGdiUrl;
         this.checkoutOutcomeUrl = checkoutOutcomeUrl;
         this.transactionTemplateWrapper = transactionTemplateWrapper;
+        this.jwtTokenUtils = jwtTokenUtils;
+        this.ecommerceSigningKey = ecommerceSigningKey;
+        this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
     }
 
     /**
@@ -113,7 +129,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
-                    .getOrderId(), correlationId, clientId)
+                    .getOrderId(), correlationId, clientId, Optional.ofNullable(userId))
             ;
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromServiceName(authorizationData.paymentMethodName());
@@ -184,7 +200,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 ),
                                 orderIdAndFieldsDto.getT1(),
                                 correlationId,
-                                clientId
+                                clientId,
+                                Optional.of(userId)
                         )
                                 .map(
                                         authorizationOutput -> new AuthorizationOutput(
@@ -280,7 +297,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                               AuthorizationRequestData authorizationData,
                                                               String orderId,
                                                               String correlationId,
-                                                              String clientId
+                                                              String clientId,
+                                                              Optional<UUID> userId
 
     ) {
         return confirmPayment(authorizationData, correlationId)
@@ -292,7 +310,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             .ofNullable(npgResponse.getFieldSet())
                                             .map(FieldsDto::getSessionId);
                                     log.info("NGP auth completed session id: {}", confirmPaymentSessionId);
-                                    String authUrl = switch (npgResponse.getState()) {
+                                    Mono<String> authUrl = switch (npgResponse.getState()) {
                                         case GDI_VERIFICATION -> {
                                             if (npgResponse.getFieldSet() == null
                                                     || npgResponse.getFieldSet().getFields() == null
@@ -320,29 +338,43 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                             );
 
-                                            // TODO: Add here newly generated JWT token for IO
-                                            URI gdiCheckPathWithFragment = clientId.equals(
+                                            Mono<URI> gdiCheckPathWithFragment = clientId.equals(
                                                     Transaction.ClientId.IO.toString()
-                                            ) ? encodeURIWithFragmentParams(
-                                                    URI.create(WALLET_GDI_CHECK_PATH),
-                                                    List.of(
-                                                            Tuples.of("gdiIframeUrl", base64redirectionUrl),
-                                                            Tuples.of("clientId", clientId),
-                                                            Tuples.of(
-                                                                    "transactionId",
-                                                                    authorizationData.transactionId().value()
+                                            ) ? generateWebviewToken(
+                                                    authorizationData.transactionId(),
+                                                    authorizationData.paymentInstrumentId(),
+                                                    orderId,
+                                                    userId.orElseThrow()
+                                            ).map(
+                                                    webViewSessionToken -> encodeURIWithFragmentParams(
+                                                            URI.create(WALLET_GDI_CHECK_PATH),
+                                                            List.of(
+                                                                    Tuples.of("gdiIframeUrl", base64redirectionUrl),
+                                                                    Tuples.of("clientId", clientId),
+                                                                    Tuples.of(
+                                                                            "transactionId",
+                                                                            authorizationData.transactionId().value()
+                                                                    ),
+                                                                    Tuples.of("sessionToken", webViewSessionToken)
                                                             )
                                                     )
                                             )
-                                                    : encodeURIWithFragmentParams(
-                                                            URI.create(this.checkoutNpgGdiUrl),
-                                                            List.of(Tuples.of("gdiIframeUrl", base64redirectionUrl))
+                                                    : Mono.just(
+                                                            encodeURIWithFragmentParams(
+                                                                    URI.create(this.checkoutNpgGdiUrl),
+                                                                    List.of(
+                                                                            Tuples.of(
+                                                                                    "gdiIframeUrl",
+                                                                                    base64redirectionUrl
+                                                                            )
+                                                                    )
+                                                            )
                                                     );
 
-                                            yield URI.create(checkoutBasePath)
-                                                    .resolve(
-                                                            gdiCheckPathWithFragment
-                                                    ).toString();
+                                            yield gdiCheckPathWithFragment.map(
+                                                    path -> URI.create(checkoutBasePath)
+                                                            .resolve(path).toString()
+                                            );
 
                                         }
                                         case REDIRECTED_TO_EXTERNAL_DOMAIN -> {
@@ -353,32 +385,43 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         HttpStatus.BAD_GATEWAY
                                                 );
                                             }
-                                            yield npgResponse.getUrl();
+                                            yield Mono.just(npgResponse.getUrl());
                                         }
-                                        case PAYMENT_COMPLETE -> clientId.equals(Transaction.ClientId.IO.toString()) ?
-                                            // TODO: Add here newly generated JWT token for IO
-                                            encodeURIWithFragmentParams(
-                                                    URI.create(checkoutBasePath).resolve(WALLET_ESITO_PATH),
-                                                    List.of(
-                                                            Tuples.of("clientId", clientId),
-                                                            Tuples.of(
-                                                                    "transactionId",
-                                                                    authorizationData.transactionId().value()
-                                                            )
-                                                    )
-                                            ).toString()
-                                                : URI.create(checkoutBasePath)
-                                                        .resolve(checkoutOutcomeUrl)
-                                                        .toString();
+                                        case PAYMENT_COMPLETE -> clientId.equals(
+                                                Transaction.ClientId.IO.toString()
+                                        ) ? generateWebviewToken(
+                                                authorizationData.transactionId(),
+                                                authorizationData.paymentInstrumentId(),
+                                                orderId,
+                                                userId.orElseThrow()
+                                        ).map(
+                                                webViewSessionToken -> encodeURIWithFragmentParams(
+                                                        URI.create(checkoutBasePath).resolve(WALLET_ESITO_PATH),
+                                                        List.of(
+                                                                Tuples.of("clientId", clientId),
+                                                                Tuples.of(
+                                                                        "transactionId",
+                                                                        authorizationData.transactionId().value()
+                                                                ),
+                                                                Tuples.of("sessionToken", webViewSessionToken)
+                                                        )
+                                                ).toString()
+                                        )
+                                                : Mono.just(
+                                                        URI.create(checkoutBasePath)
+                                                                .resolve(checkoutOutcomeUrl)
+                                                                .toString()
+                                                );
                                         default -> throw new BadGatewayException(
                                                 "Invalid NPG confirm payment state response: " + npgResponse.getState(),
                                                 HttpStatus.BAD_GATEWAY
                                         );
                                     };
-                                    return Mono.just(
-                                            new AuthorizationOutput(
+
+                                    return authUrl.map(
+                                            url -> new AuthorizationOutput(
                                                     orderId,
-                                                    authUrl,
+                                                    url,
                                                     authorizationData.sessionId(),
                                                     confirmPaymentSessionId,
                                                     Optional.empty()
@@ -476,5 +519,24 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 .collect(Collectors.joining("&"));
 
         return UriComponentsBuilder.fromUri(uri).fragment(fragment).build().toUri();
+    }
+
+    private Mono<String> generateWebviewToken(
+                                              TransactionId transactionId,
+                                              String paymentInstrumentId,
+                                              String orderId,
+                                              UUID userId
+    ) {
+        return jwtTokenUtils
+                .generateToken(
+                        ecommerceSigningKey,
+                        jwtWebviewValidityTimeInSeconds,
+                        new Claims(
+                                transactionId,
+                                orderId,
+                                paymentInstrumentId,
+                                userId
+                        )
+                ).fold(Mono::error, Mono::just);
     }
 }

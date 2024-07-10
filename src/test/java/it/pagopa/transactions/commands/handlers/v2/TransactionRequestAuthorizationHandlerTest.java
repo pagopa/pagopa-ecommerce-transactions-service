@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.BadRequestException;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
@@ -19,6 +20,7 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingInfo;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
@@ -30,6 +32,7 @@ import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.client.WalletAsyncQueueClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
@@ -58,15 +61,16 @@ import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
@@ -122,6 +126,8 @@ class TransactionRequestAuthorizationHandlerTest {
 
     private final WalletAsyncQueueClient walletAsyncQueueClient = Mockito.mock(WalletAsyncQueueClient.class);
 
+    private static final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
+
     @AfterAll
     public static void afterAll() {
         if (cardsTested) {
@@ -161,7 +167,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 transientQueueEventsTtlSeconds,
                 npgAuthRequestTimeout,
                 tracingUtils,
-                openTelemetryUtils
+                openTelemetryUtils,
+                jwtTokenUtils,
+                ECOMMERCE_JWT_SIGNING_KEY,
+                TOKEN_VALIDITY_TIME_SECONDS
         );
         Mockito.reset(walletAsyncQueueClient);
     }
@@ -723,6 +732,9 @@ class TransactionRequestAuthorizationHandlerTest {
                                 transactionActivatedEvent
                         )
                 );
+
+        Mockito.when(jwtTokenUtils.generateToken(any(), anyInt(), any())).thenReturn(Either.right(MOCK_JWT));
+
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(
@@ -747,6 +759,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .authorizationUrl(
                         new StringBuilder(NPG_WALLET_ESITO_PATH).append("clientId=").append(Transaction.ClientId.IO)
                                 .append("&transactionId=").append(transactionId.value()).toString()
+                                .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -2421,6 +2434,9 @@ class TransactionRequestAuthorizationHandlerTest {
                                 transactionActivatedEvent
                         )
                 );
+
+        Mockito.when(jwtTokenUtils.generateToken(any(), anyInt(), any())).thenReturn(Either.right(MOCK_JWT));
+
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
@@ -2440,6 +2456,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
+                                .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -3746,6 +3763,9 @@ class TransactionRequestAuthorizationHandlerTest {
                                 transactionActivatedEvent
                         )
                 );
+
+        Mockito.when(jwtTokenUtils.generateToken(any(), anyInt(), any())).thenReturn(Either.right(MOCK_JWT));
+
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
@@ -3767,7 +3787,10 @@ class TransactionRequestAuthorizationHandlerTest {
                         NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
-                        ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
+                        )
+                                .concat("&clientId=IO&transactionId=")
+                                .concat(authorizationData.transactionId().value())
+                                .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -4030,6 +4053,9 @@ class TransactionRequestAuthorizationHandlerTest {
                                 transactionActivatedEvent
                         )
                 );
+
+        Mockito.when(jwtTokenUtils.generateToken(any(), anyInt(), any())).thenReturn(Either.right(MOCK_JWT));
+
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
@@ -4052,6 +4078,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 NPG_URL_IFRAME
                                         .getBytes(StandardCharsets.UTF_8)
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
+                                .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
