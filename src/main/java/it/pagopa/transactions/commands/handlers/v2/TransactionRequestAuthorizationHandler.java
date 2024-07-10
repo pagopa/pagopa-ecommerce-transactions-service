@@ -94,7 +94,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
             JwtTokenUtils jwtTokenUtils,
-            SecretKey ecommerceSigningKey,
+            @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
             @Value("${payment.token.validity}") int jwtWebviewValidityTimeInSeconds
     ) {
         super(
@@ -104,7 +104,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 checkoutOutcomeUrl,
                 transactionTemplateWrapper,
                 jwtTokenUtils,
-                ecommerceSigningKey,
+                ecommerceWebViewSigningKey,
                 jwtWebviewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;

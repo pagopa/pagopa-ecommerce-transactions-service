@@ -22,6 +22,7 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -53,7 +54,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             EcommercePaymentMethodsClient paymentMethodsClient,
             TransactionTemplateWrapper transactionTemplateWrapper,
             JwtTokenUtils jwtTokenUtils,
-            SecretKey ecommerceSigningKey,
+            @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
             @Value("${payment.token.validity}") int jwtWebviewValidityTimeInSeconds
     ) {
         super(
@@ -63,7 +64,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 checkoutOutcomeUrl,
                 transactionTemplateWrapper,
                 jwtTokenUtils,
-                ecommerceSigningKey,
+                ecommerceWebViewSigningKey,
                 jwtWebviewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;

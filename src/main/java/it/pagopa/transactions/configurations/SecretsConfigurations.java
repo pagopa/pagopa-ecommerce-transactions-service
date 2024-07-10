@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.WeakKeyException;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.generated.pdv.v1.ApiClient;
 import it.pagopa.generated.pdv.v1.api.TokenApi;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,11 +18,17 @@ import javax.crypto.SecretKey;
 public class SecretsConfigurations {
 
     @Bean
+    @Qualifier("ecommerceSigningKey")
     public SecretKey ecommerceSigningKey(@Value("${jwt.ecommerce.secretKey}") String jwtSecret) {
         return jwtSigningKey(jwtSecret);
     }
 
-    @Bean
+    @Bean("ecommerceWebViewSigningKey")
+    public SecretKey ecommerceWebViewSigningKey(@Value("${jwt.ecommerceWebView.secretKey}") String jwtSecret) {
+        return jwtSigningKey(jwtSecret);
+    }
+
+    @Bean("npgNotificationSigningKey")
     public SecretKey npgNotificationSigningKey(@Value("${npg.notification.jwt.secret}") String jwtSecret) {
         return jwtSigningKey(jwtSecret);
     }
