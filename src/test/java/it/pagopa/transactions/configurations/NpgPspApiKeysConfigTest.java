@@ -140,7 +140,7 @@ class NpgPspApiKeysConfigTest {
                         pspToHandle
                 ),
                 npgPspApiKeysConfig.npgSatispayApiKeys(
-                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY_DIRECT),
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
                         pspToHandle
                 ),
                 expectedDefaultApiKey
@@ -188,7 +188,7 @@ class NpgPspApiKeysConfigTest {
                         pspToHandle
                 ),
                 npgPspApiKeysConfig.npgSatispayApiKeys(
-                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY_DIRECT),
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
                         pspToHandle
                 ),
                 "defaultApiKey"

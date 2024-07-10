@@ -152,7 +152,7 @@ public class NpgPspApiKeysConfigBuilder {
         return parseApiKeysMap(
                 apiKeys,
                 pspToHandle,
-                NpgClient.PaymentMethod.SATISPAY_DIRECT
+                NpgClient.PaymentMethod.SATISPAY
         );
     }
 
@@ -173,7 +173,7 @@ public class NpgPspApiKeysConfigBuilder {
                 .withMethodPspMapping(NpgClient.PaymentMethod.MYBANK, npgMyBankApiKeys)
                 .withMethodPspMapping(NpgClient.PaymentMethod.PAYPAL, npgPaypalApiKeys)
                 .withMethodPspMapping(NpgClient.PaymentMethod.APPLEPAY, npgApplePayApiKeys)
-                .withMethodPspMapping(NpgClient.PaymentMethod.SATISPAY_DIRECT, npgSatispayApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.SATISPAY, npgSatispayApiKeys)
                 .build();
     }
 
