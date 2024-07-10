@@ -95,7 +95,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             OpenTelemetryUtils openTelemetryUtils,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
-            @Value("${payment.token.validity}") int jwtWebviewValidityTimeInSeconds
+            @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds
     ) {
         super(
                 paymentGatewayClient,
