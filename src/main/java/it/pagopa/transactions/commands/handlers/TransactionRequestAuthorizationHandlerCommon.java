@@ -18,19 +18,20 @@ import it.pagopa.transactions.repositories.WalletPaymentInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
-    private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
+    private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check";
     private static final String WALLET_ESITO_PATH = "/ecommerce-fe/esito";
 
     private final PaymentGatewayClient paymentGatewayClient;
@@ -319,21 +320,28 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                             );
 
-                                            StringBuilder gdiCheckPathWithFragment = clientId.equals(
+                                            // TODO: Add here newly generated JWT token for IO
+                                            URI gdiCheckPathWithFragment = clientId.equals(
                                                     Transaction.ClientId.IO.toString()
+                                            ) ? encodeURIWithFragmentParams(
+                                                    URI.create(WALLET_GDI_CHECK_PATH),
+                                                    List.of(
+                                                            Tuples.of("gdiIframeUrl", base64redirectionUrl),
+                                                            Tuples.of("clientId", clientId),
+                                                            Tuples.of(
+                                                                    "transactionId",
+                                                                    authorizationData.transactionId().value()
+                                                            )
+                                                    )
                                             )
-                                                    ? new StringBuilder(
-                                                            WALLET_GDI_CHECK_PATH
-                                                    ).append(base64redirectionUrl)
-                                                            .append("&clientId=")
-                                                            .append(clientId)
-                                                            .append("&transactionId=")
-                                                            .append(authorizationData.transactionId().value())
-                                                    : new StringBuilder(formatGdiCheckUrl(base64redirectionUrl));
+                                                    : encodeURIWithFragmentParams(
+                                                            URI.create(this.checkoutNpgGdiUrl),
+                                                            List.of(Tuples.of("gdiIframeUrl", base64redirectionUrl))
+                                                    );
 
                                             yield URI.create(checkoutBasePath)
                                                     .resolve(
-                                                            gdiCheckPathWithFragment.toString()
+                                                            gdiCheckPathWithFragment
                                                     ).toString();
 
                                         }
@@ -348,20 +356,17 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             yield npgResponse.getUrl();
                                         }
                                         case PAYMENT_COMPLETE -> clientId.equals(Transaction.ClientId.IO.toString()) ?
-
-                                                URI.create(checkoutBasePath)
-                                                        .resolve(
-                                                                new StringBuilder(
-                                                                        WALLET_ESITO_PATH
-                                                                ).append("#clientId=")
-                                                                        .append(clientId)
-                                                                        .append("&transactionId=")
-                                                                        .append(
-                                                                                authorizationData.transactionId()
-                                                                                        .value()
-                                                                        ).toString()
-                                                        ).toString()
-
+                                            // TODO: Add here newly generated JWT token for IO
+                                            encodeURIWithFragmentParams(
+                                                    URI.create(checkoutBasePath).resolve(WALLET_ESITO_PATH),
+                                                    List.of(
+                                                            Tuples.of("clientId", clientId),
+                                                            Tuples.of(
+                                                                    "transactionId",
+                                                                    authorizationData.transactionId().value()
+                                                            )
+                                                    )
+                                            ).toString()
                                                 : URI.create(checkoutBasePath)
                                                         .resolve(checkoutOutcomeUrl)
                                                         .toString();
@@ -461,7 +466,15 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 );
     }
 
-    private String formatGdiCheckUrl(String iframeUrl) {
-        return this.checkoutNpgGdiUrl.concat("#gdiIframeUrl=").concat(iframeUrl);
+    private URI encodeURIWithFragmentParams(
+                                            URI uri,
+                                            List<Tuple2<String, String>> fragmentParameters
+    ) {
+        String fragment = fragmentParameters
+                .stream()
+                .map(entry -> String.format("%s=%s", entry.getT1(), entry.getT2()))
+                .collect(Collectors.joining("&"));
+
+        return UriComponentsBuilder.fromUri(uri).fragment(fragment).build().toUri();
     }
 }
