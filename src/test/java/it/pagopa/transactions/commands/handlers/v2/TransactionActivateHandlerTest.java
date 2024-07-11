@@ -1,6 +1,5 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
-import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;

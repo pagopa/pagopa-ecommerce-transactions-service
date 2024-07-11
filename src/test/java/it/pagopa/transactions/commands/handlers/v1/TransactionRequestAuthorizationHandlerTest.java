@@ -1,8 +1,6 @@
 package it.pagopa.transactions.commands.handlers.v1;
 
 import com.azure.cosmos.implementation.BadRequestException;
-import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionEvent;
 import it.pagopa.ecommerce.commons.domain.*;
@@ -38,21 +36,18 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.*;
+import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.ECOMMERCE_JWT_SIGNING_KEY;
+import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.TOKEN_VALIDITY_TIME_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
