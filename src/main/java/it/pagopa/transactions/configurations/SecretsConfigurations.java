@@ -17,8 +17,7 @@ import javax.crypto.SecretKey;
 @Configuration
 public class SecretsConfigurations {
 
-    @Bean
-    @Qualifier("ecommerceSigningKey")
+    @Bean("ecommerceSigningKey")
     public SecretKey ecommerceSigningKey(@Value("${jwt.ecommerce.secretKey}") String jwtSecret) {
         return jwtSigningKey(jwtSecret);
     }
