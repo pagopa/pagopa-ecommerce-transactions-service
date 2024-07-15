@@ -55,7 +55,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TransactionTemplateWrapper transactionTemplateWrapper,
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
-            @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds
+            @Value("${npg.notification.jwt.validity.time}") int jwtWebViewValidityTimeInSeconds
     ) {
         super(
                 paymentGatewayClient,
