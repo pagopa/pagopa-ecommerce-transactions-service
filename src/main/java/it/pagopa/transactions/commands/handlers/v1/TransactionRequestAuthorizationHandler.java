@@ -65,7 +65,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 transactionTemplateWrapper,
                 jwtTokenUtils,
                 ecommerceWebViewSigningKey,
-                jwtWebviewValidityTimeInSeconds
+                jwtWebViewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
