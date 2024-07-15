@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequeste
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -21,12 +22,14 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.net.URI;
 import java.util.List;
 
@@ -49,14 +52,20 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${checkout.npg.gdi.url}") String checkoutNpgGdiUrl,
             @Value("${checkout.outcome.url}") String checkoutOutcomeUrl,
             EcommercePaymentMethodsClient paymentMethodsClient,
-            TransactionTemplateWrapper transactionTemplateWrapper
+            TransactionTemplateWrapper transactionTemplateWrapper,
+            JwtTokenUtils jwtTokenUtils,
+            @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
+            @Value("${npg.notification.jwt.validity.time}") int jwtWebViewValidityTimeInSeconds
     ) {
         super(
                 paymentGatewayClient,
                 checkoutBasePath,
                 checkoutNpgGdiUrl,
                 checkoutOutcomeUrl,
-                transactionTemplateWrapper
+                transactionTemplateWrapper,
+                jwtTokenUtils,
+                ecommerceWebViewSigningKey,
+                jwtWebViewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
