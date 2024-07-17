@@ -84,7 +84,6 @@ microservice-chart:
     triggers:
       - type: cpu
         metadata:
-          # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
   strategy:
