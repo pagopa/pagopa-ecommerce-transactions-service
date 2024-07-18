@@ -123,16 +123,24 @@ class NpgPspApiKeysConfigTest {
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.CARDS),
                         pspToHandle
                 ),
-                npgPspApiKeysConfig.npgCardsApiKeys(
+                npgPspApiKeysConfig.npgBancomatpayApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.BANCOMATPAY),
                         pspToHandle
                 ),
-                npgPspApiKeysConfig.npgCardsApiKeys(
+                npgPspApiKeysConfig.npgMyBankApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.MYBANK),
                         pspToHandle
                 ),
-                npgPspApiKeysConfig.npgCardsApiKeys(
+                npgPspApiKeysConfig.npgPaypalApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.PAYPAL),
+                        pspToHandle
+                ),
+                npgPspApiKeysConfig.npgApplePayApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.APPLEPAY),
+                        pspToHandle
+                ),
+                npgPspApiKeysConfig.npgSatispayApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
                         pspToHandle
                 ),
                 expectedDefaultApiKey
@@ -163,16 +171,24 @@ class NpgPspApiKeysConfigTest {
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.CARDS),
                         pspToHandle
                 ),
-                npgPspApiKeysConfig.npgCardsApiKeys(
+                npgPspApiKeysConfig.npgBancomatpayApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.BANCOMATPAY),
                         pspToHandle
                 ),
-                npgPspApiKeysConfig.npgCardsApiKeys(
+                npgPspApiKeysConfig.npgMyBankApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.MYBANK),
                         pspToHandle
                 ),
-                npgPspApiKeysConfig.npgCardsApiKeys(
+                npgPspApiKeysConfig.npgPaypalApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.PAYPAL),
+                        pspToHandle
+                ),
+                npgPspApiKeysConfig.npgApplePayApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.APPLEPAY),
+                        pspToHandle
+                ),
+                npgPspApiKeysConfig.npgSatispayApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
                         pspToHandle
                 ),
                 "defaultApiKey"
