@@ -30,7 +30,7 @@ microservice-chart:
         CHECKOUT_OUTCOME_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/esito"
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.32.6" #improve
+    tag: "1.32.8" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -190,6 +190,7 @@ microservice-chart:
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_ECOMMERCE_SECRET: sessions-jwt-secret
+    JWT_ECOMMERCE_WEBVIEW_SECRET: ecommerce-io-jwt-signing-key
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     WALLET_API_KEY: wallet-api-key

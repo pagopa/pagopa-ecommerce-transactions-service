@@ -29,7 +29,7 @@ microservice-chart:
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.32.6"
+    tag: "1.32.8"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -47,7 +47,7 @@ microservice-chart:
     periodSeconds: 10
   deployment:
     create: true
-    replicas: 3
+    replicas: 5
   service:
     create: true
     type: ClusterIP
@@ -77,14 +77,13 @@ microservice-chart:
       cpu: "500m"
   autoscaling:
     enable: true
-    minReplica: 3
+    minReplica: 5
     maxReplica: 10
     pollingInterval: 30 # seconds
     cooldownPeriod: 300 # seconds
     triggers:
       - type: cpu
         metadata:
-          # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
   strategy:
@@ -189,6 +188,7 @@ microservice-chart:
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_ECOMMERCE_SECRET: sessions-jwt-secret
+    JWT_ECOMMERCE_WEBVIEW_SECRET: ecommerce-io-jwt-signing-key
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key

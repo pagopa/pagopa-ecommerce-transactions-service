@@ -4,6 +4,7 @@ import io.vavr.control.Either;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Component;
+
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
