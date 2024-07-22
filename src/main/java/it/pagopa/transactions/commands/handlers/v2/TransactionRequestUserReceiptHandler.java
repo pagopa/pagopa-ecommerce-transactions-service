@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -13,6 +14,7 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,9 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
     public static final String QUALIFIER_NAME = "TransactionRequestUserReceiptHandlerV2";
 
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository;
+
+    @Autowired
+    private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
@@ -132,7 +138,16 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                             )
                     );
 
-                    return userReceiptAddedEventRepository.save(event)
+                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                    new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                                            Optional.ofNullable(tx.getTransactionAuthorizationRequestData().getPspId()),
+                                            tx.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
+                                            tx.getTransactionActivatedData().getClientId()
+                                    ));
+
+
+                    Mono<TransactionUserReceiptRequestedEvent> userReceiptRequestedEvent =  userReceiptAddedEventRepository.save(event)
                             .flatMap(
                                     userReceiptEvent -> tracingUtils.traceMono(
                                             this.getClass().getSimpleName(),
@@ -159,6 +174,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                             )
                                             .thenReturn(userReceiptEvent)
                             );
+                    return userReceiptRequestedEvent;
                 });
     }
 

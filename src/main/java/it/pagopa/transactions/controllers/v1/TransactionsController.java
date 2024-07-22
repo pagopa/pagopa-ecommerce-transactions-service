@@ -2,6 +2,7 @@ package it.pagopa.transactions.controllers.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
@@ -242,10 +243,15 @@ public class TransactionsController implements TransactionsApi {
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
                                 )
                                 .doOnError(exception -> {
-                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = TransactionsService
-                                            .exceptionToUpdateStatusOutcome(
-                                                    exception
-                                            );
+                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
+                                            exception
+                                    );
+                                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(outcome,
+                                                    Optional.ofNullable(null),
+                                                    "CP",
+                                                    Transaction.ClientId.CHECKOUT)
+                                    );
                                     log.error("Got error while trying to add user receipt", exception);
                                 })
                                 .onErrorMap(SendPaymentResultException::new)

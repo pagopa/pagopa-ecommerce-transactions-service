@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -54,7 +55,6 @@ import javax.crypto.SecretKey;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -1187,12 +1187,12 @@ class TransactionsControllerTest {
     @Test
     void shouldTraceSyntacticInvalidRequestForSendPaymentResult() {
         String contextPath = "user-receipts";
-        /*
-         * UpdateTransactionStatusTracerUtils.NodoStatusUpdate expectedStatusUpdateInfo
-         * = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-         * UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.
-         * INVALID_REQUEST );
-         */
+        UpdateTransactionStatusTracerUtils.NodoStatusUpdate expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                Optional.ofNullable(null),
+                "CP",
+                Transaction.ClientId.CHECKOUT
+        );
         ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
         ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
         RequestPath requestPath = Mockito.mock(RequestPath.class);
@@ -1204,10 +1204,9 @@ class TransactionsControllerTest {
                 .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
-        /*
-         * verify(updateTransactionStatusTracerUtils,
-         * times(1)).traceStatusUpdateOperation( expectedStatusUpdateInfo );
-         */
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
     }
 
     @Test
@@ -1295,14 +1294,14 @@ class TransactionsControllerTest {
                 })
                 .verifyComplete();
 
-        /*
-         * UpdateTransactionStatusTracerUtils.StatusUpdateInfo
-         * expectedTransactionUpdateStatus = new
-         * UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-         * UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK );
-         * verify(updateTransactionStatusTracerUtils, times(1))
-         * .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
-         */
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                Optional.ofNullable(null),
+                "CP",
+                Transaction.ClientId.CHECKOUT
+        );
+        verify(updateTransactionStatusTracerUtils, times(1))
+                .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
     }
 
     private static Stream<Arguments> koAddUserReceiptMethodSource() {
@@ -1377,12 +1376,15 @@ class TransactionsControllerTest {
                 )
                 .verify();
 
-        /*
-         * UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo
-         * = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate( expectedOutcome );
-         * verify(updateTransactionStatusTracerUtils,
-         * times(1)).traceStatusUpdateOperation( expectedStatusUpdateInfo );
-         */
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                expectedOutcome,
+                Optional.ofNullable(null),
+                "CP",
+                Transaction.ClientId.CHECKOUT
+        );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
     }
 
     @Test

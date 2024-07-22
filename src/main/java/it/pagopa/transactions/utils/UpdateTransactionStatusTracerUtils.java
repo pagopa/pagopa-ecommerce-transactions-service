@@ -2,6 +2,7 @@ package it.pagopa.transactions.utils;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -216,11 +217,19 @@ public class UpdateTransactionStatusTracerUtils {
      *
      * @param outcome - the transaction update outcome
      */
-    public record NodoStatusUpdate(UpdateTransactionStatusOutcome outcome)
+    public record NodoStatusUpdate(
+            UpdateTransactionStatusOutcome outcome,
+            Optional<String> pspId,
+            String paymentMethodTypeCode,
+            Transaction.ClientId clientId
+    )
             implements
             StatusUpdateInfo {
         public NodoStatusUpdate {
             Objects.requireNonNull(outcome);
+            Objects.requireNonNull(pspId);
+            Objects.requireNonNull(paymentMethodTypeCode);
+            Objects.requireNonNull(clientId);
         }
 
         @Override
@@ -235,7 +244,7 @@ public class UpdateTransactionStatusTracerUtils {
 
         @Override
         public Optional<String> pspId() {
-            return Optional.empty();
+            return pspId;
         }
 
         @Override

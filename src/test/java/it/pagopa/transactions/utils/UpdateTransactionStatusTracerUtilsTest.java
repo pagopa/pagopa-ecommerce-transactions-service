@@ -1,6 +1,7 @@
 package it.pagopa.transactions.utils;
 
 import io.opentelemetry.api.common.Attributes;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,7 +37,10 @@ class UpdateTransactionStatusTracerUtilsTest {
                                                                       UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome
     ) {
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                outcome
+                outcome,
+                Optional.ofNullable(null),
+                "CP",
+                Transaction.ClientId.CHECKOUT
         );
         // pre-conditions
         doNothing().when(openTelemetryUtils).addSpanWithAttributes(
