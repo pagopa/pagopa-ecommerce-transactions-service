@@ -4,6 +4,8 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -54,6 +56,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private OpenTelemetryUtils openTelemetryUtils;
+
+    @Autowired
+    private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
 
     @ExceptionHandler(
         {
@@ -180,7 +185,20 @@ public class TransactionsController implements TransactionsApi {
                                         transactionId,
                                         transactionIdDecoded
                                 )
-                        )
+                        ).map(updateAuthorizationRequest -> {
+                            ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                                    "PATCH-auth-request-%s".formatted(transactionId),
+                                    "transaction-service"
+                            );
+                            boolean locked = exclusiveLockDocumentWrapper.saveIfAbsent(
+                                    lockDocument
+                            );
+                            log.info("UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]", transactionIdDecoded, lockDocument.id(), locked);
+                            if (!locked) {
+                                throw new LockNotAcquiredException(new TransactionId(transactionIdDecoded), lockDocument);
+                            }
+                            return updateAuthorizationRequest;
+                        })
                         .flatMap(
                                 updateAuthorizationRequest -> {
                                     Tuple3<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, Optional<String>, UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult> authDetails = switch (updateAuthorizationRequest.getOutcomeGateway()) {
@@ -664,6 +682,18 @@ public class TransactionsController implements TransactionsApi {
                         .status(httpStatus.value())
                         .title(httpStatus.getReasonPhrase())
                         .detail(exception.getDetail()),
+                httpStatus
+        );
+    }
+
+    @ExceptionHandler(LockNotAcquiredException.class)
+    ResponseEntity<ProblemJsonDto> lockNotAcquiredExceptionHandler(LockNotAcquiredException exception) {
+        HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title("Error acquiring lock to perform operation")
+                        .detail(exception.getMessage()),
                 httpStatus
         );
     }
