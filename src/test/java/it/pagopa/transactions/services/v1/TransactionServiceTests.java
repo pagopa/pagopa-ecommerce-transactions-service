@@ -2385,6 +2385,8 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnAlreadyProcessedExceptionForMissingAuthRequestedEventDuringUpdateAuthorizationOutcome() {
+        Hooks.onOperatorDebug();
+
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();

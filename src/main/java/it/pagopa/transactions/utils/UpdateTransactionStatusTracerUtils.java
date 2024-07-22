@@ -5,6 +5,7 @@ import io.opentelemetry.api.common.Attributes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -215,11 +216,8 @@ public class UpdateTransactionStatusTracerUtils {
     }
 
     /**
-     * Transaction status update record for payment transaction gateway update
-     * trigger
+     * Contextual data for a transaction authorization status update
      *
-     * @param outcome                           - the transaction update status
-     *                                          outcome
      * @param trigger                           - the gateway trigger that initiate
      *                                          the request
      * @param pspId                             - the psp id chosen for the current
@@ -227,19 +225,13 @@ public class UpdateTransactionStatusTracerUtils {
      * @param gatewayAuthorizationOutcomeResult - the gateway authorization outcome
      *                                          result
      */
-    public record PaymentGatewayStatusUpdate(
-            UpdateTransactionStatusOutcome outcome,
-            UpdateTransactionTrigger trigger,
+    public record PaymentGatewayStatusUpdateContext(
+            @NotNull UpdateTransactionTrigger trigger,
+            @NotNull Optional<String> pspId,
+            @NotNull Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult
 
-            Optional<String> pspId,
-
-            Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult
-    )
-            implements
-            StatusUpdateInfo {
-
-        public PaymentGatewayStatusUpdate {
-            Objects.requireNonNull(outcome);
+    ) {
+        public PaymentGatewayStatusUpdateContext {
             Objects.requireNonNull(trigger);
             Objects.requireNonNull(pspId);
             Objects.requireNonNull(gatewayAuthorizationOutcomeResult);
@@ -255,10 +247,45 @@ public class UpdateTransactionStatusTracerUtils {
                 );
             }
         }
+    }
+
+    /**
+     * Transaction status update record for payment transaction gateway update
+     * trigger
+     *
+     * @param outcome - the transaction update status outcome
+     * @param context - the transaction update status context
+     */
+    public record PaymentGatewayStatusUpdate(
+            @NotNull UpdateTransactionStatusOutcome outcome,
+            @NotNull PaymentGatewayStatusUpdateContext context
+    )
+            implements
+            StatusUpdateInfo {
+
+        public PaymentGatewayStatusUpdate {
+            Objects.requireNonNull(outcome);
+            Objects.requireNonNull(context);
+        }
 
         @Override
         public UpdateTransactionStatusType type() {
             return UpdateTransactionStatusType.AUTHORIZATION_OUTCOME;
+        }
+
+        @Override
+        public UpdateTransactionTrigger trigger() {
+            return context.trigger;
+        }
+
+        @Override
+        public Optional<String> pspId() {
+            return context.pspId;
+        }
+
+        @Override
+        public Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult() {
+            return context.gatewayAuthorizationOutcomeResult;
         }
 
     }

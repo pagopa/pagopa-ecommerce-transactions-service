@@ -763,7 +763,8 @@ public class TransactionsService {
                 )
                 .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction))
                 .cast(it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction.class)
-                .zipWith(authorizationRequestedCreationDate);
+                .zipWith(authorizationRequestedCreationDate)
+                .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
         Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction, ZonedDateTime>> transactionV2 = transactionsUtils
                 .reduceEvents(
@@ -774,7 +775,8 @@ public class TransactionsService {
                 )
                 .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction))
                 .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class)
-                .zipWith(authorizationRequestedCreationDate);
+                .zipWith(authorizationRequestedCreationDate)
+                .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
         Mono<Optional<String>> pspIdV1 = transactionV1.map(Tuple2::getT1)
                 .map(transactionsUtils::getPspId);
@@ -784,38 +786,38 @@ public class TransactionsService {
 
         Mono<Optional<String>> transactionPspId = pspIdV2.switchIfEmpty(pspIdV1);
 
-        Mono<Tuple3<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, Optional<String>, UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult>> authDetails = transactionPspId.map(pspId -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
-            case OutcomeXpayGatewayDto outcome -> Tuples.of(
+        Mono<UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext> authUpdateContext = transactionPspId.map(pspId -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
+            case OutcomeXpayGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
                     pspId,
-                    new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                    Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
                             outcome.getOutcome().toString(),
                             Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
-                    )
+                    ))
             );
-            case OutcomeVposGatewayDto outcome -> Tuples.of(
+            case OutcomeVposGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
                     pspId,
-                    new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                    Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
                             outcome.getOutcome().toString(),
                             Optional.ofNullable(outcome.getErrorCode()).map(OutcomeVposGatewayDto.ErrorCodeEnum::toString)
-                    )
+                    ))
             );
-            case OutcomeNpgGatewayDto outcome -> Tuples.of(
+            case OutcomeNpgGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
                     pspId,
-                    new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                    Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
                             outcome.getOperationResult().toString(),
                             Optional.ofNullable(outcome.getErrorCode())
-                    )
+                    ))
             );
-            case OutcomeRedirectGatewayDto outcome -> Tuples.of(
+            case OutcomeRedirectGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
                     pspId,
-                    new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                    Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
                             outcome.getOutcome().toString(),
                             Optional.ofNullable(outcome.getErrorCode())
-                    )
+                    ))
             );
             default ->
                     throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
@@ -844,14 +846,12 @@ public class TransactionsService {
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .publishOn(Schedulers.boundedElastic())
                 .doOnNext(
-                        ignored -> authDetails.subscribe(details ->
+                        ignored -> authUpdateContext.subscribe(updateContext ->
                                 updateTransactionStatusTracerUtils
                                         .traceStatusUpdateOperation(
                                                 new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                                                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                                                        details.getT1(),
-                                                        details.getT2(),
-                                                        Optional.of(details.getT3())
+                                                        updateContext
                                                 )
                                         )
                         )
@@ -861,13 +861,11 @@ public class TransactionsService {
                             exception
                     );
 
-                    return authDetails.doOnNext(details ->
+                    return authUpdateContext.doOnNext(updateContext ->
                             updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
                                     new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                                             outcome,
-                                            details.getT1(),
-                                            details.getT2(),
-                                            Optional.of(details.getT3())
+                                            updateContext
                                     )
                             )
                     ).then(Mono.error(exception));

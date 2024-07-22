@@ -382,9 +382,11 @@ public class TransactionsController implements TransactionsApi {
             };
             statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                    trigger,
-                    Optional.empty(),
-                    Optional.empty()
+                    new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                            trigger,
+                            Optional.empty(),
+                            Optional.empty()
+                    )
             );
         } else if (contextPath.endsWith("user-receipts")) {
             statusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(

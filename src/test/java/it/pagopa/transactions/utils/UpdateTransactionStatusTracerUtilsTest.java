@@ -85,9 +85,11 @@ class UpdateTransactionStatusTracerUtilsTest {
     ) {
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                trigger,
-                Optional.empty(),
-                Optional.empty()
+                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                        trigger,
+                        Optional.empty(),
+                        Optional.empty()
+                )
         );
         // pre-conditions
         doNothing().when(openTelemetryUtils).addSpanWithAttributes(
@@ -129,9 +131,11 @@ class UpdateTransactionStatusTracerUtilsTest {
     ) {
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
-                Optional.ofNullable(pspId),
-                Optional.empty()
+                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
+                        Optional.ofNullable(pspId),
+                        Optional.empty()
+                )
         );
         // pre-conditions
         doNothing().when(openTelemetryUtils).addSpanWithAttributes(
@@ -169,6 +173,16 @@ class UpdateTransactionStatusTracerUtilsTest {
                 NullPointerException.class,
                 () -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                         null,
+                        null
+                )
+        );
+    }
+
+    @Test
+    void shouldThrowExceptionBuildingInvalidPaymentGatewayStatusUpdateContextWithNullAttributes() {
+        assertThrows(
+                NullPointerException.class,
+                () -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                         null,
                         null,
                         null
@@ -182,9 +196,11 @@ class UpdateTransactionStatusTracerUtilsTest {
                 IllegalArgumentException.class,
                 () -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
-                        Optional.empty(),
-                        Optional.empty()
+                        new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                                Optional.empty(),
+                                Optional.empty()
+                        )
                 )
         );
         assertEquals("Invalid trigger for PaymentGatewayStatusUpdate: NODO", exception.getMessage());

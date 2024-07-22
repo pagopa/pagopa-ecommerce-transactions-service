@@ -1299,12 +1299,14 @@ class TransactionsControllerTest {
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                trigger,
-                Optional.ofNullable(expectedPspId),
-                Optional.of(
-                        new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                                expectedOutcome,
-                                Optional.empty()
+                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                        trigger,
+                        Optional.ofNullable(expectedPspId),
+                        Optional.of(
+                                new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                        expectedOutcome,
+                                        Optional.empty()
+                                )
                         )
                 )
         );
@@ -1333,9 +1335,11 @@ class TransactionsControllerTest {
         String contextPath = "auth-requests";
         UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                expectedTrigger,
-                Optional.empty(),
-                Optional.empty()
+                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                    expectedTrigger,
+                    Optional.empty(),
+                    Optional.empty()
+                )
         );
         ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
         ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);

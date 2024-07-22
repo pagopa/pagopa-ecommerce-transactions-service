@@ -522,12 +522,14 @@ class TransactionServiceTest {
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
                 expectedOutcome,
-                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                Optional.empty(),
-                Optional.of(
-                        new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                                "KO",
-                                Optional.of("1")
+                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                        Optional.empty(),
+                        Optional.of(
+                                new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                        "KO",
+                                        Optional.of("1")
+                                )
                         )
                 )
         );
