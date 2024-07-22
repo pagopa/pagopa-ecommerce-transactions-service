@@ -596,7 +596,8 @@ public class PaymentGatewayClient {
      */
     public Mono<RedirectUrlResponseDto> requestRedirectUrlAuthorization(
                                                                         AuthorizationRequestData authorizationData,
-                                                                        RedirectUrlRequestDto.TouchpointEnum touchpoint
+                                                                        RedirectUrlRequestDto.TouchpointEnum touchpoint,
+                                                                        UUID userId
     ) {
         return new JwtTokenUtils()
                 .generateToken(
@@ -606,7 +607,7 @@ public class PaymentGatewayClient {
                                 authorizationData.transactionId(),
                                 null,
                                 authorizationData.paymentInstrumentId(),
-                                null
+                                userId
                         )
                 ).fold(
                         Mono::error,

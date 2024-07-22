@@ -177,11 +177,13 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         )
                 );
 
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoRedirect = transaction
-                .map(BaseTransaction::getClientId).flatMap(
-                        clientId -> redirectionAuthRequestPipeline(
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoRedirect = transactionActivated
+                .flatMap(
+                        tx -> redirectionAuthRequestPipeline(
                                 authorizationRequestData,
-                                clientId
+                                tx.getClientId(),
+                                Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
+                                        .filter(Objects::nonNull).map(t -> UUID.fromString(t)).orElse(null)
                         )
                 ).map(
                         authorizationOutput -> Tuples.of(
@@ -337,7 +339,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      */
     protected Mono<AuthorizationOutput> redirectionAuthRequestPipeline(
                                                                        AuthorizationRequestData authorizationData,
-                                                                       Transaction.ClientId clientId
+                                                                       Transaction.ClientId clientId,
+                                                                       UUID userId
 
     ) {
         Transaction.ClientId effectiveClient = switch (clientId) {
@@ -348,7 +351,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         RedirectUrlRequestDto.TouchpointEnum touchpoint = RedirectUrlRequestDto.TouchpointEnum
                 .valueOf(effectiveClient.name());
 
-        return redirectionAuthRequestPipeline(authorizationData, touchpoint);
+        return redirectionAuthRequestPipeline(authorizationData, touchpoint, userId);
     }
 
     /**

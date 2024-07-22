@@ -493,13 +493,14 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
      */
     protected Mono<AuthorizationOutput> redirectionAuthRequestPipeline(
                                                                        AuthorizationRequestData authorizationData,
-                                                                       RedirectUrlRequestDto.TouchpointEnum touchpoint
+                                                                       RedirectUrlRequestDto.TouchpointEnum touchpoint,
+                                                                       UUID userId
 
     ) {
         return Mono.just(authorizationData)
                 .filter(authData -> authorizationData.authDetails() instanceof RedirectionAuthRequestDetailsDto)
                 .flatMap(
-                        details -> paymentGatewayClient.requestRedirectUrlAuthorization(details, touchpoint)
+                        details -> paymentGatewayClient.requestRedirectUrlAuthorization(details, touchpoint, userId)
                 )
                 .map(
                         redirectUrlResponseDto -> new AuthorizationOutput(

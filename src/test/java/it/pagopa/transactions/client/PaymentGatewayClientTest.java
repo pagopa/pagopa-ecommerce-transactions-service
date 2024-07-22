@@ -2593,7 +2593,11 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+                client.requestRedirectUrlAuthorization(
+                        authorizationData,
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        UUID.fromString(USER_ID)
+                )
         )
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
@@ -2748,7 +2752,11 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+                client.requestRedirectUrlAuthorization(
+                        authorizationData,
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        UUID.fromString(USER_ID)
+                )
         )
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
@@ -2868,7 +2876,11 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+                client.requestRedirectUrlAuthorization(
+                        authorizationData,
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        UUID.fromString(USER_ID)
+                )
         )
                 .expectError(expectedMappedException)
                 .verify();
@@ -2967,7 +2979,11 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                client.requestRedirectUrlAuthorization(authorizationData, RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+                client.requestRedirectUrlAuthorization(
+                        authorizationData,
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        UUID.fromString(USER_ID)
+                )
         )
                 .expectError(BadGatewayException.class)
                 .verify();
@@ -3054,7 +3070,8 @@ class PaymentGatewayClientTest {
         StepVerifier.create(
                 redirectClient.requestRedirectUrlAuthorization(
                         authorizationData,
-                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        UUID.fromString(USER_ID)
                 )
         )
                 .expectError(RedirectConfigurationException.class)
@@ -3095,7 +3112,8 @@ class PaymentGatewayClientTest {
                 InvalidRequestException.class,
                 () -> client.requestRedirectUrlAuthorization(
                         authorizationData,
-                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        UUID.fromString(USER_ID)
                 )
         );
         verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
@@ -3330,7 +3348,7 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint)
+                redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint, UUID.fromString(USER_ID))
         )
                 .expectNext(redirectUrlResponseDto)
                 .verifyComplete();
@@ -3410,7 +3428,7 @@ class PaymentGatewayClientTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(
-                redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint)
+                redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint, UUID.fromString(USER_ID))
         )
                 .consumeErrorWith(
                         exp -> assertEquals(
