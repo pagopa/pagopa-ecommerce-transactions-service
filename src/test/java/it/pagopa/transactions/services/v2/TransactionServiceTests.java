@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
@@ -232,6 +233,9 @@ class TransactionServiceTests {
 
     @MockBean
     private ConfidentialMailUtils confidentialMailUtils;
+
+    @MockBean
+    private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
     final String USER_ID = TransactionTestUtils.USER_ID;

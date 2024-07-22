@@ -186,16 +186,17 @@ public class TransactionsController implements TransactionsApi {
                                         transactionIdDecoded
                                 )
                         ).map(updateAuthorizationRequest -> {
+                            TransactionId domainTransactionId = new TransactionId(transactionIdDecoded);
                             ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
-                                    "PATCH-auth-request-%s".formatted(transactionId),
-                                    "transaction-service"
+                                    "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
+                                    "transactions-service"
                             );
                             boolean locked = exclusiveLockDocumentWrapper.saveIfAbsent(
                                     lockDocument
                             );
-                            log.info("UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]", transactionIdDecoded, lockDocument.id(), locked);
+                            log.info("UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]", domainTransactionId.value(), lockDocument.id(), locked);
                             if (!locked) {
-                                throw new LockNotAcquiredException(new TransactionId(transactionIdDecoded), lockDocument);
+                                throw new LockNotAcquiredException(domainTransactionId, lockDocument);
                             }
                             return updateAuthorizationRequest;
                         })
