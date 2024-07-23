@@ -461,6 +461,13 @@ class TransactionRequestUserReceiptHandlerTest {
                         closureSentEvent
                 ));
 
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
+                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
+                authorizationRequestedEvent.getData().getPaymentTypeCode(),
+                transactionActivatedEvent.getData().getClientId()
+        );
+
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
 
@@ -468,6 +475,10 @@ class TransactionRequestUserReceiptHandlerTest {
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
                 .verify();
+
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
     }
@@ -633,10 +644,22 @@ class TransactionRequestUserReceiptHandlerTest {
                 false,
                 updateTransactionStatusTracerUtils
         );
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
+                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
+                authorizationRequestedEvent.getData().getPaymentTypeCode(),
+                transactionActivatedEvent.getData().getClientId()
+        );
+
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectError(AlreadyProcessedException.class)
                 .verify();
+
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(
                 any()
@@ -730,14 +753,14 @@ class TransactionRequestUserReceiptHandlerTest {
                 authorizationRequestedEvent.getData().getPaymentTypeCode(),
                 transactionActivatedEvent.getData().getClientId()
         );
-        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
-                any()
-        );
 
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectError(InvalidRequestException.class)
                 .verify();
 
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
         Mockito.verify(queueAsyncClient, Mockito.times(0)).sendMessageWithResponse(any(), any(), any());
     }

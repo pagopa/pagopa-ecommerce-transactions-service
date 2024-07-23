@@ -2,11 +2,11 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionExpired;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionWithRequestedAuthorization;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -32,6 +32,9 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
+import static it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
 
 @Component(TransactionRequestUserReceiptHandler.QUALIFIER_NAME)
 @Slf4j
@@ -68,26 +71,6 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
     }
 
-    /**
-     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome} enumeration
-     *
-     * @param throwable the caught throwable
-     * @return the mapped outcome to be traced
-     */
-    private UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome exceptionToUpdateStatusOutcome(Throwable throwable) {
-        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = switch (throwable) {
-            case AlreadyProcessedException ignored ->
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
-            case TransactionNotFoundException ignored ->
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND;
-            case InvalidRequestException ignored ->
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
-            default -> UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
-        };
-        log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcome);
-        return outcome;
-    }
-
     @Override
     public Mono<BaseTransactionEvent<?>> handle(TransactionAddUserReceiptCommand command) {
         Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> transaction = transactionsUtils
@@ -106,7 +89,23 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                         : "N/A"
                         )
                 )
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
+                .flatMap(t -> {
+                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                                    WRONG_TRANSACTION_STATUS,
+                                    Optional.ofNullable(
+                                            ((BaseTransactionWithRequestedAuthorization) t)
+                                                    .getTransactionAuthorizationRequestData()
+                                                    .getPspId()
+                                    ),
+                                    ((BaseTransactionWithRequestedAuthorization) t)
+                                            .getTransactionAuthorizationRequestData()
+                                            .getPaymentTypeCode(),
+                                    t.getClientId()
+                            )
+                    );
+                    return Mono.error(new AlreadyProcessedException(t.getTransactionId()));
+                });
         return transaction
                 .map(
                         tx -> tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionExpired txExpired
@@ -137,6 +136,22 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                             isOk
                     );
                     if (!isOk) {
+                        log.debug("invoking updateTransactionStatusTracerUtils");
+                        updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                                        INVALID_REQUEST,
+                                        Optional.ofNullable(
+                                                ((BaseTransactionWithRequestedAuthorization) tx)
+                                                        .getTransactionAuthorizationRequestData()
+                                                        .getPspId()
+                                        ),
+                                        ((TransactionClosed) tx)
+                                                .getTransactionAuthorizationRequestData()
+                                                .getPaymentTypeCode(),
+                                        tx.getClientId()
+                                )
+                        );
+                        log.debug("return mono error");
                         return Mono.error(
                                 new InvalidRequestException(
                                         "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send paymnt result payment tokens: %s"
@@ -200,26 +215,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                             )
                                                     );
                                                 }
-                                        ).doOnError(exception -> {
-                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
-                                                    exception
-                                            );
-                                            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                    new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                                                            outcome,
-                                                            Optional.ofNullable(
-                                                                    event_tx.getT2()
-                                                                            .getTransactionAuthorizationRequestData()
-                                                                            .getPspId()
-                                                            ),
-                                                            event_tx.getT2().getTransactionAuthorizationRequestData()
-                                                                    .getPaymentTypeCode(),
-                                                            event_tx.getT2().getClientId()
-                                                    )
-                                            );
-                                            log.error("Got error while trying to add user receipt", exception);
-                                        })
-                                        .thenReturn(userReceiptEvent)
+                                        )
+                                                .thenReturn(userReceiptEvent)
                                 )
                 );
 
