@@ -39,6 +39,7 @@ import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NpgBuildData;
+import it.pagopa.transactions.utils.PaymentSessionData;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -359,6 +360,20 @@ public class PaymentGatewayClient {
                             return buildApiKey.fold(
                                     Mono::error,
                                     apiKey -> {
+                                        String contractId = switch (authorizationData.paymentSessionData()) {
+                                            case PaymentSessionData.WalletCardSessionData walletCardSessionData -> walletCardSessionData.contractId();
+                                            case PaymentSessionData.WalletPayPalSessionData walletPayPalSessionData -> walletPayPalSessionData.contractId();
+                                            default -> null;
+                                        };
+
+                                        // TODO: Remove `isWalletPayment` parameter and let types determine whether it's a payment with wallet
+                                        //  this check is actually redundant, kept for backward compatibility with `isWalletPayment`
+                                        if (isWalletPayment && contractId == null) {
+                                            throw new InternalServerErrorException(
+                                                    "Invalid request missing contractId"
+                                            );
+                                        }
+
                                         if (isApmPayment) {
                                             return npgClient.buildFormForPayment(
                                                     UUID.fromString(correlationId),
@@ -371,11 +386,7 @@ public class PaymentGatewayClient {
                                                     NpgClient.PaymentMethod
                                                             .valueOf(authorizationData.paymentMethodName()),
                                                     apiKey,
-                                                    isWalletPayment ? authorizationData.contractId().orElseThrow(
-                                                            () -> new InternalServerErrorException(
-                                                                    "Invalid request missing contractId"
-                                                            )
-                                                    ) : null,
+                                                    contractId,
                                                     authorizationData.paymentNotices().stream()
                                                             .mapToInt(
                                                                     paymentNotice -> paymentNotice.transactionAmount()
@@ -395,11 +406,7 @@ public class PaymentGatewayClient {
                                                     NpgClient.PaymentMethod
                                                             .valueOf(authorizationData.paymentMethodName()),
                                                     apiKey,
-                                                    authorizationData.contractId().orElseThrow(
-                                                            () -> new InternalServerErrorException(
-                                                                    "Invalid request missing contractId"
-                                                            )
-                                                    )
+                                                    contractId
                                             ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                                         }
                                     }
@@ -512,22 +519,25 @@ public class PaymentGatewayClient {
                                     .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
                                     + authorizationData.fee()
                     );
-                    if (authorizationData.sessionId().isEmpty()) {
-                        return Mono.error(
+
+                    Mono<String> sessionId = switch (authorizationData.paymentSessionData()) {
+                        case PaymentSessionData.CardSessionData cardSessionData -> Mono.just(cardSessionData.sessionId());
+                        default -> Mono.error(
                                 new BadGatewayException(
                                         "Missing sessionId for transactionId: "
                                                 + authorizationData.transactionId(),
                                         HttpStatus.BAD_GATEWAY
                                 )
                         );
-                    }
+                    };
+
                     final var pspNpgApiKey = npgApiKeyConfiguration
                             .getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, authorizationData.pspId());
-                    return pspNpgApiKey.fold(
+                    return sessionId.flatMap(sxId -> pspNpgApiKey.fold(
                             Mono::error,
                             apiKey -> npgClient.confirmPayment(
                                     UUID.fromString(correlationId),
-                                    authorizationData.sessionId().get(),
+                                    sxId,
                                     grandTotal,
                                     apiKey
                             )
@@ -583,7 +593,7 @@ public class PaymentGatewayClient {
                                                             )
                                                     )
                                     )
-                    );
+                    ));
                 });
     }
 

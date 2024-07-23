@@ -18,6 +18,7 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionCacheInfo;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.WalletPaymentInfo;
+import it.pagopa.transactions.utils.PaymentSessionData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpStatus;
@@ -29,10 +30,7 @@ import reactor.util.function.Tuples;
 import javax.crypto.SecretKey;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -178,43 +176,55 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 }
                 )
                 .flatMap(
-                        orderIdAndFieldsDto -> invokeNpgConfirmPayment(
-                                new AuthorizationRequestData(
-                                        authorizationData.transactionId(),
-                                        authorizationData.paymentNotices(),
-                                        authorizationData.email(),
-                                        authorizationData.fee(),
-                                        authorizationData.paymentInstrumentId(),
-                                        authorizationData.pspId(),
-                                        authorizationData.paymentTypeCode(),
-                                        authorizationData.brokerName(),
-                                        authorizationData.pspChannelCode(),
-                                        authorizationData.paymentMethodName(),
-                                        authorizationData.paymentMethodDescription(),
-                                        authorizationData.pspBusinessName(),
-                                        authorizationData.pspOnUs(),
-                                        authorizationData.paymentGatewayId(),
-                                        Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
-                                        authorizationData.contractId(),
-                                        authorizationData.brand(),
-                                        authorizationData.authDetails(),
-                                        authorizationData.asset(),
-                                        authorizationData.brandAssets()
-                                ),
-                                orderIdAndFieldsDto.getT1(),
-                                correlationId,
-                                clientId,
-                                Optional.of(userId)
-                        )
-                                .map(
-                                        authorizationOutput -> new AuthorizationOutput(
-                                                authorizationOutput.authorizationId(),
-                                                authorizationOutput.authorizationUrl(),
-                                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
-                                                authorizationOutput.npgConfirmSessionId(),
-                                                authorizationOutput.authorizationTimeoutMillis()
-                                        )
-                                )
+                        orderIdAndFieldsDto -> {
+                            PaymentSessionData paymentSessionData = switch (authorizationData.paymentSessionData()) {
+                                case PaymentSessionData.WalletCardSessionData walletCardSessionData -> new PaymentSessionData.WalletCardSessionData(
+                                        walletCardSessionData.brand(),
+                                        Optional.of(Objects.requireNonNull(orderIdAndFieldsDto.getT2().getSessionId())),
+                                        walletCardSessionData.cardBin(),
+                                        walletCardSessionData.lastFourDigits(),
+                                        walletCardSessionData.contractId()
+                                    );
+                                default ->
+                                        throw new IllegalStateException("Unexpected non wallet card payment session data of type: " + authorizationData.paymentSessionData().getClass());
+                            };
+
+                            return invokeNpgConfirmPayment(
+                                    new AuthorizationRequestData(
+                                            authorizationData.transactionId(),
+                                            authorizationData.paymentNotices(),
+                                            authorizationData.email(),
+                                            authorizationData.fee(),
+                                            authorizationData.paymentInstrumentId(),
+                                            authorizationData.pspId(),
+                                            authorizationData.paymentTypeCode(),
+                                            authorizationData.brokerName(),
+                                            authorizationData.pspChannelCode(),
+                                            authorizationData.paymentMethodName(),
+                                            authorizationData.paymentMethodDescription(),
+                                            authorizationData.pspBusinessName(),
+                                            authorizationData.pspOnUs(),
+                                            authorizationData.paymentGatewayId(),
+                                            paymentSessionData,
+                                            authorizationData.authDetails(),
+                                            authorizationData.asset(),
+                                            authorizationData.brandAssets()
+                                    ),
+                                    orderIdAndFieldsDto.getT1(),
+                                    correlationId,
+                                    clientId,
+                                    Optional.of(userId)
+                            )
+                                    .map(
+                                            authorizationOutput -> new AuthorizationOutput(
+                                                    authorizationOutput.authorizationId(),
+                                                    authorizationOutput.authorizationUrl(),
+                                                    Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
+                                                    authorizationOutput.npgConfirmSessionId(),
+                                                    authorizationOutput.authorizationTimeoutMillis()
+                                            )
+                                    );
+                        }
                 );
     }
 
@@ -421,11 +431,18 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         );
                                     };
 
+                                    Optional<String> sessionId = switch (authorizationData.paymentSessionData()) {
+                                        case PaymentSessionData.CardSessionData cardSessionData -> Optional.of(cardSessionData.sessionId());
+                                        case PaymentSessionData.WalletCardSessionData walletCardSessionData -> walletCardSessionData.sessionId();
+
+                                        default -> Optional.empty();
+                                    };
+
                                     return authUrl.map(
                                             url -> new AuthorizationOutput(
                                                     orderId,
                                                     url,
-                                                    authorizationData.sessionId(),
+                                                    sessionId,
                                                     confirmPaymentSessionId,
                                                     Optional.empty()
                                             )
@@ -463,7 +480,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     protected URI getLogo(AuthorizationRequestData authorizationRequestData) {
         String paymentTypeCode = authorizationRequestData.paymentTypeCode();
-        String brand = authorizationRequestData.brand();
+        String brand = authorizationRequestData.paymentSessionData().brand();
         String asset = authorizationRequestData.asset();
         Optional<Map<String, String>> brandAssets = authorizationRequestData.brandAssets();
         String logo;

@@ -8,10 +8,7 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestD
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -35,6 +32,7 @@ import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.utils.PaymentSessionData;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -219,40 +217,52 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     AuthorizationOutput authorizationOutput = authorizationOutputAndPaymentGateway
                                             .getT1();
                                     PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
-                                    String brand = authorizationRequestData.brand();
+                                    String brand = authorizationRequestData.paymentSessionData().brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
                                         case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
                                         );
-                                        case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
-                                                logo,
-                                                brand,
-                                                authorizationRequestData
-                                                        .authDetails() instanceof WalletAuthRequestDetailsDto
-                                                        || authorizationRequestData
-                                                                .authDetails() instanceof ApmAuthRequestDetailsDto
-                                                                        ? authorizationOutput.npgSessionId()
-                                                                                .orElseThrow(
-                                                                                        () -> new InternalServerErrorException(
-                                                                                                "Cannot retrieve session id for transaction"
-                                                                                        )
-                                                                                ) // build session id
-                                                                        : authorizationRequestData.sessionId()
-                                                                                .orElseThrow(
-                                                                                        () -> new BadGatewayException(
-                                                                                                "Cannot retrieve session id for transaction",
-                                                                                                HttpStatus.INTERNAL_SERVER_ERROR
-                                                                                        )
-                                                                                ),
-                                                authorizationOutput.npgConfirmSessionId().orElse(null),
-                                                /* @formatter:off
-                                                 * FIXME walletInfo set to null: this modification is addressed in
-                                                 * PR: https://github.com/pagopa/pagopa-ecommerce-transactions-service/pull/475
-                                                 * @formatter:on
-                                                 */
-                                                null
-                                        );
+                                        case NPG -> {
+                                            WalletInfo walletInfo = switch (command.getData().authDetails()) {
+                                                case WalletAuthRequestDetailsDto walletDetails -> {
+                                                    WalletInfo.WalletDetails walletInfoDetails = switch (command.getData().paymentSessionData()) {
+                                                        case PaymentSessionData.WalletCardSessionData walletCardSessionData -> new WalletInfo.CardWalletDetails(
+                                                                walletCardSessionData.cardBin().value(),
+                                                                walletCardSessionData.lastFourDigits().value()
+                                                        );
+                                                        case PaymentSessionData.WalletPayPalSessionData walletPayPalSessionData -> new WalletInfo.PaypalWalletDetails(
+                                                                walletPayPalSessionData.maskedEmail()
+                                                        );
+                                                        default -> throw new IllegalStateException("Unhandled wallet authorization request details: " + walletDetails.getDetailType());
+                                                    };
+
+                                                    yield new WalletInfo(
+                                                            walletDetails.getWalletId(),
+                                                            walletInfoDetails
+                                                    );
+                                                }
+                                                default -> null;
+                                            };
+
+                                            String sessionId = switch (command.getData().paymentSessionData()) {
+                                                case PaymentSessionData.CardSessionData cardSessionData ->
+                                                        cardSessionData.sessionId();
+                                                default -> authorizationOutput.npgSessionId().orElseThrow(
+                                                        () -> new BadGatewayException(
+                                                                "Cannot retrieve session id for transaction",
+                                                                HttpStatus.INTERNAL_SERVER_ERROR
+                                                        ));
+                                            };
+
+                                            yield new NpgTransactionGatewayAuthorizationRequestedData(
+                                                    logo,
+                                                    brand,
+                                                    sessionId,
+                                                    authorizationOutput.npgConfirmSessionId().orElse(null),
+                                                    walletInfo
+                                            );
+                                        }
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 authorizationOutput.authorizationTimeoutMillis().orElse(600000)
