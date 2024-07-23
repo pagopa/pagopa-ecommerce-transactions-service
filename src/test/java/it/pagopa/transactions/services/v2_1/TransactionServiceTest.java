@@ -14,7 +14,6 @@ import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;

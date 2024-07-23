@@ -64,7 +64,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
-            SecretKey ecommerceSigningKey,
+            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds
     ) {
         super(

@@ -134,9 +134,9 @@ public class PaymentGatewayClient {
             NpgClient npgClient,
             NpgSessionUrlConfig npgSessionUrlConfig,
             UniqueIdUtils uniqueIdUtils,
-            SecretKey npgNotificationSigningKey,
+            @Qualifier("npgNotificationSigningKey") SecretKey npgNotificationSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
-            SecretKey ecommerceSigningKey,
+            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
             RedirectKeysConfiguration redirectKeysConfig,
@@ -352,7 +352,7 @@ public class PaymentGatewayClient {
                             Either<NpgApiKeyConfigurationException, String> buildApiKey = isApmPayment
                                     ? npgApiKeyConfiguration.getApiKeyForPaymentMethod(
                                             NpgClient.PaymentMethod
-                                                    .fromServiceName(authorizationData.paymentMethodName()),
+                                                    .valueOf(authorizationData.paymentMethodName()),
                                             authorizationData.pspId()
                                     )
                                     : Either.right(npgApiKeyConfiguration.getDefaultApiKey());
@@ -369,7 +369,7 @@ public class PaymentGatewayClient {
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .fromServiceName(authorizationData.paymentMethodName()),
+                                                            .valueOf(authorizationData.paymentMethodName()),
                                                     apiKey,
                                                     isWalletPayment ? authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -393,7 +393,7 @@ public class PaymentGatewayClient {
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .fromServiceName(authorizationData.paymentMethodName()),
+                                                            .valueOf(authorizationData.paymentMethodName()),
                                                     apiKey,
                                                     authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -596,7 +596,8 @@ public class PaymentGatewayClient {
      */
     public Mono<RedirectUrlResponseDto> requestRedirectUrlAuthorization(
                                                                         AuthorizationRequestData authorizationData,
-                                                                        RedirectUrlRequestDto.TouchpointEnum touchpoint
+                                                                        RedirectUrlRequestDto.TouchpointEnum touchpoint,
+                                                                        UUID userId
     ) {
         return new JwtTokenUtils()
                 .generateToken(
@@ -606,7 +607,7 @@ public class PaymentGatewayClient {
                                 authorizationData.transactionId(),
                                 null,
                                 authorizationData.paymentInstrumentId(),
-                                null
+                                userId
                         )
                 ).fold(
                         Mono::error,

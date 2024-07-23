@@ -30,7 +30,7 @@ microservice-chart:
         CHECKOUT_OUTCOME_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/esito"
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.32.6" #improve
+    tag: "1.34.1" #improve
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -163,6 +163,8 @@ microservice-chart:
     NPG_PAYPAL_PSP_LIST: "BCITITMM,SIGPITM1XXX"
     NPG_MYBANK_PSP_LIST: "BCITITMM,UNCRITMM"
     NPG_BANCOMATPAY_PSP_LIST: "BCITITMM"
+    NPG_SATISPAY_PSP_LIST: "SATYLUL1"
+    NPG_APPLEPAY_PSP_LIST: "SIGPITM1XXX"
     NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "60"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://dev.checkout.pagopa.it"
@@ -179,6 +181,7 @@ microservice-chart:
     CHECKOUT_NPG_GDI_URL: "https://dev.checkout.pagopa.it/gdi-check"
     CHECKOUT_OUTCOME_URL: "https://dev.checkout.pagopa.it/esito"
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
+    EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "2"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
@@ -188,6 +191,7 @@ microservice-chart:
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_ECOMMERCE_SECRET: sessions-jwt-secret
+    JWT_ECOMMERCE_WEBVIEW_SECRET: ecommerce-io-jwt-signing-key
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     WALLET_API_KEY: wallet-api-key
@@ -201,6 +205,8 @@ microservice-chart:
     NPG_BANCOMATPAY_PSP_KEYS: npg-bancomatpay-psp-keys
     NPG_MYBANK_PSP_KEYS: npg-mybank-psp-keys
     WALLET_STORAGE_CONNECTION_STRING: wallet-storage-connection-string
+    NPG_SATISPAY_PSP_KEYS: npg-satispay-psp-keys
+    NPG_APPLEPAY_PSP_KEYS: npg-apple-pay-psp-keys
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

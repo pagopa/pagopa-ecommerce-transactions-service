@@ -2,6 +2,7 @@ package it.pagopa.transactions.repositories;
 
 import it.pagopa.ecommerce.commons.redis.templatewrappers.RedisTemplateWrapper;
 import org.springframework.data.redis.core.RedisTemplate;
+
 import java.time.Duration;
 
 public class TransactionTemplateWrapper extends RedisTemplateWrapper<TransactionCacheInfo> {

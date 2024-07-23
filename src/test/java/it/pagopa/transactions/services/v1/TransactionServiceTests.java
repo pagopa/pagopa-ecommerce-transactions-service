@@ -8,6 +8,7 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
@@ -234,6 +235,9 @@ class TransactionServiceTests {
 
     @MockBean
     private ConfidentialMailUtils confidentialMailUtils;
+
+    @MockBean
+    private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 
@@ -2340,7 +2344,7 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(any(), any()))
+        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(any(), any(), any()))
                 .thenReturn(Mono.just(redirectUrlResponseDto));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
