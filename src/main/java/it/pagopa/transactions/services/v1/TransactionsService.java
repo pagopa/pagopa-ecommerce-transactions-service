@@ -780,18 +780,19 @@ public class TransactionsService {
                 .zipWith(authorizationRequestedCreationDate)
                 .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
-        Mono<Tuple2<Optional<String>, Optional<String>>> pspIdAndTypeCodeV1 = transactionV1.map(Tuple2::getT1)
-                .map(t -> Tuples.of(transactionsUtils.getPspId(t), transactionsUtils.getPaymentMethodTypeCode(t)));
+        Mono<Tuple3<Optional<String>, Optional<String>, Optional<String>>> pspIdAndTypeCodeV1 = transactionV1.map(Tuple2::getT1)
+                .map(t -> Tuples.of(transactionsUtils.getPspId(t), transactionsUtils.getPaymentMethodTypeCode(t), Optional.of(t.getClientId().name())));
 
-        Mono<Tuple2<Optional<String>, Optional<String>>> pspIdAndTypeCodeV2 = transactionV2.map(Tuple2::getT1)
-                .map(t -> Tuples.of(transactionsUtils.getPspId(t), transactionsUtils.getPaymentMethodTypeCode(t)));
+        Mono<Tuple3<Optional<String>, Optional<String>, Optional<String>>> pspIdAndTypeCodeV2 = transactionV2.map(Tuple2::getT1)
+                .map(t -> Tuples.of(transactionsUtils.getPspId(t), transactionsUtils.getPaymentMethodTypeCode(t), Optional.of(t.getClientId().name())));
 
-        Mono<Tuple2<Optional<String>, Optional<String>>> pspIdAndTypeCode = pspIdAndTypeCodeV2.switchIfEmpty(pspIdAndTypeCodeV1);
+        Mono<Tuple3<Optional<String>, Optional<String>, Optional<String>>> pspIdAndTypeCode = pspIdAndTypeCodeV2.switchIfEmpty(pspIdAndTypeCodeV1);
 
         Mono<UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext> authUpdateContext = pspIdAndTypeCode
-                .map(TupleUtils.function((pspId, paymentMethodTypeCode) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
+                .map(TupleUtils.function((pspId, paymentMethodTypeCode, clientId) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
                     case OutcomeXpayGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                            clientId,
                             paymentMethodTypeCode,
                             pspId,
                             Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
@@ -801,6 +802,7 @@ public class TransactionsService {
                     );
                     case OutcomeVposGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
+                            clientId,
                             paymentMethodTypeCode,
                             pspId,
                             Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
@@ -810,6 +812,7 @@ public class TransactionsService {
                     );
                     case OutcomeNpgGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
+                            clientId,
                             paymentMethodTypeCode,
                             pspId,
                             Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
@@ -819,6 +822,7 @@ public class TransactionsService {
                     );
                     case OutcomeRedirectGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
+                            clientId,
                             paymentMethodTypeCode,
                             pspId,
                             Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(

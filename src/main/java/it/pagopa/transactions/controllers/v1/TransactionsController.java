@@ -391,6 +391,7 @@ public class TransactionsController implements TransactionsApi {
                             trigger,
                             Optional.empty(),
                             Optional.empty(),
+                            Optional.empty(),
                             Optional.empty()
                     )
             );

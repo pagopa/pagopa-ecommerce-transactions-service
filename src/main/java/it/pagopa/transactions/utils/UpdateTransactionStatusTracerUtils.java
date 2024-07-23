@@ -60,6 +60,12 @@ public class UpdateTransactionStatusTracerUtils {
             .stringKey("updateTransactionStatus.paymentMethodTypeCode");
 
     /**
+     * Span attribute used to trace transaction client id
+     */
+    static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_CLIENT_ID_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("updateTransactionStatus.clientId");
+
+    /**
      * Span attribute used to trace gateway received authorization outcome
      */
     static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_GATEWAY_OUTCOME_ATTRIBUTE_KEY = AttributeKey
@@ -199,6 +205,10 @@ public class UpdateTransactionStatusTracerUtils {
                 .put(
                         UPDATE_TRANSACTION_STATUS_PAYMENT_METHOD_TYPE_CODE_ATTRIBUTE_KEY,
                         statusUpdateInfo.paymentMethodTypeCode().orElse(FIELD_NOT_AVAILABLE)
+                )
+                .put(
+                        UPDATE_TRANSACTION_STATUS_CLIENT_ID_ATTRIBUTE_KEY,
+                        statusUpdateInfo.clientId().orElse(FIELD_NOT_AVAILABLE)
                 ).build();
         openTelemetryUtils.addSpanWithAttributes(UPDATE_TRANSACTION_STATUS_SPAN_NAME, spanAttributes);
     }
@@ -240,6 +250,11 @@ public class UpdateTransactionStatusTracerUtils {
             return Optional.empty();
         }
 
+        @Override
+        public Optional<String> clientId() {
+            return Optional.empty();
+        }
+
     }
 
     /**
@@ -249,11 +264,16 @@ public class UpdateTransactionStatusTracerUtils {
      *                                          the request
      * @param pspId                             - the psp id chosen for the current
      *                                          transaction
+     * @param paymentMethodTypeCode             - the payment method type code for
+     *                                          this authorization
+     * @param clientId                          - the id of the client that
+     *                                          initiated this transaction
      * @param gatewayAuthorizationOutcomeResult - the gateway authorization outcome
      *                                          result
      */
     public record PaymentGatewayStatusUpdateContext(
             @NotNull UpdateTransactionTrigger trigger,
+            @NotNull Optional<String> clientId,
             @NotNull Optional<String> paymentMethodTypeCode,
             @NotNull Optional<String> pspId,
             @NotNull Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult
@@ -261,6 +281,7 @@ public class UpdateTransactionStatusTracerUtils {
     ) {
         public PaymentGatewayStatusUpdateContext {
             Objects.requireNonNull(trigger);
+            Objects.requireNonNull(clientId);
             Objects.requireNonNull(paymentMethodTypeCode);
             Objects.requireNonNull(pspId);
             Objects.requireNonNull(gatewayAuthorizationOutcomeResult);
@@ -322,6 +343,10 @@ public class UpdateTransactionStatusTracerUtils {
             return context.paymentMethodTypeCode;
         }
 
+        @Override
+        public Optional<String> clientId() {
+            return context.clientId;
+        }
     }
 
     /**
@@ -366,6 +391,13 @@ public class UpdateTransactionStatusTracerUtils {
          * @return the payment method type code
          */
         Optional<String> paymentMethodTypeCode();
+
+        /**
+         * The id of the client that initiated the transaction
+         *
+         * @return the client id
+         */
+        Optional<String> clientId();
     }
 
     /**

@@ -632,6 +632,7 @@ class TransactionServiceTest {
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                 new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                         trigger,
+                        Optional.of(transactionActivated.getClientId().name()),
                         Optional.of(expectedPaymentMethodTypeCode),
                         Optional.of(expectedPspId),
                         Optional.of(
@@ -715,6 +716,7 @@ class TransactionServiceTest {
                 expectedOutcome,
                 new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                        Optional.of(transactionActivated.getClientId().name()),
                         Optional.empty(),
                         Optional.empty(),
                         Optional.of(

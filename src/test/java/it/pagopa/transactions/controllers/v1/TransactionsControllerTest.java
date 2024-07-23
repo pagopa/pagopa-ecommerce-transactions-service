@@ -1211,6 +1211,7 @@ class TransactionsControllerTest {
                         expectedTrigger,
                         Optional.empty(),
                         Optional.empty(),
+                        Optional.empty(),
                         Optional.empty()
                 )
         );
