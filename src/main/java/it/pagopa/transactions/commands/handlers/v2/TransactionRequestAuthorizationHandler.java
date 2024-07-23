@@ -51,7 +51,6 @@ import javax.crypto.SecretKey;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -162,12 +161,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         tx -> npgAuthRequestPipeline(
                                 authorizationRequestData,
                                 tx.getTransactionActivatedData()
-                                        .getTransactionGatewayActivationData()instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
-                                                ? transactionGatewayActivationData.getCorrelationId()
-                                                : null,
+                                        .getTransactionGatewayActivationData() instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
+                                        ? transactionGatewayActivationData.getCorrelationId()
+                                        : null,
                                 tx.getClientId().name(),
                                 Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
-                                        .filter(Objects::nonNull).map(t -> UUID.fromString(t)).orElse(null)
+                                        .map(UUID::fromString).orElse(null)
                         )
 
                 ).map(
@@ -177,11 +176,13 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         )
                 );
 
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoRedirect = transaction
-                .map(BaseTransaction::getClientId).flatMap(
-                        clientId -> redirectionAuthRequestPipeline(
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoRedirect = transactionActivated
+                .flatMap(
+                        tx -> redirectionAuthRequestPipeline(
                                 authorizationRequestData,
-                                clientId
+                                tx.getClientId(),
+                                Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
+                                        .map(UUID::fromString).orElse(null)
                         )
                 ).map(
                         authorizationOutput -> Tuples.of(
@@ -231,20 +232,20 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 authorizationRequestData
                                                         .authDetails() instanceof WalletAuthRequestDetailsDto
                                                         || authorizationRequestData
-                                                                .authDetails() instanceof ApmAuthRequestDetailsDto
-                                                                        ? authorizationOutput.npgSessionId()
-                                                                                .orElseThrow(
-                                                                                        () -> new InternalServerErrorException(
-                                                                                                "Cannot retrieve session id for transaction"
-                                                                                        )
-                                                                                ) // build session id
-                                                                        : authorizationRequestData.sessionId()
-                                                                                .orElseThrow(
-                                                                                        () -> new BadGatewayException(
-                                                                                                "Cannot retrieve session id for transaction",
-                                                                                                HttpStatus.INTERNAL_SERVER_ERROR
-                                                                                        )
-                                                                                ),
+                                                        .authDetails() instanceof ApmAuthRequestDetailsDto
+                                                        ? authorizationOutput.npgSessionId()
+                                                        .orElseThrow(
+                                                                () -> new InternalServerErrorException(
+                                                                        "Cannot retrieve session id for transaction"
+                                                                )
+                                                        ) // build session id
+                                                        : authorizationRequestData.sessionId()
+                                                        .orElseThrow(
+                                                                () -> new BadGatewayException(
+                                                                        "Cannot retrieve session id for transaction",
+                                                                        HttpStatus.INTERNAL_SERVER_ERROR
+                                                                )
+                                                        ),
                                                 authorizationOutput.npgConfirmSessionId().orElse(null),
                                                 /* @formatter:off
                                                  * FIXME walletInfo set to null: this modification is addressed in
@@ -283,45 +284,45 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     return transactionEventStoreRepository.save(authorizationEvent)
-                                                    .flatMap(
-                                                            e -> Mono
-                                                                    .just(
-                                                                            e.getData()
-                                                                                    .getPaymentGateway()
-                                                                    )
-                                                                    .filter(
-                                                                            gateway -> gateway
-                                                                                    .equals(PaymentGateway.NPG)
-                                                                    )
-                                                                    .flatMap(
-                                                                            p -> tracingUtils.traceMono(
-                                                                                    this.getClass().getSimpleName(),
-                                                                                    tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
-                                                                                            .sendMessageWithResponse(
-                                                                                                    new QueueEvent<>(
-                                                                                                            e,
-                                                                                                            tracingInfo
-                                                                                                    ),
-                                                                                                    Duration.ofSeconds(
-                                                                                                            npgAuthRequestTimeout
-                                                                                                    ),
-                                                                                                    Duration.ofSeconds(
-                                                                                                            transientQueuesTTLSeconds
-                                                                                                    )
+                                            .flatMap(
+                                                    e -> Mono
+                                                            .just(
+                                                                    e.getData()
+                                                                            .getPaymentGateway()
+                                                            )
+                                                            .filter(
+                                                                    gateway -> gateway
+                                                                            .equals(PaymentGateway.NPG)
+                                                            )
+                                                            .flatMap(
+                                                                    p -> tracingUtils.traceMono(
+                                                                            this.getClass().getSimpleName(),
+                                                                            tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
+                                                                                    .sendMessageWithResponse(
+                                                                                            new QueueEvent<>(
+                                                                                                    e,
+                                                                                                    tracingInfo
+                                                                                            ),
+                                                                                            Duration.ofSeconds(
+                                                                                                    npgAuthRequestTimeout
+                                                                                            ),
+                                                                                            Duration.ofSeconds(
+                                                                                                    transientQueuesTTLSeconds
                                                                                             )
-                                                                            )
+                                                                                    )
                                                                     )
-                                                    )
-                                                    .thenReturn(authorizationOutput)
-                                                    .map(
-                                                            auth -> new RequestAuthorizationResponseDto()
-                                                                    .authorizationUrl(
-                                                                            authorizationOutput.authorizationUrl()
-                                                                    )
-                                                                    .authorizationRequestId(
-                                                                            authorizationOutput.authorizationId()
-                                                                    )
-                                                    );
+                                                            )
+                                            )
+                                            .thenReturn(authorizationOutput)
+                                            .map(
+                                                    auth -> new RequestAuthorizationResponseDto()
+                                                            .authorizationUrl(
+                                                                    authorizationOutput.authorizationUrl()
+                                                            )
+                                                            .authorizationRequestId(
+                                                                    authorizationOutput.authorizationId()
+                                                            )
+                                            );
                                 })
                                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 );
@@ -337,7 +338,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      */
     protected Mono<AuthorizationOutput> redirectionAuthRequestPipeline(
                                                                        AuthorizationRequestData authorizationData,
-                                                                       Transaction.ClientId clientId
+                                                                       Transaction.ClientId clientId,
+                                                                       UUID userId
 
     ) {
         Transaction.ClientId effectiveClient = switch (clientId) {
@@ -348,7 +350,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         RedirectUrlRequestDto.TouchpointEnum touchpoint = RedirectUrlRequestDto.TouchpointEnum
                 .valueOf(effectiveClient.name());
 
-        return redirectionAuthRequestPipeline(authorizationData, touchpoint);
+        return redirectionAuthRequestPipeline(authorizationData, touchpoint, userId);
     }
 
     /**

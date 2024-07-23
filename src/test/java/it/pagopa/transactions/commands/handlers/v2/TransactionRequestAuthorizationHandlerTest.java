@@ -3052,7 +3052,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
                 .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(eq(authorizationData), any()))
+        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(eq(authorizationData), any(), any()))
                 .thenReturn(Mono.just(redirectUrlResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
