@@ -54,6 +54,12 @@ public class UpdateTransactionStatusTracerUtils {
             .stringKey("updateTransactionStatus.pspId");
 
     /**
+     * Span attribute used to trace transaction payment method type code
+     */
+    static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_PAYMENT_METHOD_TYPE_CODE_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("updateTransactionStatus.paymentMethodTypeCode");
+
+    /**
      * Span attribute used to trace gateway received authorization outcome
      */
     static final AttributeKey<String> UPDATE_TRANSACTION_STATUS_GATEWAY_OUTCOME_ATTRIBUTE_KEY = AttributeKey
@@ -162,22 +168,38 @@ public class UpdateTransactionStatusTracerUtils {
      * @param statusUpdateInfo - transaction status update information
      */
     public void traceStatusUpdateOperation(StatusUpdateInfo statusUpdateInfo) {
-        Attributes spanAttributes = Attributes.of(
-                UPDATE_TRANSACTION_STATUS_TYPE_ATTRIBUTE_KEY,
-                statusUpdateInfo.type().toString(),
-                UPDATE_TRANSACTION_STATUS_OUTCOME_ATTRIBUTE_KEY,
-                statusUpdateInfo.outcome().toString(),
-                UPDATE_TRANSACTION_STATUS_TRIGGER_ATTRIBUTE_KEY,
-                statusUpdateInfo.trigger().toString(),
-                UPDATE_TRANSACTION_STATUS_PSP_ID_ATTRIBUTE_KEY,
-                statusUpdateInfo.pspId().orElse(FIELD_NOT_AVAILABLE),
-                UPDATE_TRANSACTION_STATUS_GATEWAY_OUTCOME_ATTRIBUTE_KEY,
-                statusUpdateInfo.gatewayAuthorizationOutcomeResult()
-                        .map(GatewayAuthorizationOutcomeResult::gatewayAuthorizationStatus).orElse(FIELD_NOT_AVAILABLE),
-                UPDATE_TRANSACTION_STATUS_GATEWAY_ERROR_CODE_ATTRIBUTE_KEY,
-                statusUpdateInfo.gatewayAuthorizationOutcomeResult()
-                        .flatMap(GatewayAuthorizationOutcomeResult::errorCode).orElse(FIELD_NOT_AVAILABLE)
-        );
+        Attributes spanAttributes = Attributes.builder()
+                .put(
+                        UPDATE_TRANSACTION_STATUS_TYPE_ATTRIBUTE_KEY,
+                        statusUpdateInfo.type().toString()
+                )
+                .put(
+                        UPDATE_TRANSACTION_STATUS_OUTCOME_ATTRIBUTE_KEY,
+                        statusUpdateInfo.outcome().toString()
+                )
+                .put(
+                        UPDATE_TRANSACTION_STATUS_TRIGGER_ATTRIBUTE_KEY,
+                        statusUpdateInfo.trigger().toString()
+                )
+                .put(
+                        UPDATE_TRANSACTION_STATUS_PSP_ID_ATTRIBUTE_KEY,
+                        statusUpdateInfo.pspId().orElse(FIELD_NOT_AVAILABLE)
+                )
+                .put(
+                        UPDATE_TRANSACTION_STATUS_GATEWAY_OUTCOME_ATTRIBUTE_KEY,
+                        statusUpdateInfo.gatewayAuthorizationOutcomeResult()
+                                .map(GatewayAuthorizationOutcomeResult::gatewayAuthorizationStatus)
+                                .orElse(FIELD_NOT_AVAILABLE)
+                )
+                .put(
+                        UPDATE_TRANSACTION_STATUS_GATEWAY_ERROR_CODE_ATTRIBUTE_KEY,
+                        statusUpdateInfo.gatewayAuthorizationOutcomeResult()
+                                .flatMap(GatewayAuthorizationOutcomeResult::errorCode).orElse(FIELD_NOT_AVAILABLE)
+                )
+                .put(
+                        UPDATE_TRANSACTION_STATUS_PAYMENT_METHOD_TYPE_CODE_ATTRIBUTE_KEY,
+                        statusUpdateInfo.paymentMethodTypeCode().orElse(FIELD_NOT_AVAILABLE)
+                ).build();
         openTelemetryUtils.addSpanWithAttributes(UPDATE_TRANSACTION_STATUS_SPAN_NAME, spanAttributes);
     }
 
@@ -210,6 +232,11 @@ public class UpdateTransactionStatusTracerUtils {
 
         @Override
         public Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult() {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<String> paymentMethodTypeCode() {
             return Optional.empty();
         }
 
@@ -290,6 +317,11 @@ public class UpdateTransactionStatusTracerUtils {
             return context.gatewayAuthorizationOutcomeResult;
         }
 
+        @Override
+        public Optional<String> paymentMethodTypeCode() {
+            return context.paymentMethodTypeCode;
+        }
+
     }
 
     /**
@@ -327,6 +359,13 @@ public class UpdateTransactionStatusTracerUtils {
          * @return the authorization outcome information
          */
         Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult();
+
+        /**
+         * The payment method type code of the authorization request
+         *
+         * @return the payment method type code
+         */
+        Optional<String> paymentMethodTypeCode();
     }
 
     /**

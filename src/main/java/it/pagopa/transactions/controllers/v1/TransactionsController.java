@@ -192,7 +192,12 @@ public class TransactionsController implements TransactionsApi {
                             boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
                                     lockDocument
                             );
-                            log.info("UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]", domainTransactionId.value(), lockDocument.id(), lockAcquired);
+                            log.info(
+                                    "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
+                                    domainTransactionId.value(),
+                                    lockDocument.id(),
+                                    lockAcquired
+                            );
                             if (!lockAcquired) {
                                 throw new LockNotAcquiredException(domainTransactionId, lockDocument);
                             }
