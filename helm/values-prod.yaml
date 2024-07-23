@@ -179,6 +179,7 @@ microservice-chart:
     CHECKOUT_NPG_GDI_URL: "https://checkout.pagopa.it/gdi-check"
     CHECKOUT_OUTCOME_URL: "https://checkout.pagopa.it/esito"
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
+    EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "2"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key

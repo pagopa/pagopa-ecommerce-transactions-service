@@ -95,6 +95,7 @@ These are all environment variables needed by the application:
 | WALLET_USAGE_QUEUE_TTL                          |     | TTL to be used when sending events on wallet usage queue (in seconds)                                                                                                           | number  | 3600    |
 | WALLET_STORAGE_CONNECTION_STRING                |     | Connection string to wallet storage (queues)                                                                                                                                    | string  |         |
 | NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES          |     | NPG error codes for which eCommerce will not perform retry during authorization request                                                                                         | string  |         |
+| EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS             |     | Exclusive lock Redis document TTL for authorization status update (in seconds)                                                                                                                                  | number  | 2       |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
