@@ -1,7 +1,9 @@
 package it.pagopa.transactions.configurations;
 
+import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.RedisTemplateWrapperBuilder;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.transactions.repositories.TransactionCacheInfo;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +55,30 @@ public class RedisConfig {
                 redisTemplate,
                 "transaction",
                 Duration.ofSeconds(transactionDocumentTtl)
+        );
+    }
+
+    @Bean
+    public ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper(
+                                                                     RedisConnectionFactory redisConnectionFactory,
+                                                                     @Value(
+                                                                         "${exclusiveLockDocument.ttlSeconds}"
+                                                                     ) int exclusiveLockTtlSeconds
+    ) {
+        RedisTemplate<String, ExclusiveLockDocument> redisTemplate = new RedisTemplate<>();
+        Jackson2JsonRedisSerializer<ExclusiveLockDocument> jacksonRedisSerializer = new Jackson2JsonRedisSerializer<>(
+                ExclusiveLockDocument.class
+        );
+
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(jacksonRedisSerializer);
+        redisTemplate.afterPropertiesSet();
+
+        return new ExclusiveLockDocumentWrapper(
+                redisTemplate,
+                "exclusiveLocks",
+                Duration.ofSeconds(exclusiveLockTtlSeconds)
         );
     }
 

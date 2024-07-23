@@ -8,6 +8,7 @@ import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -111,6 +112,9 @@ class TransactionsControllerTest {
 
     @Mock
     HttpHeaders mockHeaders;
+
+    @MockBean
+    private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
 
     @Test
     void shouldGetOk() {
@@ -395,7 +399,7 @@ class TransactionsControllerTest {
                                 )
                         )
                 );
-
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
         Hooks.onOperatorDebug();
         /* test */
         ResponseEntity<TransactionInfoDto> response = transactionsController
@@ -408,6 +412,15 @@ class TransactionsControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(transactionInfo, response.getBody());
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(
+                        savedDocument -> {
+                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
+                            assertEquals("transactions-service", savedDocument.holderName());
+                            return true;
+                        }
+                )
+        );
     }
 
     @Test
@@ -445,6 +458,7 @@ class TransactionsControllerTest {
                                 )
                         )
                 );
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
 
         /* test */
         StepVerifier.create(
@@ -457,6 +471,15 @@ class TransactionsControllerTest {
         )
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(
+                        savedDocument -> {
+                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
+                            assertEquals("transactions-service", savedDocument.holderName());
+                            return true;
+                        }
+                )
+        );
     }
 
     @Test
@@ -496,6 +519,8 @@ class TransactionsControllerTest {
                         )
                 );
 
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
+
         /* test */
 
         StepVerifier.create(
@@ -508,6 +533,15 @@ class TransactionsControllerTest {
         )
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(
+                        savedDocument -> {
+                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
+                            assertEquals("transactions-service", savedDocument.holderName());
+                            return true;
+                        }
+                )
+        );
     }
 
     @Test
@@ -1232,6 +1266,7 @@ class TransactionsControllerTest {
 
         Mockito.when(mockExchange.getRequest().getMethodValue())
                 .thenReturn("PATCH");
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1275,6 +1310,15 @@ class TransactionsControllerTest {
         );
         verify(updateTransactionStatusTracerUtils, times(1))
                 .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(
+                        savedDocument -> {
+                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
+                            assertEquals("transactions-service", savedDocument.holderName());
+                            return true;
+                        }
+                )
+        );
     }
 
     @Test
@@ -1312,7 +1356,7 @@ class TransactionsControllerTest {
                                 )
                         )
                 );
-
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
         Hooks.onOperatorDebug();
 
         /* test */
@@ -1330,6 +1374,15 @@ class TransactionsControllerTest {
 
         verify(updateTransactionStatusTracerUtils, times(0))
                 .traceStatusUpdateOperation(any());
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(
+                        savedDocument -> {
+                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
+                            assertEquals("transactions-service", savedDocument.holderName());
+                            return true;
+                        }
+                )
+        );
     }
 
     private static Stream<Arguments> koAuthRequestPatchMethodSource() {
@@ -1378,6 +1431,7 @@ class TransactionsControllerTest {
 
         Mockito.when(mockExchange.getRequest().getMethodValue())
                 .thenReturn("PATCH");
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1415,6 +1469,15 @@ class TransactionsControllerTest {
         );
         verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
                 expectedStatusUpdateInfo
+        );
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(
+                        savedDocument -> {
+                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
+                            assertEquals("transactions-service", savedDocument.holderName());
+                            return true;
+                        }
+                )
         );
     }
 
@@ -1709,6 +1772,41 @@ class TransactionsControllerTest {
                         p -> {
                             assertEquals(422, p.getStatus());
                             assertEquals(exception.getDetail(), p.getDetail());
+                        }
+                );
+    }
+
+    @Test
+    void shouldReturn422ForNoLockAcquiredOnPatchAuthRequest() {
+        /* preconditions */
+        String b64TransactionId = "aaa";
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeNpgGatewayDto()
+                                .authorizationCode("authorizationCode")
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                ).timestampOperation(OffsetDateTime.now());
+
+        Mockito.when(uuidUtils.uuidFromBase64(b64TransactionId)).thenReturn(Either.right(transactionId.uuid()));
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(false);
+        /* test */
+        webTestClient.patch()
+                .uri("/transactions/{transactionId}/auth-requests", b64TransactionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(updateAuthorizationRequestDto)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(422)
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> {
+                            assertEquals(422, p.getStatus());
+                            assertEquals(
+                                    "Lock not acquired for transaction with id: [%1$s] and locking key: [PATCH-auth-request-%1$s]"
+                                            .formatted(transactionId.value()),
+                                    p.getDetail()
+                            );
                         }
                 );
     }
