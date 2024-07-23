@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
@@ -778,50 +780,54 @@ public class TransactionsService {
                 .zipWith(authorizationRequestedCreationDate)
                 .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
-        Mono<Optional<String>> pspIdV1 = transactionV1.map(Tuple2::getT1)
-                .map(transactionsUtils::getPspId);
+        Mono<Tuple2<Optional<String>, Optional<String>>> pspIdAndTypeCodeV1 = transactionV1.map(Tuple2::getT1)
+                .map(t -> Tuples.of(transactionsUtils.getPspId(t), transactionsUtils.getPaymentMethodTypeCode(t)));
 
-        Mono<Optional<String>> pspIdV2 = transactionV2.map(Tuple2::getT1)
-                .map(transactionsUtils::getPspId);
+        Mono<Tuple2<Optional<String>, Optional<String>>> pspIdAndTypeCodeV2 = transactionV2.map(Tuple2::getT1)
+                .map(t -> Tuples.of(transactionsUtils.getPspId(t), transactionsUtils.getPaymentMethodTypeCode(t)));
 
-        Mono<Optional<String>> transactionPspId = pspIdV2.switchIfEmpty(pspIdV1);
+        Mono<Tuple2<Optional<String>, Optional<String>>> pspIdAndTypeCode = pspIdAndTypeCodeV2.switchIfEmpty(pspIdAndTypeCodeV1);
 
-        Mono<UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext> authUpdateContext = transactionPspId.map(pspId -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
-            case OutcomeXpayGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                    pspId,
-                    Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                            outcome.getOutcome().toString(),
-                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
-                    ))
-            );
-            case OutcomeVposGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
-                    pspId,
-                    Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                            outcome.getOutcome().toString(),
-                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeVposGatewayDto.ErrorCodeEnum::toString)
-                    ))
-            );
-            case OutcomeNpgGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
-                    pspId,
-                    Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                            outcome.getOperationResult().toString(),
-                            Optional.ofNullable(outcome.getErrorCode())
-                    ))
-            );
-            case OutcomeRedirectGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
-                    pspId,
-                    Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                            outcome.getOutcome().toString(),
-                            Optional.ofNullable(outcome.getErrorCode())
-                    ))
-            );
-            default ->
-                    throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
-        });
+        Mono<UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext> authUpdateContext = pspIdAndTypeCode
+                .map(TupleUtils.function((pspId, paymentMethodTypeCode) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
+                    case OutcomeXpayGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                            paymentMethodTypeCode,
+                            pspId,
+                            Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                    outcome.getOutcome().toString(),
+                                    Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
+                            ))
+                    );
+                    case OutcomeVposGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
+                            paymentMethodTypeCode,
+                            pspId,
+                            Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                    outcome.getOutcome().toString(),
+                                    Optional.ofNullable(outcome.getErrorCode()).map(OutcomeVposGatewayDto.ErrorCodeEnum::toString)
+                            ))
+                    );
+                    case OutcomeNpgGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
+                            paymentMethodTypeCode,
+                            pspId,
+                            Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                    outcome.getOperationResult().toString(),
+                                    Optional.ofNullable(outcome.getErrorCode())
+                            ))
+                    );
+                    case OutcomeRedirectGatewayDto outcome -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
+                            paymentMethodTypeCode,
+                            pspId,
+                            Optional.of(new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                    outcome.getOutcome().toString(),
+                                    Optional.ofNullable(outcome.getErrorCode())
+                            ))
+                    );
+                    default -> throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
+                }));
 
         Mono<TransactionInfoDto> v1Info = transactionV1
                 .flatMap(

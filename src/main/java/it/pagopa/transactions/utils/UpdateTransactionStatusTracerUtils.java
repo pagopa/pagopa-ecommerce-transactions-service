@@ -227,12 +227,14 @@ public class UpdateTransactionStatusTracerUtils {
      */
     public record PaymentGatewayStatusUpdateContext(
             @NotNull UpdateTransactionTrigger trigger,
+            @NotNull Optional<String> paymentMethodTypeCode,
             @NotNull Optional<String> pspId,
             @NotNull Optional<GatewayAuthorizationOutcomeResult> gatewayAuthorizationOutcomeResult
 
     ) {
         public PaymentGatewayStatusUpdateContext {
             Objects.requireNonNull(trigger);
+            Objects.requireNonNull(paymentMethodTypeCode);
             Objects.requireNonNull(pspId);
             Objects.requireNonNull(gatewayAuthorizationOutcomeResult);
             if (!Set.of(

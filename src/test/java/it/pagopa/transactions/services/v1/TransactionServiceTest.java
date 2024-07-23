@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services.v1;
 
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -7,12 +8,16 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
@@ -48,7 +53,6 @@ import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -58,6 +62,8 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
+import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -456,6 +462,191 @@ class TransactionServiceTest {
         );
     }
 
+    private static Stream<Arguments> authRequestMethodSource() {
+        return Stream.of(
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionAuthorizationRequestedEvent(
+                                TransactionAuthorizationRequestData.PaymentGateway.XPAY,
+                                new PgsTransactionGatewayAuthorizationRequestedData(
+                                        LOGO_URI,
+                                        PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA
+                                )
+                        ),
+                        new UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new OutcomeXpayGatewayDto()
+                                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
+                                                .authorizationCode("authorizationCode")
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                        "OK"
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionAuthorizationRequestedEvent(
+                                TransactionAuthorizationRequestData.PaymentGateway.VPOS,
+                                new PgsTransactionGatewayAuthorizationRequestedData(
+                                        LOGO_URI,
+                                        PgsTransactionGatewayAuthorizationRequestedData.CardBrand.VISA
+                                )
+                        ),
+                        new UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new OutcomeVposGatewayDto()
+                                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
+                                                .authorizationCode("authorizationCode")
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
+                        "OK"
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionAuthorizationRequestedEvent(
+                                TransactionAuthorizationRequestData.PaymentGateway.NPG,
+                                new NpgTransactionGatewayAuthorizationRequestedData()
+                        ),
+                        new UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new OutcomeNpgGatewayDto()
+                                                .authorizationCode("authorizationCode")
+                                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
+                        "EXECUTED"
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionAuthorizationRequestedEvent(
+                                TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
+                                new RedirectTransactionGatewayAuthorizationRequestedData(
+                                        LOGO_URI,
+                                        REDIRECT_AUTHORIZATION_TIMEOUT
+                                )
+                        ),
+                        new UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new OutcomeRedirectGatewayDto()
+                                                .authorizationCode("authorizationCode")
+                                                .outcome(AuthorizationOutcomeDto.OK)
+                                                .pspId(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.PSP_ID)
+                                                .pspTransactionId(
+                                                        it.pagopa.ecommerce.commons.v2.TransactionTestUtils.AUTHORIZATION_REQUEST_ID
+                                                )
+                                ).timestampOperation(OffsetDateTime.now()),
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
+                        "OK"
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("authRequestMethodSource")
+    void shouldTraceTransactionUpdateStatusOK(
+                                              TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent,
+                                              UpdateAuthorizationRequestDto updateAuthorizationRequest,
+                                              UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger,
+                                              String expectedOutcome
+    ) {
+        Hooks.onOperatorDebug();
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        String expectedPaymentMethodTypeCode = transactionAuthorizationRequestedEvent.getData().getPaymentTypeCode();
+        String expectedPspId = transactionAuthorizationRequestedEvent.getData().getPspId();
+
+        it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivatedEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivateEvent();
+
+        it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transactionActivated = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivated(transactionActivatedEvent.getCreationDate());
+        it.pagopa.ecommerce.commons.domain.v2.TransactionWithRequestedAuthorization transactionWithRequestedAuthorization = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionWithRequestedAuthorization(transactionAuthorizationRequestedEvent, transactionActivated);
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
+                .just(transactionActivatedEvent, transactionAuthorizationRequestedEvent));
+
+        it.pagopa.ecommerce.commons.documents.v2.Transaction closureRequestedTransaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        ZonedDateTime.now()
+                );
+
+        TransactionInfoDto expected = new TransactionInfoDto()
+                .payments(
+                        closureRequestedTransaction.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
+                        )
+                                .toList()
+                )
+                .transactionId(closureRequestedTransaction.getTransactionId())
+                .status(TransactionStatusDto.CLOSURE_REQUESTED);
+
+        /* preconditions */
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(events);
+        Mockito.when(
+                transactionsUtils.reduceEvents(
+                        any(),
+                        eq(new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction()),
+                        any(),
+                        any()
+                )
+        ).thenReturn(Mono.just(new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction()));
+        Mockito.when(
+                transactionsUtils.reduceEvents(
+                        any(),
+                        eq(new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction()),
+                        any(),
+                        any()
+                )
+        ).thenReturn(Mono.just(transactionWithRequestedAuthorization));
+
+        Mockito.when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getPspId(any(BaseTransaction.class))).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getPaymentMethodTypeCode(any(BaseTransaction.class))).thenCallRealMethod();
+
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdAndEventCode(any(), any()))
+                .thenReturn(Mono.empty());
+
+        Mockito.when(transactionUpdateAuthorizationHandlerV2.handle(any())).thenReturn(
+                Mono.just(transactionAuthorizationCompletedEvent(new NpgTransactionGatewayAuthorizationData()))
+        );
+
+        Mockito.when(authorizationUpdateProjectionHandlerV2.handle(any())).thenReturn(Mono.just(transactionActivated));
+
+        Mockito.when(transactionSendClosureRequestHandler.handle(any()))
+                .thenReturn(Mono.just(transactionClosureRequestedEvent()));
+        Mockito.when(closureRequestedProjectionHandler.handle(any()))
+                .thenReturn(Mono.just(closureRequestedTransaction));
+
+        /* test */
+        StepVerifier.create(
+                transactionsServiceV1
+                        .updateTransactionAuthorization(
+                                transactionId.uuid(),
+                                updateAuthorizationRequest
+                        )
+        )
+                .assertNext(actual -> assertEquals(expected, actual))
+                .verifyComplete();
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                        trigger,
+                        Optional.of(expectedPaymentMethodTypeCode),
+                        Optional.of(expectedPspId),
+                        Optional.of(
+                                new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
+                                        expectedOutcome,
+                                        Optional.empty()
+                                )
+                        )
+                )
+        );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("koAuthRequestPatchMethodSource")
     void shouldTraceTransactionUpdateStatusKO(
@@ -524,6 +715,7 @@ class TransactionServiceTest {
                 expectedOutcome,
                 new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                        Optional.empty(),
                         Optional.empty(),
                         Optional.of(
                                 new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(

@@ -87,6 +87,7 @@ class UpdateTransactionStatusTracerUtilsTest {
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                 new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                         trigger,
+                        Optional.of("CP"),
                         Optional.empty(),
                         Optional.empty()
                 )
@@ -133,6 +134,7 @@ class UpdateTransactionStatusTracerUtilsTest {
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                 new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
+                        Optional.empty(),
                         Optional.ofNullable(pspId),
                         Optional.empty()
                 )
@@ -185,6 +187,7 @@ class UpdateTransactionStatusTracerUtilsTest {
                 () -> new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                         null,
                         null,
+                        null,
                         null
                 )
         );
@@ -198,6 +201,7 @@ class UpdateTransactionStatusTracerUtilsTest {
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                         new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                                Optional.empty(),
                                 Optional.empty(),
                                 Optional.empty()
                         )

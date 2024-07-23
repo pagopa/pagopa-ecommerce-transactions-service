@@ -514,4 +514,18 @@ public class TransactionsUtils {
             default -> Optional.empty();
         };
     }
+
+    public Optional<String> getPaymentMethodTypeCode(BaseTransaction transaction) {
+        return switch (transaction) {
+            case BaseTransactionWithRequestedAuthorization t -> Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
+            default -> Optional.empty();
+        };
+    }
+
+    public Optional<String> getPaymentMethodTypeCode(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction) {
+        return switch (transaction) {
+            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t -> Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
+            default -> Optional.empty();
+        };
+    }
 }

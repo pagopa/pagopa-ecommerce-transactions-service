@@ -385,6 +385,7 @@ public class TransactionsController implements TransactionsApi {
                     new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                             trigger,
                             Optional.empty(),
+                            Optional.empty(),
                             Optional.empty()
                     )
             );
