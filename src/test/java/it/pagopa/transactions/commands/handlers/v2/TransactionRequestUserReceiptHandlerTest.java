@@ -1,10 +1,12 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.PaymentNotice;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
@@ -18,11 +20,16 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.SendPaymentResultException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
@@ -31,18 +38,25 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.net.URI;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static it.pagopa.transactions.utils.Queues.QUEUE_SUCCESSFUL_RESPONSE;
+import static it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestUserReceiptHandlerTest {
@@ -59,6 +73,9 @@ class TransactionRequestUserReceiptHandlerTest {
 
     private TransactionsEventStoreRepository<Object> eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
+
+    private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
+            .mock(UpdateTransactionStatusTracerUtils.class);
 
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
@@ -79,7 +96,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 queueAsyncClient,
                 transientQueueEventsTtlSeconds,
                 tracingUtils,
-                sendPaymentResultForTxExpiredEnabled
+                sendPaymentResultForTxExpiredEnabled,
+                updateTransactionStatusTracerUtils
         );
     }
 
@@ -145,6 +163,13 @@ class TransactionRequestUserReceiptHandlerTest {
                         .sendMessageWithResponse(queueArgumentCaptor.capture(), any(), durationArgumentCaptor.capture())
         )
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                OK,
+                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
+                authorizationRequestedEvent.getData().getPaymentTypeCode(),
+                transactionActivatedEvent.getData().getClientId()
+        );
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectNext(event)
@@ -157,6 +182,10 @@ class TransactionRequestUserReceiptHandlerTest {
                 )
         );
         Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
+
+        verify(updateTransactionStatusTracerUtils, times(1))
+                .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
+
         TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
                 .getValue().event());
         assertEquals(
@@ -601,7 +630,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 queueAsyncClient,
                 transientQueueEventsTtlSeconds,
                 tracingUtils,
-                false
+                false,
+                updateTransactionStatusTracerUtils
         );
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
@@ -693,6 +723,17 @@ class TransactionRequestUserReceiptHandlerTest {
         )
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
+                authorizationRequestedEvent.getData().getPaymentTypeCode(),
+                transactionActivatedEvent.getData().getClientId()
+        );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                any()
+        );
+
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectError(InvalidRequestException.class)
                 .verify();
@@ -794,6 +835,17 @@ class TransactionRequestUserReceiptHandlerTest {
                 )
         );
         Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
+
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
+                authorizationRequestedEvent.getData().getPaymentTypeCode(),
+                transactionActivatedEvent.getData().getClientId()
+        );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                expectedStatusUpdateInfo
+        );
+
         TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
                 .getValue().event());
         assertEquals(

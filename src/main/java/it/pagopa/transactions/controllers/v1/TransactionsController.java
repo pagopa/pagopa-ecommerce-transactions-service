@@ -242,18 +242,15 @@ public class TransactionsController implements TransactionsApi {
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
                                 )
-                                .doOnError(exception -> {
-                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
-                                            exception
-                                    );
-                                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(outcome,
-                                                    Optional.ofNullable(null),
-                                                    "CP",
-                                                    Transaction.ClientId.CHECKOUT)
-                                    );
-                                    log.error("Got error while trying to add user receipt", exception);
-                                })
+                                /*
+                                 * .doOnError(exception -> {
+                                 * UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome =
+                                 * exceptionToUpdateStatusOutcome( exception );
+                                 * updateTransactionStatusTracerUtils.traceStatusUpdateOperation( new
+                                 * UpdateTransactionStatusTracerUtils.NodoStatusUpdate( outcome,
+                                 * Optional.ofNullable(null), "CP", Transaction.ClientId.CHECKOUT ) );
+                                 * log.error("Got error while trying to add user receipt", exception); })
+                                 */
                                 .onErrorMap(SendPaymentResultException::new)
                 )
                 .map(ResponseEntity::ok)
