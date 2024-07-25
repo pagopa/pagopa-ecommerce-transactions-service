@@ -13,7 +13,6 @@ public record SendPaymentResultOutcomeInfo(
         Optional<String> paymentTypeCode,
         Optional<Transaction.ClientId> clientId,
         Optional<Boolean> walletPayment,
-
         Optional<UpdateTransactionStatusTracerUtils.GatewayOutcomeResult> gatewayOutcomeResult
 ) {
 }

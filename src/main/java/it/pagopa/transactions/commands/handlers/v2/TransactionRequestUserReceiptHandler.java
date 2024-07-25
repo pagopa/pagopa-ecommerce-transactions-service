@@ -94,8 +94,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                     return Mono.error(
                             new AlreadyProcessedException(
                                     t.getTransactionId(),
-                                    Optional.of(t.getTransactionAuthorizationRequestData().getPspId()),
-                                    Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode()),
+                                    t.getTransactionAuthorizationRequestData().getPspId(),
+                                    t.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
                                     t.getClientId().name(),
                                     isWalletPayment,
                                     // TODO Qui ci va il codice di risposta della send payment result ? L'error code
@@ -238,7 +238,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                     );
                                                 }
                                         )
-                                                .thenReturn(userReceiptEvent)
+                                        .thenReturn(userReceiptEvent)
                                 )
                 );
 

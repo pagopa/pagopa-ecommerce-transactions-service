@@ -14,10 +14,10 @@ public interface TransactionContext {
 
     Optional<String> paymentTypeCode();
 
-    String clientId();
+    Optional<String>  clientId();
 
-    Boolean walletPayment();
+    Optional<Boolean> walletPayment();
 
-    UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult();
+    Optional<UpdateTransactionStatusTracerUtils.GatewayOutcomeResult> gatewayOutcomeResult();
 
 }

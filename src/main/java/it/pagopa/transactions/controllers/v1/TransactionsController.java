@@ -305,9 +305,9 @@ public class TransactionsController implements TransactionsApi {
                     Optional.of(exception.getTransactionId()),
                     exception.pspId(),
                     exception.paymentTypeCode(),
-                    Optional.ofNullable(Transaction.ClientId.valueOf(exception.clientId())),
-                    Optional.ofNullable(exception.walletPayment()),
-                    Optional.ofNullable(exception.gatewayOutcomeResult())
+                    exception.clientId().map(Transaction.ClientId::valueOf),
+                    exception.walletPayment(),
+                    exception.gatewayOutcomeResult()
             );
             case TransactionNotFoundException ignored ->
                     new SendPaymentResultOutcomeInfo(
@@ -324,9 +324,9 @@ public class TransactionsController implements TransactionsApi {
                     Optional.of(exception.getTransactionId()),
                     exception.pspId(),
                     exception.paymentTypeCode(),
-                    Optional.ofNullable(Transaction.ClientId.valueOf(exception.clientId())),
-                    Optional.ofNullable(exception.walletPayment()),
-                    Optional.ofNullable(exception.gatewayOutcomeResult())
+                    exception.clientId().map(Transaction.ClientId::valueOf),
+                    exception.walletPayment(),
+                    exception.gatewayOutcomeResult()
             );
             default -> new SendPaymentResultOutcomeInfo(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,

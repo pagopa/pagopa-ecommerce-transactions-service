@@ -6,21 +6,24 @@ import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 @ResponseStatus(value = HttpStatus.CONFLICT)
 public class AlreadyProcessedException extends Exception implements TransactionContext {
-    private final TransactionId transactionId;
-    private final Optional<String> pspId;
-    private final Optional<String> paymentTypeCode;
-    private final String clientId;
-    private final Boolean walletPayment;
-    private final UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult;
+    @NotNull private final TransactionId transactionId;
+    @Nullable private final String pspId;
+    @Nullable private final String paymentTypeCode;
+    @Nullable private final String clientId;
+    @Nullable private final Boolean walletPayment;
+    @Nullable private final UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult;
+
 
     public AlreadyProcessedException(TransactionId transactionId) {
         this.transactionId = transactionId;
-        this.pspId = Optional.empty();
-        this.paymentTypeCode = Optional.empty();
+        this.pspId = null;
+        this.paymentTypeCode = null;
         this.clientId = null;
         this.walletPayment = null;
         this.gatewayOutcomeResult = null;
@@ -28,8 +31,8 @@ public class AlreadyProcessedException extends Exception implements TransactionC
 
     public AlreadyProcessedException(
             TransactionId transactionId,
-            Optional<String> pspId,
-            Optional<String> paymentTypeCode,
+            String pspId,
+            String paymentTypeCode,
             String clientId,
             Boolean walletPayment,
             UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult
@@ -49,26 +52,26 @@ public class AlreadyProcessedException extends Exception implements TransactionC
 
     @Override
     public Optional<String> pspId() {
-        return pspId;
+        return Optional.ofNullable(pspId);
     }
 
     @Override
     public Optional<String> paymentTypeCode() {
-        return paymentTypeCode;
+        return Optional.ofNullable(paymentTypeCode);
     }
 
     @Override
-    public String clientId() {
-        return clientId;
+    public Optional<String> clientId() {
+        return Optional.ofNullable(clientId);
     }
 
     @Override
-    public Boolean walletPayment() {
-        return walletPayment;
+    public Optional<Boolean> walletPayment() {
+        return Optional.ofNullable(walletPayment);
     }
 
     @Override
-    public UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult() {
-        return gatewayOutcomeResult;
+    public Optional<UpdateTransactionStatusTracerUtils.GatewayOutcomeResult> gatewayOutcomeResult() {
+        return Optional.ofNullable(gatewayOutcomeResult);
     }
 }
