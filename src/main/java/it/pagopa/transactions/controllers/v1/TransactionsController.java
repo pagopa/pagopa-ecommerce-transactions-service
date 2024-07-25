@@ -378,20 +378,23 @@ public class TransactionsController implements TransactionsApi {
             };
 
             if (Objects.equals(request.getMethod(), HttpMethod.PATCH)) {
-                statusUpdateInfo = new UpdateTransactionStatusTracerUtils.InvalidRequestTransactionUpdate(
+                statusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
-                        trigger
+                        trigger,
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
                 );
             } else if (Objects.equals(request.getMethod(), HttpMethod.POST)) {
-                statusUpdateInfo = new UpdateTransactionStatusTracerUtils.InvalidRequestTransactionUpdate(
+                statusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_REQUESTED,
-                        trigger
+                        trigger,
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
                 );
             }
         } else if (contextPath.endsWith("user-receipts")) {
-            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.InvalidRequestTransactionUpdate(
+            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
             );
         }
         if (statusUpdateInfo != null) {

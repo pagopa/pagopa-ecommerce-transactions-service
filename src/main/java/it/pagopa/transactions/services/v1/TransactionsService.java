@@ -897,9 +897,10 @@ public class TransactionsService {
                     if (exception instanceof InvalidRequestException) {
                         return authUpdateContext.doOnNext(TupleUtils.consumer((trigger, _updateContext) ->
                                 updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                        new UpdateTransactionStatusTracerUtils.InvalidRequestTransactionUpdate(
+                                        new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
-                                                trigger
+                                                trigger,
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
                                         )
                                 )
                         )).then(Mono.error(exception));
