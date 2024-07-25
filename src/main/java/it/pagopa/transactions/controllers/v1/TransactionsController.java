@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -14,9 +15,9 @@ import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
-import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -240,21 +241,11 @@ public class TransactionsController implements TransactionsApi {
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
                                 )
-                                .doOnNext(
-                                        ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
-                                                )
-                                        )
-                                )
                                 .doOnError(exception -> {
                                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = TransactionsService
                                             .exceptionToUpdateStatusOutcome(
                                                     exception
                                             );
-                                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(outcome)
-                                    );
                                     log.error("Got error while trying to add user receipt", exception);
                                 })
                                 .onErrorMap(SendPaymentResultException::new)
@@ -385,19 +376,22 @@ public class TransactionsController implements TransactionsApi {
                 case "REDIRECT" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT;
                 default -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN;
             };
-            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                    new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                            trigger,
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty()
-                    )
-            );
+
+            if (Objects.equals(request.getMethod(), HttpMethod.PATCH)) {
+                statusUpdateInfo = new UpdateTransactionStatusTracerUtils.InvalidRequestTransactionUpdate(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
+                        trigger
+                );
+            } else if (Objects.equals(request.getMethod(), HttpMethod.POST)) {
+                statusUpdateInfo = new UpdateTransactionStatusTracerUtils.InvalidRequestTransactionUpdate(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_REQUESTED,
+                        trigger
+                );
+            }
         } else if (contextPath.endsWith("user-receipts")) {
-            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.InvalidRequestTransactionUpdate(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO
             );
         }
         if (statusUpdateInfo != null) {

@@ -19,7 +19,6 @@ import java.util.Set;
  * enumeration, instead, contains external actors that trigger the transaction
  * status update
  */
-@Component
 public class UpdateTransactionStatusTracerUtils {
 
     private final OpenTelemetryUtils openTelemetryUtils;
@@ -163,7 +162,6 @@ public class UpdateTransactionStatusTracerUtils {
 
     static final String FIELD_NOT_AVAILABLE = "N/A";
 
-    @Autowired
     public UpdateTransactionStatusTracerUtils(OpenTelemetryUtils openTelemetryUtils) {
         this.openTelemetryUtils = openTelemetryUtils;
     }
