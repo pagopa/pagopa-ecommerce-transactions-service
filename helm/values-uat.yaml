@@ -29,7 +29,7 @@ microservice-chart:
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.34.1"
+    tag: "1.34.2"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -158,7 +158,7 @@ microservice-chart:
     NPG_BANCOMATPAY_PSP_LIST: "BCITITMM"
     NPG_SATISPAY_PSP_LIST: "SATYLUL1"
     NPG_APPLEPAY_PSP_LIST: "SIGPITM1XXX"
-    NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "60"
+    NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "180"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://uat.checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"
