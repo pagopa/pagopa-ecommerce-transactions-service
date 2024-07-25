@@ -1,18 +1,18 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.*;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.PaymentNotice;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
@@ -20,16 +20,11 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.SendPaymentResultException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
@@ -38,20 +33,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.net.URI;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
+import static it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto.OutcomeEnum.OK;
 import static it.pagopa.transactions.utils.Queues.QUEUE_SUCCESSFUL_RESPONSE;
-import static it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -118,7 +110,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .outcome(OK)
                 .paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(
                         new AddUserReceiptRequestPaymentsInnerDto()
@@ -164,11 +156,22 @@ class TransactionRequestUserReceiptHandlerTest {
         )
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
 
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                OK,
-                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
+                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                authorizationRequestedEvent.getData().getPspId(),
                 authorizationRequestedEvent.getData().getPaymentTypeCode(),
-                transactionActivatedEvent.getData().getClientId()
+                transactionActivatedEvent.getData().getClientId(),
+
+                transactionAuthorizationRequestedEvent().getData()
+                        .getTransactionGatewayAuthorizationRequestedData() instanceof NpgTransactionGatewayAuthorizationRequestedData
+                        &&
+                        ((NpgTransactionGatewayAuthorizationRequestedData) (transactionAuthorizationRequestedEvent()
+                                .getData().getTransactionGatewayAuthorizationRequestedData()))
+                                        .getWalletInfo() != null,
+                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                        OK.getValue(),
+                        Optional.empty()
+                )
         );
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
@@ -375,7 +378,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .outcome(OK)
                 .paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(
                         new AddUserReceiptRequestPaymentsInnerDto()
@@ -428,7 +431,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .transactionClosedEvent(TransactionClosureData.Outcome.KO);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .outcome(OK)
                 .paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(
                         new AddUserReceiptRequestPaymentsInnerDto()
@@ -461,13 +464,6 @@ class TransactionRequestUserReceiptHandlerTest {
                         closureSentEvent
                 ));
 
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
-                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
-                authorizationRequestedEvent.getData().getPaymentTypeCode(),
-                transactionActivatedEvent.getData().getClientId()
-        );
-
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
 
@@ -476,8 +472,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
                 .verify();
 
-        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
-                expectedStatusUpdateInfo
+        verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(
+                any()
         );
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
@@ -500,7 +496,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .outcome(OK)
                 .paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(
                         new AddUserReceiptRequestPaymentsInnerDto()
@@ -587,7 +583,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .outcome(OK)
                 .paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(
                         new AddUserReceiptRequestPaymentsInnerDto()
@@ -645,20 +641,13 @@ class TransactionRequestUserReceiptHandlerTest {
                 updateTransactionStatusTracerUtils
         );
 
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
-                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
-                authorizationRequestedEvent.getData().getPaymentTypeCode(),
-                transactionActivatedEvent.getData().getClientId()
-        );
-
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectError(AlreadyProcessedException.class)
                 .verify();
 
-        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
-                expectedStatusUpdateInfo
+        verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(
+                any()
         );
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(
@@ -700,7 +689,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 .transactionClosedEvent(TransactionClosureData.Outcome.OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .outcome(OK)
                 .paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(
                         new AddUserReceiptRequestPaymentsInnerDto()
@@ -747,19 +736,12 @@ class TransactionRequestUserReceiptHandlerTest {
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
 
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
-                authorizationRequestedEvent.getData().getPaymentTypeCode(),
-                transactionActivatedEvent.getData().getClientId()
-        );
-
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectError(InvalidRequestException.class)
                 .verify();
 
-        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
-                expectedStatusUpdateInfo
+        verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(
+                any()
         );
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
         Mockito.verify(queueAsyncClient, Mockito.times(0)).sendMessageWithResponse(any(), any(), any());
@@ -810,7 +792,7 @@ class TransactionRequestUserReceiptHandlerTest {
                 )
         );
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-                .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
+                .outcome(OK)
                 .paymentDate(OffsetDateTime.now());
         addUserReceiptRequest.setPayments(sendPaymentResultPaymentItems);
 
@@ -859,11 +841,22 @@ class TransactionRequestUserReceiptHandlerTest {
         );
         Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
 
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                Optional.ofNullable(authorizationRequestedEvent.getData().getPspId()),
+                authorizationRequestedEvent.getData().getPspId(),
                 authorizationRequestedEvent.getData().getPaymentTypeCode(),
-                transactionActivatedEvent.getData().getClientId()
+                transactionActivatedEvent.getData().getClientId(),
+
+                transactionAuthorizationRequestedEvent().getData()
+                        .getTransactionGatewayAuthorizationRequestedData() instanceof NpgTransactionGatewayAuthorizationRequestedData
+                        &&
+                        ((NpgTransactionGatewayAuthorizationRequestedData) (transactionAuthorizationRequestedEvent()
+                                .getData().getTransactionGatewayAuthorizationRequestedData()))
+                                        .getWalletInfo() != null,
+                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                        OK.getValue(),
+                        Optional.empty()
+                )
         );
         verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
                 expectedStatusUpdateInfo

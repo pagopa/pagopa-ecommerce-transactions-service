@@ -2,24 +2,21 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionExpired;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionWithRequestedAuthorization;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,9 +29,6 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
-import static it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
 
 @Component(TransactionRequestUserReceiptHandler.QUALIFIER_NAME)
 @Slf4j
@@ -79,7 +73,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionClosed> alreadyProcessedError = transaction
-                .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class)
+                .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization.class)
                 .doOnNext(
                         t -> log.error(
                                 "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
@@ -90,21 +84,28 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         )
                 )
                 .flatMap(t -> {
-                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                                    WRONG_TRANSACTION_STATUS,
-                                    Optional.ofNullable(
-                                            ((BaseTransactionWithRequestedAuthorization) t)
-                                                    .getTransactionAuthorizationRequestData()
-                                                    .getPspId()
-                                    ),
-                                    ((BaseTransactionWithRequestedAuthorization) t)
-                                            .getTransactionAuthorizationRequestData()
-                                            .getPaymentTypeCode(),
-                                    t.getClientId()
+                    TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = t
+                            .getTransactionAuthorizationRequestData().getTransactionGatewayAuthorizationRequestedData();
+                    boolean isWalletPayment = transactionGatewayAuthorizationRequestedData instanceof NpgTransactionGatewayAuthorizationRequestedData
+                            &&
+                            ((NpgTransactionGatewayAuthorizationRequestedData) t
+                                    .getTransactionAuthorizationRequestData()
+                                    .getTransactionGatewayAuthorizationRequestedData()).getWalletInfo() != null;
+                    return Mono.error(
+                            new AlreadyProcessedException(
+                                    t.getTransactionId(),
+                                    Optional.of(t.getTransactionAuthorizationRequestData().getPspId()),
+                                    Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode()),
+                                    t.getClientId().name(),
+                                    isWalletPayment,
+                                    // TODO Qui ci va il codice di risposta della send payment result ? L'error code
+                                    // sarà sempre empty() ?
+                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                            command.getData().addUserReceiptRequest().getOutcome().getValue(),
+                                            Optional.empty()
+                                    )
                             )
                     );
-                    return Mono.error(new AlreadyProcessedException(t.getTransactionId()));
                 });
         return transaction
                 .map(
@@ -136,22 +137,13 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                             isOk
                     );
                     if (!isOk) {
-                        log.debug("invoking updateTransactionStatusTracerUtils");
-                        updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                                        INVALID_REQUEST,
-                                        Optional.ofNullable(
-                                                ((BaseTransactionWithRequestedAuthorization) tx)
-                                                        .getTransactionAuthorizationRequestData()
-                                                        .getPspId()
-                                        ),
-                                        ((TransactionClosed) tx)
-                                                .getTransactionAuthorizationRequestData()
-                                                .getPaymentTypeCode(),
-                                        tx.getClientId()
-                                )
-                        );
-                        log.debug("return mono error");
+                        BaseTransactionWithRequestedAuthorization baseTransactionWithAuthData = ((BaseTransactionWithRequestedAuthorization) tx);
+                        TransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = baseTransactionWithAuthData
+                                .getTransactionAuthorizationRequestData()
+                                .getTransactionGatewayAuthorizationRequestedData();
+                        boolean isWalletPayment = npgTransactionGatewayAuthorizationRequestedData instanceof NpgTransactionGatewayAuthorizationRequestedData
+                                && ((NpgTransactionGatewayAuthorizationRequestedData) npgTransactionGatewayAuthorizationRequestedData)
+                                        .getWalletInfo() != null;
                         return Mono.error(
                                 new InvalidRequestException(
                                         "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send paymnt result payment tokens: %s"
@@ -159,7 +151,22 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                         tx.getTransactionId().value(),
                                                         eCommercePaymentTokens,
                                                         addUserReceiptRequestPaymentTokens
-                                                )
+                                                ),
+                                        tx.getTransactionId(),
+                                        Optional.of(
+                                                ((BaseTransactionWithRequestedAuthorization) tx)
+                                                        .getTransactionAuthorizationRequestData().getPspId()
+                                        ),
+                                        Optional.of(
+                                                ((BaseTransactionWithRequestedAuthorization) tx)
+                                                        .getTransactionAuthorizationRequestData().getPaymentTypeCode()
+                                        ),
+                                        tx.getClientId().name(),
+                                        isWalletPayment,
+                                        new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                command.getData().addUserReceiptRequest().getOutcome().getValue(),
+                                                Optional.empty()
+                                        )
                                 )
                         );
                     }
@@ -200,18 +207,33 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                             event_tx.getT1().getEventCode(),
                                                             event_tx.getT1().getTransactionId()
                                                     );
+
+                                                    boolean isWalletPayment = event_tx.getT2()
+                                                            .getTransactionAuthorizationRequestData()
+                                                            .getTransactionGatewayAuthorizationRequestedData() instanceof NpgTransactionGatewayAuthorizationRequestedData
+                                                            && ((NpgTransactionGatewayAuthorizationRequestedData) (event_tx
+                                                                    .getT2().getTransactionAuthorizationRequestData()
+                                                                    .getTransactionGatewayAuthorizationRequestedData()))
+                                                                            .getWalletInfo() != null;
+
                                                     updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+                                                            new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
                                                                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                                                                    Optional.ofNullable(
-                                                                            event_tx.getT2()
-                                                                                    .getTransactionAuthorizationRequestData()
-                                                                                    .getPspId()
-                                                                    ),
+
+                                                                    event_tx.getT2()
+                                                                            .getTransactionAuthorizationRequestData()
+                                                                            .getPspId(),
+
                                                                     event_tx.getT2()
                                                                             .getTransactionAuthorizationRequestData()
                                                                             .getPaymentTypeCode(),
-                                                                    event_tx.getT2().getClientId()
+                                                                    event_tx.getT2().getClientId(),
+                                                                    isWalletPayment,
+                                                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                                            command.getData().addUserReceiptRequest()
+                                                                                    .getOutcome().getValue(),
+                                                                            Optional.empty()
+                                                                    )
                                                             )
                                                     );
                                                 }

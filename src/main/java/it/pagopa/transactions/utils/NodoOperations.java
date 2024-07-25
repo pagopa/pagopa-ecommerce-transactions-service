@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.domain.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
@@ -121,9 +122,9 @@ public class NodoOperations {
                             );
                             if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
                                 openTelemetryUtils.addSpanWithAttributes(
-                                        OpenTelemetryUtils.NODO_ACTIVATION_OK_SPAN_NAME,
+                                        SpanLabelOpenTelemetry.NODO_ACTIVATION_OK_SPAN_NAME,
                                         Attributes.of(
-                                                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
+                                                SpanLabelOpenTelemetry.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
                                                 StOutcome.OK.toString()
                                         )
                                 );
@@ -132,9 +133,9 @@ public class NodoOperations {
                                         : Mono.error(new InvalidNodoResponseException("No payment token received"));
                             } else {
                                 openTelemetryUtils.addErrorSpanWithAttributes(
-                                        OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME.formatted(faultCode),
+                                        SpanLabelOpenTelemetry.NODO_ACTIVATION_ERROR_SPAN_NAME.formatted(faultCode),
                                         Attributes.of(
-                                                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
+                                                SpanLabelOpenTelemetry.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
                                                 faultCode
                                         )
                                 );
