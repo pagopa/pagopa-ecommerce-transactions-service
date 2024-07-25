@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
@@ -188,56 +189,64 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                             tx
                     );
                 }).flatMap(
-                        event_tx -> userReceiptAddedEventRepository.save(event_tx.getT1())
-                                .flatMap(
-                                        userReceiptEvent -> tracingUtils.traceMono(
-                                                this.getClass().getSimpleName(),
-                                                tracingInfo -> transactionNotificationRequestedQueueAsyncClient
-                                                        .sendMessageWithResponse(
-                                                                new QueueEvent<>(userReceiptEvent, tracingInfo),
-                                                                Duration.ZERO,
-                                                                Duration.ofSeconds(transientQueuesTTLSeconds)
-                                                        )
-                                        ).doOnNext(
-                                                queueResponse -> {
-                                                    log.info(
-                                                            "Generated event {} for transactionId {}",
-                                                            event_tx.getT1().getEventCode(),
-                                                            event_tx.getT1().getTransactionId()
-                                                    );
+                        TupleUtils.function(
+                                (
+                                 event,
+                                 transactionClosed
+                                ) -> userReceiptAddedEventRepository.save(event)
+                                        .flatMap(
+                                                userReceiptEvent -> tracingUtils.traceMono(
+                                                        this.getClass().getSimpleName(),
+                                                        tracingInfo -> transactionNotificationRequestedQueueAsyncClient
+                                                                .sendMessageWithResponse(
+                                                                        new QueueEvent<>(userReceiptEvent, tracingInfo),
+                                                                        Duration.ZERO,
+                                                                        Duration.ofSeconds(transientQueuesTTLSeconds)
+                                                                )
+                                                ).doOnNext(
+                                                        queueResponse -> {
+                                                            log.info(
+                                                                    "Generated event {} for transactionId {}",
+                                                                    event.getEventCode(),
+                                                                    event.getTransactionId()
+                                                            );
 
-                                                    boolean isWalletPayment = event_tx.getT2()
-                                                            .getTransactionAuthorizationRequestData()
-                                                            .getTransactionGatewayAuthorizationRequestedData() instanceof NpgTransactionGatewayAuthorizationRequestedData
-                                                            && ((NpgTransactionGatewayAuthorizationRequestedData) (event_tx
-                                                                    .getT2().getTransactionAuthorizationRequestData()
-                                                                    .getTransactionGatewayAuthorizationRequestedData()))
-                                                                            .getWalletInfo() != null;
-
-                                                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                            new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
-                                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-
-                                                                    event_tx.getT2()
+                                                            boolean isWalletPayment = transactionClosed
+                                                                    .getTransactionAuthorizationRequestData()
+                                                                    .getTransactionGatewayAuthorizationRequestedData() instanceof NpgTransactionGatewayAuthorizationRequestedData
+                                                                    && ((NpgTransactionGatewayAuthorizationRequestedData) (transactionClosed
                                                                             .getTransactionAuthorizationRequestData()
-                                                                            .getPspId(),
+                                                                            .getTransactionGatewayAuthorizationRequestedData()))
+                                                                                    .getWalletInfo() != null;
 
-                                                                    event_tx.getT2()
-                                                                            .getTransactionAuthorizationRequestData()
-                                                                            .getPaymentTypeCode(),
-                                                                    event_tx.getT2().getClientId(),
-                                                                    isWalletPayment,
-                                                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                                            command.getData().addUserReceiptRequest()
-                                                                                    .getOutcome().getValue(),
-                                                                            Optional.empty()
-                                                                    )
-                                                            )
-                                                    );
-                                                }
+                                                            updateTransactionStatusTracerUtils
+                                                                    .traceStatusUpdateOperation(
+                                                                            new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
+                                                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+
+                                                                                    transactionClosed
+                                                                                            .getTransactionAuthorizationRequestData()
+                                                                                            .getPspId(),
+
+                                                                                    transactionClosed
+                                                                                            .getTransactionAuthorizationRequestData()
+                                                                                            .getPaymentTypeCode(),
+                                                                                    transactionClosed.getClientId(),
+                                                                                    isWalletPayment,
+                                                                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                                                            command.getData()
+                                                                                                    .addUserReceiptRequest()
+                                                                                                    .getOutcome()
+                                                                                                    .getValue(),
+                                                                                            Optional.empty()
+                                                                                    )
+                                                                            )
+                                                                    );
+                                                        }
+                                                )
+                                                        .thenReturn(userReceiptEvent)
                                         )
-                                                .thenReturn(userReceiptEvent)
-                                )
+                        )
                 );
 
     }
