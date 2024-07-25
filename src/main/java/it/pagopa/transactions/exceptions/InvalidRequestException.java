@@ -71,12 +71,12 @@ public class InvalidRequestException extends RuntimeException implements Transac
     }
 
     @Override
-    public Optional<String>  clientId() {
+    public Optional<String> clientId() {
         return Optional.ofNullable(clientId);
     }
 
     @Override
-    public Optional<Boolean>  walletPayment() {
+    public Optional<Boolean> walletPayment() {
         return Optional.ofNullable(walletPayment);
     }
 

@@ -4,7 +4,6 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -1185,77 +1184,6 @@ class TransactionsControllerTest {
                 .value(p -> assertEquals(422, p.getStatus()));
     }
 
-    private static Stream<Arguments> authRequestMethodSource() {
-        return Stream.of(
-                Arguments.of(
-                        new UpdateAuthorizationRequestDto()
-                                .outcomeGateway(
-                                        new OutcomeXpayGatewayDto()
-                                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                                .authorizationCode("authorizationCode")
-                                ).timestampOperation(OffsetDateTime.now()),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                        null,
-                        "OK"
-                ),
-                Arguments.of(
-                        new UpdateAuthorizationRequestDto()
-                                .outcomeGateway(
-                                        new OutcomeVposGatewayDto()
-                                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
-                                                .authorizationCode("authorizationCode")
-                                ).timestampOperation(OffsetDateTime.now()),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
-                        null,
-                        "OK"
-                ),
-                Arguments.of(
-                        new UpdateAuthorizationRequestDto()
-                                .outcomeGateway(
-                                        new OutcomeNpgGatewayDto()
-                                                .authorizationCode("authorizationCode")
-                                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
-                                ).timestampOperation(OffsetDateTime.now()),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
-                        null,
-                        "EXECUTED"
-                ),
-                Arguments.of(
-                        new UpdateAuthorizationRequestDto()
-                                .outcomeGateway(
-                                        new OutcomeRedirectGatewayDto()
-                                                .authorizationCode("authorizationCode")
-                                                .outcome(AuthorizationOutcomeDto.OK)
-                                                .pspId(TransactionTestUtils.PSP_ID)
-                                ).timestampOperation(OffsetDateTime.now()),
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
-                        TransactionTestUtils.PSP_ID,
-                        "OK"
-                )
-        );
-    }
-
-    private static Stream<Arguments> koAuthRequestPatchMethodSource() {
-        return Stream.of(
-                Arguments.of(
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
-                        new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
-                ),
-                Arguments.of(
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND,
-                        new TransactionNotFoundException(TransactionTestUtils.PAYMENT_TOKEN)
-                ),
-                Arguments.of(
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                        new InvalidRequestException("Invalid request exception")
-                ),
-                Arguments.of(
-                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
-                        new RuntimeException("Error processing request")
-                )
-        );
-    }
-
     private static Stream<Arguments> badRequestForUpdateAuthRequestMethodSource() {
         return Stream.of(
                 Arguments.of("XPAY", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY),
@@ -1277,13 +1205,7 @@ class TransactionsControllerTest {
                                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
     ) {
         String contextPath = "auth-requests";
-        /*
-         * UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate
-         * expectedStatusUpdateInfo = new
-         * UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-         * UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.
-         * INVALID_REQUEST, expectedTrigger, Optional.empty(), Optional.empty() );
-         */
+
         ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
         ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
         RequestPath requestPath = Mockito.mock(RequestPath.class);
@@ -1302,10 +1224,8 @@ class TransactionsControllerTest {
                 .validationExceptionHandler(new InvalidRequestException("Some message"), exchange);
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
-        /*
-         * verify(updateTransactionStatusTracerUtils,
-         * times(1)).traceStatusUpdateOperation( expectedStatusUpdateInfo );
-         */
+
+        verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(any());
     }
 
     @Test

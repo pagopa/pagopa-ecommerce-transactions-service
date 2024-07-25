@@ -35,5 +35,4 @@ public class OpenTelemetryConfiguration {
     ) {
         return new OpenTelemetryUtils(openTelemetryTracer);
     }
-
 }

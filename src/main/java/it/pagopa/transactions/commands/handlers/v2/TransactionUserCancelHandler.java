@@ -46,12 +46,8 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                 );
 
         return transaction
-                .flatMap(tx -> {
-                    if(!tx.getStatus().equals(TransactionStatusDto.ACTIVATED)) {
-                        return Mono.error(new AlreadyProcessedException(command.getData()));
-                    }
-                    return Mono.just(tx);
-                })
+                .filter(tx -> tx.getStatus().equals(TransactionStatusDto.ACTIVATED))
+                .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getData())))
                 .flatMap(
                         t -> {
                             it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent userCanceledEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent(

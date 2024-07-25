@@ -1,6 +1,5 @@
 package it.pagopa.transactions.exceptions;
 
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import org.springframework.http.HttpStatus;
@@ -12,13 +11,18 @@ import java.util.Optional;
 
 @ResponseStatus(value = HttpStatus.CONFLICT)
 public class AlreadyProcessedException extends Exception implements TransactionContext {
-    @NotNull private final TransactionId transactionId;
-    @Nullable private final String pspId;
-    @Nullable private final String paymentTypeCode;
-    @Nullable private final String clientId;
-    @Nullable private final Boolean walletPayment;
-    @Nullable private final UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult;
-
+    @NotNull
+    private final TransactionId transactionId;
+    @Nullable
+    private final String pspId;
+    @Nullable
+    private final String paymentTypeCode;
+    @Nullable
+    private final String clientId;
+    @Nullable
+    private final Boolean walletPayment;
+    @Nullable
+    private final UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult;
 
     public AlreadyProcessedException(TransactionId transactionId) {
         this.transactionId = transactionId;

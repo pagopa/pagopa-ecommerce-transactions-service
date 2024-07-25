@@ -1,6 +1,5 @@
 package it.pagopa.transactions.exceptions;
 
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 
@@ -14,7 +13,7 @@ public interface TransactionContext {
 
     Optional<String> paymentTypeCode();
 
-    Optional<String>  clientId();
+    Optional<String> clientId();
 
     Optional<Boolean> walletPayment();
 

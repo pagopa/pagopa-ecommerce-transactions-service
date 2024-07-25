@@ -98,8 +98,6 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                     t.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
                                     t.getClientId().name(),
                                     isWalletPayment,
-                                    // TODO Qui ci va il codice di risposta della send payment result ? L'error code
-                                    // sarà sempre empty() ?
                                     new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
                                             command.getData().addUserReceiptRequest().getOutcome().getValue(),
                                             Optional.empty()
@@ -238,7 +236,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                     );
                                                 }
                                         )
-                                        .thenReturn(userReceiptEvent)
+                                                .thenReturn(userReceiptEvent)
                                 )
                 );
 

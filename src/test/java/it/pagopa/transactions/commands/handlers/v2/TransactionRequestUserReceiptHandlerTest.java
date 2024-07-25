@@ -640,7 +640,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 false,
                 updateTransactionStatusTracerUtils
         );
-
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectError(AlreadyProcessedException.class)
@@ -735,7 +734,6 @@ class TransactionRequestUserReceiptHandlerTest {
         )
                 .thenReturn(QUEUE_SUCCESSFUL_RESPONSE);
         /* test */
-
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
                 .expectError(InvalidRequestException.class)
                 .verify();
