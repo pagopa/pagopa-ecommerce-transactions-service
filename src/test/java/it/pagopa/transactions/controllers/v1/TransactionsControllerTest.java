@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -54,6 +55,7 @@ import javax.crypto.SecretKey;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -1294,16 +1296,25 @@ class TransactionsControllerTest {
                     assertEquals(transactionInfo, response.getBody());
                 })
                 .verifyComplete();
-        /*
-         * UpdateTransactionStatusTracerUtils.StatusUpdateInfo
-         * expectedTransactionUpdateStatus = new
-         * UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-         * UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-         * trigger, Optional.ofNullable(expectedPspId), Optional.of( new
-         * UpdateTransactionStatusTracerUtils.GatewayOutcomeResult( expectedOutcome,
-         * Optional.empty() ) ) ); verify(updateTransactionStatusTracerUtils, times(1))
-         * .traceStatusUpdateOperation(expectedTransactionUpdateStatus);
-         */
+
+         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedTransactionUpdateStatus = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+         trigger,
+                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                 new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                         expectedPspId,
+                         new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                 expectedOutcome,
+                         Optional.empty()
+                         ),
+                         "CP",
+                         Transaction.ClientId.CHECKOUT,
+                         false
+                 )
+         );
+
+
+         verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(expectedTransactionUpdateStatus);
+
     }
 
     @Test
@@ -1430,16 +1441,21 @@ class TransactionsControllerTest {
         )
                 .expectError(raisedException.getClass())
                 .verify();
-        /*
-         * UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo
-         * = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-         * expectedOutcome,
-         * UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-         * Optional.empty(), Optional.of( new
-         * UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult( "KO",
-         * Optional.of("1") ) ) ); verify(updateTransactionStatusTracerUtils,
-         * times(1)).traceStatusUpdateOperation( expectedStatusUpdateInfo );
-         */
+
+         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                 UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                 expectedOutcome,
+                 new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                "PSP_ID",
+                         new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                 "KO", Optional.of("1")),
+                         "CP",
+                         Transaction.ClientId.CHECKOUT,
+                         false
+                 )
+         );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation( expectedStatusUpdateInfo );
+
     }
 
     private static Stream<Arguments> badRequestForUpdateAuthRequestMethodSource() {

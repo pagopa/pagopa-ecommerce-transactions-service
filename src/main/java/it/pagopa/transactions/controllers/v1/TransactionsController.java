@@ -207,83 +207,11 @@ public class TransactionsController implements TransactionsApi {
                             return updateAuthorizationRequest;
                         })
                         .flatMap(
-                                updateAuthorizationRequest -> {
-                                    Tuple3<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, Optional<String>, UpdateTransactionStatusTracerUtils.GatewayOutcomeResult> authDetails = switch (updateAuthorizationRequest.getOutcomeGateway()) {
-                                        case OutcomeXpayGatewayDto outcome -> Tuples.of(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                                                Optional.empty(),
-                                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                        outcome.getOutcome().toString(),
-                                                        Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
-                                                )
-                                        );
-                                        case OutcomeVposGatewayDto outcome -> Tuples.of(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
-                                                Optional.empty(),
-                                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                        outcome.getOutcome().toString(),
-                                                        Optional.ofNullable(outcome.getErrorCode()).map(OutcomeVposGatewayDto.ErrorCodeEnum::toString)
-                                                )
-                                        );
-                                        case OutcomeNpgGatewayDto outcome -> Tuples.of(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
-                                                Optional.empty(),
-                                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                        outcome.getOperationResult().toString(),
-                                                        Optional.ofNullable(outcome.getErrorCode())
-                                                )
-                                        );
-                                        case OutcomeRedirectGatewayDto outcome -> Tuples.of(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
-                                                Optional.of(outcome.getPspId()),
-                                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                        outcome.getOutcome().toString(),
-                                                        Optional.ofNullable(outcome.getErrorCode())
-                                                )
-                                        );
-                                        default ->
-                                                throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequest.getOutcomeGateway()));
-                                    };
-                                    return transactionsService
+                                updateAuthorizationRequest -> transactionsService
                                         .updateTransactionAuthorization(
                                                 transactionIdDecoded,
                                                 updateAuthorizationRequest
                                         )
-                                            .doOnNext(
-                                                    ignored -> updateTransactionStatusTracerUtils
-                                                            .traceStatusUpdateOperation(
-                                                                    new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-                                                                            authDetails.getT1(),
-                                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                                                                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                                                                                    authDetails.getT2().get(),
-                                                                                    authDetails.getT3(),
-                                                                                    "CP",
-                                                                                    Transaction.ClientId.CHECKOUT,
-                                                                                    false
-                                                                            )
-                                                                    )
-                                                            )
-                                            )
-                                            .doOnError(exception -> {
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
-                                                        exception
-                                                );
-                                                updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                        new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-                                                                authDetails.getT1(),
-                                                                outcome,
-                                                                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                                                                        authDetails.getT2().get(),
-                                                                        authDetails.getT3(),
-                                                                        "CP",
-                                                                        Transaction.ClientId.CHECKOUT,
-                                                                        false
-                                                                )
-                                                        )
-                                                );
-                                            });
-                                }
                         )
                         .map(ResponseEntity::ok)
                         .contextWrite(

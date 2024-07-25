@@ -30,13 +30,6 @@ public class OpenTelemetryConfiguration {
     }
 
     @Bean
-    public UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils(
-                                                                                 Tracer openTelemetryTracer
-    ) {
-        return new UpdateTransactionStatusTracerUtils(new OpenTelemetryUtils(openTelemetryTracer));
-    }
-
-    @Bean
     public OpenTelemetryUtils openTelemetryUtils(
                                                  Tracer openTelemetryTracer
     ) {
