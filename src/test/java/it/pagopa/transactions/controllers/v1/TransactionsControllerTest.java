@@ -1270,7 +1270,6 @@ class TransactionsControllerTest {
 
     @Test
     void shouldHandleAddUserReceiptStatusOK() {
-
         AddUserReceiptRequestDto addUserReceiptRequestDto = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK).paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(

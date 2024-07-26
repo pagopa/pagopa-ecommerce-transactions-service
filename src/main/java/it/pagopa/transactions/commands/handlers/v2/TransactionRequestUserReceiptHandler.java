@@ -89,18 +89,13 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 .flatMap(t -> {
                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = t
                             .getTransactionAuthorizationRequestData().getTransactionGatewayAuthorizationRequestedData();
-                    boolean isWalletPayment = transactionGatewayAuthorizationRequestedData instanceof NpgTransactionGatewayAuthorizationRequestedData
-                            &&
-                            ((NpgTransactionGatewayAuthorizationRequestedData) t
-                                    .getTransactionAuthorizationRequestData()
-                                    .getTransactionGatewayAuthorizationRequestedData()).getWalletInfo() != null;
                     return Mono.error(
                             new AlreadyProcessedException(
                                     t.getTransactionId(),
                                     t.getTransactionAuthorizationRequestData().getPspId(),
                                     t.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
                                     t.getClientId().name(),
-                                    isWalletPayment,
+                                    transactionsUtils.isWalletPayment(t).orElseThrow(),
                                     new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
                                             command.getData().addUserReceiptRequest().getOutcome().getValue(),
                                             Optional.empty()
@@ -142,9 +137,6 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         TransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = baseTransactionWithAuthData
                                 .getTransactionAuthorizationRequestData()
                                 .getTransactionGatewayAuthorizationRequestedData();
-                        boolean isWalletPayment = npgTransactionGatewayAuthorizationRequestedData instanceof NpgTransactionGatewayAuthorizationRequestedData
-                                && ((NpgTransactionGatewayAuthorizationRequestedData) npgTransactionGatewayAuthorizationRequestedData)
-                                        .getWalletInfo() != null;
                         return Mono.error(
                                 new InvalidRequestException(
                                         "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send paymnt result payment tokens: %s"
@@ -159,7 +151,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                         baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
                                                 .getPaymentTypeCode(),
                                         tx.getClientId().name(),
-                                        isWalletPayment,
+                                        transactionsUtils.isWalletPayment(tx).orElseThrow(),
                                         new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
                                                 command.getData().addUserReceiptRequest().getOutcome().getValue(),
                                                 Optional.empty()
@@ -208,15 +200,6 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                                     event.getEventCode(),
                                                                     event.getTransactionId()
                                                             );
-
-                                                            boolean isWalletPayment = transactionClosed
-                                                                    .getTransactionAuthorizationRequestData()
-                                                                    .getTransactionGatewayAuthorizationRequestedData() instanceof NpgTransactionGatewayAuthorizationRequestedData
-                                                                    && ((NpgTransactionGatewayAuthorizationRequestedData) (transactionClosed
-                                                                            .getTransactionAuthorizationRequestData()
-                                                                            .getTransactionGatewayAuthorizationRequestedData()))
-                                                                                    .getWalletInfo() != null;
-
                                                             updateTransactionStatusTracerUtils
                                                                     .traceStatusUpdateOperation(
                                                                             new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
@@ -230,7 +213,9 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                                                             .getTransactionAuthorizationRequestData()
                                                                                             .getPaymentTypeCode(),
                                                                                     transactionClosed.getClientId(),
-                                                                                    isWalletPayment,
+                                                                                    transactionsUtils.isWalletPayment(
+                                                                                            transactionClosed
+                                                                                    ).orElseThrow(),
                                                                                     new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
                                                                                             command.getData()
                                                                                                     .addUserReceiptRequest()
