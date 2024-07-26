@@ -247,13 +247,28 @@ public class TransactionsController implements TransactionsApi {
                                     SendPaymentResultOutcomeInfo outcomeInfo = exceptionToUpdateSendPaymentResultOutcomeInfo(
                                             exception
                                     );
-                                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                            new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
-                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
-                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
-                                                    outcomeInfo.outcome()
-                                            )
-                                    );
+                                    switch (outcomeInfo.outcome()) {
+                                        case INVALID_REQUEST, WRONG_TRANSACTION_STATUS -> updateTransactionStatusTracerUtils
+                                                .traceStatusUpdateOperation(
+                                                        new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
+                                                                outcomeInfo.outcome(),
+                                                                outcomeInfo.pspId().orElse("N/A"),
+                                                                outcomeInfo.paymentTypeCode().orElse("N/A"),
+                                                                outcomeInfo.clientId().get(),
+                                                                outcomeInfo.walletPayment().get(),
+                                                                outcomeInfo.gatewayOutcomeResult().get()
+                                                        )
+                                                );
+                                        case PROCESSING_ERROR, TRANSACTION_NOT_FOUND -> updateTransactionStatusTracerUtils
+                                                .traceStatusUpdateOperation(
+                                                        new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
+                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                                                                outcomeInfo.outcome()
+                                                        )
+                                                );
+                                    }
+
                                     log.error("Got error while trying to add user receipt", exception);
                                 })
                                 .onErrorMap(SendPaymentResultException::new)
@@ -420,7 +435,7 @@ public class TransactionsController implements TransactionsApi {
 
     private void traceInvalidRequestException(ServerHttpRequest request) {
         String contextPath = request.getPath().value();
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = null;
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo errorStatusUpdateInfo = null;
         if (contextPath.endsWith("auth-requests")) {
             /*
              * for PATCH auth-requests gateway information is passed into
@@ -440,27 +455,27 @@ public class TransactionsController implements TransactionsApi {
             };
 
             if (Objects.equals(request.getMethod(), HttpMethod.PATCH)) {
-                statusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                errorStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
                         trigger,
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
                 );
             } else if (Objects.equals(request.getMethod(), HttpMethod.POST)) {
-                statusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                errorStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_REQUESTED,
                         trigger,
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
                 );
             }
         } else if (contextPath.endsWith("user-receipts")) {
-            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+            errorStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
                     UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
             );
         }
-        if (statusUpdateInfo != null) {
-            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(statusUpdateInfo);
+        if (errorStatusUpdateInfo != null) {
+            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(errorStatusUpdateInfo);
         }
     }
 

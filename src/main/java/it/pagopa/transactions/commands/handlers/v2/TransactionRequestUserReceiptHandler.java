@@ -153,12 +153,12 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                 ),
                                         tx.getTransactionId(),
                                         Optional.of(
-                                                ((BaseTransactionWithRequestedAuthorization) tx)
-                                                        .getTransactionAuthorizationRequestData().getPspId()
+                                                baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
+                                                        .getPspId()
                                         ),
                                         Optional.of(
-                                                ((BaseTransactionWithRequestedAuthorization) tx)
-                                                        .getTransactionAuthorizationRequestData().getPaymentTypeCode()
+                                                baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
+                                                        .getPaymentTypeCode()
                                         ),
                                         tx.getClientId().name(),
                                         isWalletPayment,
