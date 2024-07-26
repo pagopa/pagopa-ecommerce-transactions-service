@@ -1,6 +1,5 @@
 package it.pagopa.transactions.controllers.v1;
 
-import com.nimbusds.oauth2.sdk.id.ClientID;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -55,6 +54,7 @@ import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -258,9 +258,9 @@ class TransactionsControllerTest {
         /* test */
 
         StepVerifier.create(
-                transactionsController
-                        .requestTransactionUserCancellation(transactionId, null, mockExchange)
-        )
+                        transactionsController
+                                .requestTransactionUserCancellation(transactionId, null, mockExchange)
+                )
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
     }
@@ -280,9 +280,9 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
-        )
+                        transactionsService
+                                .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                )
                 .thenReturn(Mono.just(authorizationResponse));
 
         Mockito.when(mockExchange.getRequest())
@@ -324,9 +324,9 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
-        )
+                        transactionsService
+                                .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                )
                 .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
 
         Mockito.when(mockExchange.getRequest())
@@ -375,8 +375,8 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
-        )
+                        transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
+                )
                 .thenReturn(Mono.just(transactionInfo));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
 
@@ -434,8 +434,8 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
-        )
+                        transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
+                )
                 .thenReturn(Mono.error(new TransactionNotFoundException(transactionId.value())));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
 
@@ -460,13 +460,13 @@ class TransactionsControllerTest {
 
         /* test */
         StepVerifier.create(
-                transactionsController
-                        .updateTransactionAuthorization(
-                                transactionId.value(),
-                                Mono.just(updateAuthorizationRequest),
-                                mockExchange
-                        )
-        )
+                        transactionsController
+                                .updateTransactionAuthorization(
+                                        transactionId.value(),
+                                        Mono.just(updateAuthorizationRequest),
+                                        mockExchange
+                                )
+                )
                 .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
                 .verify();
         Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
@@ -493,8 +493,8 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
-        )
+                        transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
+                )
                 .thenReturn(Mono.error(new BadGatewayException("", HttpStatus.BAD_REQUEST)));
 
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
@@ -522,13 +522,13 @@ class TransactionsControllerTest {
         /* test */
 
         StepVerifier.create(
-                transactionsController
-                        .updateTransactionAuthorization(
-                                transactionId.value(),
-                                Mono.just(updateAuthorizationRequest),
-                                mockExchange
-                        )
-        )
+                        transactionsController
+                                .updateTransactionAuthorization(
+                                        transactionId.value(),
+                                        Mono.just(updateAuthorizationRequest),
+                                        mockExchange
+                                )
+                )
                 .expectErrorMatches(error -> error instanceof BadGatewayException)
                 .verify();
         Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
@@ -844,8 +844,8 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @MethodSource("badRequestForUpdateAuthRequestMethodSource")
     void shouldReturnResponseEntityWithMismatchAmount(
-                                                      String paymentGatewayTypeHeaderValue,
-                                                      UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
+            String paymentGatewayTypeHeaderValue,
+            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
     ) {
         String contextPath = "test/auth-requests";
         ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
@@ -886,8 +886,8 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @MethodSource("badRequestForUpdateAuthRequestMethodSource")
     void shouldReturnResponseEntityWithMismatchAllCCP(
-                                                      String paymentGatewayTypeHeaderValue,
-                                                      UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
+            String paymentGatewayTypeHeaderValue,
+            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
     ) {
         String contextPath = "test/auth-requests";
         ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
@@ -1072,9 +1072,9 @@ class TransactionsControllerTest {
         PaymentMethodNotFoundException exception = new PaymentMethodNotFoundException(paymentMethodId, client);
 
         Mockito.when(
-                transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
-        )
+                        transactionsService
+                                .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                )
                 .thenReturn(Mono.error(exception));
 
         /* test */
@@ -1258,8 +1258,8 @@ class TransactionsControllerTest {
     @ParameterizedTest
     @MethodSource("badRequestForUpdateAuthRequestMethodSource")
     void shouldTraceSyntacticInvalidRequestForUpdateAuthRequest(
-                                                                String paymentGatewayTypeHeaderValue,
-                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
+            String paymentGatewayTypeHeaderValue,
+            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
     ) {
         String contextPath = "auth-requests";
 
@@ -1363,8 +1363,8 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
-        )
+                        transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                )
                 .thenReturn(Mono.just(transactionInfo));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
         Mockito.when(mockExchange.getRequest())
@@ -1388,13 +1388,13 @@ class TransactionsControllerTest {
         /* test */
 
         StepVerifier.create(
-                transactionsController
-                        .addUserReceipt(
-                                transactionId.value(),
-                                Mono.just(addUserReceiptRequestDto),
-                                mockExchange
-                        )
-        )
+                        transactionsController
+                                .addUserReceipt(
+                                        transactionId.value(),
+                                        Mono.just(addUserReceiptRequestDto),
+                                        mockExchange
+                                )
+                )
                 .assertNext(response -> {
                     assertEquals(HttpStatus.OK, response.getStatusCode());
                     assertEquals(addUserReceiptResponseDto, response.getBody());
@@ -1426,8 +1426,8 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
-        )
+                        transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                )
                 .thenReturn(Mono.error(raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
         Mockito.when(mockExchange.getRequest())
@@ -1450,13 +1450,13 @@ class TransactionsControllerTest {
 
         /* test */
         StepVerifier.create(
-                transactionsController
-                        .addUserReceipt(
-                                transactionId.value(),
-                                Mono.just(addUserReceiptRequestDto),
-                                mockExchange
-                        )
-        )
+                        transactionsController
+                                .addUserReceipt(
+                                        transactionId.value(),
+                                        Mono.just(addUserReceiptRequestDto),
+                                        mockExchange
+                                )
+                )
                 .expectErrorMatches(
                         exc -> exc instanceof SendPaymentResultException
                                 && ((SendPaymentResultException) exc).cause.equals(raisedException)
@@ -1502,8 +1502,8 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
-        )
+                        transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                )
                 .thenReturn(Mono.error(raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
         Mockito.when(mockExchange.getRequest())
@@ -1526,13 +1526,13 @@ class TransactionsControllerTest {
 
         /* test */
         StepVerifier.create(
-                transactionsController
-                        .addUserReceipt(
-                                transactionId.value(),
-                                Mono.just(addUserReceiptRequestDto),
-                                mockExchange
-                        )
-        )
+                        transactionsController
+                                .addUserReceipt(
+                                        transactionId.value(),
+                                        Mono.just(addUserReceiptRequestDto),
+                                        mockExchange
+                                )
+                )
                 .expectErrorMatches(
                         exc -> exc instanceof SendPaymentResultException
                                 && ((SendPaymentResultException) exc).cause.equals(raisedException)
@@ -1580,9 +1580,9 @@ class TransactionsControllerTest {
         );
 
         Mockito.when(
-                transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
-        )
+                        transactionsService
+                                .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                )
                 .thenReturn(Mono.error(exception));
 
         /* test */
