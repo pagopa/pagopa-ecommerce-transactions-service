@@ -562,13 +562,18 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(TransactionAmountMismatchException.class)
-    ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(TransactionAmountMismatchException exception) {
+    ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(
+                                                              TransactionAmountMismatchException exception,
+                                                              ServerWebExchange exchange
+    ) {
+
         log.warn(
                 "Got invalid input: {}. Request amount: [{}], transaction amount: [{}]",
                 exception.getMessage(),
                 exception.getRequestAmount(),
                 exception.getTransactionAmount()
         );
+        traceInvalidRequestException(exchange.getRequest());
         HttpStatus httpStatus = HttpStatus.CONFLICT;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -581,7 +586,8 @@ public class TransactionsController implements TransactionsApi {
 
     @ExceptionHandler(PaymentNoticeAllCCPMismatchException.class)
     ResponseEntity<ProblemJsonDto> paymentNoticeAllCCPMismatchErrorHandler(
-                                                                           PaymentNoticeAllCCPMismatchException exception
+                                                                           PaymentNoticeAllCCPMismatchException exception,
+                                                                           ServerWebExchange exchange
     ) {
         log.warn(
                 "Got invalid input: {}. RptID: [{}] request allCCP: [{}], payment notice allCCP: [{}]",
@@ -590,6 +596,7 @@ public class TransactionsController implements TransactionsApi {
                 exception.getRequestAllCCP(),
                 exception.getPaymentNoticeAllCCP()
         );
+        traceInvalidRequestException(exchange.getRequest());
         HttpStatus httpStatus = HttpStatus.CONFLICT;
         return new ResponseEntity<>(
                 new ProblemJsonDto()

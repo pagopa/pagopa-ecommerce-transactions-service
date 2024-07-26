@@ -38,10 +38,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
@@ -58,7 +55,6 @@ import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -845,29 +841,88 @@ class TransactionsControllerTest {
         assertEquals("Method not implemented", responseEntity.getBody().getDetail());
     }
 
-    @Test
-    void shouldReturnResponseEntityWithMismatchAmount() {
+    @ParameterizedTest
+    @MethodSource("badRequestForUpdateAuthRequestMethodSource")
+    void shouldReturnResponseEntityWithMismatchAmount(
+                                                      String paymentGatewayTypeHeaderValue,
+                                                      UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
+    ) {
+        String contextPath = "test/auth-requests";
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        HttpHeaders httpHeaders = Mockito.mock(HttpHeaders.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(serverHttpRequest.getHeaders()).willReturn(httpHeaders);
+        given(serverHttpRequest.getMethod()).willReturn(HttpMethod.POST);
+        given(httpHeaders.get("x-payment-gateway-type")).willReturn(List.of());
+        if (paymentGatewayTypeHeaderValue != null) {
+            given(httpHeaders.get("x-pgs-id")).willReturn(List.of(paymentGatewayTypeHeaderValue));
+        } else {
+            given(httpHeaders.get("x-pgs-id")).willReturn(List.of());
+        }
+        given(requestPath.value()).willReturn(contextPath);
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
-                .amountMismatchErrorHandler(new TransactionAmountMismatchException(1, 2));
+                .amountMismatchErrorHandler(
+                        new TransactionAmountMismatchException(1, 2),
+                        exchange
+                );
 
         assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
         assertEquals(
                 "Invalid request: Transaction amount mismatch",
                 responseEntity.getBody().getDetail()
         );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_REQUESTED,
+                        expectedTrigger,
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+                )
+        );
     }
 
-    @Test
-    void shouldReturnResponseEntityWithMismatchAllCCP() {
+    @ParameterizedTest
+    @MethodSource("badRequestForUpdateAuthRequestMethodSource")
+    void shouldReturnResponseEntityWithMismatchAllCCP(
+                                                      String paymentGatewayTypeHeaderValue,
+                                                      UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger expectedTrigger
+    ) {
+        String contextPath = "test/auth-requests";
+        ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
+        ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
+        RequestPath requestPath = Mockito.mock(RequestPath.class);
+        HttpHeaders httpHeaders = Mockito.mock(HttpHeaders.class);
+        given(exchange.getRequest()).willReturn(serverHttpRequest);
+        given(serverHttpRequest.getPath()).willReturn(requestPath);
+        given(serverHttpRequest.getHeaders()).willReturn(httpHeaders);
+        given(serverHttpRequest.getMethod()).willReturn(HttpMethod.POST);
+        given(httpHeaders.get("x-payment-gateway-type")).willReturn(List.of());
+        if (paymentGatewayTypeHeaderValue != null) {
+            given(httpHeaders.get("x-pgs-id")).willReturn(List.of(paymentGatewayTypeHeaderValue));
+        } else {
+            given(httpHeaders.get("x-pgs-id")).willReturn(List.of());
+        }
+        given(requestPath.value()).willReturn(contextPath);
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
                 .paymentNoticeAllCCPMismatchErrorHandler(
-                        new PaymentNoticeAllCCPMismatchException("testRptID", false, true)
+                        new PaymentNoticeAllCCPMismatchException("testRptID", false, true),
+                        exchange
+
                 );
 
         assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
         assertEquals(
                 "Invalid request: Payment notice allCCP mismatch",
                 responseEntity.getBody().getDetail()
+        );
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_REQUESTED,
+                        expectedTrigger,
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+                )
         );
     }
 
@@ -1215,6 +1270,7 @@ class TransactionsControllerTest {
         given(exchange.getRequest()).willReturn(serverHttpRequest);
         given(serverHttpRequest.getPath()).willReturn(requestPath);
         given(serverHttpRequest.getHeaders()).willReturn(httpHeaders);
+        given(serverHttpRequest.getMethod()).willReturn(HttpMethod.PATCH);
         if (paymentGatewayTypeHeaderValue != null) {
             given(httpHeaders.get("x-payment-gateway-type")).willReturn(List.of(paymentGatewayTypeHeaderValue));
         } else {
@@ -1227,7 +1283,13 @@ class TransactionsControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals("Invalid request: Some message", responseEntity.getBody().getDetail());
 
-        verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(any());
+        verify(updateTransactionStatusTracerUtils, times(1)).traceStatusUpdateOperation(
+                new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
+                        expectedTrigger,
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+                )
+        );
     }
 
     @Test
