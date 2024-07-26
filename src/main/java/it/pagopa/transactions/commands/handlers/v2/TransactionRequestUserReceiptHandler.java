@@ -74,6 +74,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionClosed> alreadyProcessedError = transaction
+                // FIXME In case of closure_error this exception processing cause class cast
+                // exception. To be fixed
                 .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization.class)
                 .doOnNext(
                         t -> log.error(
@@ -152,14 +154,10 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                         addUserReceiptRequestPaymentTokens
                                                 ),
                                         tx.getTransactionId(),
-                                        Optional.of(
-                                                baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
-                                                        .getPspId()
-                                        ),
-                                        Optional.of(
-                                                baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
-                                                        .getPaymentTypeCode()
-                                        ),
+                                        baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
+                                                .getPspId(),
+                                        baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
+                                                .getPaymentTypeCode(),
                                         tx.getClientId().name(),
                                         isWalletPayment,
                                         new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
