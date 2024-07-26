@@ -4,11 +4,14 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithClosureError;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
+import it.pagopa.ecommerce.commons.utils.v2.TransactionUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
@@ -153,12 +156,12 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                 ),
                                         tx.getTransactionId(),
                                         Optional.of(
-                                                ((BaseTransactionWithRequestedAuthorization) tx)
-                                                        .getTransactionAuthorizationRequestData().getPspId()
+                                                baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
+                                                        .getPspId()
                                         ),
                                         Optional.of(
-                                                ((BaseTransactionWithRequestedAuthorization) tx)
-                                                        .getTransactionAuthorizationRequestData().getPaymentTypeCode()
+                                                baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
+                                                        .getPaymentTypeCode()
                                         ),
                                         tx.getClientId().name(),
                                         isWalletPayment,
