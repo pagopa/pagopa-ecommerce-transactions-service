@@ -21,6 +21,7 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -757,6 +758,50 @@ class TransactionRequestUserReceiptHandlerTest {
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .verify();
+
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
+    }
+
+    @Test
+    void shouldRejectTransactionInInvalidStateNotRequestedAuth() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction.getTransactionId(),
+                addUserReceiptRequest
+        );
+
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData
+        );
+
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
+                .just(transactionActivatedEvent));
+
+        /* preconditions */
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
+                .expectErrorMatches(error -> error instanceof ProcessingErrorException)
                 .verify();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());

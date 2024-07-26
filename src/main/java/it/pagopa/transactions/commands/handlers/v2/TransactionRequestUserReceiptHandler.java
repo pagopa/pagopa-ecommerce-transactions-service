@@ -2,7 +2,6 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -15,6 +14,7 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -74,8 +74,15 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionClosed> alreadyProcessedError = transaction
-                // FIXME In case of closure_error this exception processing cause class cast
-                // exception. To be fixed
+                .filter(t -> t instanceof BaseTransactionWithRequestedAuthorization)
+                .switchIfEmpty(
+                        Mono.error(
+                                new ProcessingErrorException(
+                                        "Error processing sendPaymentResult for transaction "
+                                                + command.getData().transactionId().value()
+                                )
+                        )
+                )
                 .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization.class)
                 .doOnNext(
                         t -> log.error(
@@ -86,23 +93,21 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                         : "N/A"
                         )
                 )
-                .flatMap(t -> {
-                    TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = t
-                            .getTransactionAuthorizationRequestData().getTransactionGatewayAuthorizationRequestedData();
-                    return Mono.error(
-                            new AlreadyProcessedException(
-                                    t.getTransactionId(),
-                                    t.getTransactionAuthorizationRequestData().getPspId(),
-                                    t.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
-                                    t.getClientId().name(),
-                                    transactionsUtils.isWalletPayment(t).orElseThrow(),
-                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                            command.getData().addUserReceiptRequest().getOutcome().getValue(),
-                                            Optional.empty()
-                                    )
-                            )
-                    );
-                });
+                .flatMap(
+                        t -> Mono.error(
+                                new AlreadyProcessedException(
+                                        t.getTransactionId(),
+                                        t.getTransactionAuthorizationRequestData().getPspId(),
+                                        t.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
+                                        t.getClientId().name(),
+                                        transactionsUtils.isWalletPayment(t).orElseThrow(),
+                                        new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                command.getData().addUserReceiptRequest().getOutcome().getValue(),
+                                                Optional.empty()
+                                        )
+                                )
+                        )
+                );
         return transaction
                 .map(
                         tx -> tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionExpired txExpired
@@ -134,12 +139,9 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                     );
                     if (!isOk) {
                         BaseTransactionWithRequestedAuthorization baseTransactionWithAuthData = ((BaseTransactionWithRequestedAuthorization) tx);
-                        TransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = baseTransactionWithAuthData
-                                .getTransactionAuthorizationRequestData()
-                                .getTransactionGatewayAuthorizationRequestedData();
                         return Mono.error(
                                 new InvalidRequestException(
-                                        "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send paymnt result payment tokens: %s"
+                                        "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send payment result payment tokens: %s"
                                                 .formatted(
                                                         tx.getTransactionId().value(),
                                                         eCommercePaymentTokens,
