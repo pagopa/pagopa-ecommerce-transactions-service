@@ -1350,6 +1350,10 @@ class TransactionsControllerTest {
                 Arguments.of(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND,
                         new TransactionNotFoundException("paymentToken")
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
+                        new ProcessingErrorException("Error processing request")
                 )
         );
     }
