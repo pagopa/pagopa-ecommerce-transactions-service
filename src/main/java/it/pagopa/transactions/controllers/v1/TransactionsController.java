@@ -7,8 +7,8 @@ import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
-import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -289,18 +289,17 @@ public class TransactionsController implements TransactionsApi {
                     exception.walletPayment(),
                     exception.gatewayOutcomeResult()
             );
-            case TransactionNotFoundException ignored ->
-                    new SendPaymentResultOutcomeInfo(
-                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND,
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty(),
-                            Optional.empty()
-                    );
+            case TransactionNotFoundException ignored -> new SendPaymentResultOutcomeInfo(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND,
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()
+            );
             case InvalidRequestException exception -> new SendPaymentResultOutcomeInfo(
-                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
                     Optional.of(exception.getTransactionId()),
                     exception.pspId(),
                     exception.paymentTypeCode(),
@@ -423,10 +422,15 @@ public class TransactionsController implements TransactionsApi {
         String contextPath = request.getPath().value();
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = null;
         if (contextPath.endsWith("auth-requests")) {
-            String gatewayHeader = Optional.ofNullable(request.getHeaders().get("x-payment-gateway-type"))
-                    .filter(Predicate.not(List::isEmpty))
-                    .map(headers -> headers.get(0))
-                    .orElse("");
+            /*
+             * for PATCH auth-requests gateway information is passed into
+             * `x-payment-gateway-type` header, for POST auth-requests into `x-pgs-id`
+             */
+            Optional<String> gatewayTypeHeader = Optional.ofNullable(request.getHeaders().get("x-payment-gateway-type"))
+                    .filter(Predicate.not(List::isEmpty)).map(headers -> headers.get(0));
+            Optional<String> pgsIdHeader = Optional.ofNullable(request.getHeaders().get("x-pgs-id"))
+                    .filter(Predicate.not(List::isEmpty)).map(headers -> headers.get(0));
+            String gatewayHeader = gatewayTypeHeader.orElse(pgsIdHeader.orElse(""));
             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger = switch (gatewayHeader) {
                 case "XPAY" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
                 case "VPOS" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
