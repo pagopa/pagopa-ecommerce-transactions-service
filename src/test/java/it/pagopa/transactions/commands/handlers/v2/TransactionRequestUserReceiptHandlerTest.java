@@ -801,7 +801,13 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-                .expectErrorMatches(error -> error instanceof ProcessingErrorException)
+                .expectErrorMatches(
+                        error -> error instanceof ProcessingErrorException && error.getMessage().equals(
+                                "Error processing sendPaymentResult for transaction "
+                                        + transaction.getTransactionId().value() + " in status "
+                                        + transaction.getStatus().getValue()
+                        )
+                )
                 .verify();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());

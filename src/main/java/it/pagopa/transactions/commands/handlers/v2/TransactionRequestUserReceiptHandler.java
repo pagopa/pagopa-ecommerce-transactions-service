@@ -74,39 +74,55 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionClosed> alreadyProcessedError = transaction
-                .filter(t -> t instanceof BaseTransactionWithRequestedAuthorization)
-                .switchIfEmpty(
-                        Mono.error(
-                                new ProcessingErrorException(
-                                        "Error processing sendPaymentResult for transaction "
-                                                + command.getData().transactionId().value()
-                                )
-                        )
-                )
-                .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization.class)
-                .doOnNext(
-                        t -> log.error(
-                                "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
-                                t.getStatus(),
-                                t instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
-                                        ? transactionClosed.getTransactionClosureData().getResponseOutcome()
-                                        : "N/A"
-                        )
-                )
                 .flatMap(
-                        t -> Mono.error(
-                                new AlreadyProcessedException(
-                                        t.getTransactionId(),
-                                        t.getTransactionAuthorizationRequestData().getPspId(),
-                                        t.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
-                                        t.getClientId().name(),
-                                        transactionsUtils.isWalletPayment(t).orElseThrow(),
-                                        new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                command.getData().addUserReceiptRequest().getOutcome().getValue(),
-                                                Optional.empty()
+                        t -> !(t instanceof BaseTransactionWithRequestedAuthorization) ? Mono.just(t)
+                                .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken.class)
+                                .doOnNext(
+                                        tx -> log.error(
+                                                "Error: requesting closure status update for transaction in state {}",
+                                                tx.getStatus()
+                                        )
+                                ).flatMap(
+                                        tx -> Mono.error(
+                                                new ProcessingErrorException(
+                                                        "Error processing sendPaymentResult for transaction "
+                                                                + tx.getTransactionId().value()
+                                                                + " in status " + tx.getStatus()
+                                                )
                                         )
                                 )
-                        )
+                                : Mono.just(t)
+                                        .cast(
+                                                it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization.class
+                                        )
+                                        .doOnNext(
+                                                tx -> log.error(
+                                                        "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
+                                                        tx.getStatus(),
+                                                        tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
+                                                                ? transactionClosed.getTransactionClosureData()
+                                                                        .getResponseOutcome()
+                                                                : "N/A"
+                                                )
+                                        )
+                                        .flatMap(
+                                                tx -> Mono.error(
+                                                        new AlreadyProcessedException(
+                                                                tx.getTransactionId(),
+                                                                tx.getTransactionAuthorizationRequestData().getPspId(),
+                                                                tx.getTransactionAuthorizationRequestData()
+                                                                        .getPaymentTypeCode(),
+                                                                tx.getClientId().name(),
+                                                                transactionsUtils.isWalletPayment(tx).orElseThrow(),
+                                                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                                        command.getData().addUserReceiptRequest()
+                                                                                .getOutcome()
+                                                                                .getValue(),
+                                                                        Optional.empty()
+                                                                )
+                                                        )
+                                                )
+                                        )
                 );
         return transaction
                 .map(
