@@ -4,6 +4,7 @@ import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
@@ -145,10 +146,10 @@ class NodoOperationsTest {
         assertEquals(paTaxCode, response.paFiscalCode());
         assertEquals(false, response.isAllCCP());
         Mockito.verify(openTelemetryUtils, Mockito.times(1)).addSpanWithAttributes(
-                OpenTelemetryUtils.NODO_ACTIVATION_OK_SPAN_NAME,
+                SpanLabelOpenTelemetry.NODO_ACTIVATION_OK_SPAN_NAME,
                 Attributes
                         .of(
-                                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
+                                SpanLabelOpenTelemetry.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
                                 StOutcome.OK.toString()
                         )
 
@@ -1868,10 +1869,10 @@ class NodoOperationsTest {
         /* asserts */
         Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
         Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithAttributes(
-                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_SPAN_NAME.formatted(nodoFaultCode),
+                SpanLabelOpenTelemetry.NODO_ACTIVATION_ERROR_SPAN_NAME.formatted(nodoFaultCode),
                 Attributes
                         .of(
-                                OpenTelemetryUtils.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
+                                SpanLabelOpenTelemetry.NODO_ACTIVATION_ERROR_FAULT_CODE_ATTRIBUTE_KEY,
                                 nodoFaultCode
                         )
 

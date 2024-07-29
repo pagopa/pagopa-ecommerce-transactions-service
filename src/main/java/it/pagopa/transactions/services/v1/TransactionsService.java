@@ -10,8 +10,8 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
-import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
@@ -38,7 +38,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
-import reactor.util.function.Tuple3;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
@@ -508,7 +507,6 @@ public class TransactionsService {
                                     "Authorization psp validation for transactionId: {}",
                                     transactionId
                             );
-                            Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
                             String clientId = transactionsUtils.getClientId(transaction);
                             List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = transactionsUtils.getPaymentNotices(transaction);
                             return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto, clientId)
@@ -727,17 +725,19 @@ public class TransactionsService {
 
     private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
         return transactionsViewRepository.findById(transactionId)
-                    .filter(transactionDocument -> switch (transactionDocument) {
-                        case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
-                        case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> xUserId == null ? t.getUserId() == null : t.getUserId().equals(xUserId.toString());
-                        default -> throw new NotImplementedException("Handling for transaction document version: [%s] not implemented yet".formatted(transactionDocument.getClass()));
-                    });
+                .filter(transactionDocument -> switch (transactionDocument) {
+                    case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
+                    case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->
+                            xUserId == null ? t.getUserId() == null : t.getUserId().equals(xUserId.toString());
+                    default ->
+                            throw new NotImplementedException("Handling for transaction document version: [%s] not implemented yet".formatted(transactionDocument.getClass()));
+                });
     }
 
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-                                                                   UUID decodedTransactionId,
-                                                                   UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            UUID decodedTransactionId,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
@@ -803,14 +803,14 @@ public class TransactionsService {
                     case OutcomeXpayGatewayDto outcome -> Tuples.of(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
                             new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                                pspId,
-                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                        outcome.getOutcome().toString(),
-                                        Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
-                                ),
-                                paymentMethodTypeCode,
-                                clientId,
-                                isWalletPayment
+                                    pspId,
+                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                            outcome.getOutcome().toString(),
+                                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
+                                    ),
+                                    paymentMethodTypeCode,
+                                    clientId,
+                                    isWalletPayment
                             )
                     );
                     case OutcomeVposGatewayDto outcome -> Tuples.of(
@@ -852,7 +852,8 @@ public class TransactionsService {
                                     isWalletPayment
                             )
                     );
-                    default -> throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
+                    default ->
+                            throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
                 }));
 
         Mono<TransactionInfoDto> v1Info = transactionV1

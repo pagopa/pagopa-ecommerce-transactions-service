@@ -4,13 +4,14 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.v2.server.api.V2Api;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v2.TransactionsService;
-import it.pagopa.transactions.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +66,7 @@ public class TransactionsController implements V2Api {
                 )
         ).doOnNext(
                 ignored -> openTelemetryUtils.addErrorSpanWithException(
-                        OpenTelemetryUtils.CIRCUIT_BREAKER_OPEN_SPAN_NAME
+                        SpanLabelOpenTelemetry.CIRCUIT_BREAKER_OPEN_SPAN_NAME
                                 .formatted(error.getCausingCircuitBreakerName()),
                         error
                 )

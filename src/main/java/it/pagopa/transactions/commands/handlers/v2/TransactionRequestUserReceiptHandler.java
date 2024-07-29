@@ -2,15 +2,19 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +23,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
+import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,6 +38,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
     public static final String QUALIFIER_NAME = "TransactionRequestUserReceiptHandlerV2";
 
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository;
+
+    private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
@@ -43,7 +52,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
             TracingUtils tracingUtils,
             @Value(
                 "${ecommerce.send-payment-result-for-tx-expired.enabled}"
-            ) boolean sendPaymentResultForTxExpiredEnabled
+            ) boolean sendPaymentResultForTxExpiredEnabled,
+            UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils
     ) {
         super(
                 tracingUtils,
@@ -53,6 +63,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 sendPaymentResultForTxExpiredEnabled
         );
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
+        this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
     }
 
     @Override
@@ -63,17 +74,56 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionClosed> alreadyProcessedError = transaction
-                .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class)
-                .doOnNext(
-                        t -> log.error(
-                                "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
-                                t.getStatus(),
-                                t instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
-                                        ? transactionClosed.getTransactionClosureData().getResponseOutcome()
-                                        : "N/A"
-                        )
-                )
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
+                .flatMap(
+                        t -> !(t instanceof BaseTransactionWithRequestedAuthorization) ? Mono.just(t)
+                                .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken.class)
+                                .doOnNext(
+                                        tx -> log.error(
+                                                "Error: requesting closure status update for transaction in state {}",
+                                                tx.getStatus()
+                                        )
+                                ).flatMap(
+                                        tx -> Mono.error(
+                                                new ProcessingErrorException(
+                                                        "Error processing sendPaymentResult for transaction "
+                                                                + tx.getTransactionId().value()
+                                                                + " in status " + tx.getStatus()
+                                                )
+                                        )
+                                )
+                                : Mono.just(t)
+                                        .cast(
+                                                it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization.class
+                                        )
+                                        .doOnNext(
+                                                tx -> log.error(
+                                                        "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
+                                                        tx.getStatus(),
+                                                        tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
+                                                                ? transactionClosed.getTransactionClosureData()
+                                                                        .getResponseOutcome()
+                                                                : "N/A"
+                                                )
+                                        )
+                                        .flatMap(
+                                                tx -> Mono.error(
+                                                        new AlreadyProcessedException(
+                                                                tx.getTransactionId(),
+                                                                tx.getTransactionAuthorizationRequestData().getPspId(),
+                                                                tx.getTransactionAuthorizationRequestData()
+                                                                        .getPaymentTypeCode(),
+                                                                tx.getClientId().name(),
+                                                                transactionsUtils.isWalletPayment(tx).orElseThrow(),
+                                                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                                        command.getData().addUserReceiptRequest()
+                                                                                .getOutcome()
+                                                                                .getValue(),
+                                                                        Optional.empty()
+                                                                )
+                                                        )
+                                                )
+                                        )
+                );
         return transaction
                 .map(
                         tx -> tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionExpired txExpired
@@ -104,62 +154,102 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                             isOk
                     );
                     if (!isOk) {
+                        BaseTransactionWithRequestedAuthorization baseTransactionWithAuthData = ((BaseTransactionWithRequestedAuthorization) tx);
                         return Mono.error(
                                 new InvalidRequestException(
-                                        "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send paymnt result payment tokens: %s"
+                                        "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send payment result payment tokens: %s"
                                                 .formatted(
                                                         tx.getTransactionId().value(),
                                                         eCommercePaymentTokens,
                                                         addUserReceiptRequestPaymentTokens
-                                                )
+                                                ),
+                                        tx.getTransactionId(),
+                                        baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
+                                                .getPspId(),
+                                        baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
+                                                .getPaymentTypeCode(),
+                                        tx.getClientId().name(),
+                                        transactionsUtils.isWalletPayment(tx).orElseThrow(),
+                                        new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                command.getData().addUserReceiptRequest().getOutcome().getValue(),
+                                                Optional.empty()
+                                        )
                                 )
                         );
                     }
                     return Mono.just(true);
                 })
                 .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
-                .flatMap(tx -> {
+                .map(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
-                    it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent event = new it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent(
-                            command.getData().transactionId().value(),
-                            new it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData(
-                                    requestOutcomeToReceiptOutcome(
-                                            command.getData().addUserReceiptRequest().getOutcome()
-                                    ),
-                                    language,
-                                    addUserReceiptRequestDto.getPaymentDate().toZonedDateTime().toString()
-                            )
-                    );
-
-                    return userReceiptAddedEventRepository.save(event)
-                            .flatMap(
-                                    userReceiptEvent -> tracingUtils.traceMono(
-                                            this.getClass().getSimpleName(),
-                                            tracingInfo -> transactionNotificationRequestedQueueAsyncClient
-                                                    .sendMessageWithResponse(
-                                                            new QueueEvent<>(userReceiptEvent, tracingInfo),
-                                                            Duration.ZERO,
-                                                            Duration.ofSeconds(transientQueuesTTLSeconds)
-                                                    )
-                                    ).doOnError(
-                                            exception -> log.error(
-                                                    "Error to generate event {} for transactionId {} - error {}",
-                                                    event.getEventCode(),
-                                                    event.getTransactionId(),
-                                                    exception.getMessage()
-                                            )
+                    return Tuples.of(
+                            new it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent(
+                                    command.getData().transactionId().value(),
+                                    new it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData(
+                                            requestOutcomeToReceiptOutcome(
+                                                    command.getData().addUserReceiptRequest().getOutcome()
+                                            ),
+                                            language,
+                                            addUserReceiptRequestDto.getPaymentDate().toZonedDateTime().toString()
                                     )
-                                            .doOnNext(
-                                                    queueResponse -> log.info(
-                                                            "Generated event {} for transactionId {}",
-                                                            event.getEventCode(),
-                                                            event.getTransactionId()
-                                                    )
-                                            )
-                                            .thenReturn(userReceiptEvent)
-                            );
-                });
+                            ),
+                            tx
+                    );
+                }).flatMap(
+                        TupleUtils.function(
+                                (
+                                 event,
+                                 transactionClosed
+                                ) -> userReceiptAddedEventRepository.save(event)
+                                        .flatMap(
+                                                userReceiptEvent -> tracingUtils.traceMono(
+                                                        this.getClass().getSimpleName(),
+                                                        tracingInfo -> transactionNotificationRequestedQueueAsyncClient
+                                                                .sendMessageWithResponse(
+                                                                        new QueueEvent<>(userReceiptEvent, tracingInfo),
+                                                                        Duration.ZERO,
+                                                                        Duration.ofSeconds(transientQueuesTTLSeconds)
+                                                                )
+                                                ).doOnNext(
+                                                        queueResponse -> {
+                                                            log.info(
+                                                                    "Generated event {} for transactionId {}",
+                                                                    event.getEventCode(),
+                                                                    event.getTransactionId()
+                                                            );
+                                                            updateTransactionStatusTracerUtils
+                                                                    .traceStatusUpdateOperation(
+                                                                            new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
+                                                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+
+                                                                                    transactionClosed
+                                                                                            .getTransactionAuthorizationRequestData()
+                                                                                            .getPspId(),
+
+                                                                                    transactionClosed
+                                                                                            .getTransactionAuthorizationRequestData()
+                                                                                            .getPaymentTypeCode(),
+                                                                                    transactionClosed.getClientId(),
+                                                                                    transactionsUtils.isWalletPayment(
+                                                                                            transactionClosed
+                                                                                    ).orElseThrow(),
+                                                                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                                                            command.getData()
+                                                                                                    .addUserReceiptRequest()
+                                                                                                    .getOutcome()
+                                                                                                    .getValue(),
+                                                                                            Optional.empty()
+                                                                                    )
+                                                                            )
+                                                                    );
+                                                        }
+                                                )
+                                                        .thenReturn(userReceiptEvent)
+                                        )
+                        )
+                );
+
     }
 
     private static it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome requestOutcomeToReceiptOutcome(
