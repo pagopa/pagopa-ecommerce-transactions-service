@@ -1405,8 +1405,29 @@ class TransactionsControllerTest {
                 .traceStatusUpdateOperation(any());
     }
 
-    @Test
-    void shouldTraceAddUserReceiptStatusKOForProcessingError() {
+    private static Stream<Arguments> sendPaymentResultKO_ErrorStatusTransactionUpdate() {
+        return Stream.of(
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
+                        new RuntimeException("Error processing request")
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND,
+                        new TransactionNotFoundException("paymentToken")
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
+                        new ProcessingErrorException("Error processing request")
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("sendPaymentResultKO_ErrorStatusTransactionUpdate")
+    void shouldTraceAddUserReceiptStatusKOForProcessingError(
+                                                             UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome expectedOutcome,
+                                                             Throwable raisedException
+    ) {
         AddUserReceiptRequestDto addUserReceiptRequestDto = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK).paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(
@@ -1420,9 +1441,6 @@ class TransactionsControllerTest {
                                 .description("description")
                 );
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
-
-        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome expectedOutcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
-        RuntimeException raisedException = new RuntimeException("Error processing request");
 
         /* preconditions */
         Mockito.when(
@@ -1474,8 +1492,40 @@ class TransactionsControllerTest {
         );
     }
 
-    @Test
-    void shouldTraceAddUserReceiptStatusKOForWringTransactionStatus() {
+    private static Stream<Arguments> sendPaymentResultKO_SendPaymentResultNodoStatusUpdate() {
+        return Stream.of(
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
+                        new AlreadyProcessedException(
+                                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                                TransactionTestUtils.PSP_ID,
+                                TransactionTestUtils.PAYMENT_TYPE_CODE,
+                                "CHECKOUT",
+                                false,
+                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult("OK", Optional.empty())
+                        )
+                ),
+                Arguments.of(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                        new InvalidRequestException(
+                                "Invalid Request Exception",
+                                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                                TransactionTestUtils.PSP_ID,
+                                TransactionTestUtils.PAYMENT_TYPE_CODE,
+                                "CHECKOUT",
+                                false,
+                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult("OK", Optional.empty())
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("sendPaymentResultKO_SendPaymentResultNodoStatusUpdate")
+    void shouldTraceAddUserReceiptStatusKOForWrongTransactionStatus(
+                                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome expectedOutcome,
+                                                                    Exception raisedException
+    ) {
         AddUserReceiptRequestDto addUserReceiptRequestDto = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK).paymentDate(OffsetDateTime.now())
                 .addPaymentsItem(
@@ -1489,16 +1539,6 @@ class TransactionsControllerTest {
                                 .description("description")
                 );
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome expectedOutcome = UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
-
-        AlreadyProcessedException raisedException = new AlreadyProcessedException(
-                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
-                TransactionTestUtils.PSP_ID,
-                TransactionTestUtils.PAYMENT_TYPE_CODE,
-                "CHECKOUT",
-                false,
-                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult("OK", Optional.empty())
-        );
 
         /* preconditions */
         Mockito.when(

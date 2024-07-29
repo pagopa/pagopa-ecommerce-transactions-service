@@ -252,8 +252,8 @@ public class TransactionsController implements TransactionsApi {
                                                 .traceStatusUpdateOperation(
                                                         new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
                                                                 outcomeInfo.outcome(),
-                                                                outcomeInfo.pspId().orElse("N/A"),
-                                                                outcomeInfo.paymentTypeCode().orElse("N/A"),
+                                                                outcomeInfo.pspId().get(),
+                                                                outcomeInfo.paymentTypeCode().get(),
                                                                 outcomeInfo.clientId().get(),
                                                                 outcomeInfo.walletPayment().get(),
                                                                 outcomeInfo.gatewayOutcomeResult().get()
@@ -288,7 +288,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     /**
-     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome} enumeration
+     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.SendPaymentResultOutcomeInfo} operation outcome record
      *
      * @param throwable the caught throwable
      * @return the mapped outcome to be traced

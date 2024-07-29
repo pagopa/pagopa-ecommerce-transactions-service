@@ -8,8 +8,8 @@ import java.util.Optional;
 public class InvalidRequestException extends RuntimeException implements TransactionContext {
 
     private final TransactionId transactionId;
-    private final Optional<String> pspId;
-    private final Optional<String> paymentTypeCode;
+    private final String pspId;
+    private final String paymentTypeCode;
     private final String clientId;
     private final Boolean walletPayment;
     private final UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult;
@@ -40,8 +40,8 @@ public class InvalidRequestException extends RuntimeException implements Transac
     public InvalidRequestException(
             String message,
             TransactionId transactionId,
-            Optional<String> pspId,
-            Optional<String> paymentTypeCode,
+            String pspId,
+            String paymentTypeCode,
             String clientId,
             Boolean walletPayment,
             UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult
@@ -62,12 +62,12 @@ public class InvalidRequestException extends RuntimeException implements Transac
 
     @Override
     public Optional<String> pspId() {
-        return pspId;
+        return Optional.ofNullable(pspId);
     }
 
     @Override
     public Optional<String> paymentTypeCode() {
-        return paymentTypeCode;
+        return Optional.ofNullable(paymentTypeCode);
     }
 
     @Override
