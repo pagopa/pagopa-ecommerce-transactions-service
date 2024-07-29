@@ -1524,7 +1524,7 @@ class TransactionsControllerTest {
     @MethodSource("sendPaymentResultKO_SendPaymentResultNodoStatusUpdate")
     void shouldTraceAddUserReceiptStatusKOForWrongTransactionStatus(
                                                                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome expectedOutcome,
-                                                                    Exception raisedException
+                                                                    TransactionContext raisedException
     ) {
         AddUserReceiptRequestDto addUserReceiptRequestDto = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK).paymentDate(OffsetDateTime.now())
@@ -1544,7 +1544,7 @@ class TransactionsControllerTest {
         Mockito.when(
                 transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
         )
-                .thenReturn(Mono.error(raisedException));
+                .thenReturn(Mono.error((Throwable) raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
