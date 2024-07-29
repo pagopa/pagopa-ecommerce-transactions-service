@@ -288,7 +288,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     /**
-     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome} enumeration
+     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.SendPaymentResultOutcomeInfo} operation outcome record
      *
      * @param throwable the caught throwable
      * @return the mapped outcome to be traced
