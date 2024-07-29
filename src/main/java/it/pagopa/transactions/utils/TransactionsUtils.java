@@ -4,8 +4,6 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -506,47 +504,54 @@ public class TransactionsUtils {
 
     public Optional<String> getPspId(BaseTransaction transaction) {
         return switch (transaction) {
-            case BaseTransactionWithRequestedAuthorization t -> Optional.of(t.getTransactionAuthorizationRequestData().getPspId());
+            case BaseTransactionWithRequestedAuthorization t ->
+                    Optional.of(t.getTransactionAuthorizationRequestData().getPspId());
             default -> Optional.empty();
         };
     }
 
     public Optional<String> getPspId(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction) {
         return switch (transaction) {
-            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t -> Optional.of(t.getTransactionAuthorizationRequestData().getPspId());
+            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t ->
+                    Optional.of(t.getTransactionAuthorizationRequestData().getPspId());
             default -> Optional.empty();
         };
     }
 
     public Optional<String> getPaymentMethodTypeCode(BaseTransaction transaction) {
         return switch (transaction) {
-            case BaseTransactionWithRequestedAuthorization t -> Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
+            case BaseTransactionWithRequestedAuthorization t ->
+                    Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
             default -> Optional.empty();
         };
     }
 
     public Optional<String> getPaymentMethodTypeCode(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction) {
         return switch (transaction) {
-            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t -> Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
+            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t ->
+                    Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
             default -> Optional.empty();
         };
     }
 
     public Optional<Boolean> isWalletPayment(BaseTransaction transaction) {
         return switch (transaction) {
-            case BaseTransactionWithRequestedAuthorization _t -> Optional.of(false); // v1 transactions don't support wallet authorization
+            case BaseTransactionWithRequestedAuthorization _t ->
+                    Optional.of(false); // v1 transactions don't support wallet authorization
             default -> Optional.empty();
         };
     }
 
     public Optional<Boolean> isWalletPayment(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction) {
         return switch (transaction) {
-            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t -> switch (t.getTransactionAuthorizationRequestData().getTransactionGatewayAuthorizationRequestedData()) {
-                case NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData ->
-                        Optional.of(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo() != null);
-                default -> Optional.of(false);
-            };
+            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t ->
+                    switch (t.getTransactionAuthorizationRequestData().getTransactionGatewayAuthorizationRequestedData()) {
+                        case NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData ->
+                                Optional.of(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo() != null);
+                        default -> Optional.of(false);
+                    };
             default -> Optional.empty();
         };
     }
+
 }

@@ -1,6 +1,5 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
-import com.azure.cosmos.implementation.BadRequestException;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
@@ -22,6 +21,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
@@ -35,9 +35,9 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.Queues;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.apache.commons.codec.binary.Base64;
@@ -127,6 +127,9 @@ class TransactionRequestAuthorizationHandlerTest {
 
     private static final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
 
+    private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
+            .mock(UpdateTransactionStatusTracerUtils.class);
+
     @AfterAll
     public static void afterAll() {
         if (cardsTested) {
@@ -169,7 +172,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 openTelemetryUtils,
                 jwtTokenUtils,
                 ECOMMERCE_JWT_SIGNING_KEY,
-                TOKEN_VALIDITY_TIME_SECONDS
+                TOKEN_VALIDITY_TIME_SECONDS,
+                updateTransactionStatusTracerUtils
         );
         Mockito.reset(walletAsyncQueueClient);
     }
@@ -1178,7 +1182,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "GPAY",
+                "NPG",
                 Optional.empty(),
                 Optional.empty(),
                 "VISA",
@@ -1198,7 +1202,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(error -> error instanceof BadRequestException)
+                .expectErrorMatches(error -> error instanceof InvalidRequestException)
                 .verify();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
@@ -2561,7 +2565,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(error -> error instanceof BadRequestException)
+                .expectErrorMatches(error -> error instanceof InvalidRequestException)
                 .verify();
 
         Mockito.verify(paymentGatewayClient, Mockito.times(0))
