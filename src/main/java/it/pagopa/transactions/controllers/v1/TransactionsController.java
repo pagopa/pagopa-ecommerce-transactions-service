@@ -2,21 +2,24 @@ package it.pagopa.transactions.controllers.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v1.TransactionsService;
-import it.pagopa.transactions.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
-import it.pagopa.transactions.utils.UpdateTransactionStatusTracerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -28,8 +31,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
-import reactor.util.function.Tuples;
 
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
@@ -77,7 +78,7 @@ public class TransactionsController implements TransactionsApi {
                 )
         ).doOnNext(
                 ignored -> openTelemetryUtils.addErrorSpanWithException(
-                        OpenTelemetryUtils.CIRCUIT_BREAKER_OPEN_SPAN_NAME
+                        SpanLabelOpenTelemetry.CIRCUIT_BREAKER_OPEN_SPAN_NAME
                                 .formatted(error.getCausingCircuitBreakerName()),
                         error
                 )
@@ -172,9 +173,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(
-            String transactionId,
-            Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
-            ServerWebExchange exchange
+                                                                                   String transactionId,
+                                                                                   Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
+                                                                                   ServerWebExchange exchange
     ) {
         return uuidUtils.uuidFromBase64(transactionId).fold(
                 Mono::error,
@@ -194,80 +195,23 @@ public class TransactionsController implements TransactionsApi {
                             boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
                                     lockDocument
                             );
-                            log.info("UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]", domainTransactionId.value(), lockDocument.id(), lockAcquired);
+                            log.info(
+                                    "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
+                                    domainTransactionId.value(),
+                                    lockDocument.id(),
+                                    lockAcquired
+                            );
                             if (!lockAcquired) {
                                 throw new LockNotAcquiredException(domainTransactionId, lockDocument);
                             }
                             return updateAuthorizationRequest;
                         })
                         .flatMap(
-                                updateAuthorizationRequest -> {
-                                    Tuple3<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, Optional<String>, UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult> authDetails = switch (updateAuthorizationRequest.getOutcomeGateway()) {
-                                        case OutcomeXpayGatewayDto outcome -> Tuples.of(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                                                Optional.empty(),
-                                                new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                                                        outcome.getOutcome().toString(),
-                                                        Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
-                                                )
-                                        );
-                                        case OutcomeVposGatewayDto outcome -> Tuples.of(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
-                                                Optional.empty(),
-                                                new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                                                        outcome.getOutcome().toString(),
-                                                        Optional.ofNullable(outcome.getErrorCode()).map(OutcomeVposGatewayDto.ErrorCodeEnum::toString)
-                                                )
-                                        );
-                                        case OutcomeNpgGatewayDto outcome -> Tuples.of(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
-                                                Optional.empty(),
-                                                new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                                                        outcome.getOperationResult().toString(),
-                                                        Optional.ofNullable(outcome.getErrorCode())
-                                                )
-                                        );
-                                        case OutcomeRedirectGatewayDto outcome -> Tuples.of(
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
-                                                Optional.of(outcome.getPspId()),
-                                                new UpdateTransactionStatusTracerUtils.GatewayAuthorizationOutcomeResult(
-                                                        outcome.getOutcome().toString(),
-                                                        Optional.ofNullable(outcome.getErrorCode())
-                                                )
-                                        );
-                                        default ->
-                                                throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequest.getOutcomeGateway()));
-                                    };
-                                    return transactionsService
-                                            .updateTransactionAuthorization(
-                                                    transactionIdDecoded,
-                                                    updateAuthorizationRequest
-                                            )
-                                            .doOnNext(
-                                                    ignored -> updateTransactionStatusTracerUtils
-                                                            .traceStatusUpdateOperation(
-                                                                    new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-                                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-                                                                            authDetails.getT1(),
-                                                                            authDetails.getT2(),
-                                                                            Optional.of(authDetails.getT3())
-                                                                    )
-                                                            )
-                                            )
-                                            .doOnError(exception -> {
-                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
-                                                        exception
-                                                );
-                                                updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                        new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-                                                                outcome,
-                                                                authDetails.getT1(),
-                                                                authDetails.getT2(),
-                                                                Optional.of(authDetails.getT3())
-                                                        )
-                                                );
-                                            });
-                                }
+                                updateAuthorizationRequest -> transactionsService
+                                        .updateTransactionAuthorization(
+                                                transactionIdDecoded,
+                                                updateAuthorizationRequest
+                                        )
                         )
                         .map(ResponseEntity::ok)
                         .contextWrite(
@@ -276,7 +220,8 @@ public class TransactionsController implements TransactionsApi {
                                                 new TransactionId(transactionIdDecoded),
                                                 new HashSet<>(),
                                                 exchange.getRequest().getMethodValue(),
-                                                exchange.getRequest().getURI().getPath()),
+                                                exchange.getRequest().getURI().getPath()
+                                        ),
                                         context
                                 )
                         )
@@ -298,20 +243,32 @@ public class TransactionsController implements TransactionsApi {
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
                                 )
-                                .doOnNext(
-                                        ignored -> updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                                new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
-                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK
-                                                )
-                                        )
-                                )
                                 .doOnError(exception -> {
-                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
+                                    SendPaymentResultOutcomeInfo outcomeInfo = exceptionToUpdateSendPaymentResultOutcomeInfo(
                                             exception
                                     );
-                                    updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
-                                            new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(outcome)
-                                    );
+                                    switch (outcomeInfo.outcome()) {
+                                        case INVALID_REQUEST, WRONG_TRANSACTION_STATUS -> updateTransactionStatusTracerUtils
+                                                .traceStatusUpdateOperation(
+                                                        new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
+                                                                outcomeInfo.outcome(),
+                                                                outcomeInfo.pspId().get(),
+                                                                outcomeInfo.paymentTypeCode().get(),
+                                                                outcomeInfo.clientId().get(),
+                                                                outcomeInfo.walletPayment().get(),
+                                                                outcomeInfo.gatewayOutcomeResult().get()
+                                                        )
+                                                );
+                                        case PROCESSING_ERROR, TRANSACTION_NOT_FOUND -> updateTransactionStatusTracerUtils
+                                                .traceStatusUpdateOperation(
+                                                        new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
+                                                                UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
+                                                                outcomeInfo.outcome()
+                                                        )
+                                                );
+                                    }
+
                                     log.error("Got error while trying to add user receipt", exception);
                                 })
                                 .onErrorMap(SendPaymentResultException::new)
@@ -331,23 +288,52 @@ public class TransactionsController implements TransactionsApi {
     }
 
     /**
-     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome} enumeration
+     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.SendPaymentResultOutcomeInfo} operation outcome record
      *
      * @param throwable the caught throwable
      * @return the mapped outcome to be traced
      */
-    private UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome exceptionToUpdateStatusOutcome(Throwable throwable) {
-        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = switch (throwable) {
-            case AlreadyProcessedException ignored ->
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
-            case TransactionNotFoundException ignored ->
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND;
-            case InvalidRequestException ignored ->
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
-            default -> UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
+    private SendPaymentResultOutcomeInfo exceptionToUpdateSendPaymentResultOutcomeInfo(Throwable throwable) {
+        SendPaymentResultOutcomeInfo outcomeInfo = switch (throwable) {
+            case AlreadyProcessedException exception -> new SendPaymentResultOutcomeInfo(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
+                    Optional.of(exception.getTransactionId()),
+                    exception.pspId(),
+                    exception.paymentTypeCode(),
+                    exception.clientId().map(Transaction.ClientId::valueOf),
+                    exception.walletPayment(),
+                    exception.gatewayOutcomeResult()
+            );
+            case TransactionNotFoundException ignored -> new SendPaymentResultOutcomeInfo(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND,
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()
+            );
+            case InvalidRequestException exception -> new SendPaymentResultOutcomeInfo(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
+                    Optional.of(exception.getTransactionId()),
+                    exception.pspId(),
+                    exception.paymentTypeCode(),
+                    exception.clientId().map(Transaction.ClientId::valueOf),
+                    exception.walletPayment(),
+                    exception.gatewayOutcomeResult()
+            );
+            default -> new SendPaymentResultOutcomeInfo(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()
+            );
         };
-        log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcome);
-        return outcome;
+        log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcomeInfo);
+        return outcomeInfo;
     }
 
     @Override
@@ -449,12 +435,17 @@ public class TransactionsController implements TransactionsApi {
 
     private void traceInvalidRequestException(ServerHttpRequest request) {
         String contextPath = request.getPath().value();
-        UpdateTransactionStatusTracerUtils.StatusUpdateInfo statusUpdateInfo = null;
+        UpdateTransactionStatusTracerUtils.StatusUpdateInfo errorStatusUpdateInfo = null;
         if (contextPath.endsWith("auth-requests")) {
-            String gatewayHeader = Optional.ofNullable(request.getHeaders().get("x-payment-gateway-type"))
-                    .filter(Predicate.not(List::isEmpty))
-                    .map(headers -> headers.get(0))
-                    .orElse("");
+            /*
+             * for PATCH auth-requests gateway information is passed into
+             * `x-payment-gateway-type` header, for POST auth-requests into `x-pgs-id`
+             */
+            Optional<String> gatewayTypeHeader = Optional.ofNullable(request.getHeaders().get("x-payment-gateway-type"))
+                    .filter(Predicate.not(List::isEmpty)).map(headers -> headers.get(0));
+            Optional<String> pgsIdHeader = Optional.ofNullable(request.getHeaders().get("x-pgs-id"))
+                    .filter(Predicate.not(List::isEmpty)).map(headers -> headers.get(0));
+            String gatewayHeader = gatewayTypeHeader.orElse(pgsIdHeader.orElse(""));
             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger = switch (gatewayHeader) {
                 case "XPAY" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
                 case "VPOS" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
@@ -462,19 +453,29 @@ public class TransactionsController implements TransactionsApi {
                 case "REDIRECT" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT;
                 default -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN;
             };
-            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
-                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST,
-                    trigger,
-                    Optional.empty(),
-                    Optional.empty()
-            );
+
+            if (Objects.equals(request.getMethod(), HttpMethod.PATCH)) {
+                errorStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
+                        trigger,
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+                );
+            } else if (Objects.equals(request.getMethod(), HttpMethod.POST)) {
+                errorStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_REQUESTED,
+                        trigger,
+                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+                );
+            }
         } else if (contextPath.endsWith("user-receipts")) {
-            statusUpdateInfo = new UpdateTransactionStatusTracerUtils.NodoStatusUpdate(
+            errorStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.SEND_PAYMENT_RESULT_OUTCOME,
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NODO,
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
             );
         }
-        if (statusUpdateInfo != null) {
-            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(statusUpdateInfo);
+        if (errorStatusUpdateInfo != null) {
+            updateTransactionStatusTracerUtils.traceStatusUpdateOperation(errorStatusUpdateInfo);
         }
     }
 
@@ -561,13 +562,18 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(TransactionAmountMismatchException.class)
-    ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(TransactionAmountMismatchException exception) {
+    ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(
+                                                              TransactionAmountMismatchException exception,
+                                                              ServerWebExchange exchange
+    ) {
+
         log.warn(
                 "Got invalid input: {}. Request amount: [{}], transaction amount: [{}]",
                 exception.getMessage(),
                 exception.getRequestAmount(),
                 exception.getTransactionAmount()
         );
+        traceInvalidRequestException(exchange.getRequest());
         HttpStatus httpStatus = HttpStatus.CONFLICT;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -580,7 +586,8 @@ public class TransactionsController implements TransactionsApi {
 
     @ExceptionHandler(PaymentNoticeAllCCPMismatchException.class)
     ResponseEntity<ProblemJsonDto> paymentNoticeAllCCPMismatchErrorHandler(
-                                                                           PaymentNoticeAllCCPMismatchException exception
+                                                                           PaymentNoticeAllCCPMismatchException exception,
+                                                                           ServerWebExchange exchange
     ) {
         log.warn(
                 "Got invalid input: {}. RptID: [{}] request allCCP: [{}], payment notice allCCP: [{}]",
@@ -589,6 +596,7 @@ public class TransactionsController implements TransactionsApi {
                 exception.getRequestAllCCP(),
                 exception.getPaymentNoticeAllCCP()
         );
+        traceInvalidRequestException(exchange.getRequest());
         HttpStatus httpStatus = HttpStatus.CONFLICT;
         return new ResponseEntity<>(
                 new ProblemJsonDto()

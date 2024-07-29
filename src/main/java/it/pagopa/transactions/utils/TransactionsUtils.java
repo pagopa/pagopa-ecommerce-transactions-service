@@ -3,10 +3,12 @@ package it.pagopa.transactions.utils;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.generated.transactions.v2.server.model.*;
@@ -385,11 +387,9 @@ public class TransactionsUtils {
         if (neededPadLength < 0) {
             noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
         } else {
-            StringBuilder padBuilder = new StringBuilder();
-            noticeCode = padBuilder
-                    .append(noticeCode)
-                    .append("0".repeat(neededPadLength))
-                    .toString();
+            String padBuilder = noticeCode +
+                    "0".repeat(neededPadLength);
+            noticeCode = padBuilder;
         }
         return new NewTransactionRequestDto()
                 .email("test@test.it")
@@ -408,11 +408,9 @@ public class TransactionsUtils {
         if (neededPadLength < 0) {
             noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
         } else {
-            StringBuilder padBuilder = new StringBuilder();
-            noticeCode = padBuilder
-                    .append(noticeCode)
-                    .append("0".repeat(neededPadLength))
-                    .toString();
+            String padBuilder = noticeCode +
+                    "0".repeat(neededPadLength);
+            noticeCode = padBuilder;
         }
         return new it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto()
                 .email("test@test.it")
@@ -432,11 +430,9 @@ public class TransactionsUtils {
         if (neededPadLength < 0) {
             noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
         } else {
-            StringBuilder padBuilder = new StringBuilder();
-            noticeCode = padBuilder
-                    .append(noticeCode)
-                    .append("0".repeat(neededPadLength))
-                    .toString();
+            String padBuilder = noticeCode +
+                    "0".repeat(neededPadLength);
+            noticeCode = padBuilder;
         }
         return new it.pagopa.generated.transactions.v2_1.server.model.NewTransactionRequestDto()
                 .emailToken("b397aebf-f61c-4845-9483-67f702aebe36")
@@ -503,6 +499,58 @@ public class TransactionsUtils {
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getEmail();
             default ->
                     throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
+        };
+    }
+
+    public Optional<String> getPspId(BaseTransaction transaction) {
+        return switch (transaction) {
+            case BaseTransactionWithRequestedAuthorization t ->
+                    Optional.of(t.getTransactionAuthorizationRequestData().getPspId());
+            default -> Optional.empty();
+        };
+    }
+
+    public Optional<String> getPspId(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction) {
+        return switch (transaction) {
+            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t ->
+                    Optional.of(t.getTransactionAuthorizationRequestData().getPspId());
+            default -> Optional.empty();
+        };
+    }
+
+    public Optional<String> getPaymentMethodTypeCode(BaseTransaction transaction) {
+        return switch (transaction) {
+            case BaseTransactionWithRequestedAuthorization t ->
+                    Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
+            default -> Optional.empty();
+        };
+    }
+
+    public Optional<String> getPaymentMethodTypeCode(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction) {
+        return switch (transaction) {
+            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t ->
+                    Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
+            default -> Optional.empty();
+        };
+    }
+
+    public Optional<Boolean> isWalletPayment(BaseTransaction transaction) {
+        return switch (transaction) {
+            case BaseTransactionWithRequestedAuthorization _t ->
+                    Optional.of(false); // v1 transactions don't support wallet authorization
+            default -> Optional.empty();
+        };
+    }
+
+    public Optional<Boolean> isWalletPayment(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction) {
+        return switch (transaction) {
+            case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t ->
+                    switch (t.getTransactionAuthorizationRequestData().getTransactionGatewayAuthorizationRequestedData()) {
+                        case NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData ->
+                                Optional.of(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo() != null);
+                        default -> Optional.of(false);
+                    };
+            default -> Optional.empty();
         };
     }
 

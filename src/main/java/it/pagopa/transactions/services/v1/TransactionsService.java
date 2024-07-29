@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
@@ -18,7 +19,11 @@ import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.*;
+import it.pagopa.transactions.commands.handlers.v1.*;
+import it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler;
 import it.pagopa.transactions.exceptions.*;
+import it.pagopa.transactions.projections.handlers.v1.*;
+import it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.*;
@@ -30,7 +35,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
 import java.time.ZonedDateTime;
@@ -111,76 +119,78 @@ public class TransactionsService {
 
     private final ConfidentialMailUtils confidentialMailUtils;
 
+    private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
+
     @Autowired
     public TransactionsService(
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1,
+                TransactionActivateHandler.QUALIFIER_NAME
+            ) TransactionActivateHandler transactionActivateHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2,
-            it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1,
+            TransactionRequestAuthorizationHandler requestAuthHandlerV1,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1,
+                TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
+            ) TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler transactionSendClosureHandlerV1,
-            it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler,
+                TransactionSendClosureHandler.QUALIFIER_NAME
+            ) TransactionSendClosureHandler transactionSendClosureHandlerV1,
+            TransactionSendClosureRequestHandler transactionSendClosureRequestHandler,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV1,
+                TransactionRequestUserReceiptHandler.QUALIFIER_NAME
+            ) TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1,
+                TransactionUserCancelHandler.QUALIFIER_NAME
+            ) TransactionUserCancelHandler transactionCancelHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2,
 
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1,
+                AuthorizationRequestProjectionHandler.QUALIFIER_NAME
+            ) AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1,
+                AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
+            ) AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1,
+                RefundRequestProjectionHandler.QUALIFIER_NAME
+            ) RefundRequestProjectionHandler refundRequestProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1,
-            it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler,
+                ClosureSendProjectionHandler.QUALIFIER_NAME
+            ) ClosureSendProjectionHandler closureSendProjectionHandlerV1,
+            ClosureRequestedProjectionHandler closureRequestedProjectionHandler,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1,
+                ClosureErrorProjectionHandler.QUALIFIER_NAME
+            ) ClosureErrorProjectionHandler closureErrorProjectionHandlerV1,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1,
+                CancellationRequestProjectionHandler.QUALIFIER_NAME
+            ) CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1,
+                TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
+            ) TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2,
             @Qualifier(
-                it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.QUALIFIER_NAME
-            ) it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1,
+                TransactionsActivationProjectionHandler.QUALIFIER_NAME
+            ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
@@ -193,7 +203,8 @@ public class TransactionsService {
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             @Value("${ecommerce.event.version}") EventVersion eventVersion,
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
-            ConfidentialMailUtils confidentialMailUtils
+            ConfidentialMailUtils confidentialMailUtils,
+            UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils
     ) {
         this.transactionActivateHandlerV1 = transactionActivateHandlerV1;
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
@@ -231,6 +242,7 @@ public class TransactionsService {
         this.eventVersion = eventVersion;
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.confidentialMailUtils = confidentialMailUtils;
+        this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -495,7 +507,6 @@ public class TransactionsService {
                                     "Authorization psp validation for transactionId: {}",
                                     transactionId
                             );
-                            Integer amountTotal = transactionsUtils.getTransactionTotalAmount(transaction);
                             String clientId = transactionsUtils.getClientId(transaction);
                             List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = transactionsUtils.getPaymentNotices(transaction);
                             return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto, clientId)
@@ -714,17 +725,19 @@ public class TransactionsService {
 
     private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
         return transactionsViewRepository.findById(transactionId)
-                    .filter(transactionDocument -> switch (transactionDocument) {
-                        case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
-                        case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> xUserId == null ? t.getUserId() == null : t.getUserId().equals(xUserId.toString());
-                        default -> throw new NotImplementedException("Handling for transaction document version: [%s] not implemented yet".formatted(transactionDocument.getClass()));
-                    });
+                .filter(transactionDocument -> switch (transactionDocument) {
+                    case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
+                    case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->
+                            xUserId == null ? t.getUserId() == null : t.getUserId().equals(xUserId.toString());
+                    default ->
+                            throw new NotImplementedException("Handling for transaction document version: [%s] not implemented yet".formatted(transactionDocument.getClass()));
+                });
     }
 
     @Retry(name = "updateTransactionAuthorization")
     public Mono<TransactionInfoDto> updateTransactionAuthorization(
-                                                                   UUID decodedTransactionId,
-                                                                   UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            UUID decodedTransactionId,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
@@ -752,7 +765,8 @@ public class TransactionsService {
                 )
                 .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction))
                 .cast(it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction.class)
-                .zipWith(authorizationRequestedCreationDate);
+                .zipWith(authorizationRequestedCreationDate)
+                .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
         Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction, ZonedDateTime>> transactionV2 = transactionsUtils
                 .reduceEvents(
@@ -763,7 +777,84 @@ public class TransactionsService {
                 )
                 .filter(t -> !(t instanceof it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction))
                 .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class)
-                .zipWith(authorizationRequestedCreationDate);
+                .zipWith(authorizationRequestedCreationDate)
+                .onErrorResume(ClassCastException.class, e -> Mono.empty());
+
+        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txTracingDataV1 = transactionV1.map(Tuple2::getT1)
+                .map(t -> Tuples.of(
+                        transactionsUtils.getPspId(t).orElseThrow(),
+                        transactionsUtils.getPaymentMethodTypeCode(t).orElseThrow(),
+                        Transaction.ClientId.fromString(t.getClientId().name()),
+                        transactionsUtils.isWalletPayment(t).orElseThrow())
+                );
+
+        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txTracingDataV2 = transactionV2.map(Tuple2::getT1)
+                .map(t -> Tuples.of(
+                        transactionsUtils.getPspId(t).orElseThrow(),
+                        transactionsUtils.getPaymentMethodTypeCode(t).orElseThrow(),
+                        t.getClientId(),
+                        transactionsUtils.isWalletPayment(t).orElseThrow())
+                );
+
+        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txData = txTracingDataV2.switchIfEmpty(txTracingDataV1);
+
+        Mono<Tuple2<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext>> authUpdateContext = txData
+                .map(TupleUtils.function((pspId, paymentMethodTypeCode, clientId, isWalletPayment) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
+                    case OutcomeXpayGatewayDto outcome -> Tuples.of(
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
+                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                                    pspId,
+                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                            outcome.getOutcome().toString(),
+                                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
+                                    ),
+                                    paymentMethodTypeCode,
+                                    clientId,
+                                    isWalletPayment
+                            )
+                    );
+                    case OutcomeVposGatewayDto outcome -> Tuples.of(
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
+                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                                    pspId,
+                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                            outcome.getOutcome().toString(),
+                                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeVposGatewayDto.ErrorCodeEnum::toString)
+                                    ),
+                                    paymentMethodTypeCode,
+                                    clientId,
+                                    isWalletPayment
+                            )
+                    );
+                    case OutcomeNpgGatewayDto outcome -> Tuples.of(
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
+                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                                    pspId,
+                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                            outcome.getOperationResult().toString(),
+                                            Optional.ofNullable(outcome.getErrorCode())
+                                    ),
+                                    paymentMethodTypeCode,
+                                    clientId,
+                                    isWalletPayment
+                            )
+                    );
+                    case OutcomeRedirectGatewayDto outcome -> Tuples.of(
+                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
+                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
+                                    pspId,
+                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                            outcome.getOutcome().toString(),
+                                            Optional.ofNullable(outcome.getErrorCode())
+                                    ),
+                                    paymentMethodTypeCode,
+                                    clientId,
+                                    isWalletPayment
+                            )
+                    );
+                    default ->
+                            throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
+                }));
 
         Mono<TransactionInfoDto> v1Info = transactionV1
                 .flatMap(
@@ -785,7 +876,47 @@ public class TransactionsService {
 
         return v1Info
                 .switchIfEmpty(v2Info)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())));
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
+                .publishOn(Schedulers.boundedElastic())
+                .doOnNext(
+                        ignored -> authUpdateContext.subscribe(TupleUtils.consumer((trigger, updateContext) ->
+                                updateTransactionStatusTracerUtils
+                                        .traceStatusUpdateOperation(
+                                                new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                                                        trigger,
+                                                        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+                                                        updateContext
+                                                )
+                                        )
+                        ))
+                )
+                .onErrorResume(exception -> {
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = exceptionToUpdateStatusOutcome(
+                            exception
+                    );
+
+                    if (exception instanceof InvalidRequestException) {
+                        return authUpdateContext.doOnNext(TupleUtils.consumer((trigger, _updateContext) ->
+                                updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                        new UpdateTransactionStatusTracerUtils.ErrorStatusTransactionUpdate(
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusType.AUTHORIZATION_OUTCOME,
+                                                trigger,
+                                                UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST
+                                        )
+                                )
+                        )).then(Mono.error(exception));
+                    } else {
+                        return authUpdateContext.doOnNext(TupleUtils.consumer((trigger, updateContext) ->
+                                updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
+                                        new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(
+                                                trigger,
+                                                outcome,
+                                                updateContext
+                                        )
+                                )
+                        )).then(Mono.error(exception));
+                    }
+                });
     }
 
     private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV1(
@@ -1010,7 +1141,6 @@ public class TransactionsService {
                                 (it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent) closureRequestedEvent
 
                         )
-
                 );
     }
 
@@ -1342,4 +1472,23 @@ public class TransactionsService {
         };
     }
 
+    /**
+     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome} enumeration
+     *
+     * @param throwable the caught throwable
+     * @return the mapped outcome to be traced
+     */
+    public static UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome exceptionToUpdateStatusOutcome(Throwable throwable) {
+        UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = switch (throwable) {
+            case AlreadyProcessedException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
+            case TransactionNotFoundException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND;
+            case InvalidRequestException ignored ->
+                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
+            default -> UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
+        };
+        log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcome);
+        return outcome;
+    }
 }

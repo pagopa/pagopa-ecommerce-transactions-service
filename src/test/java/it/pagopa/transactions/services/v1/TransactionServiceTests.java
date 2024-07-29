@@ -12,6 +12,8 @@ import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentW
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
@@ -2385,6 +2387,8 @@ class TransactionServiceTests {
 
     @Test
     void shouldReturnAlreadyProcessedExceptionForMissingAuthRequestedEventDuringUpdateAuthorizationOutcome() {
+        Hooks.onOperatorDebug();
+
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
