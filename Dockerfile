@@ -17,7 +17,7 @@ COPY eclipse-style.xml eclipse-style.xml
 RUN ./mvnw install -DskipTests --offline
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jre@sha256:0adcf8486107fbd706de4b4fdde64c2d2e3ead4c689b2fb7ae4947010e1f00b4
 
 RUN addgroup --system user && adduser --ingroup user --system user
 USER user:user
