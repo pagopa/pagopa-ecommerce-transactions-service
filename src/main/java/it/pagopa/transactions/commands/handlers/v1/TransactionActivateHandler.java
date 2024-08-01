@@ -145,6 +145,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                                                 .generateRandomStringToIdempotencyKey()
                                                                                 ),
                                                                                 new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                                                                null,
                                                                                 null
                                                                         );
                                                                         paymentRequestInfoRedisTemplateWrapper
@@ -376,7 +377,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 )
                         ).toList(),
                         paymentRequestInfo.isAllCCP(),
-                        paymentRequestInfo.paName()
+                        paymentRequestInfo.paName(),
+                        paymentRequestInfo.creditorReferenceId()
                 )
         ).toList();
     }

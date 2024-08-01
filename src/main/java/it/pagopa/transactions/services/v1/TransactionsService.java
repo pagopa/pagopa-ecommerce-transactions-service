@@ -274,6 +274,7 @@ public class TransactionsService {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -658,7 +659,8 @@ public class TransactionsService {
                                                                     )
                                                             ).toList(),
                                                     paymentNotice.isAllCCP(),
-                                                    new CompanyName(paymentNotice.getCompanyName())
+                                                    new CompanyName(paymentNotice.getCompanyName()),
+                                                    paymentNotice.getCreditorReferenceId()
                                             )
                                     ).toList(),
                                     transactionsUtils.getEmail(transactionDocument),

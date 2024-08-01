@@ -155,6 +155,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -175,7 +176,8 @@ class TransactionActivateHandlerTest {
                 transactionActivatedTime.toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null)),
-                false
+                false,
+                null
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -192,6 +194,7 @@ class TransactionActivateHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
                                 false,
+                                null,
                                 null
                         )
                 )
@@ -308,6 +311,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -328,7 +332,8 @@ class TransactionActivateHandlerTest {
                 transactionActivatedTime.toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null)),
-                false
+                false,
+                null
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -345,6 +350,7 @@ class TransactionActivateHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
                                 false,
+                                null,
                                 null
                         )
                 )
@@ -446,6 +452,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -466,7 +473,8 @@ class TransactionActivateHandlerTest {
                 null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null)),
-                false
+                false,
+                null
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -483,6 +491,7 @@ class TransactionActivateHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
                                 false,
+                                null,
                                 null
                         )
                 )
@@ -563,6 +572,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -655,6 +665,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -675,7 +686,8 @@ class TransactionActivateHandlerTest {
                 null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, amount, null)),
-                false
+                false,
+                null
         );
 
         /* preconditions */
@@ -727,6 +739,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -747,7 +760,8 @@ class TransactionActivateHandlerTest {
                 null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, null, null)),
-                false
+                false,
+                null
         );
 
         PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
@@ -761,7 +775,8 @@ class TransactionActivateHandlerTest {
                 ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null)),
-                false
+                false,
+                null
         );
 
         /* preconditions */
@@ -843,6 +858,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -863,7 +879,8 @@ class TransactionActivateHandlerTest {
                 null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, null, null)),
-                false
+                false,
+                null
         );
 
         PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
@@ -877,7 +894,8 @@ class TransactionActivateHandlerTest {
                 ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null)),
-                false
+                false,
+                null
         );
 
         /* preconditions */
@@ -959,6 +977,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -979,7 +998,8 @@ class TransactionActivateHandlerTest {
                 ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null)),
-                false
+                false,
+                null
         );
 
         /* preconditions */

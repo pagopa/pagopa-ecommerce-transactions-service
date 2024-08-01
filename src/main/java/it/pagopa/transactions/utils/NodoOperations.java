@@ -163,7 +163,8 @@ public class NodoOperations {
                                                         transfer.getTransferCategory()
                                                 )
                                         ).toList(),
-                                isAllCCP(response, allCCPOnTransferIbanEnabled)
+                                isAllCCP(response, allCCPOnTransferIbanEnabled),
+                                response.getCreditorReferenceId()
                         )
                 );
     }

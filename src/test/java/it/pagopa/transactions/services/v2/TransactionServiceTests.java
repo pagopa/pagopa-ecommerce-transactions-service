@@ -699,7 +699,8 @@ class TransactionServiceTests {
                                         )
                                 ),
                                 paymentNotice.isAllCCP(),
-                                new CompanyName(paymentNotice.getCompanyName())
+                                new CompanyName(paymentNotice.getCompanyName()),
+                                null
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
