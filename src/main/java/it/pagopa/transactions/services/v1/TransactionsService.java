@@ -1434,7 +1434,9 @@ public class TransactionsService {
                 .map(
                         value -> {
                             try {
-                                return NewTransactionResponseDto.ClientIdEnum.fromValue(value);
+                                return NewTransactionResponseDto.ClientIdEnum.fromValue(
+                                        Transaction.ClientId.fromString(clientId).getEffectiveClient().name()
+                                );
                             } catch (IllegalArgumentException e) {
                                 log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);

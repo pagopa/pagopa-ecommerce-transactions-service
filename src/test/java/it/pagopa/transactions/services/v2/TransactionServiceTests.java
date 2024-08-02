@@ -1248,7 +1248,10 @@ class TransactionServiceTests {
     void shouldConvertClientIdSuccessfully() {
         for (Transaction.ClientId clientId : Transaction.ClientId
                 .values()) {
-            assertEquals(clientId.toString(), transactionsServiceV1.convertClientId(clientId.name()).toString());
+            assertEquals(
+                    clientId.getEffectiveClient().toString(),
+                    transactionsServiceV1.convertClientId(clientId.name()).toString()
+            );
         }
         assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(null));
     }
