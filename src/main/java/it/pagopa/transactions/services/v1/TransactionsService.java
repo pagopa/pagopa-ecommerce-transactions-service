@@ -1372,7 +1372,7 @@ public class TransactionsService {
                                 .authToken(authToken)
                                 .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .clientId(convertClientId(transaction.getClientId().name()))
+                                .clientId(convertClientId(transaction.getClientId()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())
                 );
     }
@@ -1420,19 +1420,36 @@ public class TransactionsService {
                                 .authToken(authToken)
                                 .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .clientId(convertClientId(transaction.getClientId().name()))
+                                .clientId(convertClientId(transaction.getClientId()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())
                 );
     }
 
     public NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                                  String clientId
+                                                                  it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
     ) {
-        return Optional.ofNullable(clientId).filter(Objects::nonNull)
+        return Optional.ofNullable(clientId)
                 .map(
                         value -> {
                             try {
-                                return NewTransactionResponseDto.ClientIdEnum.fromValue(value);
+                                return NewTransactionResponseDto.ClientIdEnum.fromValue(value.name());
+                            } catch (IllegalArgumentException e) {
+                                log.error("Unknown input origin ", e);
+                                throw new InvalidRequestException("Unknown input origin", e);
+                            }
+                        }
+                ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
+    }
+
+    public NewTransactionResponseDto.ClientIdEnum convertClientId(
+                                                                  it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+    ) {
+        return Optional.ofNullable(clientId)
+                .map(
+                        value -> {
+                            try {
+                                return NewTransactionResponseDto.ClientIdEnum
+                                        .fromValue(value.getEffectiveClient().name());
                             } catch (IllegalArgumentException e) {
                                 log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);

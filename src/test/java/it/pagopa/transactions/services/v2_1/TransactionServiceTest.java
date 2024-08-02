@@ -142,7 +142,7 @@ class TransactionServiceTest {
 
     @Test
     void shouldHandleNewTransactionTransactionActivatedMappingWISPClientIdToCheckoutCarts() {
-        ClientIdDto clientIdDto = ClientIdDto.WISP;
+        ClientIdDto clientIdDto = ClientIdDto.WISP_REDIRECT;
         UUID TEST_SESSION_TOKEN = UUID.randomUUID();
         UUID TEST_CPP = UUID.randomUUID();
         UUID TRANSACTION_ID = UUID.randomUUID();
@@ -197,7 +197,7 @@ class TransactionServiceTest {
                 TransactionTestUtils.EMAIL,
                 "faultCode",
                 "faultCodeString",
-                Transaction.ClientId.WISP,
+                Transaction.ClientId.WISP_REDIRECT,
                 "idCart",
                 TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
                 new EmptyTransactionGatewayActivationData(),
