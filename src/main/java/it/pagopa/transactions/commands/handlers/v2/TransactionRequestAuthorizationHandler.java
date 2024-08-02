@@ -140,24 +140,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(
-                authorizationRequestData
-        ).map(
-                authorizationOutput -> Tuples.of(
-                        authorizationOutput,
-                        PaymentGateway.XPAY
-                )
-        );
-
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(
-                authorizationRequestData
-        ).map(
-                authorizationOutput -> Tuples.of(
-                        authorizationOutput,
-                        PaymentGateway.VPOS
-                )
-        );
-
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpg = transactionActivated
                 .flatMap(
                         tx -> npgAuthRequestPipeline(
@@ -193,7 +175,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 );
 
         List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List
-                .of(monoXPay, monoVPOS, monoNpg, monoRedirect);
+                .of(monoNpg, monoRedirect);
 
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()

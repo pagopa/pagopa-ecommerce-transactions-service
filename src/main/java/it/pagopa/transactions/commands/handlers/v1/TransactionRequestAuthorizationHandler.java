@@ -92,10 +92,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(authorizationRequestData)
-                .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.XPAY));
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(authorizationRequestData)
-                .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.VPOS));
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpgCards = transactionActivated
                 .flatMap(
                         tx -> npgAuthRequestPipeline(
@@ -106,13 +102,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         )
                 )
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.NPG));
-        List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List
-                .of(monoXPay, monoVPOS, monoNpgCards);
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> gatewayAttempts = gatewayRequests
-                .stream()
-                .reduce(
-                        Mono::switchIfEmpty
-                ).orElse(Mono.empty());
 
         return transactionActivated
                 .flatMap(t -> switch (command.getData().authDetails()) {
@@ -124,7 +113,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     default -> Mono.just(t);
                 })
                 .flatMap(
-                        t -> gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
+                        t -> monoNpgCards
                                 .flatMap(authorizationOutputAndGateway -> {
                                     log.info(
                                             "Logging authorization event for transaction id {}",
