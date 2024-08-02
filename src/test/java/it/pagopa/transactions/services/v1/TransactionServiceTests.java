@@ -38,6 +38,10 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
@@ -59,6 +63,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -1170,13 +1175,43 @@ class TransactionServiceTests {
         verify(paymentRequestInfoRedisTemplateWrapper, times(0)).deleteById(any());
     }
 
+    static Stream<Arguments> v2ClientIdMapping() {
+        return Stream.of(
+                Arguments.of("IO", it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO),
+                Arguments.of("CHECKOUT", it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT),
+                Arguments.of(
+                        "CHECKOUT_CART",
+                        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT_CART
+                ),
+                Arguments.of(
+                        "CHECKOUT_CART",
+                        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.WISP_REDIRECT
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @EnumSource(Transaction.ClientId.class)
+    void shouldConvertClientIdSuccessfully(Transaction.ClientId clientId) {
+        assertEquals(clientId.name(), transactionsServiceV1.convertClientId(clientId).toString());
+    }
+
+    @ParameterizedTest
+    @MethodSource("v2ClientIdMapping")
+    void shouldConvertV2ClientIdSuccessfully(
+                                             String expected,
+                                             it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+    ) {
+        assertEquals(expected, transactionsServiceV1.convertClientId(clientId).toString());
+    }
+
     @Test
-    void shouldConvertClientIdSuccessfully() {
-        for (it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId : it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId
-                .values()) {
-            assertEquals(clientId.toString(), transactionsServiceV1.convertClientId(clientId.name()).toString());
-        }
-        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(null));
+    void shouldRejectNullClientId() {
+        assertThrows(
+                InvalidRequestException.class,
+                () -> transactionsServiceV1
+                        .convertClientId((it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId) null)
+        );
     }
 
     @Test
@@ -1184,7 +1219,7 @@ class TransactionServiceTests {
         it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId = Mockito
                 .mock(it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.class);
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
-        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(clientId.name()));
+        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(clientId));
     }
 
     @Test
