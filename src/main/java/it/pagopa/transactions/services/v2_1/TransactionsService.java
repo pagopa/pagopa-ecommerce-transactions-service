@@ -172,10 +172,8 @@ public class TransactionsService {
                 .map(
                         value -> {
                             try {
-                                return switch (clientId) {
-                                    case WISP -> NewTransactionResponseDto.ClientIdEnum.CHECKOUT_CART;
-                                    default -> NewTransactionResponseDto.ClientIdEnum.fromValue(clientId.name());
-                                };
+                                return NewTransactionResponseDto.ClientIdEnum
+                                        .fromValue(clientId.getEffectiveClient().name());
                             } catch (IllegalArgumentException e) {
                                 log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);
