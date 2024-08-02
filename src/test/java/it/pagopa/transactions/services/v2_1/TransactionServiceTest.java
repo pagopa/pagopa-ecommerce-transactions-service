@@ -142,4 +142,205 @@ class TransactionServiceTest {
 
     }
 
+    @Test
+    void shouldProjectCreditorReferenceIdWhenHandleNewTransactionTransactionActivatedForWispRedirect() {
+        final var clientIdDto = ClientIdDto.CHECKOUT_CART;
+        final var creditorReferenceId = UUID.randomUUID().toString();
+        UUID TEST_SESSION_TOKEN = UUID.randomUUID();
+        UUID TEST_CPP = UUID.randomUUID();
+        UUID TRANSACTION_ID = UUID.randomUUID();
+
+        final var transactionRequestDto = new NewTransactionRequestDto()
+                .emailToken(TransactionTestUtils.EMAIL.opaqueData())
+                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(100));
+
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
+        transactionActivatedData
+                .setPaymentNotices(
+                        List.of(
+                                new PaymentNotice(
+                                        TransactionTestUtils.PAYMENT_TOKEN,
+                                        null,
+                                        "dest",
+                                        0,
+                                        TEST_CPP.toString(),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        false,
+                                        null,
+                                        creditorReferenceId
+                                )
+                        )
+                );
+
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
+                new TransactionId(TRANSACTION_ID).value(),
+                transactionActivatedData
+        );
+
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = Tuples
+                .of(
+                        Mono.just(transactionActivatedEvent),
+                        TEST_SESSION_TOKEN.toString()
+                );
+
+        TransactionActivated transactionActivated = new TransactionActivated(
+                new TransactionId(TRANSACTION_ID),
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
+                                new RptId(TransactionTestUtils.RPT_ID),
+                                new TransactionAmount(0),
+                                new TransactionDescription("desc"),
+                                new PaymentContextCode(TEST_CPP.toString()),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false,
+                                new CompanyName(null),
+                                creditorReferenceId
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                "faultCode",
+                "faultCodeString",
+                Transaction.ClientId.WISP_REDIRECT,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
+        );
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(transactionActivateHandlerv2.handle(any()))
+                .thenReturn(Mono.just(response));
+        Mockito.when(transactionsActivationProjectionHandlerv2.handle(transactionActivatedEvent))
+                .thenReturn(Mono.just(transactionActivated));
+        Mockito.when(transactionsUtils.convertEnumerationV2_1(any()))
+                .thenCallRealMethod();
+        Hooks.onOperatorDebug();
+        StepVerifier
+                .create(
+                        transactionsService.newTransaction(
+                                transactionRequestDto,
+                                clientIdDto,
+                                UUID.randomUUID(),
+                                new TransactionId(transactionActivatedEvent.getTransactionId()),
+                                UUID.randomUUID()
+                        )
+                )
+                .expectNextMatches(
+                        res -> res.getPayments().get(0).getRptId()
+                                .equals(transactionRequestDto.getPaymentNotices().get(0).getRptId())
+                                && res.getPayments().get(0).getCreditorReferenceId().equals(creditorReferenceId)
+                                && res.getIdCart().equals("idCart")
+                                && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
+                                && res.getClientId()
+                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                && !res.getTransactionId().isEmpty()
+                                && !res.getAuthToken().isEmpty()
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldNewTransactionTransactionActivatedForCheckoutCart() {
+        final var clientIdDto = ClientIdDto.CHECKOUT_CART;
+        final var creditorReferenceId = UUID.randomUUID().toString();
+        UUID TEST_SESSION_TOKEN = UUID.randomUUID();
+        UUID TEST_CPP = UUID.randomUUID();
+        UUID TRANSACTION_ID = UUID.randomUUID();
+
+        final var transactionRequestDto = new NewTransactionRequestDto()
+                .emailToken(TransactionTestUtils.EMAIL.opaqueData())
+                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(100));
+
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
+        transactionActivatedData
+                .setPaymentNotices(
+                        List.of(
+                                new PaymentNotice(
+                                        TransactionTestUtils.PAYMENT_TOKEN,
+                                        null,
+                                        "dest",
+                                        0,
+                                        TEST_CPP.toString(),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        false,
+                                        null,
+                                        creditorReferenceId
+                                )
+                        )
+                );
+
+        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
+                new TransactionId(TRANSACTION_ID).value(),
+                transactionActivatedData
+        );
+
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = Tuples
+                .of(
+                        Mono.just(transactionActivatedEvent),
+                        TEST_SESSION_TOKEN.toString()
+                );
+
+        TransactionActivated transactionActivated = new TransactionActivated(
+                new TransactionId(TRANSACTION_ID),
+                Arrays.asList(
+                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
+                                new RptId(TransactionTestUtils.RPT_ID),
+                                new TransactionAmount(0),
+                                new TransactionDescription("desc"),
+                                new PaymentContextCode(TEST_CPP.toString()),
+                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                false,
+                                new CompanyName(null),
+                                creditorReferenceId
+                        )
+                ),
+                TransactionTestUtils.EMAIL,
+                "faultCode",
+                "faultCodeString",
+                Transaction.ClientId.CHECKOUT_CART,
+                "idCart",
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
+        );
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(transactionActivateHandlerv2.handle(any()))
+                .thenReturn(Mono.just(response));
+        Mockito.when(transactionsActivationProjectionHandlerv2.handle(transactionActivatedEvent))
+                .thenReturn(Mono.just(transactionActivated));
+        Mockito.when(transactionsUtils.convertEnumerationV2_1(any()))
+                .thenCallRealMethod();
+        Hooks.onOperatorDebug();
+        StepVerifier
+                .create(
+                        transactionsService.newTransaction(
+                                transactionRequestDto,
+                                clientIdDto,
+                                UUID.randomUUID(),
+                                new TransactionId(transactionActivatedEvent.getTransactionId()),
+                                UUID.randomUUID()
+                        )
+                )
+                .expectNextMatches(
+                        res -> res.getPayments().get(0).getRptId()
+                                .equals(transactionRequestDto.getPaymentNotices().get(0).getRptId())
+                                && res.getPayments().get(0).getCreditorReferenceId() == null
+                                && res.getIdCart().equals("idCart")
+                                && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
+                                && res.getClientId()
+                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                && !res.getTransactionId().isEmpty()
+                                && !res.getAuthToken().isEmpty()
+                )
+                .verifyComplete();
+    }
 }
