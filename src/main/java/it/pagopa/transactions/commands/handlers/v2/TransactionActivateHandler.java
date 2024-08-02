@@ -151,7 +151,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                                 ),
                                                                                 new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
                                                                                 null,
-                                                                                null
+                                                                                paymentNotice.creditorReferenceId()
                                                                         );
                                                                         paymentRequestInfoRedisTemplateWrapper
                                                                                 .save(

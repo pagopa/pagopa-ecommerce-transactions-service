@@ -16,6 +16,7 @@ import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.WispDeprecation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -143,6 +144,12 @@ public class TransactionsService {
                                                         .rptId(paymentNotice.rptId().value())
                                                         .paymentToken(paymentNotice.paymentToken().value())
                                                         .isAllCCP(paymentNotice.isAllCCP())
+                                                        .creditorReferenceId(
+                                                                WispDeprecation.extractCreditorReferenceId(
+                                                                        transaction,
+                                                                        paymentNotice
+                                                                ).orElse(null)
+                                                        )
                                                         .transferList(
                                                                 paymentNotice.transferList().stream().map(
                                                                         paymentTransferInfo -> new TransferDto()
@@ -181,7 +188,9 @@ public class TransactionsService {
                 .map(
                         value -> {
                             try {
-                                return NewTransactionResponseDto.ClientIdEnum.fromValue(value);
+                                return NewTransactionResponseDto.ClientIdEnum.fromValue(
+                                        WispDeprecation.adaptClientId(value)
+                                );
                             } catch (IllegalArgumentException e) {
                                 log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);
