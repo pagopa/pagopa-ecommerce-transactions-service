@@ -38,6 +38,10 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
@@ -57,6 +61,7 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -1244,20 +1249,12 @@ class TransactionServiceTests {
     }
 
     @Test
-    void shouldConvertClientIdSuccessfully() {
-        for (Transaction.ClientId clientId : Transaction.ClientId
-                .values()) {
-            assertEquals(clientId.toString(), transactionsServiceV1.convertClientId(clientId.name()).toString());
-        }
-        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(null));
-    }
-
-    @Test
     void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
         Transaction.ClientId clientId = Mockito
                 .mock(Transaction.ClientId.class);
         Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
-        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(clientId.name()));
+        Mockito.when(clientId.getEffectiveClient()).thenReturn(clientId);
+        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(clientId));
     }
 
     @Test

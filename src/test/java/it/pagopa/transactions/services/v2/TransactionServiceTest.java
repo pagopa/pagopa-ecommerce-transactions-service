@@ -13,10 +13,14 @@ import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.v2.server.model.*;
+import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
@@ -29,8 +33,11 @@ import reactor.util.function.Tuples;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.EMAIL_STRING;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 
 @AutoConfigureDataRedis
@@ -154,4 +161,35 @@ class TransactionServiceTest {
 
     }
 
+    static Stream<Arguments> clientIdMapping() {
+        return Stream.of(
+                Arguments.of("IO", it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO),
+                Arguments.of("CHECKOUT", it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT),
+                Arguments.of(
+                        "CHECKOUT_CART",
+                        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT_CART
+                ),
+                Arguments.of(
+                        "CHECKOUT_CART",
+                        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.WISP_REDIRECT
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("clientIdMapping")
+    void shouldConvertClientIdSuccessfully(
+                                           String expected,
+                                           Transaction.ClientId clientId
+    ) {
+        assertEquals(expected, transactionsService.convertClientId(clientId).toString());
+    }
+
+    @Test
+    void shouldRejectNullClientId() {
+        assertThrows(
+                InvalidRequestException.class,
+                () -> transactionsService.convertClientId(null)
+        );
+    }
 }

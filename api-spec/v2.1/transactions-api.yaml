@@ -278,6 +278,7 @@ components:
         - IO
         - CHECKOUT
         - CHECKOUT_CART
+        - WISP_REDIRECT
     UserId:
       description: unique user identifier
       type: string
