@@ -18,16 +18,6 @@ public final class WispDeprecation {
         return extractCreditorReferenceId(transaction.getClientId(), paymentNotice.creditorReferenceId());
     }
 
-    public static Optional<String> extractCreditorReferenceId(
-                                                              it.pagopa.ecommerce.commons.documents.v2.Transaction transaction,
-                                                              it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice
-    ) {
-        return extractCreditorReferenceId(
-                transaction.getClientId(),
-                paymentNotice.getCreditorReferenceId()
-        );
-    }
-
     private static Optional<String> extractCreditorReferenceId(
                                                                Transaction.ClientId clientId,
                                                                String creditorReferenceId
@@ -36,14 +26,5 @@ public final class WispDeprecation {
             case WISP_REDIRECT -> Optional.ofNullable(creditorReferenceId);
             case CHECKOUT, CHECKOUT_CART, IO -> Optional.empty();
         };
-    }
-
-    // TODO: WISP replace with effectiveClient method
-    public static String adaptClientId(String clientId) {
-        if (clientId.equals(Transaction.ClientId.WISP_REDIRECT.name())) {
-            return Transaction.ClientId.CHECKOUT.name();
-        } else {
-            return clientId;
-        }
     }
 }

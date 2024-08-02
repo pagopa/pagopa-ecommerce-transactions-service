@@ -168,7 +168,7 @@ public class TransactionsService {
                                 .authToken(authToken)
                                 .status(transactionsUtils.convertEnumerationV2_1(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .clientId(convertClientId(transaction.getClientId().name()))
+                                .clientId(convertClientId(transaction.getClientId().getEffectiveClient().name()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())
                 );
     }
@@ -180,9 +180,7 @@ public class TransactionsService {
                 .map(
                         value -> {
                             try {
-                                return NewTransactionResponseDto.ClientIdEnum.fromValue(
-                                        WispDeprecation.adaptClientId(value)
-                                );
+                                return NewTransactionResponseDto.ClientIdEnum.fromValue(value);
                             } catch (IllegalArgumentException e) {
                                 log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);

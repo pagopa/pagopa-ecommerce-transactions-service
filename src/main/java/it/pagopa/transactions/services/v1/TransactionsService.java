@@ -518,7 +518,7 @@ public class TransactionsService {
                                                             transactionId,
                                                             new CalculateFeeRequestDto()
                                                                     .touchpoint(
-                                                                            clientId
+                                                                            transactionsUtils.getEffectiveClientId(transaction)
                                                                     )
                                                                     .bin(
                                                                             paymentSessionData.cardBin()
