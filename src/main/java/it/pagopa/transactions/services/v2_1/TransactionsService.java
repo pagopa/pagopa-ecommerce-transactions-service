@@ -168,7 +168,7 @@ public class TransactionsService {
     public NewTransactionResponseDto.ClientIdEnum convertClientId(
                                                                   Transaction.ClientId clientId
     ) {
-        return Optional.ofNullable(clientId).filter(Objects::nonNull)
+        return Optional.ofNullable(clientId)
                 .map(
                         value -> {
                             try {
