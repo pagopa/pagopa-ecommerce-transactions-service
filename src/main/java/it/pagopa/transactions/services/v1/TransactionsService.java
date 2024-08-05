@@ -417,7 +417,7 @@ public class TransactionsService {
                     .feeTotal(transaction.getFeeTotal())
                     .clientId(
                             TransactionInfoDto.ClientIdEnum.valueOf(
-                                    transaction.getClientId().toString()
+                                    transaction.getClientId().getEffectiveClient().toString()
                             )
                     )
                     .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
