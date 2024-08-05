@@ -473,7 +473,6 @@ components:
         details:
           description: Additional payment authorization details. Must match the correct format for the chosen payment method.
           oneOf:
-            - $ref: "#/components/schemas/CardAuthRequestDetails"
             - $ref: "#/components/schemas/CardsAuthRequestDetails"
             - $ref: "#/components/schemas/WalletAuthRequestDetails"
             - $ref: "#/components/schemas/ApmAuthRequestDetails"
@@ -481,7 +480,6 @@ components:
           discriminator:
             propertyName: detailType
             mapping:
-              card: "#/components/schemas/CardAuthRequestDetails"
               cards: "#/components/schemas/CardsAuthRequestDetails"
               wallet: "#/components/schemas/WalletAuthRequestDetails"
               apm: "#/components/schemas/ApmAuthRequestDetails"
@@ -495,57 +493,6 @@ components:
         - language
         - details
         - isAllCCP
-    CardAuthRequestDetails:
-      type: object
-      description: Additional payment authorization details for credit cards
-      properties:
-        detailType:
-          description: property discriminator, used to discriminate the authorization request detail. Fixed value 'card'
-          type: string
-        cvv:
-          type: string
-          description: Credit card CVV
-          pattern: "^[0-9]{3,4}$"
-        pan:
-          type: string
-          description: Credit card PAN
-          pattern: "^[0-9]{14,16}$"
-        expiryDate:
-          type: string
-          description: Credit card expiry date. The date format is `YYYYMM`
-          pattern: '^\d{6}$'
-        holderName:
-          type: string
-          description: The card holder name
-        brand:
-          type: string
-          description: The card brand name
-          enum:
-            - VISA
-            - MASTERCARD
-            - UNKNOWN
-            - DINERS
-            - MAESTRO
-            - AMEX
-        threeDsData:
-          type: string
-          description: The 3ds data evaluated by the client
-      required:
-        - detailType
-        - cvv
-        - pan
-        - expiryDate
-        - holderName
-        - brand
-        - threeDsData
-      example:
-        detailType: "card"
-        cvv: "000"
-        pan: "0123456789012345"
-        expiryDate: "209901"
-        holderName: "Name Surname"
-        brand: "VISA"
-        threeDsData: "threeDsData"
     CardsAuthRequestDetails:
       type: object
       description: Additional payment authorization details for cards NPG authorization

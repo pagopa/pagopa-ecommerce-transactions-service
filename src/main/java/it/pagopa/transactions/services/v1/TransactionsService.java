@@ -800,32 +800,6 @@ public class TransactionsService {
 
         Mono<Tuple2<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext>> authUpdateContext = txData
                 .map(TupleUtils.function((pspId, paymentMethodTypeCode, clientId, isWalletPayment) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
-                    case OutcomeXpayGatewayDto outcome -> Tuples.of(
-                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                                    pspId,
-                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                            outcome.getOutcome().toString(),
-                                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
-                                    ),
-                                    paymentMethodTypeCode,
-                                    clientId,
-                                    isWalletPayment
-                            )
-                    );
-                    case OutcomeVposGatewayDto outcome -> Tuples.of(
-                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
-                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                                    pspId,
-                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                            outcome.getOutcome().toString(),
-                                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeVposGatewayDto.ErrorCodeEnum::toString)
-                                    ),
-                                    paymentMethodTypeCode,
-                                    clientId,
-                                    isWalletPayment
-                            )
-                    );
                     case OutcomeNpgGatewayDto outcome -> Tuples.of(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
                             new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(

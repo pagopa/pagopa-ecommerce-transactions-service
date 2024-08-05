@@ -23,9 +23,6 @@ import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -140,11 +137,8 @@ class TransactionRequestAuthorizationHandlerTest {
                     untestedBrands.isEmpty(),
                     "There are untested brand to logo cases: %s".formatted(untestedBrands)
             );
-            Set<String> vposCardCircuit = Arrays.stream(VposAuthRequestDto.CircuitEnum.values())
-                    .map(VposAuthRequestDto.CircuitEnum::toString).collect(Collectors.toSet());
             Set<String> uncoveredEcommerceBrands = Arrays.stream(CardAuthRequestDetailsDto.BrandEnum.values())
                     .map(CardAuthRequestDetailsDto.BrandEnum::toString).collect(Collectors.toSet());
-            uncoveredEcommerceBrands.removeAll(vposCardCircuit);
             assertTrue(
                     uncoveredEcommerceBrands.isEmpty(),
                     "There are ecommerce card brands not mapped into PGS VPOS circuit!%nUnmapped brands: %s"
@@ -176,195 +170,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 updateTransactionStatusTracerUtils
         );
         Mockito.reset(walletAsyncQueueClient);
-    }
-
-    @Test
-    void shouldSaveAuthorizationEventXPAY() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
-        String idCart = "idCart";
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode,
-                                new ArrayList<>(),
-                                false,
-                                new CompanyName(null)
-                        )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
-                email,
-                null,
-                null,
-                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
-                idCart,
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData(),
-                TransactionTestUtils.USER_ID
-        );
-
-        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
-                .fee(200)
-                .paymentInstrumentId("paymentInstrumentId")
-                .pspId("PSP_CODE")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
-
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                authorizationRequest.getFee(),
-                authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId(),
-                "CP",
-                "brokerName",
-                "pspChannelCode",
-                "paymentMethodName",
-                "paymentMethodDescription",
-                "pspBusinessName",
-                false,
-                "XPAY",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
-                new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA),
-                "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
-        );
-
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                authorizationData
-        );
-
-        XPayAuthResponseEntityDto xPayAuthResponseEntityDto = new XPayAuthResponseEntityDto()
-                .requestId("requestId")
-                .status("status")
-                .urlRedirect("http://example.com");
-
-        /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.just(xPayAuthResponseEntityDto));
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
-                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
-
-        /* test */
-        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
-        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(0)).sendMessageWithResponse(
-                any(QueueEvent.class),
-                any(),
-                any()
-        );
-    }
-
-    @Test
-    void shouldSaveAuthorizationEventVPOS() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
-        String idCart = "idCart";
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode,
-                                new ArrayList<>(),
-                                false,
-                                new CompanyName(null)
-                        )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
-                email,
-                null,
-                null,
-                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
-                idCart,
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
-                TransactionTestUtils.npgTransactionGatewayActivationData(),
-                TransactionTestUtils.USER_ID
-        );
-
-        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
-                .fee(200)
-                .paymentInstrumentId("paymentInstrumentId")
-                .pspId("PSP_CODE")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
-
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                authorizationRequest.getFee(),
-                authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId(),
-                "CP",
-                "brokerName",
-                "pspChannelCode",
-                "paymentMethodName",
-                "paymentMethodDescription",
-                "pspBusinessName",
-                false,
-                "VPOS",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
-                new CardAuthRequestDetailsDto().brand(CardAuthRequestDetailsDto.BrandEnum.VISA),
-                "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
-        );
-
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                authorizationData
-        );
-        VposAuthResponseDto vposAuthResponseDto = new VposAuthResponseDto()
-                .requestId("requestId")
-                .status("status")
-                .urlRedirect("http://example.com");
-
-        /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.just(vposAuthResponseDto));
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
-                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
-
-        /* test */
-        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
-        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(0)).sendMessageWithResponse(
-                any(QueueEvent.class),
-                any(),
-                any()
-        );
     }
 
     @Test
@@ -444,10 +249,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -581,10 +382,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -719,10 +516,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
@@ -866,10 +659,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -1013,10 +802,6 @@ class TransactionRequestAuthorizationHandlerTest {
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -1197,9 +982,6 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData)).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData)).thenReturn(Mono.empty());
-
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectErrorMatches(error -> error instanceof InvalidRequestException)
@@ -1296,14 +1078,12 @@ class TransactionRequestAuthorizationHandlerTest {
                 authorizationData
         );
 
-        XPayAuthResponseEntityDto xPayAuthResponseEntityDto = new XPayAuthResponseEntityDto()
-                .requestId("requestId")
-                .status("status")
-                .urlRedirect("http://example.com");
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.just(xPayAuthResponseEntityDto));
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), any()))
+                .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
@@ -1402,10 +1182,6 @@ class TransactionRequestAuthorizationHandlerTest {
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -1513,10 +1289,6 @@ class TransactionRequestAuthorizationHandlerTest {
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -1627,10 +1399,6 @@ class TransactionRequestAuthorizationHandlerTest {
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -1741,10 +1509,6 @@ class TransactionRequestAuthorizationHandlerTest {
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -1854,10 +1618,6 @@ class TransactionRequestAuthorizationHandlerTest {
                         transactionId.value()
                 )
         ).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -1961,10 +1721,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .fieldSet(new FieldsDto().sessionId(TransactionTestUtils.NPG_CONFIRM_PAYMENT_SESSION_ID));
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -2098,10 +1854,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -2236,10 +1988,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -2408,10 +2156,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient
                         .requestNpgBuildSession(
@@ -2557,10 +2301,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.READY_FOR_PAYMENT);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         /* test */
@@ -2665,10 +2405,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient
                         .requestNpgBuildApmPayment(
@@ -2801,10 +2537,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient.requestNpgBuildApmPayment(
                         authorizationData,
@@ -2941,10 +2673,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient
                         .requestNpgBuildApmPayment(
@@ -3053,10 +2781,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .timeout(TransactionTestUtils.REDIRECT_AUTHORIZATION_TIMEOUT);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(eq(authorizationData), any(), any()))
                 .thenReturn(Mono.just(redirectUrlResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -3165,10 +2889,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -3299,10 +3019,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -3433,10 +3149,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -3567,10 +3279,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -3736,10 +3444,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient.requestNpgBuildSession(
                         authorizationData,
@@ -3890,16 +3594,12 @@ class TransactionRequestAuthorizationHandlerTest {
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 authorizationData
         );
-        VposAuthResponseDto vposAuthResponseDto = new VposAuthResponseDto()
-                .requestId("requestId")
-                .status("status")
-                .urlRedirect("http://example.com");
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.just(vposAuthResponseDto));
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), any()))
+                .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
@@ -4028,10 +3728,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* preconditions */
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestCreditCardAuthorization(authorizationData))
-                .thenReturn(Mono.empty());
         Mockito.when(
                 paymentGatewayClient.requestNpgBuildSession(
                         authorizationData,

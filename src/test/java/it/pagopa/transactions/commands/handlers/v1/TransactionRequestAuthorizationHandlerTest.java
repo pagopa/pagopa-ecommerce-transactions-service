@@ -11,8 +11,6 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
@@ -100,11 +98,8 @@ class TransactionRequestAuthorizationHandlerTest {
                     untestedBrands.isEmpty(),
                     "There are untested brand to logo cases: %s".formatted(untestedBrands)
             );
-            Set<String> vposCardCircuit = Arrays.stream(VposAuthRequestDto.CircuitEnum.values())
-                    .map(VposAuthRequestDto.CircuitEnum::toString).collect(Collectors.toSet());
             Set<String> uncoveredEcommerceBrands = Arrays.stream(CardAuthRequestDetailsDto.BrandEnum.values())
                     .map(CardAuthRequestDetailsDto.BrandEnum::toString).collect(Collectors.toSet());
-            uncoveredEcommerceBrands.removeAll(vposCardCircuit);
             assertTrue(
                     uncoveredEcommerceBrands.isEmpty(),
                     "There are ecommerce card brands not mapped into PGS VPOS circuit!%nUnmapped brands: %s"
@@ -129,7 +124,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 TOKEN_VALIDITY_TIME_SECONDS
         );
     }
-
 
     @Test
     void shouldSaveAuthorizationEventNpgCardsRedirectToExternalDomain() {
@@ -784,10 +778,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 authorizationData
         );
 
-        XPayAuthResponseEntityDto xPayAuthResponseEntityDto = new XPayAuthResponseEntityDto()
-                .requestId("requestId")
-                .status("status")
-                .urlRedirect("http://example.com");
+        // TODO: Check if this response is ok
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
+                .url("http://example.com");
 
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
