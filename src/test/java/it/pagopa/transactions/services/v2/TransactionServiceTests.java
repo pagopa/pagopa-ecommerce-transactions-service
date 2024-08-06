@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -631,7 +632,7 @@ class TransactionServiceTests {
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
                         new OutcomeNpgGatewayDto()
-                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.AUTHORIZED)
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -639,13 +640,12 @@ class TransactionServiceTests {
                 "authorizationCode",
                 null,
                 expectedOperationTimestamp,
-                new PgsTransactionGatewayAuthorizationData(
-                        null,
-                        it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto
-                                .fromValue(
-                                        ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway())
-                                                .getOutcome().toString()
-                                )
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEndToEndId",
+                        "errorCode",
+                        "validationServiceId"
                 )
 
         );
@@ -736,9 +736,8 @@ class TransactionServiceTests {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new OutcomeXpayGatewayDto()
-                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                .authorizationCode("authorizationCode")
+                        new OutcomeNpgGatewayDto()
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -1048,9 +1047,8 @@ class TransactionServiceTests {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new OutcomeXpayGatewayDto()
-                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                .authorizationCode("authorizationCode")
+                        new OutcomeNpgGatewayDto()
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -1137,9 +1135,8 @@ class TransactionServiceTests {
 
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new OutcomeXpayGatewayDto()
-                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                .authorizationCode("authorizationCode")
+                        new OutcomeNpgGatewayDto()
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                 )
                 .timestampOperation(OffsetDateTime.now());
 

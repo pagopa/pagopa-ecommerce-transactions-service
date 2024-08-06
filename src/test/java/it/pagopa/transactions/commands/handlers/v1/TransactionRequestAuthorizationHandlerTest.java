@@ -46,6 +46,7 @@ import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationH
 import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.TOKEN_VALIDITY_TIME_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
@@ -82,31 +83,10 @@ class TransactionRequestAuthorizationHandlerTest {
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
 
     private static final String CHECKOUT_BASE_PATH = "checkoutUri";
-    private static final Set<CardAuthRequestDetailsDto.BrandEnum> testedCardBrands = new HashSet<>();
 
     private static boolean cardsTested = false;
 
     private static final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
-
-    @AfterAll
-    public static void afterAll() {
-        if (cardsTested) {
-            Set<CardAuthRequestDetailsDto.BrandEnum> untestedBrands = Arrays
-                    .stream(CardAuthRequestDetailsDto.BrandEnum.values())
-                    .filter(Predicate.not(testedCardBrands::contains)).collect(Collectors.toSet());
-            assertTrue(
-                    untestedBrands.isEmpty(),
-                    "There are untested brand to logo cases: %s".formatted(untestedBrands)
-            );
-            Set<String> uncoveredEcommerceBrands = Arrays.stream(CardAuthRequestDetailsDto.BrandEnum.values())
-                    .map(CardAuthRequestDetailsDto.BrandEnum::toString).collect(Collectors.toSet());
-            assertTrue(
-                    uncoveredEcommerceBrands.isEmpty(),
-                    "There are ecommerce card brands not mapped into PGS VPOS circuit!%nUnmapped brands: %s"
-                            .formatted(uncoveredEcommerceBrands)
-            );
-        }
-    }
 
     @BeforeEach
     private void init() {
@@ -673,7 +653,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.empty(),
                 Optional.empty(),
                 "VISA",
-                new RedirectionAuthRequestDetailsDto(),
+                new CardsAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
         );
@@ -682,6 +662,9 @@ class TransactionRequestAuthorizationHandlerTest {
                 List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
+
+        Mockito.when(paymentMethodsClient.updateSession(any(), any(), any())).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(any(), any())).thenCallRealMethod();
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
@@ -691,110 +674,5 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0)).save(any());
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "VISA",
-                    "MASTERCARD",
-                    "UNKNOWN",
-                    "DINERS",
-                    "MAESTRO",
-                    "AMEX"
-            }
-    )
-    void shouldMapLogoSuccessfully(String brand) {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
-        PaymentToken paymentToken = new PaymentToken("paymentToken");
-        RptId rptId = new RptId("77777777777111111111111111111");
-        TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
-        Confidential<Email> email = TransactionTestUtils.EMAIL;
-        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
-        String idCart = "idCart";
-        TransactionActivated transaction = new TransactionActivated(
-                transactionId,
-                List.of(
-                        new PaymentNotice(
-                                paymentToken,
-                                rptId,
-                                amount,
-                                description,
-                                nullPaymentContextCode,
-                                new ArrayList<>(),
-                                false,
-                                new CompanyName(null)
-                        )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
-                email,
-                null,
-                null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
-                idCart,
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
-        );
-
-        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
-                .fee(200)
-                .paymentInstrumentId("paymentInstrumentId")
-                .pspId("PSP_CODE")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                authorizationRequest.getFee(),
-                authorizationRequest.getPaymentInstrumentId(),
-                authorizationRequest.getPspId(),
-                "CP",
-                "brokerName",
-                "pspChannelCode",
-                "paymentMethodName",
-                "paymentMethodDescription",
-                "pspBusinessName",
-                false,
-                "VPOS",
-                Optional.empty(),
-                Optional.empty(),
-                "VISA",
-                new CardAuthRequestDetailsDto()
-                        .cvv("000")
-                        .pan("123")
-                        .threeDsData("threeDsData")
-                        .expiryDate("209912")
-                        .brand(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand))
-                        .holderName("holder name")
-                        .detailType("CARD"),
-                "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
-        );
-
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                List.of(transaction.getPaymentNotices().get(0).rptId()),
-                authorizationData
-        );
-
-        // TODO: Check if this response is ok
-        StateResponseDto stateResponseDto = new StateResponseDto()
-                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
-                .url("http://example.com");
-
-        /* preconditions */
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
-                .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        Mockito.when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
-                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
-
-        /* test */
-        requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
-
-        Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
-        TransactionEvent<TransactionAuthorizationRequestData> capturedEvent = eventStoreCaptor.getValue();
-        cardsTested = true;
-        testedCardBrands.add(CardAuthRequestDetailsDto.BrandEnum.fromValue(brand));
     }
 }

@@ -21,7 +21,6 @@ class AuthRequestDataUtilsTest {
 
     private static final String TRANSACTION_ID_ENCODED = "transactionIdEncoded";
 
-
     @ParameterizedTest
     @EnumSource(OutcomeNpgGatewayDto.OperationResultEnum.class)
     void shouldExtractNpgInformation(

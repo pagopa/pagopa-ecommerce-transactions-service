@@ -864,7 +864,7 @@ class TransactionsControllerTest {
         String transactionId = new TransactionId(UUID.randomUUID()).value();
         String paymentMethodId = "paymentMethodId";
         String client = "CHECKOUT";
-        String pgsId = "XPAY";
+        String pgsId = "NPG";
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
@@ -902,6 +902,103 @@ class TransactionsControllerTest {
                 .value(
                         p -> {
                             assertEquals(404, p.getStatus());
+                            assertEquals(exception.getMessage(), p.getDetail());
+                        }
+                );
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingPaymentMethodInAuthorizationRequestVPOS() {
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+        String paymentMethodId = "paymentMethodId";
+        String client = "CHECKOUT";
+        String pgsId = "VPOS";
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(1)
+                .paymentInstrumentId(paymentMethodId)
+                .pspId("pspId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .isAllCCP(false)
+                .details(
+                        new CardsAuthRequestDetailsDto()
+                                .orderId("orderId")
+                                .detailType("cards")
+                );
+
+        /* preconditions */
+        InvalidRequestException exception = new InvalidRequestException("Invalid request: requestTransactionAuthorization.xPgsId: deve corrispondere a \"NPG|REDIRECT\"");
+
+
+        Mockito.when(
+                        transactionsService
+                                .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                )
+                .thenReturn(Mono.error(exception));
+
+        /* test */
+        webTestClient.post()
+                .uri("/transactions/{transactionId}/auth-requests", transactionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authorizationRequest)
+                .header("X-Client-Id", client)
+                .header("X-Pgs-Id", pgsId)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> {
+                            assertEquals(400, p.getStatus());
+                            assertEquals(exception.getMessage(), p.getDetail());
+                        }
+                );
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingPaymentMethodInAuthorizationRequestXPAY() {
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+        String paymentMethodId = "paymentMethodId";
+        String client = "CHECKOUT";
+        String pgsId = "XPAY";
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(1)
+                .paymentInstrumentId(paymentMethodId)
+                .pspId("pspId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .isAllCCP(false)
+                .details(
+                        new CardsAuthRequestDetailsDto()
+                                .orderId("orderId")
+                                .detailType("cards")
+                );
+
+        /* preconditions */
+        InvalidRequestException exception = new InvalidRequestException("Invalid request: requestTransactionAuthorization.xPgsId: deve corrispondere a \"NPG|REDIRECT\"");
+
+        Mockito.when(
+                        transactionsService
+                                .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                )
+                .thenReturn(Mono.error(exception));
+
+        /* test */
+        webTestClient.post()
+                .uri("/transactions/{transactionId}/auth-requests", transactionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authorizationRequest)
+                .header("X-Client-Id", client)
+                .header("X-Pgs-Id", pgsId)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> {
+                            assertEquals(400, p.getStatus());
                             assertEquals(exception.getMessage(), p.getDetail());
                         }
                 );
@@ -1409,7 +1506,7 @@ class TransactionsControllerTest {
         String transactionId = new TransactionId(UUID.randomUUID()).value();
         String paymentMethodId = "paymentMethodId";
         String client = "CHECKOUT";
-        String pgsId = "XPAY";
+        String pgsId = "NPG";
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)

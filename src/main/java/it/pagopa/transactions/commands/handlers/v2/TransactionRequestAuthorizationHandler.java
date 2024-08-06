@@ -229,10 +229,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
                                     String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
-                                        case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
+                                        /*case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
-                                        );
+                                        );*/
+                                        //TODO: how to handle this case? We should remove this value for enum from document definition, but it should not be safe for old transaction and for helpdesk scope
+                                        default -> throw new RuntimeException();
                                         case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
