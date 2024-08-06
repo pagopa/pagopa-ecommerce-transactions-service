@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.Claims;
@@ -198,7 +199,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                     transactionId.value(),
                                                                     paymentTokenTimeout,
                                                                     newTransactionRequestDto.idCard(),
-                                                                    partialPaymentRequestInfo.dueDate()
+                                                                    partialPaymentRequestInfo.dueDate(),
+                                                                    Transaction.ClientId
+                                                                            .fromString(command.getClientId())
                                                             )
                                                             .doOnSuccess(
                                                                     p -> {

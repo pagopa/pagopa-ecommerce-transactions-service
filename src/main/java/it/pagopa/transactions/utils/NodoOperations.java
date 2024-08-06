@@ -1,6 +1,7 @@
 package it.pagopa.transactions.utils;
 
 import io.opentelemetry.api.common.Attributes;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.RptId;
@@ -56,6 +57,42 @@ public class NodoOperations {
         this.nodoConfig = nodoConfig;
         this.allCCPOnTransferIbanEnabled = allCCPOnTransferIbanEnabled;
         this.openTelemetryUtils = openTelemetryUtils;
+    }
+
+    public Mono<PaymentRequestInfo> activatePaymentRequest(
+                                                           RptId rptId,
+                                                           IdempotencyKey idempotencyKey,
+                                                           Integer amount,
+                                                           String transactionId,
+                                                           Integer paymentTokenTimeout,
+                                                           String idCart,
+                                                           String dueDate,
+                                                           Transaction.ClientId clientId
+    ) {
+        return activatePaymentRequest(
+                rptId,
+                idempotencyKey,
+                amount,
+                transactionId,
+                paymentTokenTimeout,
+                idCart,
+                dueDate
+        )
+                .flatMap(paymentRequestInfo -> {
+                    if (clientId == Transaction.ClientId.WISP_REDIRECT
+                            && paymentRequestInfo.creditorReferenceId() == null) {
+                        return Mono.error(
+                                new InvalidNodoResponseException(
+                                        String.format(
+                                                "Mandatory creditorReferenceId for client %s is missing",
+                                                clientId.name()
+                                        )
+                                )
+                        );
+                    } else {
+                        return Mono.just(paymentRequestInfo);
+                    }
+                });
     }
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
