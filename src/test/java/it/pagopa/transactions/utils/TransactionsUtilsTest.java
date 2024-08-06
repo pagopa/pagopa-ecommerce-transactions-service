@@ -162,6 +162,18 @@ class TransactionsUtilsTest {
     }
 
     @Test
+    void shouldGetEffectiveClientIdFromTransactionV2() {
+        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.WISP_REDIRECT;
+        TransactionsUtils utils = new TransactionsUtils(null, null);
+        it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+        transaction.setClientId(clientId);
+        String result = utils.getEffectiveClientId(transaction);
+        assertNotNull(result);
+        assertEquals(clientId.getEffectiveClient().name(), result);
+    }
+
+    @Test
     void shouldGetClientIdFromTransactionInvalidClass() {
         TransactionsUtils utils = new TransactionsUtils(null, null);
         assertThrows(NotImplementedException.class, () -> utils.getClientId(Mockito.mock(BaseTransactionView.class)));
