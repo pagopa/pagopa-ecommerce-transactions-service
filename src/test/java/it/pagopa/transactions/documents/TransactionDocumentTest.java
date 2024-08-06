@@ -58,6 +58,7 @@ class TransactionDocumentTest {
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
                                 false,
+                                null,
                                 null
                         )
                 ),
@@ -81,6 +82,7 @@ class TransactionDocumentTest {
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
                                 false,
+                                null,
                                 null
                         )
                 ),
@@ -105,6 +107,7 @@ class TransactionDocumentTest {
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
                                 false,
+                                null,
                                 null
                         )
                 ),
@@ -124,6 +127,7 @@ class TransactionDocumentTest {
                 null,
                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
                 false,
+                null,
                 null
         );
         differentTransaction.setPaymentNotices(List.of(paymentNotice));
@@ -168,7 +172,8 @@ class TransactionDocumentTest {
                                 nullPaymentContextCode,
                                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null)),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ),
                 email,

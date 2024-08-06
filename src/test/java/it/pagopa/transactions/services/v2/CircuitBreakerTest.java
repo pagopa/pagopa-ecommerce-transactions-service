@@ -163,6 +163,7 @@ class CircuitBreakerTest {
                                         TEST_CCP.toString(),
                                         List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
                                         false,
+                                        null,
                                         null
                                 )
                         )
@@ -219,6 +220,7 @@ class CircuitBreakerTest {
                                         TEST_CCP.toString(),
                                         List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
                                         false,
+                                        null,
                                         null
                                 )
                         )
@@ -279,6 +281,7 @@ class CircuitBreakerTest {
                                         TEST_CCP.toString(),
                                         List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
                                         false,
+                                        null,
                                         null
                                 )
                         )

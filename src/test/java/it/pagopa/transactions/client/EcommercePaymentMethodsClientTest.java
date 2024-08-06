@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
@@ -9,6 +10,9 @@ import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentNoticeDto;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,6 +27,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class EcommercePaymentMethodsClientTest {
@@ -304,5 +310,28 @@ class EcommercePaymentMethodsClientTest {
         StepVerifier.create(ecommercePaymentMethodsClient.getPaymentMethod(TEST_ID, CLIENT_ID))
                 .expectError(PaymentMethodNotFoundException.class)
                 .verify();
+    }
+
+    @ParameterizedTest
+    @EnumSource(Transaction.ClientId.class)
+    void shouldRequestPaymentMethodUsingOnlyCheckoutOrIO(Transaction.ClientId clientId) {
+        final var paymentMethodId = UUID.randomUUID().toString();
+        final var testPaymentMethodResponseDto = new PaymentMethodResponseDto()
+                .description("")
+                .addRangesItem(new RangeDto().max(100L).min(0L))
+                .paymentTypeCode("PO")
+                .status(PaymentMethodStatusDto.ENABLED)
+                .id(paymentMethodId)
+                .name("test");
+
+        when(ecommercePaymentMethodsWebClientV1.getPaymentMethod(any(), any()))
+                .thenReturn(Mono.just(testPaymentMethodResponseDto));
+
+        assertThat(ecommercePaymentMethodsClient.getPaymentMethod(paymentMethodId, clientId.name()).block())
+                .satisfies((it) -> assertThat(it.getId()).isEqualTo(paymentMethodId));
+
+        final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ecommercePaymentMethodsWebClientV1).getPaymentMethod(eq(paymentMethodId), clientIdCaptor.capture());
+        assertThat(clientIdCaptor.getValue().equals("IO") || clientIdCaptor.getValue().equals("CHECKOUT")).isTrue();
     }
 }

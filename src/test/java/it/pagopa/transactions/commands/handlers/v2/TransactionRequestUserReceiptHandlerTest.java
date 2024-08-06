@@ -1065,7 +1065,8 @@ class TransactionRequestUserReceiptHandlerTest {
                                 PAYMENT_CONTEXT_CODE,
                                 List.of(),
                                 false,
-                                COMPANY_NAME
+                                COMPANY_NAME,
+                                CREDITOR_REFERENCE_ID
                         )
                 )
         );
@@ -1155,7 +1156,8 @@ class TransactionRequestUserReceiptHandlerTest {
                                 PAYMENT_CONTEXT_CODE,
                                 List.of(),
                                 false,
-                                COMPANY_NAME
+                                COMPANY_NAME,
+                                CREDITOR_REFERENCE_ID
                         )
                 )
         );

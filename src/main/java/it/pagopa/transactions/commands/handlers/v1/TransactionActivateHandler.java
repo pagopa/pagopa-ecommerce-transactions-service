@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -145,6 +146,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                                                 .generateRandomStringToIdempotencyKey()
                                                                                 ),
                                                                                 new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                                                                null,
                                                                                 null
                                                                         );
                                                                         paymentRequestInfoRedisTemplateWrapper
@@ -376,7 +378,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 )
                         ).toList(),
                         paymentRequestInfo.isAllCCP(),
-                        paymentRequestInfo.paName()
+                        paymentRequestInfo.paName(),
+                        paymentRequestInfo.creditorReferenceId()
                 )
         ).toList();
     }

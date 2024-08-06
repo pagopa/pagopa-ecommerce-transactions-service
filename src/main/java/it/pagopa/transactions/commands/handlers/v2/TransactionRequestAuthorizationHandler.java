@@ -166,7 +166,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         .getTransactionGatewayActivationData() instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
                                         ? transactionGatewayActivationData.getCorrelationId()
                                         : null,
-                                tx.getClientId().name(),
+                                tx.getClientId().getEffectiveClient().name(),
                                 Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
                                         .map(UUID::fromString).orElse(null)
                         )
@@ -181,7 +181,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .flatMap(
                         tx -> redirectionAuthRequestPipeline(
                                 authorizationRequestData,
-                                tx.getClientId(),
+                                tx.getClientId().getEffectiveClient(),
                                 Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
                                         .map(UUID::fromString).orElse(null)
                         )

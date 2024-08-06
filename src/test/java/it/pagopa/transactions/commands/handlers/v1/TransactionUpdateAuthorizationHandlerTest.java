@@ -131,7 +131,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 nullPaymentContextCode,
                                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null)),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ),
                 email,

@@ -36,7 +36,7 @@ class TransactionsActivationProjectionHandlerTest {
     @Test
     void shouldSaveTransaction() {
         /* preconditions */
-
+        String creditorReferenceId = UUID.randomUUID().toString();
         String transactionIdString = TransactionTestUtils.TRANSACTION_ID;
         String paFiscalCode = "77777777777";
         String rptIdString = paFiscalCode + "111111111111111111";
@@ -58,7 +58,8 @@ class TransactionsActivationProjectionHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null)),
                                 false,
-                                null
+                                null,
+                                creditorReferenceId
                         )
                 )
         );
@@ -100,7 +101,8 @@ class TransactionsActivationProjectionHandlerTest {
                                         )
                                 ),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                creditorReferenceId
                         )
                 ),
                 email,
@@ -140,6 +142,10 @@ class TransactionsActivationProjectionHandlerTest {
                 transaction.getPaymentNotices().get(0).rptId()
         );
         assertEquals(
+                transactionResult.getPaymentNotices().get(0).creditorReferenceId(),
+                transaction.getPaymentNotices().get(0).creditorReferenceId()
+        );
+        assertEquals(
                 transactionResult.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
                 transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken()
         );
@@ -149,7 +155,6 @@ class TransactionsActivationProjectionHandlerTest {
                 ((NpgTransactionGatewayActivationData) transaction.getTransactionActivatedData()
                         .getTransactionGatewayActivationData()).getOrderId()
         );
-
     }
 
 }

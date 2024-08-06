@@ -42,7 +42,8 @@ public class TransactionsActivationProjectionHandler
                                 )
                         ).toList(),
                         paymentNoticeData.isAllCCP(),
-                        new CompanyName(paymentNoticeData.getCompanyName())
+                        new CompanyName(paymentNoticeData.getCompanyName()),
+                        paymentNoticeData.getCreditorReferenceId()
                 )
         ).toList();
         Confidential<Email> email = event.getData().getEmail();
