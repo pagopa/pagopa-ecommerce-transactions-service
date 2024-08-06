@@ -194,9 +194,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                     transactionId.value(),
                                                                     paymentTokenTimeout,
                                                                     newTransactionRequestDto.idCard(),
-                                                                    partialPaymentRequestInfo.dueDate(),
-                                                                    Transaction.ClientId
-                                                                            .fromString(command.getClientId())
+                                                                    partialPaymentRequestInfo.dueDate()
                                                             )
                                                             .doOnSuccess(
                                                                     p -> {
