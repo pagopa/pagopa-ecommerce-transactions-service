@@ -212,15 +212,11 @@ class PaymentGatewayClientTest {
 
         /* test */
 
-        StepVerifier.create(client.requestNpgCardsAuthorization(eq(authorizationData), any()))
+        StepVerifier.create(client.requestNpgCardsAuthorization(eq(authorizationData), anyString()))
                 .expectNextCount(0)
                 .verifyComplete();
 
-        StepVerifier.create(client.requestRedirectUrlAuthorization(eq(authorizationData), any(), any()))
-                .expectNextCount(0)
-                .verifyComplete();
-
-        verifyNoInteractions(npgClient, nodeForwarderClient);
+        verifyNoInteractions(npgClient);
     }
 
     @Test

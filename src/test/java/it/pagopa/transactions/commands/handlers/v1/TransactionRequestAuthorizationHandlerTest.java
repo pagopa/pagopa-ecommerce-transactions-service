@@ -45,8 +45,7 @@ import java.util.stream.Collectors;
 import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.ECOMMERCE_JWT_SIGNING_KEY;
 import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.TOKEN_VALIDITY_TIME_SECONDS;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionRequestAuthorizationHandlerTest {
@@ -653,7 +652,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.empty(),
                 Optional.empty(),
                 "VISA",
-                new CardsAuthRequestDetailsDto(),
+                new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
         );
@@ -662,11 +661,9 @@ class TransactionRequestAuthorizationHandlerTest {
                 List.of(transaction.getPaymentNotices().get(0).rptId()),
                 authorizationData
         );
-
-        Mockito.when(paymentMethodsClient.updateSession(any(), any(), any())).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(any(), any())).thenCallRealMethod();
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+/*        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), anyString())).thenReturn(Mono.empty());*/
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))

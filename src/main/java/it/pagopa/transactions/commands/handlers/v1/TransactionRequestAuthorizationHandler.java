@@ -102,6 +102,13 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         )
                 )
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.NPG));
+        List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List
+                .of(monoNpgCards);
+        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> gatewayAttempts = gatewayRequests
+                .stream()
+                .reduce(
+                        Mono::switchIfEmpty
+                ).orElse(Mono.empty());
 
         return transactionActivated
                 .flatMap(t -> switch (command.getData().authDetails()) {
@@ -113,7 +120,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     default -> Mono.just(t);
                 })
                 .flatMap(
-                        t -> monoNpgCards
+                        t -> gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                                 .flatMap(authorizationOutputAndGateway -> {
                                     log.info(
                                             "Logging authorization event for transaction id {}",
