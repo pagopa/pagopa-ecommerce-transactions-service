@@ -3445,18 +3445,18 @@ class TransactionRequestAuthorizationHandlerTest {
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
-                "RBPIC",
+                "CP",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "REDIRECT",
+                "NPG",
+                Optional.of("sessionId"),
                 Optional.empty(),
-                Optional.empty(),
-                "INTESA",
-                new RedirectionAuthRequestDetailsDto(),
+                "VISA",
+                new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
         );
@@ -3466,24 +3466,34 @@ class TransactionRequestAuthorizationHandlerTest {
                 authorizationData
         );
 
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(WorkflowStateDto.GDI_VERIFICATION)
+                .fieldSet(
+                        new FieldsDto().sessionId("authorizationSessionId")
+                                .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
+                );
+
         /* preconditions */
+        Mockito.when(paymentMethodsClient.updateSession(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), any()))
-                .thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(eq(authorizationData), any(), any()))
-                .thenReturn(Mono.empty());
+                .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        Mockito.when(
+                        transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                                any(QueueEvent.class),
+                                any(),
+                                durationArgumentCaptor.capture()
+                        )
+                )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
-        Mockito.verify(transactionAuthorizationRequestedQueueAsyncClient, Mockito.times(0)).sendMessageWithResponse(
-                any(QueueEvent.class),
-                any(),
-                any()
-        );
+
         Mockito.verify(walletAsyncQueueClient, Mockito.times(0)).fireWalletLastUsageEvent(any(), any(), any());
     }
 
