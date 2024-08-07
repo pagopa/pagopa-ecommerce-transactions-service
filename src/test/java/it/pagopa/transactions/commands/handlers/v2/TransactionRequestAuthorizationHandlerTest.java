@@ -958,9 +958,12 @@ class TransactionRequestAuthorizationHandlerTest {
                 authorizationData
         );
 
-        Mockito.when(paymentMethodsClient.updateSession(any(), any(), any()).thenReturn(Mono.empty()));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
+        //TODO Check this null value in this mocks
+        Mockito.when(paymentMethodsClient.updateSession("paymentInstrumentId", null, transactionId.value())).thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), eq(null))).thenReturn(Mono.empty());
+
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectErrorMatches(error -> error instanceof InvalidRequestException)
@@ -2167,10 +2170,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 authorizationData
         );
 
-        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
-                .state(WorkflowStateDto.READY_FOR_PAYMENT);
-
         /* preconditions */
+        Mockito.when(paymentMethodsClient.updateSession(anyString(), eq(null), anyString())).thenReturn(Mono.empty());
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         /* test */
@@ -3444,18 +3445,18 @@ class TransactionRequestAuthorizationHandlerTest {
                 authorizationRequest.getFee(),
                 authorizationRequest.getPaymentInstrumentId(),
                 authorizationRequest.getPspId(),
-                "CP",
+                "RBPIC",
                 "brokerName",
                 "pspChannelCode",
                 "paymentMethodName",
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
-                "NPG",
+                "REDIRECT",
                 Optional.empty(),
                 Optional.empty(),
-                "VISA",
-                new CardsAuthRequestDetailsDto().orderId("orderId"),
+                "INTESA",
+                new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
         );
@@ -3464,13 +3465,12 @@ class TransactionRequestAuthorizationHandlerTest {
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 authorizationData
         );
-        StateResponseDto stateResponseDto = new StateResponseDto()
-                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
 
         /* preconditions */
-        Mockito.when(paymentMethodsClient.updateSession(any(), any(), any())).thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), any()))
-                .thenReturn(Mono.just(stateResponseDto));
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestRedirectUrlAuthorization(eq(authorizationData), any(), any()))
+                .thenReturn(Mono.empty());
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));

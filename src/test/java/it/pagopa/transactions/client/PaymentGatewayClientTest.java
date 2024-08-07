@@ -212,7 +212,7 @@ class PaymentGatewayClientTest {
 
         /* test */
 
-        StepVerifier.create(client.requestNpgCardsAuthorization(eq(authorizationData), anyString()))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, any()))
                 .expectNextCount(0)
                 .verifyComplete();
 

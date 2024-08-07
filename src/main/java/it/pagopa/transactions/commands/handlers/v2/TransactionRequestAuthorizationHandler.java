@@ -234,7 +234,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
                                         );*/
                                         //TODO: how to handle this case? We should remove this value for enum from document definition, but it should not be safe for old transaction and for helpdesk scope
-                                        default -> throw new RuntimeException();
                                         case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
@@ -267,6 +266,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 logo,
                                                 authorizationOutput.authorizationTimeoutMillis().orElse(600000)
                                         );
+                                        default -> throw new RuntimeException();
                                     };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
