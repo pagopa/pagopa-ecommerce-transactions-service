@@ -140,24 +140,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(
-                authorizationRequestData
-        ).map(
-                authorizationOutput -> Tuples.of(
-                        authorizationOutput,
-                        PaymentGateway.XPAY
-                )
-        );
-
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(
-                authorizationRequestData
-        ).map(
-                authorizationOutput -> Tuples.of(
-                        authorizationOutput,
-                        PaymentGateway.VPOS
-                )
-        );
-
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpg = transactionActivated
                 .flatMap(
                         tx -> npgAuthRequestPipeline(
@@ -193,7 +175,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 );
 
         List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List
-                .of(monoXPay, monoVPOS, monoNpg, monoRedirect);
+                .of(monoNpg, monoRedirect);
 
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()
@@ -247,10 +229,11 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
                                     String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
-                                        case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
+                                        /*case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
-                                        );
+                                        );*/
+                                        //TODO: how to handle this case? We should remove this value for enum from document definition, but it should not be safe for old transaction and for helpdesk scope
                                         case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
@@ -283,6 +266,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 logo,
                                                 authorizationOutput.authorizationTimeoutMillis().orElse(600000)
                                         );
+                                        default -> throw new RuntimeException();
                                     };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),

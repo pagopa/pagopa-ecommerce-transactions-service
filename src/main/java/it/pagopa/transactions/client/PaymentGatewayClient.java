@@ -20,15 +20,8 @@ import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -63,10 +56,6 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class PaymentGatewayClient {
-
-    private final XPayInternalApi paymentTransactionGatewayXPayWebClient;
-
-    private final VposInternalApi creditCardInternalApiClient;
 
     private final ObjectMapper objectMapper;
 
@@ -126,8 +115,7 @@ public class PaymentGatewayClient {
 
     @Autowired
     public PaymentGatewayClient(
-            @Qualifier("paymentTransactionGatewayXPayWebClient") XPayInternalApi paymentTransactionGatewayXPayWebClient,
-            @Qualifier("creditCardInternalApiClient") VposInternalApi creditCardInternalApiClient,
+
             ObjectMapper objectMapper,
             UUIDUtils uuidUtils,
             ConfidentialMailUtils confidentialMailUtils,
@@ -145,8 +133,6 @@ public class PaymentGatewayClient {
                 "${npg.authorization.retry.excluded.error.codes}"
             ) Set<String> npgAuthorizationRetryExcludedErrorCodes
     ) {
-        this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
-        this.creditCardInternalApiClient = creditCardInternalApiClient;
         this.objectMapper = objectMapper;
         this.uuidUtils = uuidUtils;
         this.confidentialMailUtils = confidentialMailUtils;
@@ -161,137 +147,6 @@ public class PaymentGatewayClient {
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
-    }
-
-    public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
-
-        return Mono.just(authorizationData)
-                .filter(
-                        authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && TransactionAuthorizationRequestData.PaymentGateway.XPAY.equals(
-                                        TransactionAuthorizationRequestData.PaymentGateway
-                                                .valueOf(authorizationRequestData.paymentGatewayId())
-                                )
-                )
-                .switchIfEmpty(Mono.empty())
-                .flatMap(authorizationRequestData -> {
-                    final Mono<XPayAuthRequestDto> xPayAuthRequest;
-                    if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
-                        BigDecimal grandTotal = BigDecimal.valueOf(
-                                ((long) authorizationData.paymentNotices().stream()
-                                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
-                                        + authorizationData.fee()
-                        );
-                        xPayAuthRequest = Mono.just(
-                                new XPayAuthRequestDto()
-                                        .cvv(cardData.getCvv())
-                                        .pan(cardData.getPan())
-                                        .expiryDate(cardData.getExpiryDate())
-                                        .idTransaction(
-                                                uuidUtils.uuidToBase64(
-                                                        authorizationData.transactionId().uuid()
-                                                )
-                                        )
-                                        .grandTotal(grandTotal)
-                        );
-                    } else {
-                        xPayAuthRequest = Mono.error(
-                                new InvalidRequestException(
-                                        "Cannot perform XPAY authorization for null input CardAuthRequestDetailsDto"
-                                )
-                        );
-                    }
-                    return xPayAuthRequest;
-                })
-                .flatMap(
-                        xPayAuthRequestDto -> paymentTransactionGatewayXPayWebClient
-                                .authXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
-                                .onErrorMap(
-                                        WebClientResponseException.class,
-                                        exception -> switch (exception.getStatusCode()) {
-                                        case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transactionId()
-                                        ); // 401
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                                "",
-                                                exception.getStatusCode()
-                                        ); // 500
-                                        default -> exception;
-                                        }
-                                )
-                );
-    }
-
-    public Mono<VposAuthResponseDto> requestCreditCardAuthorization(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData)
-                .filter(
-                        authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && TransactionAuthorizationRequestData.PaymentGateway.VPOS
-                                        .equals(
-                                                TransactionAuthorizationRequestData.PaymentGateway
-                                                        .valueOf(authorizationRequestData.paymentGatewayId())
-                                        )
-                )
-                .switchIfEmpty(Mono.empty())
-                .flatMap(
-                        authorizationRequestData -> confidentialMailUtils
-                                .toEmail(authorizationRequestData.email())
-                )
-                .flatMap(email -> {
-                    final Mono<VposAuthRequestDto> creditCardAuthRequest;
-                    if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
-                        BigDecimal grandTotal = BigDecimal.valueOf(
-                                ((long) authorizationData.paymentNotices().stream()
-                                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
-                                        + authorizationData.fee()
-                        );
-                        creditCardAuthRequest = Mono.just(
-                                new VposAuthRequestDto()
-                                        .pan(cardData.getPan())
-                                        .expireDate(cardData.getExpiryDate())
-                                        .idTransaction(
-                                                uuidUtils.uuidToBase64(
-                                                        authorizationData.transactionId().uuid()
-                                                )
-                                        )
-                                        .amount(grandTotal)
-                                        .emailCH(email.value())
-                                        .holder(cardData.getHolderName())
-                                        .securityCode(cardData.getCvv())
-                                        .isFirstPayment(true) // TODO TO BE CHECKED
-                                        .threeDsData(cardData.getThreeDsData())
-                                        .circuit(VposAuthRequestDto.CircuitEnum.valueOf(cardData.getBrand().toString()))
-                                        .idPsp(authorizationData.pspId())
-                        );
-                    } else {
-                        creditCardAuthRequest = Mono.error(
-                                new InvalidRequestException(
-                                        "Cannot perform VPOS authorization for null input CreditCardAuthRequestDto"
-                                )
-                        );
-                    }
-                    return creditCardAuthRequest;
-                })
-                .flatMap(
-                        creditCardAuthRequestDto -> creditCardInternalApiClient
-                                .step0VposAuth(
-                                        creditCardAuthRequestDto,
-                                        encodeMdcFields(authorizationData)
-                                )
-                                .onErrorMap(
-                                        WebClientResponseException.class,
-                                        exception -> switch (exception.getStatusCode()) {
-                                        case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transactionId()
-                                        ); // 401
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                                "",
-                                                exception.getStatusCode()
-                                        ); // 500
-                                        default -> exception;
-                                        }
-                                )
-                );
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(

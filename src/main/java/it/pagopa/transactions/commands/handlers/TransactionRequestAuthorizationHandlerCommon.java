@@ -76,52 +76,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     }
 
     /**
-     * XPAY authorization pipeline
-     *
-     * @param authorizationData the authorization requested data
-     * @return the authorization output data containing authorization id and
-     *         redirect URL
-     */
-    protected Mono<AuthorizationOutput> xpayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData)
-                .flatMap(
-                        paymentGatewayClient::requestXPayAuthorization
-                )
-                .map(
-                        xPayAuthResponseEntityDto -> new AuthorizationOutput(
-                                xPayAuthResponseEntityDto.getRequestId(),
-                                xPayAuthResponseEntityDto.getUrlRedirect(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                Optional.empty()
-                        )
-                );
-    }
-
-    /**
-     * VPOS authorization pipeline
-     *
-     * @param authorizationData the authorization requested data
-     * @return the authorization output data containing authorization id and
-     *         redirect URL
-     */
-    protected Mono<AuthorizationOutput> vposAuthRequestPipeline(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData)
-                .flatMap(
-                        paymentGatewayClient::requestCreditCardAuthorization
-                )
-                .map(
-                        creditCardAuthResponseDto -> new AuthorizationOutput(
-                                creditCardAuthResponseDto.getRequestId(),
-                                creditCardAuthResponseDto.getUrlRedirect(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                Optional.empty()
-                        )
-                );
-    }
-
-    /**
      * NPG authorization pipeline
      *
      * @param authorizationData the authorization requested data
