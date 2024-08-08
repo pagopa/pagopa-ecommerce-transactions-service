@@ -50,6 +50,12 @@ microservice-chart:
     type: ClusterIP
     ports:
       - 8080
+  serviceMonitor:
+    create: true
+    endpoints:
+      - interval: 10s
+        targetPort: 8080
+        path: /actuator/prometheus
   ingress:
     create: true
     host: "weuuat.ecommerce.internal.uat.platform.pagopa.it"
