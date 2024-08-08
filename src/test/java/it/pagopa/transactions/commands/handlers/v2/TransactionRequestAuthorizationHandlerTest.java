@@ -960,9 +960,11 @@ class TransactionRequestAuthorizationHandlerTest {
 
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        //TODO Check this null value in this mocks
-        Mockito.when(paymentMethodsClient.updateSession("paymentInstrumentId", null, transactionId.value())).thenReturn(Mono.empty());
-        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), eq(null))).thenReturn(Mono.empty());
+        // TODO Check this null value in this mocks
+        Mockito.when(paymentMethodsClient.updateSession("paymentInstrumentId", null, transactionId.value()))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), eq(null)))
+                .thenReturn(Mono.empty());
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -2160,7 +2162,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.empty(),
                 Optional.of(contractId),
                 "VISA",
-                new CardsAuthRequestDetailsDto(),
+                Mockito.mock(RequestAuthorizationRequestDetailsDto.class),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
         );
@@ -2171,7 +2173,6 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(paymentMethodsClient.updateSession(anyString(), eq(null), anyString())).thenReturn(Mono.empty());
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         /* test */
@@ -3474,19 +3475,20 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(paymentMethodsClient.updateSession(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
+        Mockito.when(paymentMethodsClient.updateSession(anyString(), anyString(), anyString()))
+                .thenReturn(Mono.empty());
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), any()))
                 .thenReturn(Mono.just(stateResponseDto));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         Mockito.when(transactionEventStoreRepository.save(any())).thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(
-                        transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
-                                any(QueueEvent.class),
-                                any(),
-                                durationArgumentCaptor.capture()
-                        )
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
                 )
+        )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         /* test */

@@ -342,8 +342,9 @@ public class PaymentGatewayClient {
         return Mono.just(authorizationData)
                 .filter(
                         authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && TransactionAuthorizationRequestData.PaymentGateway.NPG.name().equals(
-                                        authorizationRequestData.paymentGatewayId()
+                                && TransactionAuthorizationRequestData.PaymentGateway.NPG.equals(
+                                        TransactionAuthorizationRequestData.PaymentGateway
+                                                .valueOf(authorizationRequestData.paymentGatewayId())
                                 )
                 )
                 .switchIfEmpty(Mono.empty())

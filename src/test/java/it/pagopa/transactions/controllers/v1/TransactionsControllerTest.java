@@ -928,13 +928,14 @@ class TransactionsControllerTest {
                 );
 
         /* preconditions */
-        InvalidRequestException exception = new InvalidRequestException("Invalid request: requestTransactionAuthorization.xPgsId: deve corrispondere a \"NPG|REDIRECT\"");
-
+        InvalidRequestException exception = new InvalidRequestException(
+                "Invalid request: requestTransactionAuthorization.xPgsId: deve corrispondere a \"NPG|REDIRECT\""
+        );
 
         Mockito.when(
-                        transactionsService
-                                .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
-                )
+                transactionsService
+                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+        )
                 .thenReturn(Mono.error(exception));
 
         /* test */
@@ -977,12 +978,14 @@ class TransactionsControllerTest {
                 );
 
         /* preconditions */
-        InvalidRequestException exception = new InvalidRequestException("Invalid request: requestTransactionAuthorization.xPgsId: deve corrispondere a \"NPG|REDIRECT\"");
+        InvalidRequestException exception = new InvalidRequestException(
+                "Invalid request: requestTransactionAuthorization.xPgsId: deve corrispondere a \"NPG|REDIRECT\""
+        );
 
         Mockito.when(
-                        transactionsService
-                                .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
-                )
+                transactionsService
+                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+        )
                 .thenReturn(Mono.error(exception));
 
         /* test */

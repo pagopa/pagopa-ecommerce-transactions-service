@@ -663,7 +663,10 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-/*        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), anyString())).thenReturn(Mono.empty());*/
+        /*
+         * Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(eq(
+         * authorizationData), anyString())).thenReturn(Mono.empty());
+         */
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))

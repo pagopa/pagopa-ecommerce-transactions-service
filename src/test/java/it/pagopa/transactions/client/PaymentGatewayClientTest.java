@@ -212,9 +212,9 @@ class PaymentGatewayClientTest {
 
         /* test */
 
-        StepVerifier.create(client.requestRedirectUrlAuthorization(authorizationData, any(), any()))
+        StepVerifier.create(client.requestNpgCardsAuthorization(authorizationData, UUID.randomUUID().toString()))
                 .expectNextCount(0)
-                .verifyComplete();
+                .verifyError(InvalidRequestException.class);
 
         verifyNoInteractions(npgClient);
     }
