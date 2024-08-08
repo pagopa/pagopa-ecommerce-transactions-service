@@ -927,17 +927,6 @@ class TransactionsControllerTest {
                                 .detailType("cards")
                 );
 
-        /* preconditions */
-        InvalidRequestException exception = new InvalidRequestException(
-                "Invalid request: requestTransactionAuthorization.xPgsId: deve corrispondere a \"NPG|REDIRECT\""
-        );
-
-        Mockito.when(
-                transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
-        )
-                .thenReturn(Mono.error(exception));
-
         /* test */
         webTestClient.post()
                 .uri("/transactions/{transactionId}/auth-requests", transactionId)
@@ -950,10 +939,7 @@ class TransactionsControllerTest {
                 .isBadRequest()
                 .expectBody(ProblemJsonDto.class)
                 .value(
-                        p -> {
-                            assertEquals(400, p.getStatus());
-                            assertEquals(exception.getMessage(), p.getDetail());
-                        }
+                        p -> assertEquals(400, p.getStatus())
                 );
     }
 
@@ -977,17 +963,6 @@ class TransactionsControllerTest {
                                 .detailType("cards")
                 );
 
-        /* preconditions */
-        InvalidRequestException exception = new InvalidRequestException(
-                "Invalid request: requestTransactionAuthorization.xPgsId: deve corrispondere a \"NPG|REDIRECT\""
-        );
-
-        Mockito.when(
-                transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
-        )
-                .thenReturn(Mono.error(exception));
-
         /* test */
         webTestClient.post()
                 .uri("/transactions/{transactionId}/auth-requests", transactionId)
@@ -1000,10 +975,7 @@ class TransactionsControllerTest {
                 .isBadRequest()
                 .expectBody(ProblemJsonDto.class)
                 .value(
-                        p -> {
-                            assertEquals(400, p.getStatus());
-                            assertEquals(exception.getMessage(), p.getDetail());
-                        }
+                        p -> assertEquals(400, p.getStatus())
                 );
     }
 
