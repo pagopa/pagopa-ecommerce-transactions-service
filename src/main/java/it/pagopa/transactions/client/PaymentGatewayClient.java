@@ -738,7 +738,7 @@ public class PaymentGatewayClient {
         if (paName == null || paName.length() <= 70) {
             return paName;
         } else {
-            return paName.substring(0, 69) + "…";
+            return paName.substring(0, 67) + "...";
         }
     }
 

@@ -2640,7 +2640,7 @@ class PaymentGatewayClientTest {
     ) {
         String pspId = "pspId";
         String longPaName = it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME.repeat(6) + "abcde";
-        String expectedPaName = it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME.repeat(6) + "abc…";
+        String expectedPaName = it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME.repeat(6) + "a...";
 
         assertTrue(longPaName.length() > 70);
         assertEquals(70, expectedPaName.length());
@@ -2868,7 +2868,7 @@ class PaymentGatewayClientTest {
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
                 .paymentMethod(mappedPaymentMethodDescription)
-                .paName(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME);
+                .paName(null);
 
         String urlBack = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
