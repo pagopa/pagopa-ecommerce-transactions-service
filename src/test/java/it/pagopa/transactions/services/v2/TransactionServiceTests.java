@@ -5,7 +5,6 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
@@ -1070,9 +1069,12 @@ class TransactionServiceTests {
                 .transactionAuthorizationRequestedEvent();
         TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(
-                        new PgsTransactionGatewayAuthorizationData(
+                        new NpgTransactionGatewayAuthorizationData(
+                                OperationResultDto.EXECUTED,
+                                "operationId",
+                                "paymentEnd2EndId",
                                 null,
-                                it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+                                null
                         )
 
                 );
@@ -1158,9 +1160,12 @@ class TransactionServiceTests {
                 .transactionAuthorizationRequestedEvent();
         TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
                 .transactionAuthorizationCompletedEvent(
-                        new PgsTransactionGatewayAuthorizationData(
+                        new NpgTransactionGatewayAuthorizationData(
+                                OperationResultDto.EXECUTED,
+                                "operationId",
+                                "paymentEnd2EndId",
                                 null,
-                                it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto.OK
+                                null
                         )
                 );
         BaseTransaction baseTransaction = TransactionTestUtils.reduceEvents(

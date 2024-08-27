@@ -4,7 +4,6 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
@@ -60,10 +59,6 @@ public class AuthorizationUpdateProjectionHandler
                         case NpgTransactionGatewayAuthorizationData npgData -> Tuples.of(
                                 npgData.getOperationResult().toString(),
                                 Optional.ofNullable(npgData.getErrorCode())
-                        );
-                        case PgsTransactionGatewayAuthorizationData pgsData -> Tuples.of(
-                                pgsData.getAuthorizationResultDto().toString(),
-                                Optional.ofNullable(pgsData.getErrorCode())
                         );
                         case RedirectTransactionGatewayAuthorizationData redirectData -> Tuples.of(
                                 redirectData.getOutcome().toString(),
