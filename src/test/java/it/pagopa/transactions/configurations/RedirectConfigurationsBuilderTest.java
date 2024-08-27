@@ -37,7 +37,8 @@ class RedirectConfigurationsBuilderTest {
     )
     void shouldBuildPspBackendUriMapSuccessfully(String pspId) {
         Map<String, URI> mapping = assertDoesNotThrow(
-                () -> checkoutRedirectConfigurationsBuilder.redirectBeApiCallUriMap(pspToHandle, pspUriMap)
+                () -> checkoutRedirectConfigurationsBuilder.redirectKeysConfig(pspToHandle, pspUriMap)
+                        .getRedirectBeApiCallUriMap()
         );
         assertEquals("http://localhost/%s/redirectionUrl".formatted(pspId), mapping.get(pspId).toString());
 
@@ -50,7 +51,7 @@ class RedirectConfigurationsBuilderTest {
         RedirectConfigurationException e = assertThrows(
                 RedirectConfigurationException.class,
                 () -> checkoutRedirectConfigurationsBuilder
-                        .redirectBeApiCallUriMap(pspToHandle, missingKeyPspMap)
+                        .redirectKeysConfig(pspToHandle, missingKeyPspMap)
         );
         assertEquals(
                 "Error parsing Redirect PSP BACKEND_URLS configuration, cause: Misconfigured redirect.pspUrlMapping, the following redirect payment type code b.e. URIs are not configured: [key1]",
@@ -66,7 +67,7 @@ class RedirectConfigurationsBuilderTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> checkoutRedirectConfigurationsBuilder
-                        .redirectBeApiCallUriMap(pspToHandle, missingKeyPspMap)
+                        .redirectKeysConfig(pspToHandle, missingKeyPspMap)
         );
     }
 

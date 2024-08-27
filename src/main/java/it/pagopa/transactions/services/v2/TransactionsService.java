@@ -14,6 +14,7 @@ import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,8 @@ public class TransactionsService {
 
     private final TransactionsUtils transactionsUtils;
 
+    private final ConfidentialMailUtils confidentialMailUtils;
+
     @Autowired
     public TransactionsService(
             @Qualifier(
@@ -44,11 +47,13 @@ public class TransactionsService {
             @Qualifier(
                 TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
-            TransactionsUtils transactionsUtils
+            TransactionsUtils transactionsUtils,
+            ConfidentialMailUtils confidentialMailUtils
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;
         this.transactionsUtils = transactionsUtils;
+        this.confidentialMailUtils = confidentialMailUtils;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -70,7 +75,7 @@ public class TransactionsService {
                 newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
                 new NewTransactionRequestData(
                         newTransactionRequestDto.getIdCart(),
-                        newTransactionRequestDto.getEmail(),
+                        confidentialMailUtils.toConfidential(newTransactionRequestDto.getEmail()),
                         newTransactionRequestDto.getOrderId(),
                         correlationId,
                         newTransactionRequestDto.getPaymentNotices().stream().map(
@@ -163,19 +168,20 @@ public class TransactionsService {
                                 .authToken(authToken)
                                 .status(transactionsUtils.convertEnumerationV2(transaction.getStatus()))
                                 // .feeTotal()//TODO da dove prendere le fees?
-                                .clientId(convertClientId(transaction.getClientId().name()))
+                                .clientId(convertClientId(transaction.getClientId()))
                                 .idCart(transaction.getTransactionActivatedData().getIdCart())
                 );
     }
 
     public NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                                  String clientId
+                                                                  Transaction.ClientId clientId
     ) {
-        return Optional.ofNullable(clientId).filter(Objects::nonNull)
+        return Optional.ofNullable(clientId)
                 .map(
                         value -> {
                             try {
-                                return NewTransactionResponseDto.ClientIdEnum.fromValue(value);
+                                return NewTransactionResponseDto.ClientIdEnum
+                                        .fromValue(value.getEffectiveClient().name());
                             } catch (IllegalArgumentException e) {
                                 log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);
@@ -183,5 +189,4 @@ public class TransactionsService {
                         }
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
-
 }

@@ -1,5 +1,6 @@
 package it.pagopa.transactions.configurations;
 
+import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
 import com.azure.core.util.serializer.JsonSerializer;
 import com.azure.storage.queue.QueueClientBuilder;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import reactor.netty.http.client.HttpClient;
 
 @Configuration
 public class AzureStorageConfig {
@@ -187,6 +189,11 @@ public class AzureStorageConfig {
         final var queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
                 .queueName(queueName)
+                .httpClient(
+                        new NettyAsyncHttpClientBuilder(
+                                HttpClient.create().resolver(nameResolverSpec -> nameResolverSpec.ndots(1))
+                        ).build()
+                )
                 .buildAsyncClient();
         queueAsyncClient.createIfNotExists().block();
         return new WalletAsyncQueueClient(queueAsyncClient, secondsTtl, serializer);
@@ -200,6 +207,11 @@ public class AzureStorageConfig {
         com.azure.storage.queue.QueueAsyncClient queueAsyncClient = new QueueClientBuilder()
                 .connectionString(storageConnectionString)
                 .queueName(queueName)
+                .httpClient(
+                        new NettyAsyncHttpClientBuilder(
+                                HttpClient.create().resolver(nameResolverSpec -> nameResolverSpec.ndots(1))
+                        ).build()
+                )
                 .buildAsyncClient();
         queueAsyncClient.createIfNotExists().block();
 

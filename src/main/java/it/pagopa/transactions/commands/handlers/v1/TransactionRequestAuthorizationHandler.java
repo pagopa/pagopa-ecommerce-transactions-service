@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequeste
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -21,12 +22,14 @@ import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.net.URI;
 import java.util.List;
 
@@ -46,13 +49,23 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TransactionsEventStoreRepository<TransactionAuthorizationRequestData> transactionEventStoreRepository,
             TransactionsUtils transactionsUtils,
             @Value("${checkout.basePath}") String checkoutBasePath,
+            @Value("${checkout.npg.gdi.url}") String checkoutNpgGdiUrl,
+            @Value("${checkout.outcome.url}") String checkoutOutcomeUrl,
             EcommercePaymentMethodsClient paymentMethodsClient,
-            TransactionTemplateWrapper transactionTemplateWrapper
+            TransactionTemplateWrapper transactionTemplateWrapper,
+            JwtTokenUtils jwtTokenUtils,
+            @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
+            @Value("${npg.notification.jwt.validity.time}") int jwtWebViewValidityTimeInSeconds
     ) {
         super(
                 paymentGatewayClient,
                 checkoutBasePath,
-                transactionTemplateWrapper
+                checkoutNpgGdiUrl,
+                checkoutOutcomeUrl,
+                transactionTemplateWrapper,
+                jwtTokenUtils,
+                ecommerceWebViewSigningKey,
+                jwtWebViewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
@@ -88,7 +101,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         tx -> npgAuthRequestPipeline(
                                 authorizationRequestData,
                                 null,
-                                tx.getClientId().name()
+                                tx.getClientId().name(),
+                                null
                         )
                 )
                 .map(authorizationOutput -> Tuples.of(authorizationOutput, PaymentGateway.NPG));
@@ -101,6 +115,14 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 ).orElse(Mono.empty());
 
         return transactionActivated
+                .flatMap(t -> switch (command.getData().authDetails()) {
+                    case CardsAuthRequestDetailsDto authRequestDetails -> paymentMethodsClient.updateSession(
+                            command.getData().paymentInstrumentId(),
+                            authRequestDetails.getOrderId(),
+                            command.getData().transactionId().value()
+                    ).thenReturn(t);
+                    default -> Mono.just(t);
+                })
                 .flatMap(
                         t -> gatewayAttempts.switchIfEmpty(Mono.error(new BadRequestException("No gateway matched")))
                                 .flatMap(authorizationOutputAndGateway -> {
@@ -137,19 +159,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             )
                                     );
 
-                                    Mono<Void> updateSession = Mono.just(command.getData().authDetails())
-                                            .filter(CardsAuthRequestDetailsDto.class::isInstance)
-                                            .cast(CardsAuthRequestDetailsDto.class)
-                                            .flatMap(
-                                                    authRequestDetails -> paymentMethodsClient.updateSession(
-                                                            command.getData().paymentInstrumentId(),
-                                                            authRequestDetails.getOrderId(),
-                                                            command.getData().transactionId().value()
-                                                    )
-                                            );
-
-                                    return updateSession.then(
-                                            transactionEventStoreRepository.save(authorizationEvent)
+                                    return transactionEventStoreRepository.save(authorizationEvent)
                                                     .thenReturn(authorizationOutputAndGateway)
                                                     .map(
                                                             auth -> new RequestAuthorizationResponseDto()
@@ -159,8 +169,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                     .authorizationRequestId(
                                                                             authorizationOutput.authorizationId()
                                                                     )
-                                                    )
-                                    );
+                                                    );
                                 })
                                 .doOnError(BadRequestException.class, error -> log.error(error.getMessage()))
                 );

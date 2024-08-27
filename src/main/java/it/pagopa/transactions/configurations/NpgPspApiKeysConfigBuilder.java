@@ -112,12 +112,58 @@ public class NpgPspApiKeysConfigBuilder {
         );
     }
 
+    /**
+     * Return a map where valued with each psp id - api keys entries
+     *
+     * @param apiKeys - the secret api keys configuration json
+     * @return the parsed map
+     */
+    @Bean
+    public it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig npgApplePayApiKeys(
+                                                                                    @Value(
+                                                                                        "${npg.authorization.applepay.keys}"
+                                                                                    ) String apiKeys,
+                                                                                    @Value(
+                                                                                        "${npg.authorization.applepay.pspList}"
+                                                                                    ) Set<String> pspToHandle
+    ) {
+        return parseApiKeysMap(
+                apiKeys,
+                pspToHandle,
+                NpgClient.PaymentMethod.APPLEPAY
+        );
+    }
+
+    /**
+     * Return a map where valued with each psp id - api keys entries
+     *
+     * @param apiKeys - the secret api keys configuration json
+     * @return the parsed map
+     */
+    @Bean
+    public it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig npgSatispayApiKeys(
+                                                                                    @Value(
+                                                                                        "${npg.authorization.satispay.keys}"
+                                                                                    ) String apiKeys,
+                                                                                    @Value(
+                                                                                        "${npg.authorization.satispay.pspList}"
+                                                                                    ) Set<String> pspToHandle
+    ) {
+        return parseApiKeysMap(
+                apiKeys,
+                pspToHandle,
+                NpgClient.PaymentMethod.SATISPAY
+        );
+    }
+
     @Bean
     public NpgApiKeyConfiguration npgApiKeyConfiguration(
                                                          NpgPspApiKeysConfig npgCardsApiKeys,
                                                          NpgPspApiKeysConfig npgBancomatpayApiKeys,
                                                          NpgPspApiKeysConfig npgMyBankApiKeys,
                                                          NpgPspApiKeysConfig npgPaypalApiKeys,
+                                                         NpgPspApiKeysConfig npgApplePayApiKeys,
+                                                         NpgPspApiKeysConfig npgSatispayApiKeys,
                                                          @Value("${npg.client.apiKey}") String defaultApiKey
     ) {
         return new NpgApiKeyConfiguration.Builder()
@@ -126,6 +172,8 @@ public class NpgPspApiKeysConfigBuilder {
                 .withMethodPspMapping(NpgClient.PaymentMethod.BANCOMATPAY, npgBancomatpayApiKeys)
                 .withMethodPspMapping(NpgClient.PaymentMethod.MYBANK, npgMyBankApiKeys)
                 .withMethodPspMapping(NpgClient.PaymentMethod.PAYPAL, npgPaypalApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.APPLEPAY, npgApplePayApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.SATISPAY, npgSatispayApiKeys)
                 .build();
     }
 

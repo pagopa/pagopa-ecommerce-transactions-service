@@ -2,14 +2,12 @@ package it.pagopa.transactions.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.transactions.configurations.SecretsConfigurations;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.time.Duration;
@@ -32,7 +30,7 @@ class JwtTokenUtilsTests {
         String generatedToken = jwtTokenUtils.generateToken(
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                new it.pagopa.ecommerce.commons.domain.Claims(transactionId, orderId, null)
+                new it.pagopa.ecommerce.commons.domain.Claims(transactionId, orderId, null, null)
         ).fold(error -> error.toString(), value -> value);
         assertNotNull(generatedToken);
         Claims claims = assertDoesNotThrow(
@@ -40,6 +38,8 @@ class JwtTokenUtilsTests {
         );
         assertEquals(transactionId.value(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
         assertEquals(orderId, claims.get(JwtTokenUtils.ORDER_ID_CLAIM, String.class));
+        assertNull(claims.get(JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM, String.class));
+        assertNull(claims.get(JwtTokenUtils.USER_ID_CLAIM, String.class));
         assertNotNull(claims.getId());
         assertNotNull(claims.getIssuedAt());
         assertNotNull(claims.getExpiration());
@@ -55,7 +55,7 @@ class JwtTokenUtilsTests {
         String generatedToken = jwtTokenUtils.generateToken(
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                new it.pagopa.ecommerce.commons.domain.Claims(transactionId, null, null)
+                new it.pagopa.ecommerce.commons.domain.Claims(transactionId, null, null, null)
         ).fold(error -> error.toString(), value -> value);
         assertNotNull(generatedToken);
         Claims claims = assertDoesNotThrow(
@@ -63,6 +63,35 @@ class JwtTokenUtilsTests {
         );
         assertEquals(transactionId.value(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
         assertNull(claims.get(JwtTokenUtils.ORDER_ID_CLAIM, String.class));
+        assertNull(claims.get(JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM, String.class));
+        assertNull(claims.get(JwtTokenUtils.USER_ID_CLAIM, String.class));
+        assertNotNull(claims.getId());
+        assertNotNull(claims.getIssuedAt());
+        assertNotNull(claims.getExpiration());
+        assertEquals(
+                Duration.ofSeconds(TOKEN_VALIDITY_TIME_SECONDS).toMillis(),
+                claims.getExpiration().getTime() - claims.getIssuedAt().getTime()
+        );
+    }
+
+    @Test
+    void shouldGenerateValidJwtTokenWithOrderIdAndTransactionIdAndUserId() {
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        String orderId = UUID.randomUUID().toString();
+        UUID userId = UUID.randomUUID();
+        String generatedToken = jwtTokenUtils.generateToken(
+                jwtSecretKey,
+                TOKEN_VALIDITY_TIME_SECONDS,
+                new it.pagopa.ecommerce.commons.domain.Claims(transactionId, orderId, null, userId)
+        ).fold(error -> error.toString(), value -> value);
+        assertNotNull(generatedToken);
+        Claims claims = assertDoesNotThrow(
+                () -> Jwts.parserBuilder().setSigningKey(jwtSecretKey).build().parseClaimsJws(generatedToken).getBody()
+        );
+        assertEquals(transactionId.value(), claims.get(JwtTokenUtils.TRANSACTION_ID_CLAIM, String.class));
+        assertEquals(orderId, claims.get(JwtTokenUtils.ORDER_ID_CLAIM, String.class));
+        assertNull(claims.get(JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM, String.class));
+        assertNotNull(userId.toString(), claims.get(JwtTokenUtils.USER_ID_CLAIM, String.class));
         assertNotNull(claims.getId());
         assertNotNull(claims.getIssuedAt());
         assertNotNull(claims.getExpiration());

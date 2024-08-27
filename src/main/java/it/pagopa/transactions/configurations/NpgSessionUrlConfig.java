@@ -6,7 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record NpgSessionUrlConfig(
         String basePath,
         String outcomeSuffix,
-        String cancelSuffix,
         String notificationUrl
 ) {
 }

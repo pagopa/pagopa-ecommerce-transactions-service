@@ -29,7 +29,7 @@ microservice-chart:
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.30.0"
+    tag: "1.34.4"
     pullPolicy: Always
   livenessProbe:
     httpGet:
@@ -47,7 +47,7 @@ microservice-chart:
     periodSeconds: 10
   deployment:
     create: true
-    replicas: 3
+    replicas: 5
   service:
     create: true
     type: ClusterIP
@@ -70,21 +70,20 @@ microservice-chart:
     allowPrivilegeEscalation: false
   resources:
     requests:
-      memory: "512Mi"
+      memory: "768Mi"
       cpu: "300m"
     limits:
-      memory: "512Mi"
+      memory: "768Mi"
       cpu: "500m"
   autoscaling:
     enable: true
-    minReplica: 3
+    minReplica: 5
     maxReplica: 10
     pollingInterval: 30 # seconds
     cooldownPeriod: 300 # seconds
     triggers:
       - type: cpu
         metadata:
-          # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
   strategy:
@@ -155,27 +154,32 @@ microservice-chart:
     NPG_URI: "https://xpay.nexigroup.com/api/phoenix-0.0"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
-    NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX"
+    NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,PASCITMM,WOLLNLB1,BPMOIT22,SARDIT31,IFSPIT21"
     NPG_PAYPAL_PSP_LIST: ""
-    NPG_MYBANK_PSP_LIST: ""
+    NPG_MYBANK_PSP_LIST: "UNCRITMM"
     NPG_BANCOMATPAY_PSP_LIST: ""
-    NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "60"
+    NPG_SATISPAY_PSP_LIST: ""
+    NPG_APPLEPAY_PSP_LIST: ""
+    NPG_AUTHORIZATION_REQUEST_TIMEOUT_SECONDS: "180"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
     ECOMMERCE_EVENT_VERSION: "V1"
     SEND_PAYMENT_RESULT_FOR_TX_EXPIRED_ENABLED: "true"
     SESSION_URL_BASEPATH: "https://checkout.pagopa.it"
     SESSION_URL_OUTCOME_SUFFIX: "/ecommerce-fe/esito#clientId={clientId}&transactionId={transactionId}&sessionToken={sessionToken}"
-    SESSION_URL_CANCEL_SUFFIX: "/ecommerce-fe/cancel"
     SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-    REDIRECT_PAYMENT_TYPE_CODE_LIST: ""
+    REDIRECT_PAYMENT_TYPE_CODE_LIST: "PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR"
     NODE_FORWARDER_URL: "https://api.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
     FEATURE_WALLET_USAGE_ENABLED: "false"
     WALLET_USAGE_QUEUE_NAME: pagopa-p-weu-wallet-usage-update-queue
     WALLET_USAGE_QUEUE_TTL: "3600"
+    CHECKOUT_NPG_GDI_URL: "https://checkout.pagopa.it/gdi-check"
+    CHECKOUT_OUTCOME_URL: "https://checkout.pagopa.it/esito"
+    NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
+    EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "2"
   envSecret:
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
@@ -185,6 +189,7 @@ microservice-chart:
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
     PAYMENT_TRANSACTIONS_GATEWAY_API_KEY: payment-transactions-gateway-api-key
     JWT_ECOMMERCE_SECRET: sessions-jwt-secret
+    JWT_ECOMMERCE_WEBVIEW_SECRET: ecommerce-io-jwt-signing-key
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
@@ -198,6 +203,8 @@ microservice-chart:
     NPG_BANCOMATPAY_PSP_KEYS: npg-bancomatpay-psp-keys
     NPG_MYBANK_PSP_KEYS: npg-mybank-psp-keys
     WALLET_STORAGE_CONNECTION_STRING: wallet-storage-connection-string
+    NPG_SATISPAY_PSP_KEYS: npg-satispay-psp-keys
+    NPG_APPLEPAY_PSP_KEYS: npg-apple-pay-psp-keys
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

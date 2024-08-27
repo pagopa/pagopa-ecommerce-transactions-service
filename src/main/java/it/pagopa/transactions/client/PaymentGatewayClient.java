@@ -9,12 +9,16 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.*;
+import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
+import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyConfigurationException;
+import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
+import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
+import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
 import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
@@ -32,6 +36,7 @@ import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NpgBuildData;
 import it.pagopa.transactions.utils.UUIDUtils;
@@ -79,7 +84,9 @@ public class PaymentGatewayClient {
     private final SecretKey ecommerceSigningKey;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
-    private final Map<String, URI> redirectBeApiCallUriMap;
+    private final RedirectKeysConfiguration redirectKeysConfig;
+
+    private final Set<String> npgAuthorizationRetryExcludedErrorCodes;
 
     static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
             RedirectPaymentMethodId.RBPR,
@@ -127,13 +134,16 @@ public class PaymentGatewayClient {
             NpgClient npgClient,
             NpgSessionUrlConfig npgSessionUrlConfig,
             UniqueIdUtils uniqueIdUtils,
-            SecretKey npgNotificationSigningKey,
+            @Qualifier("npgNotificationSigningKey") SecretKey npgNotificationSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
-            SecretKey ecommerceSigningKey,
+            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
-            Map<String, URI> redirectBeApiCallUriMap,
-            NpgApiKeyConfiguration npgApiKeyConfiguration
+            RedirectKeysConfiguration redirectKeysConfig,
+            NpgApiKeyConfiguration npgApiKeyConfiguration,
+            @Value(
+                "${npg.authorization.retry.excluded.error.codes}"
+            ) Set<String> npgAuthorizationRetryExcludedErrorCodes
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
@@ -146,10 +156,11 @@ public class PaymentGatewayClient {
         this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
-        this.redirectBeApiCallUriMap = redirectBeApiCallUriMap;
+        this.redirectKeysConfig = redirectKeysConfig;
         this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
+        this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
     }
 
     public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
@@ -287,19 +298,21 @@ public class PaymentGatewayClient {
                                                                   AuthorizationRequestData authorizationData,
                                                                   String correlationId,
                                                                   boolean isWalletPayment,
-                                                                  String clientId
+                                                                  String clientId,
+                                                                  UUID userId
 
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId);
+        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId, userId);
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(
                                                                      AuthorizationRequestData authorizationData,
                                                                      String correlationId,
                                                                      boolean isWalletPayment,
-                                                                     String clientId
+                                                                     String clientId,
+                                                                     UUID userId
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId);
+        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId, userId);
     }
 
     private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -307,11 +320,12 @@ public class PaymentGatewayClient {
                                                                    String correlationId,
                                                                    boolean isApmPayment,
                                                                    boolean isWalletPayment,
-                                                                   String clientId
+                                                                   String clientId,
+                                                                   UUID userId
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
                 : WorkflowStateDto.READY_FOR_PAYMENT;
-        return retrieveNpgBuildDataInformation(authorizationData)
+        return retrieveNpgBuildDataInformation(authorizationData, userId)
                 .flatMap(
                         npgBuildData -> {
                             String orderId = npgBuildData.orderId();
@@ -324,7 +338,6 @@ public class PaymentGatewayClient {
                                     outcomeJwtToken
                             );
                             URI merchantUrl = returnUrlBasePath;
-                            URI cancelUrl = returnUrlBasePath.resolve(npgSessionUrlConfig.cancelSuffix());
 
                             URI notificationUrl = UriComponentsBuilder
                                     .fromHttpUrl(npgSessionUrlConfig.notificationUrl())
@@ -339,7 +352,7 @@ public class PaymentGatewayClient {
                             Either<NpgApiKeyConfigurationException, String> buildApiKey = isApmPayment
                                     ? npgApiKeyConfiguration.getApiKeyForPaymentMethod(
                                             NpgClient.PaymentMethod
-                                                    .fromServiceName(authorizationData.paymentMethodName()),
+                                                    .valueOf(authorizationData.paymentMethodName()),
                                             authorizationData.pspId()
                                     )
                                     : Either.right(npgApiKeyConfiguration.getDefaultApiKey());
@@ -352,11 +365,11 @@ public class PaymentGatewayClient {
                                                     merchantUrl,
                                                     outcomeResultUrl,
                                                     notificationUrl,
-                                                    cancelUrl,
+                                                    outcomeResultUrl,
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .fromServiceName(authorizationData.paymentMethodName()),
+                                                            .valueOf(authorizationData.paymentMethodName()),
                                                     apiKey,
                                                     isWalletPayment ? authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -376,11 +389,11 @@ public class PaymentGatewayClient {
                                                     merchantUrl,
                                                     outcomeResultUrl,
                                                     notificationUrl,
-                                                    cancelUrl,
+                                                    outcomeResultUrl,
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .fromServiceName(authorizationData.paymentMethodName()),
+                                                            .valueOf(authorizationData.paymentMethodName()),
                                                     apiKey,
                                                     authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -396,18 +409,40 @@ public class PaymentGatewayClient {
                         NpgResponseException.class,
                         exception -> exception
                                 .getStatusCode()
-                                .map(statusCode -> switch (statusCode) {
-                                case UNAUTHORIZED -> new AlreadyProcessedException(
-                                        authorizationData.transactionId()
-                                ); // 401
-                                case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                        "NPG internal server error response received",
-                                        statusCode
-                                ); // 500
-                                default -> new BadGatewayException(
-                                        "Received NPG error response with unmanaged HTTP response status code",
-                                        statusCode
-                                );
+                                .map(statusCode -> {
+                                    List<String> errorCodes = exception.getErrors();
+                                    log.error(
+                                            "KO performing NPG buildForm: HTTP status code: [%s], errorCodes: %s"
+                                                    .formatted(statusCode, errorCodes),
+                                            exception
+                                    );
+                                    if (errorCodes.stream()
+                                            .anyMatch(npgAuthorizationRetryExcludedErrorCodes::contains)) {
+                                        return new NpgNotRetryableErrorException(
+                                                "Npg received error codes: %s, retry excluded error codes: %s"
+                                                        .formatted(errorCodes, npgAuthorizationRetryExcludedErrorCodes),
+                                                statusCode
+                                        );
+                                    }
+                                    if (statusCode.is4xxClientError()) {
+                                        return new NpgNotRetryableErrorException(
+                                                "Npg 4xx error for transactionId: [%s], correlationId: [%s]".formatted(
+                                                        authorizationData.transactionId().value(),
+                                                        correlationId
+                                                ),
+                                                statusCode
+                                        );
+                                    } else if (statusCode.is5xxServerError()) {
+                                        return new BadGatewayException(
+                                                "NPG internal server error response received",
+                                                statusCode
+                                        );
+                                    } else {
+                                        return new BadGatewayException(
+                                                "Received NPG error response with unmanaged HTTP response status code",
+                                                statusCode
+                                        );
+                                    }
                                 })
                                 .orElse(
                                         new BadGatewayException(
@@ -500,19 +535,47 @@ public class PaymentGatewayClient {
                                             NpgResponseException.class,
                                             exception -> exception
                                                     .getStatusCode()
-                                                    .map(statusCode -> switch (statusCode) {
-                        case UNAUTHORIZED -> new AlreadyProcessedException(
-                                authorizationData.transactionId()
-                        ); // 401
-                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                "NPG internal server error response received",
-                                statusCode
-                        ); // 500
-                        default -> new BadGatewayException(
-                                "Received NPG error response with unmanaged HTTP response status code",
-                                statusCode
-                        );
-                    })
+                                                    .map(statusCode -> {
+                                                        List<String> errorCodes = exception.getErrors();
+                                                        log.error(
+                                                                "KO performing NPG confirmPayment: HTTP status code: [%s], errorCodes: %s"
+                                                                        .formatted(statusCode, errorCodes),
+                                                                exception
+                                                        );
+                                                        if (errorCodes.stream().anyMatch(
+                                                                npgAuthorizationRetryExcludedErrorCodes::contains
+                                                        )) {
+                                                            return new NpgNotRetryableErrorException(
+                                                                    "Npg received error codes: %s, retry excluded error codes: %s"
+                                                                            .formatted(
+                                                                                    errorCodes,
+                                                                                    npgAuthorizationRetryExcludedErrorCodes
+                                                                            ),
+                                                                    statusCode
+                                                            );
+                                                        }
+                                                        if (statusCode.is4xxClientError()) {
+                                                            return new NpgNotRetryableErrorException(
+                                                                    "Npg 4xx error for transactionId: [%s], correlationId: [%s]"
+                                                                            .formatted(
+                                                                                    authorizationData.transactionId()
+                                                                                            .value(),
+                                                                                    correlationId
+                                                                            ),
+                                                                    statusCode
+                                                            );
+                                                        } else if (statusCode.is5xxServerError()) {
+                                                            return new BadGatewayException(
+                                                                    "NPG internal server error response received",
+                                                                    statusCode
+                                                            );
+                                                        } else {
+                                                            return new BadGatewayException(
+                                                                    "Received NPG error response with unmanaged HTTP response status code",
+                                                                    statusCode
+                                                            );
+                                                        }
+                                                    })
                                                     .orElse(
                                                             new BadGatewayException(
                                                                     "Received NPG error response with unknown HTTP response status code",
@@ -533,7 +596,8 @@ public class PaymentGatewayClient {
      */
     public Mono<RedirectUrlResponseDto> requestRedirectUrlAuthorization(
                                                                         AuthorizationRequestData authorizationData,
-                                                                        RedirectUrlRequestDto.TouchpointEnum touchpoint
+                                                                        RedirectUrlRequestDto.TouchpointEnum touchpoint,
+                                                                        UUID userId
     ) {
         return new JwtTokenUtils()
                 .generateToken(
@@ -542,7 +606,8 @@ public class PaymentGatewayClient {
                         new Claims(
                                 authorizationData.transactionId(),
                                 null,
-                                authorizationData.paymentInstrumentId()
+                                authorizationData.paymentInstrumentId(),
+                                userId
                         )
                 ).fold(
                         Mono::error,
@@ -550,6 +615,18 @@ public class PaymentGatewayClient {
 
                             RedirectPaymentMethodId idPaymentMethod = RedirectPaymentMethodId
                                     .fromPaymentTypeCode(authorizationData.paymentTypeCode());
+
+                            /*
+                             * `paName` is shown to users on the payment gateway redirect page. If there is
+                             * only one payment notice we use its `companyName` as `paName`, otherwise there
+                             * would be an ambiguity, so we don't pass it into the authorization request
+                             */
+                            String paName = null;
+
+                            if (authorizationData.paymentNotices().size() == 1) {
+                                paName = authorizationData.paymentNotices().get(0).companyName().value();
+                            }
+
                             RedirectUrlRequestDto request = new RedirectUrlRequestDto()
                                     .amount(
                                             authorizationData
@@ -586,11 +663,13 @@ public class PaymentGatewayClient {
                                             redirectMethodsDescriptions.get(idPaymentMethod)
                                     )
                                     .idPaymentMethod(idPaymentMethod.toString())
-                                    .paName(null);// optional
-                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = getRedirectUrlForPsp(
-                                    authorizationData.pspId(),
-                                    authorizationData.paymentTypeCode()
-                            );
+                                    .paName(paName);// optional
+                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = redirectKeysConfig
+                                    .getRedirectUrlForPsp(
+                                            touchpoint.name(),
+                                            authorizationData.pspId(),
+                                            authorizationData.paymentTypeCode()
+                                    );
 
                             return pspConfiguredUrl.fold(
                                     Mono::error,
@@ -621,17 +700,23 @@ public class PaymentGatewayClient {
                                                         );
                                                         if (responseHttpStatus.isPresent()) {
                                                             HttpStatus httpStatus = responseHttpStatus.get();
-
-                                                            return switch (httpStatus) {
-                                                                case BAD_REQUEST, UNAUTHORIZED -> new AlreadyProcessedException(
+                                                            if (httpStatus.is4xxClientError()) {
+                                                                return new AlreadyProcessedException(
                                                                         authorizationData.transactionId()
                                                                 );
-                                                                default -> new BadGatewayException(
+                                                            } else if (httpStatus.is5xxServerError()) {
+                                                                return new BadGatewayException(
                                                                         "KO performing redirection URL api call for PSP: [%s]"
                                                                                 .formatted(pspId),
                                                                         httpStatus
                                                                 );
-                                                            };
+                                                            } else {
+                                                                return new BadGatewayException(
+                                                                        "Unhandled error performing redirection URL api call for PSP: [%s]"
+                                                                                .formatted(pspId),
+                                                                        null
+                                                                );
+                                                            }
                                                         } else {
                                                             return new BadGatewayException(
                                                                     "Unhandled error performing redirection URL api call for PSP: [%s]"
@@ -661,24 +746,10 @@ public class PaymentGatewayClient {
         return Base64.getEncoder().encodeToString(mdcData.getBytes(StandardCharsets.UTF_8));
     }
 
-    private Either<RedirectConfigurationException, URI> getRedirectUrlForPsp(
-                                                                             String pspId,
-                                                                             String paymentTypeCode
+    private Mono<NpgBuildData> retrieveNpgBuildDataInformation(
+                                                               AuthorizationRequestData authorizationRequestData,
+                                                               UUID userId
     ) {
-        String urlKey = "%s-%s".formatted(pspId, paymentTypeCode);
-        if (redirectBeApiCallUriMap.containsKey(urlKey)) {
-            return Either.right(redirectBeApiCallUriMap.get(urlKey));
-        } else {
-            return Either.left(
-                    new RedirectConfigurationException(
-                            "Missing key for redirect return url with key: [%s]".formatted(urlKey),
-                            RedirectConfigurationType.BACKEND_URLS
-                    )
-            );
-        }
-    }
-
-    private Mono<NpgBuildData> retrieveNpgBuildDataInformation(AuthorizationRequestData authorizationRequestData) {
         return uniqueIdUtils.generateUniqueId()
                 .flatMap(
                         orderId -> new JwtTokenUtils()
@@ -688,7 +759,8 @@ public class PaymentGatewayClient {
                                         new Claims(
                                                 authorizationRequestData.transactionId(),
                                                 orderId,
-                                                authorizationRequestData.paymentInstrumentId()
+                                                authorizationRequestData.paymentInstrumentId(),
+                                                userId
                                         )
                                 ).fold(
                                         Mono::error,
@@ -699,7 +771,8 @@ public class PaymentGatewayClient {
                                                         new Claims(
                                                                 authorizationRequestData.transactionId(),
                                                                 orderId,
-                                                                authorizationRequestData.paymentInstrumentId()
+                                                                authorizationRequestData.paymentInstrumentId(),
+                                                                userId
                                                         )
                                                 ).fold(
                                                         Mono::error,

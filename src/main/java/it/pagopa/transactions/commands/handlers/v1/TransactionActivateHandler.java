@@ -5,22 +5,20 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NodoOperations;
-import it.pagopa.transactions.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -67,7 +65,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
-            SecretKey ecommerceSigningKey,
+            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds
     ) {
         super(
@@ -216,7 +214,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         .generateToken(
                                                 ecommerceSigningKey,
                                                 jwtEcommerceValidityTimeInSeconds,
-                                                new Claims(transactionId, null, null)
+                                                new Claims(transactionId, null, null, null)
                                         )
                                         .fold(
                                                 Mono::error,
@@ -262,11 +260,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
              * inside Transaction view
              */
             openTelemetryUtils.addSpanWithAttributes(
-                    OpenTelemetryUtils.REPEATED_ACTIVATION_SPAN_NAME,
+                    SpanLabelOpenTelemetry.REPEATED_ACTIVATION_SPAN_NAME,
                     Attributes.of(
-                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY,
+                            SpanLabelOpenTelemetry.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY,
                             paymentToken,
-                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY,
+                            SpanLabelOpenTelemetry.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY,
                             paymentTokenValidityTimeLeft.getSeconds()
                     )
             );
@@ -311,24 +309,23 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     private Mono<BaseTransactionEvent<?>> newTransactionActivatedEvent(
                                                                        List<PaymentRequestInfo> paymentRequestsInfo,
                                                                        String transactionId,
-                                                                       String email,
+                                                                       Mono<Confidential<Email>> email,
                                                                        String clientId,
                                                                        String idCart,
                                                                        Integer paymentTokenTimeout
     ) {
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
-        Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData> data = confidentialMailUtils
-                .toConfidential(email).map(
-                        e -> new it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData(
-                                e,
-                                paymentNotices,
-                                null,
-                                null,
-                                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.valueOf(clientId),
-                                idCart,
-                                paymentTokenTimeout
-                        )
-                );
+        Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData> data = email.map(
+                e -> new it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData(
+                        e,
+                        paymentNotices,
+                        null,
+                        null,
+                        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.valueOf(clientId),
+                        idCart,
+                        paymentTokenTimeout
+                )
+        );
 
         Mono<it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent> transactionActivatedEvent = data.map(
                 d -> new it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent(

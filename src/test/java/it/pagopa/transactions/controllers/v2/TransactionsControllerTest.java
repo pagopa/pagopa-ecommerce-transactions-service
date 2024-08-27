@@ -1,10 +1,14 @@
 package it.pagopa.transactions.controllers.v2;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
@@ -16,6 +20,7 @@ import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -40,6 +45,7 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.net.URI;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -74,6 +80,9 @@ class TransactionsControllerTest {
     @MockBean
     private UniqueIdUtils uniqueIdUtils;
 
+    @MockBean
+    private OpenTelemetryUtils openTelemetryUtils;
+
     @Mock
     ServerWebExchange mockExchange;
 
@@ -83,6 +92,10 @@ class TransactionsControllerTest {
     @Mock
     HttpHeaders mockHeaders;
 
+    private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
+            Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
+    );
+
     @Test
     void shouldGetOk() {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
@@ -90,6 +103,7 @@ class TransactionsControllerTest {
             uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
             String RPTID = "77777777777302016723749670035";
             String EMAIL = "mario.rossi@email.com";
+            UUID userId = UUID.randomUUID();
             ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
             NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
             newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
@@ -107,7 +121,7 @@ class TransactionsControllerTest {
                     jwtTokenUtils.generateToken(
                             any(SecretKey.class),
                             anyInt(),
-                            eq(new Claims(transactionId, "orderId", null))
+                            eq(new Claims(transactionId, "orderId", null, userId))
                     )
             ).thenReturn(Either.right(""));
             Mockito.lenient()
@@ -118,7 +132,7 @@ class TransactionsControllerTest {
                                             clientIdDto,
                                             UUID.randomUUID(),
                                             transactionId,
-                                            UUID.randomUUID()
+                                            userId
                                     )
                     )
                     .thenReturn(Mono.just(response));
@@ -234,103 +248,339 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnErrorCircuitBreakerOpen() {
 
-        ResponseEntity error = transactionsController.openStateHandler().block();
+        ResponseEntity error = transactionsController.openStateHandler(
+                CallNotPermittedException.createCallNotPermittedException(
+                        circuitBreakerRegistry.circuitBreaker("circuit-breaker-test")
+                )
+        ).block();
 
         // Verify status code and response
         assertEquals(HttpStatus.BAD_GATEWAY, error.getStatusCode());
     }
 
-    @Test
-    void shouldReturnResponseEntityWithPartyConfigurationFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
-        ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
+    @ParameterizedTest
+    @EnumSource(PartyConfigurationFaultDto.class)
+    void shouldReturnResponseEntityWithPartyConfigurationFault(PartyConfigurationFaultDto nodoErrorCode) {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
 
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
-        assertEquals(
-                FaultCategoryDto.PAYMENT_UNAVAILABLE,
-                responseEntity.getBody().getFaultCodeCategory()
-        );
-        assertEquals(
-                PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+
+                .expectStatus().isEqualTo(HttpStatus.SERVICE_UNAVAILABLE)
+                .expectBody(PartyConfigurationFaultPaymentProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            PartyConfigurationFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.DOMAIN_UNKNOWN,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals(nodoErrorCode.getValue(), response.getFaultCodeDetail().getValue());
+                });
+    }
+
+    @ParameterizedTest
+    @EnumSource(ValidationFaultPaymentUnknownDto.class)
+    void shouldReturnResponseEntityWithValidationFaultPaymentUnknown(
+                                                                     ValidationFaultPaymentUnknownDto nodoErrorCode
+    ) {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
+
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+
+                .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
+                .expectBody(ValidationFaultPaymentUnknownProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            ValidationFaultPaymentUnknownProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_UNKNOWN,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals(nodoErrorCode.getValue(), response.getFaultCodeDetail().getValue());
+                });
+    }
+
+    @ParameterizedTest
+    @EnumSource(ValidationFaultPaymentDataErrorDto.class)
+    void shouldReturnResponseEntityWithValidationFaultPaymentDataError(
+                                                                       ValidationFaultPaymentDataErrorDto nodoErrorCode
+    ) {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
+
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+
+                .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
+                .expectBody(ValidationFaultPaymentDataErrorProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals(nodoErrorCode.getValue(), response.getFaultCodeDetail().getValue());
+                });
+    }
+
+    @ParameterizedTest
+    @EnumSource(ValidationFaultPaymentUnavailableDto.class)
+    void shouldReturnResponseEntityWithValidationFaultPaymentUnavailable(
+                                                                         ValidationFaultPaymentUnavailableDto nodoErrorCode
+    ) {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
+
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
+                .expectBody(ValidationFaultPaymentUnavailableProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            ValidationFaultPaymentUnavailableProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_UNAVAILABLE,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals(nodoErrorCode.getValue(), response.getFaultCodeDetail().getValue());
+                });
+    }
+
+    @ParameterizedTest
+    @EnumSource(PaymentOngoingStatusFaultDto.class)
+    void shouldReturnResponseEntityWithPaymentOngoingStatusFault(PaymentOngoingStatusFaultDto nodoErrorCode) {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
+
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectBody(PaymentOngoingStatusFaultPaymentProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            PaymentOngoingStatusFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_ONGOING,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals(nodoErrorCode.getValue(), response.getFaultCodeDetail().getValue());
+                });
+    }
+
+    @ParameterizedTest
+    @EnumSource(PaymentExpiredStatusFaultDto.class)
+    void shouldReturnResponseEntityWithPaymentExpiredStatusFault(PaymentExpiredStatusFaultDto nodoErrorCode) {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
+
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectBody(PaymentExpiredStatusFaultPaymentProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            PaymentExpiredStatusFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_EXPIRED,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals(nodoErrorCode.getValue(), response.getFaultCodeDetail().getValue());
+                });
+    }
+
+    @ParameterizedTest
+    @EnumSource(PaymentCanceledStatusFaultDto.class)
+    void shouldReturnResponseEntityWithPaymentCanceledStatusFault(PaymentCanceledStatusFaultDto nodoErrorCode) {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
+
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectBody(PaymentCanceledStatusFaultPaymentProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            PaymentCanceledStatusFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_CANCELED,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals(nodoErrorCode.getValue(), response.getFaultCodeDetail().getValue());
+                });
+    }
+
+    @ParameterizedTest
+    @EnumSource(PaymentDuplicatedStatusFaultDto.class)
+    void shouldReturnResponseEntityWithPaymentDuplicatedStatusFault(
+                                                                    PaymentDuplicatedStatusFaultDto nodoErrorCode
+    ) {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode(nodoErrorCode.getValue());
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
+
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectBody(PaymentDuplicatedStatusFaultPaymentProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            PaymentDuplicatedStatusFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DUPLICATED,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals(nodoErrorCode.getValue(), response.getFaultCodeDetail().getValue());
+                });
     }
 
     @Test
-    void shouldReturnResponseEntityWithValidationFault() {
-        CtFaultBean faultBean = faultBeanWithCode(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue());
+    void shouldReturnResponseEntityWithGenericFault() {
+        String rptId = "77777777777302000100000009424";
+        CtFaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
+        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto()
+                                .rptId(TransactionTestUtils.RPT_ID)
+                                .amount(TransactionTestUtils.AMOUNT)
+                )
+                .email("email@test.it")
+                .orderId("orderId")
+                .idCart(TransactionTestUtils.ID_CART);
 
-        ResponseEntity<ValidationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<ValidationFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
-        assertEquals(FaultCategoryDto.PAYMENT_UNKNOWN, responseEntity.getBody().getFaultCodeCategory());
-        assertEquals(
-                ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithGatewayFault() {
-        CtFaultBean faultBean = faultBeanWithCode(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue());
-
-        ResponseEntity<GatewayFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<GatewayFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
-        assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
-        assertEquals(
-                GatewayFaultDto.PAA_SYSTEM_ERROR.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithPartyTimeoutFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue());
-        ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.GATEWAY_TIMEOUT, responseEntity.getStatusCode());
-        assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
-        assertEquals(
-                PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithPaymentStatusFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue());
-        ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
-        assertEquals(
-                FaultCategoryDto.PAYMENT_UNAVAILABLE,
-                responseEntity.getBody().getFaultCodeCategory()
-        );
-        assertEquals(
-                PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
+        Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
+                .thenThrow(new NodoErrorException(faultBean));
+        webTestClient.post()
+                .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
+                .header("X-Client-Id", "CHECKOUT")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(newTransactionRequestDto)
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
+                .expectBody(GatewayFaultPaymentProblemJsonDto.class)
+                .value(response -> {
+                    assertEquals(
+                            GatewayFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.GENERIC_ERROR,
+                            response.getFaultCodeCategory()
+                    );
+                    assertEquals("UNKNOWN_ERROR", response.getFaultCodeDetail());
+                });
     }
 
     @Test

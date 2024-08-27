@@ -16,13 +16,14 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NodoOperations;
-import it.pagopa.transactions.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -67,7 +68,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
-            SecretKey ecommerceSigningKey,
+            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds
     ) {
         super(
@@ -218,7 +219,12 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         .generateToken(
                                                 ecommerceSigningKey,
                                                 jwtEcommerceValidityTimeInSeconds,
-                                                new Claims(transactionId, command.getData().orderId(), null)
+                                                new Claims(
+                                                        transactionId,
+                                                        command.getData().orderId(),
+                                                        null,
+                                                        command.getUserId()
+                                                )
                                         )
                                         .fold(
                                                 Mono::error,
@@ -261,11 +267,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
              * inside Transaction view
              */
             openTelemetryUtils.addSpanWithAttributes(
-                    OpenTelemetryUtils.REPEATED_ACTIVATION_SPAN_NAME,
+                    SpanLabelOpenTelemetry.REPEATED_ACTIVATION_SPAN_NAME,
                     Attributes.of(
-                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY,
+                            SpanLabelOpenTelemetry.REPEATED_ACTIVATION_PAYMENT_TOKEN_ATTRIBUTE_KEY,
                             paymentToken,
-                            OpenTelemetryUtils.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY,
+                            SpanLabelOpenTelemetry.REPEATED_ACTIVATION_PAYMENT_TOKEN_LEFT_TIME_ATTRIBUTE_KEY,
                             paymentTokenValidityTimeLeft.getSeconds()
                     )
             );
@@ -315,8 +321,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         NewTransactionRequestData newTransactionRequestData = command.getData();
         TransactionId transactionId = command.getTransactionId();
         List<PaymentNotice> paymentNotices = toPaymentNoticeList(paymentRequestsInfo);
-        Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> data = confidentialMailUtils
-                .toConfidential(command.getData().email()).map(
+        Mono<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> data = command.getData().email()
+                .map(
                         e -> new it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData(
                                 e,
                                 paymentNotices,
