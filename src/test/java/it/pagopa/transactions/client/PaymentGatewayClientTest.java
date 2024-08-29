@@ -2685,7 +2685,8 @@ class PaymentGatewayClientTest {
                                         )
                                 ),
                                 false,
-                                new CompanyName(longPaName)
+                                new CompanyName(longPaName),
+                                null
                         )
                 ),
                 EMAIL,
