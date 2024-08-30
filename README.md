@@ -74,6 +74,7 @@ These are all environment variables needed by the application:
 | JWT_ECOMMERCE_WEBVIEW_SECRET                    |     | Secret key used to sign authorization jwt for ecommerce REST calls from authorization webview                                                                                   | string  |         |
 | NODE_FORWARDER_API_KEY                          |     | Node forwarder api key                                                                                                                                                          | string  |         |
 | REDIRECT_PAYMENT_TYPE_CODE_LIST                 |     | List of all redirect payment type codes that are expected to be present in other redirect configurations such as REDIRECT_URL_MAPPING (used for configuration cross validation) | string  |         |
+| REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING  |     | Redirect Payment type code to description mapping                                                                                                                               | string  |         |
 | NODE_FORWARDER_URL                              |     | Node forwarder backend URL                                                                                                                                                      | string  |         |
 | REDIRECT_URL_MAPPING                            |     | Key-value string map PSP to backend URI mapping that will be used for Redirect payments                                                                                         | string  |         |
 | NODE_FORWARDER_READ_TIMEOUT                     |     | Node forwarder request read timeout                                                                                                                                             | number  |         |
@@ -95,7 +96,7 @@ These are all environment variables needed by the application:
 | WALLET_USAGE_QUEUE_TTL                          |     | TTL to be used when sending events on wallet usage queue (in seconds)                                                                                                           | number  | 3600    |
 | WALLET_STORAGE_CONNECTION_STRING                |     | Connection string to wallet storage (queues)                                                                                                                                    | string  |         |
 | NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES          |     | NPG error codes for which eCommerce will not perform retry during authorization request                                                                                         | string  |         |
-| EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS             |     | Exclusive lock Redis document TTL for authorization status update (in seconds)                                                                                                                                  | number  | 2       |
+| EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS             |     | Exclusive lock Redis document TTL for authorization status update (in seconds)                                                                                                  | number  | 2       |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
