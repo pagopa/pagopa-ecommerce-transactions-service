@@ -51,8 +51,6 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -78,41 +76,9 @@ public class PaymentGatewayClient {
 
     private final Set<String> npgAuthorizationRetryExcludedErrorCodes;
 
-    static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
-            RedirectPaymentMethodId.RBPR,
-            "Poste addebito in conto Retail",
-            RedirectPaymentMethodId.RBPB,
-            "Poste addebito in conto Business",
-            RedirectPaymentMethodId.RBPP,
-            "Paga con BottonePostePay",
-            RedirectPaymentMethodId.RPIC,
-            "Pago in Conto Intesa",
-            RedirectPaymentMethodId.RBPS,
-            "SCRIGNO Internet Banking"
-    );
     private final NpgApiKeyConfiguration npgApiKeyConfiguration;
 
-    public enum RedirectPaymentMethodId {
-        RBPR,
-        RBPB,
-        RBPP,
-        RPIC,
-        RBPS;
-
-        private static final Map<String, RedirectPaymentMethodId> lookupMap = Arrays
-                .stream(RedirectPaymentMethodId.values())
-                .collect(Collectors.toMap(Enum::toString, Function.identity()));
-
-        static RedirectPaymentMethodId fromPaymentTypeCode(String paymentTypeCode) {
-            RedirectPaymentMethodId converted = lookupMap.get(paymentTypeCode);
-            if (converted == null) {
-                throw new InvalidRequestException(
-                        "Unmanaged payment method with type code: [%s]".formatted(paymentTypeCode)
-                );
-            }
-            return converted;
-        }
-    }
+    private final Map<String, String> redirectPaymentTypeCodeDescription;
 
     @Autowired
     public PaymentGatewayClient(
@@ -132,7 +98,10 @@ public class PaymentGatewayClient {
             NpgApiKeyConfiguration npgApiKeyConfiguration,
             @Value(
                 "${npg.authorization.retry.excluded.error.codes}"
-            ) Set<String> npgAuthorizationRetryExcludedErrorCodes
+            ) Set<String> npgAuthorizationRetryExcludedErrorCodes,
+            @Value(
+                "#{${redirect.paymentTypeCodeDescriptionMapping}}"
+            ) Map<String, String> redirectPaymentTypeCodeDescription
     ) {
         this.objectMapper = objectMapper;
         this.uuidUtils = uuidUtils;
@@ -148,6 +117,7 @@ public class PaymentGatewayClient {
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
+        this.redirectPaymentTypeCodeDescription = redirectPaymentTypeCodeDescription;
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -469,8 +439,7 @@ public class PaymentGatewayClient {
                         Mono::error,
                         outcomeJwtToken -> {
 
-                            RedirectPaymentMethodId idPaymentMethod = RedirectPaymentMethodId
-                                    .fromPaymentTypeCode(authorizationData.paymentTypeCode());
+                            String paymentTypeCode = authorizationData.paymentTypeCode();
 
                             /*
                              * `paName` is shown to users on the payment gateway redirect page. If there is
@@ -516,9 +485,9 @@ public class PaymentGatewayClient {
                                     )
                                     .touchpoint(touchpoint)
                                     .paymentMethod(
-                                            redirectMethodsDescriptions.get(idPaymentMethod)
+                                            redirectPaymentTypeCodeDescription.getOrDefault(paymentTypeCode, null)
                                     )
-                                    .idPaymentMethod(idPaymentMethod.toString())
+                                    .idPaymentMethod(paymentTypeCode)
                                     .paName(shortenRedirectPaName(paName));// optional
                             Either<RedirectConfigurationException, URI> pspConfiguredUrl = redirectKeysConfig
                                     .getRedirectUrlForPsp(
