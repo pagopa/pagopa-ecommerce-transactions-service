@@ -68,6 +68,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -134,20 +135,24 @@ class PaymentGatewayClientTest {
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderClient = Mockito
             .mock(NodeForwarderClient.class);
 
-    private final Set<String> codeTypeList = Arrays.stream(PaymentGatewayClient.RedirectPaymentMethodId.values())
-            .map(PaymentGatewayClient.RedirectPaymentMethodId::toString)
+    private static final Set<String> redirectPaymentTypeCodes = Set.of("RBPR", "RBPB", "RBPP", "RPIC", "RBPS", "RICO");
+
+    private static final Map<String, String> redirectPaymentTypeCodeDescription = redirectPaymentTypeCodes.stream()
+            .collect(
+                    Collectors.toMap(Function.identity(), "Redirect payment type code description %s"::formatted)
+            );
+
+    private final Set<String> pspTypeCodesPspIdSet = redirectPaymentTypeCodes.stream()
             .map("pspId-%s"::formatted).collect(Collectors.toSet());
 
-    private final Map<String, String> redirectBeApiCallUriMap = Arrays
-            .stream(PaymentGatewayClient.RedirectPaymentMethodId.values())
-            .map(PaymentGatewayClient.RedirectPaymentMethodId::toString)
+    private final Map<String, String> redirectBeApiCallUriMap = redirectPaymentTypeCodes.stream()
             .collect(
                     Collectors.toMap("pspId-%s"::formatted, "http://redirect/%s"::formatted)
             );
 
     private final RedirectKeysConfiguration configurationKeysConfig = new RedirectKeysConfiguration(
             redirectBeApiCallUriMap,
-            codeTypeList
+            pspTypeCodesPspIdSet
     );
 
     private final Set<String> npgAuthorizationRetryExcludedErrorCodes = Set.of("GW0035", "GW0004");
@@ -172,8 +177,8 @@ class PaymentGatewayClientTest {
                 nodeForwarderClient,
                 configurationKeysConfig,
                 npgApiKeyHandler,
-                npgAuthorizationRetryExcludedErrorCodes
-
+                npgAuthorizationRetryExcludedErrorCodes,
+                redirectPaymentTypeCodeDescription
         );
 
         Hooks.onOperatorDebug();
@@ -2532,19 +2537,15 @@ class PaymentGatewayClientTest {
     }
 
     private static Stream<Arguments> redirectRetrieveUrlPaymentMethodsTestMethodSource() {
-        return Stream.of(
-                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RBPR, "Poste addebito in conto Retail"),
-                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RBPB, "Poste addebito in conto Business"),
-                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RBPP, "Paga con BottonePostePay"),
-                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RPIC, "Pago in Conto Intesa"),
-                Arguments.of(PaymentGatewayClient.RedirectPaymentMethodId.RBPS, "SCRIGNO Internet Banking")
+        return redirectPaymentTypeCodeDescription.entrySet().stream().map(
+                entry -> Arguments.of(entry.getKey(), entry.getValue())
         );
     }
 
     @ParameterizedTest
     @MethodSource("redirectRetrieveUrlPaymentMethodsTestMethodSource")
     void shouldPerformAuthorizationRequestRetrievingRedirectionUrl(
-                                                                   PaymentGatewayClient.RedirectPaymentMethodId paymentTypeCode,
+                                                                   String paymentTypeCode,
                                                                    String mappedPaymentMethodDescription
     ) {
         String pspId = "pspId";
@@ -2557,7 +2558,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                paymentTypeCode.toString(),
+                paymentTypeCode,
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2575,7 +2576,7 @@ class PaymentGatewayClientTest {
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .idPaymentMethod(paymentTypeCode.toString())
+                .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -2657,7 +2658,7 @@ class PaymentGatewayClientTest {
     @ParameterizedTest
     @MethodSource("redirectRetrieveUrlPaymentMethodsTestMethodSource")
     void shouldPerformAuthorizationRequestRetrievingRedirectionUrlWithLongPaName(
-                                                                                 PaymentGatewayClient.RedirectPaymentMethodId paymentTypeCode,
+                                                                                 String paymentTypeCode,
                                                                                  String mappedPaymentMethodDescription
     ) {
         String pspId = "pspId";
@@ -2707,7 +2708,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                paymentTypeCode.toString(),
+                paymentTypeCode,
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2725,7 +2726,7 @@ class PaymentGatewayClientTest {
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .idPaymentMethod(paymentTypeCode.toString())
+                .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -2807,7 +2808,7 @@ class PaymentGatewayClientTest {
     @ParameterizedTest
     @MethodSource("redirectRetrieveUrlPaymentMethodsTestMethodSource")
     void shouldPerformAuthorizationRequestRetrievingRedirectionUrlWithoutPaNameWhenMultiplePaymentNotices(
-                                                                                                          PaymentGatewayClient.RedirectPaymentMethodId paymentTypeCode,
+                                                                                                          String paymentTypeCode,
                                                                                                           String mappedPaymentMethodDescription
     ) {
         String pspId = "pspId";
@@ -2868,7 +2869,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                paymentTypeCode.toString(),
+                paymentTypeCode,
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2886,7 +2887,7 @@ class PaymentGatewayClientTest {
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .idPaymentMethod(paymentTypeCode.toString())
+                .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -3004,12 +3005,12 @@ class PaymentGatewayClientTest {
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
         );
-        PaymentGatewayClient.RedirectPaymentMethodId idPaymentMethod = PaymentGatewayClient.RedirectPaymentMethodId.RBPS;
+        String idPaymentMethod = "RBPS";
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .idPaymentMethod(idPaymentMethod.toString())
-                .paymentMethod(PaymentGatewayClient.redirectMethodsDescriptions.get(idPaymentMethod))
+                .idPaymentMethod(idPaymentMethod)
+                .paymentMethod("Redirect payment type code description RBPS")
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -3114,12 +3115,12 @@ class PaymentGatewayClientTest {
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset"))
         );
-        PaymentGatewayClient.RedirectPaymentMethodId idPaymentMethod = PaymentGatewayClient.RedirectPaymentMethodId.RBPS;
+        String idPaymentMethod = "RBPS";
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
-                .paymentMethod(PaymentGatewayClient.redirectMethodsDescriptions.get(idPaymentMethod))
-                .idPaymentMethod(idPaymentMethod.toString())
+                .paymentMethod("Redirect payment type code description RBPS")
+                .idPaymentMethod(idPaymentMethod)
                 .amount(totalAmount)
                 .idPsp(pspId)
                 .idTransaction(transaction.getTransactionId().value())
@@ -3219,7 +3220,7 @@ class PaymentGatewayClientTest {
 
         Hooks.onOperatorDebug();
         Map<String, String> redirectUrlMapping = new HashMap<>(redirectBeApiCallUriMap);
-        Set<String> codeListTypeMapping = new HashSet<>(codeTypeList);
+        Set<String> codeListTypeMapping = new HashSet<>(pspTypeCodesPspIdSet);
         redirectUrlMapping.remove("pspId-RBPS");
         codeListTypeMapping.remove("pspId-RBPS");
         PaymentGatewayClient redirectClient = new PaymentGatewayClient(
@@ -3238,7 +3239,8 @@ class PaymentGatewayClientTest {
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, codeListTypeMapping),
                 npgApiKeyHandler,
-                npgAuthorizationRetryExcludedErrorCodes
+                npgAuthorizationRetryExcludedErrorCodes,
+                redirectPaymentTypeCodeDescription
         );
         /* test */
         StepVerifier.create(
@@ -3251,47 +3253,6 @@ class PaymentGatewayClientTest {
                 .expectError(RedirectConfigurationException.class)
                 .verify();
         verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
-    }
-
-    @Test
-    void shouldReturnErrorDuringRedirectPaymentTransactionForUnmanagedPaymentTypeCode() {
-        String pspId = "pspId";
-        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                10,
-                "paymentInstrumentId",
-                pspId,
-                "CC",
-                "brokerName",
-                "pspChannelCode",
-                "REDIRECT",
-                "paymentMethodDescription",
-                "pspBusinessName",
-                false,
-                "REDIRECT",
-                Optional.empty(),
-                Optional.empty(),
-                "N/A",
-                new RedirectionAuthRequestDetailsDto(),
-                "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
-        );
-
-        Hooks.onOperatorDebug();
-        /* test */
-        InvalidRequestException exception = assertThrows(
-                InvalidRequestException.class,
-                () -> client.requestRedirectUrlAuthorization(
-                        authorizationData,
-                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
-                        UUID.fromString(USER_ID)
-                )
-        );
-        verify(nodeForwarderClient, times(0)).proxyRequest(any(), any(), any(), any());
-        assertEquals("Unmanaged payment method with type code: [CC]", exception.getMessage());
     }
 
     private static Stream<List<String>> npgNotRetryableErrorsTestMethodSource() {
@@ -3403,38 +3364,38 @@ class PaymentGatewayClientTest {
                         RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
 
                         "psp1",
-                        PaymentGatewayClient.RedirectPaymentMethodId.RBPR,
+                        "RBPR",
                         new URI("http://localhost:8096/redirections1/CHECKOUT")
                 ),
                 Arguments.of(
                         RedirectUrlRequestDto.TouchpointEnum.IO,
 
                         "psp1",
-                        PaymentGatewayClient.RedirectPaymentMethodId.RBPR,
+                        "RBPR",
                         new URI("http://localhost:8096/redirections1/IO")
                 ),
                 Arguments.of(
                         RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
                         "psp2",
-                        PaymentGatewayClient.RedirectPaymentMethodId.RBPB,
+                        "RBPB",
                         new URI("http://localhost:8096/redirections2")
                 ),
                 Arguments.of(
                         RedirectUrlRequestDto.TouchpointEnum.IO,
                         "psp2",
-                        PaymentGatewayClient.RedirectPaymentMethodId.RBPB,
+                        "RBPB",
                         new URI("http://localhost:8096/redirections2")
                 ),
                 Arguments.of(
                         RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
                         "psp3",
-                        PaymentGatewayClient.RedirectPaymentMethodId.RBPS,
+                        "RBPS",
                         new URI("http://localhost:8096/redirections3")
                 ),
                 Arguments.of(
                         RedirectUrlRequestDto.TouchpointEnum.IO,
                         "psp3",
-                        PaymentGatewayClient.RedirectPaymentMethodId.RBPS,
+                        "RBPS",
                         new URI("http://localhost:8096/redirections3")
                 )
         );
@@ -3445,7 +3406,7 @@ class PaymentGatewayClientTest {
     void shouldReturnURIDuringSearchRedirectURLSearchingIteratively(
                                                                     RedirectUrlRequestDto.TouchpointEnum touchpoint,
                                                                     String pspId,
-                                                                    PaymentGatewayClient.RedirectPaymentMethodId paymentMethodId,
+                                                                    String paymentMethodId,
                                                                     URI expectedUri
     ) {
         Map<String, String> redirectUrlMapping = Map.of(
@@ -3480,7 +3441,8 @@ class PaymentGatewayClientTest {
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
                 npgApiKeyHandler,
-                npgAuthorizationRetryExcludedErrorCodes
+                npgAuthorizationRetryExcludedErrorCodes,
+                redirectPaymentTypeCodeDescription
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -3492,10 +3454,10 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                paymentMethodId.name(),
+                paymentMethodId,
                 "brokerName",
                 "pspChannelCode",
-                paymentMethodId.toString(),
+                paymentMethodId,
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
@@ -3555,7 +3517,7 @@ class PaymentGatewayClientTest {
         );
         RedirectUrlRequestDto.TouchpointEnum touchpoint = RedirectUrlRequestDto.TouchpointEnum.CHECKOUT;
         String pspId = "pspId";
-        PaymentGatewayClient.RedirectPaymentMethodId redirectPaymentMethodId = PaymentGatewayClient.RedirectPaymentMethodId.RBPP;
+        String redirectPaymentMethodId = "RBPP";
         PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 xPayInternalApi,
                 creditCardInternalApi,
@@ -3572,7 +3534,8 @@ class PaymentGatewayClientTest {
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
                 npgApiKeyHandler,
-                npgAuthorizationRetryExcludedErrorCodes
+                npgAuthorizationRetryExcludedErrorCodes,
+                redirectPaymentTypeCodeDescription
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -3584,10 +3547,10 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 pspId,
-                redirectPaymentMethodId.toString(),
+                redirectPaymentMethodId,
                 "brokerName",
                 "pspChannelCode",
-                redirectPaymentMethodId.toString(),
+                redirectPaymentMethodId,
                 "paymentMethodDescription",
                 "pspBusinessName",
                 false,
@@ -3623,6 +3586,137 @@ class PaymentGatewayClientTest {
                 any(),
                 any(),
                 any()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("redirectRetrieveUrlPaymentMethodsTestMethodSource")
+    void shouldPerformAuthorizationRequestRetrieveUrlForRedirectTransactionWithoutConfiguredPaymentMethodDescription(
+                                                                                                                     String paymentTypeCode
+    ) {
+        String pspId = "pspId";
+        it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivated(ZonedDateTime.now().toString());
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                10,
+                "paymentInstrumentId",
+                pspId,
+                paymentTypeCode,
+                "brokerName",
+                "pspChannelCode",
+                "REDIRECT",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "REDIRECT",
+                Optional.empty(),
+                Optional.empty(),
+                "N/A",
+                new RedirectionAuthRequestDetailsDto(),
+                "http://asset",
+                Optional.of(Map.of("VISA", "http://visaAsset"))
+        );
+        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
+                .idPaymentMethod(paymentTypeCode)
+                .amount(totalAmount)
+                .idPsp(pspId)
+                .idTransaction(transaction.getTransactionId().value())
+                .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
+                .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
+                .paymentMethod(null)
+                .paName(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME);
+
+        String urlBack = UriComponentsBuilder
+                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .build(
+                        Map.of(
+                                "clientId",
+                                RedirectUrlRequestDto.TouchpointEnum.CHECKOUT.getValue(),
+                                "transactionId",
+                                authorizationData.transactionId().value(),
+                                "sessionToken",
+                                "sessionToken"
+                        )
+                ).toString();
+
+        String urlBackPrefix = urlBack
+                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
+
+        RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
+                .timeout(60000)
+                .url("http://redirectionUrl")
+                .idPSPTransaction("idPspTransaction");
+        given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
+                Mono.just(
+                        new NodeForwarderClient.NodeForwarderResponse<>(
+                                redirectUrlResponseDto,
+                                Optional.of(authorizationData.transactionId().value())
+                        )
+                )
+        );
+        PaymentGatewayClient redirectClient = new PaymentGatewayClient(
+                xPayInternalApi,
+                creditCardInternalApi,
+                objectMapper,
+                mockUuidUtils,
+                confidentialMailUtils,
+                npgClient,
+                sessionUrlConfig,
+                uniqueIdUtils,
+                jwtSecretKey,
+                TOKEN_VALIDITY_TIME_SECONDS,
+                jwtSecretKey,
+                TOKEN_VALIDITY_TIME_SECONDS,
+                nodeForwarderClient,
+                configurationKeysConfig,
+                npgApiKeyHandler,
+                npgAuthorizationRetryExcludedErrorCodes,
+                Map.of()
+        );
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(
+                redirectClient.requestRedirectUrlAuthorization(
+                        authorizationData,
+                        RedirectUrlRequestDto.TouchpointEnum.CHECKOUT,
+                        UUID.fromString(USER_ID)
+                )
+        )
+                .expectNext(redirectUrlResponseDto)
+                .verifyComplete();
+        verify(nodeForwarderClient, times(1)).proxyRequest(
+                argThat(request -> {
+                    URI urlBackExpected = request.getUrlBack();
+                    assertEquals(
+                            redirectUrlRequestDto,
+                            new RedirectUrlRequestDto()
+                                    .idPaymentMethod(request.getIdPaymentMethod())
+                                    .paymentMethod(request.getPaymentMethod())
+                                    .amount(request.getAmount())
+                                    .idPsp(request.getIdPsp())
+                                    .idTransaction(request.getIdTransaction())
+                                    .description(request.getDescription())
+                                    .touchpoint(request.getTouchpoint())
+                                    .paName(request.getPaName())
+                    );
+                    assertTrue(
+                            new NpgOutcomeUrlMatcher(
+                                    urlBackPrefix,
+                                    authorizationData.transactionId().value(),
+                                    null,
+                                    authorizationData.paymentInstrumentId()
+                            ).matches(urlBackExpected)
+                    );
+                    return true;
+                }),
+                eq(URI.create("http://redirect/%s".formatted(paymentTypeCode))),
+                eq(authorizationData.transactionId().value()),
+                eq(RedirectUrlResponseDto.class)
         );
     }
 
