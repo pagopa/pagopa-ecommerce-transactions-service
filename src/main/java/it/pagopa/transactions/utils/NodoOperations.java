@@ -95,14 +95,14 @@ public class NodoOperations {
                 });
     }
 
-    public Mono<PaymentRequestInfo> activatePaymentRequest(
-                                                           RptId rptId,
-                                                           IdempotencyKey idempotencyKey,
-                                                           Integer amount,
-                                                           String transactionId,
-                                                           Integer paymentTokenTimeout,
-                                                           String idCart,
-                                                           String dueDate
+    private Mono<PaymentRequestInfo> activatePaymentRequest(
+                                                            RptId rptId,
+                                                            IdempotencyKey idempotencyKey,
+                                                            Integer amount,
+                                                            String transactionId,
+                                                            Integer paymentTokenTimeout,
+                                                            String idCart,
+                                                            String dueDate
     ) {
 
         final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount.doubleValue() / 100)

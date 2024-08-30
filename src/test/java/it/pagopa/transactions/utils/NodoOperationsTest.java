@@ -133,7 +133,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -242,7 +243,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -342,7 +344,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -421,7 +424,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -511,7 +515,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -590,7 +595,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -682,7 +688,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -782,7 +789,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -882,7 +890,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -982,7 +991,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1082,7 +1092,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1182,7 +1193,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1278,7 +1290,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1374,7 +1387,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1461,7 +1475,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         null,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1517,7 +1532,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 );
 
         Assert.assertThrows(
@@ -1570,7 +1586,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 );
 
         InvalidNodoResponseException exception = Assert.assertThrows(
@@ -1648,7 +1665,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1772,7 +1790,8 @@ class NodoOperationsTest {
                         transactionId,
                         900,
                         idCart,
-                        dueDate
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1861,7 +1880,8 @@ class NodoOperationsTest {
                                 transactionId,
                                 900,
                                 idCart,
-                                dueDate
+                                dueDate,
+                                Transaction.ClientId.CHECKOUT
                         )
         )
                 .expectError(NodoErrorException.class)

@@ -526,7 +526,9 @@ class TransactionActivateHandlerTest {
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
-        Mockito.when(nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate)))
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate), any())
+        )
                 .thenReturn(Mono.error(new InvalidNodoResponseException("Invalid payment token received")));
 
         /* run test */
@@ -620,7 +622,7 @@ class TransactionActivateHandlerTest {
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate))
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(
@@ -739,7 +741,7 @@ class TransactionActivateHandlerTest {
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(
@@ -843,7 +845,7 @@ class TransactionActivateHandlerTest {
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoActivation));
         Mockito.when(
