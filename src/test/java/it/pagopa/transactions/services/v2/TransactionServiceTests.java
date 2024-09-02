@@ -23,6 +23,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodStatusDt
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.RangeDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.SessionPaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
+import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeRequestDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
@@ -704,7 +705,8 @@ class TransactionServiceTests {
                                         )
                                 ),
                                 paymentNotice.isAllCCP(),
-                                new CompanyName(paymentNotice.getCompanyName())
+                                new CompanyName(paymentNotice.getCompanyName()),
+                                null
                         )
                 ).toList(),
                 transactionDocument.getEmail(),
@@ -1462,4 +1464,93 @@ class TransactionServiceTests {
 
     }
 
+    @ParameterizedTest()
+    @EnumSource(it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.class)
+    void shouldCalculateFeesUsingEffectiveClient(
+                                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
+    ) {
+        final var authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(
+                        new CardAuthRequestDetailsDto().cvv("123").pan("123456677").expiryDate("0223")
+                                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA).holderName("Name Surname")
+                );
+
+        final var transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+        transaction.setClientId(clientId);
+
+        /* preconditions */
+        final var calculateFeeResponseDto = new CalculateFeeResponseDto()
+                .belowThreshold(true)
+                .paymentMethodName("PaymentMethodName")
+                .paymentMethodDescription("PaymentMethodDescription")
+                .paymentMethodStatus(it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.ENABLED)
+                .bundles(
+                        List.of(
+                                new BundleDto()
+                                        .idPsp("PSP_CODE")
+                                        .taxPayerFee(200l)
+                        )
+                );
+
+        final var paymentMethod = new PaymentMethodResponseDto()
+                .name("paymentMethodName")
+                .description("desc")
+                .status(PaymentMethodStatusDto.ENABLED)
+                .id("id")
+                .paymentTypeCode("PO")
+                .addRangesItem(new RangeDto().min(0L).max(100L));
+
+        final var gatewayResponse = new XPayAuthResponseEntityDto()
+                .requestId("requestId")
+                .urlRedirect("http://example.com");
+
+        final var requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationUrl(gatewayResponse.getUrlRedirect());
+
+        final var calculateFeeRequest = ArgumentCaptor.forClass(CalculateFeeRequestDto.class);
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), calculateFeeRequest.capture(), any()))
+                .thenReturn(
+                        Mono.just(calculateFeeResponseDto)
+                );
+
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
+
+        Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionRequestAuthorizationHandlerV2.handle(commandArgumentCaptor.capture()))
+                .thenReturn(Mono.just(requestAuthorizationResponse));
+
+        Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getClientId(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getEffectiveClientId(any())).thenCallRealMethod();
+
+        /* test */
+        transactionsServiceV1
+                .requestTransactionAuthorization(
+                        TRANSACTION_ID,
+                        UUID.fromString(USER_ID),
+                        null,
+                        authorizationRequest
+                ).block();
+
+        assertEquals(clientId.getEffectiveClient().name(), calculateFeeRequest.getValue().getTouchpoint());
+    }
 }

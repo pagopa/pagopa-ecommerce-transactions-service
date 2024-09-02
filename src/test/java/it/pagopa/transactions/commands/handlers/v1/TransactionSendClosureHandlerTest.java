@@ -137,6 +137,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         List.of(new PaymentTransferInformation("77777777777", false, 100, null)),
                         false,
+                        null,
                         null
                 )
         );
@@ -162,7 +163,8 @@ class TransactionSendClosureHandlerTest {
                                         )
                                 ),
                                 paymentNotice.isAllCCP(),
-                                new CompanyName(paymentNotice.getCompanyName())
+                                new CompanyName(paymentNotice.getCompanyName()),
+                                null
                         )
                 )
                         .toList(),
@@ -284,6 +286,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );
@@ -511,6 +514,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );
@@ -747,6 +751,7 @@ class TransactionSendClosureHandlerTest {
                         null,
                         List.of(new PaymentTransferInformation("77777777777", false, 100, null)),
                         false,
+                        null,
                         null
                 )
         );
@@ -1015,6 +1020,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );
@@ -1288,6 +1294,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );
@@ -1576,6 +1583,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );
@@ -1816,6 +1824,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );
@@ -2037,6 +2046,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );
@@ -2303,6 +2313,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );
@@ -2583,6 +2594,7 @@ class TransactionSendClosureHandlerTest {
                                 )
                         ),
                         false,
+                        null,
                         null
                 )
         );

@@ -484,6 +484,15 @@ public class TransactionsUtils {
         };
     }
 
+    public String getEffectiveClientId(BaseTransactionView baseTransactionView) {
+        return switch (baseTransactionView) {
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
+            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().getEffectiveClient().toString();
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
+        };
+    }
+
     public String getClientId(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();

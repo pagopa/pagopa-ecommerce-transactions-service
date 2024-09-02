@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PatchSessionRequestDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.SessionPaymentMethodResponseDto;
@@ -57,7 +58,12 @@ public class EcommercePaymentMethodsClient {
                                                            String paymentMethodId,
                                                            String xClientId
     ) {
-        return ecommercePaymentMethodsWebClientV1.getPaymentMethod(paymentMethodId, xClientId)
+        // payment methods only support CHECKOUT and IO.
+        final var client = Transaction.ClientId.fromString(xClientId) == Transaction.ClientId.IO
+                ? Transaction.ClientId.IO
+                : Transaction.ClientId.CHECKOUT;
+
+        return ecommercePaymentMethodsWebClientV1.getPaymentMethod(paymentMethodId, client.name())
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsClient::logWebClientException
