@@ -274,6 +274,7 @@ public class TransactionsService {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -416,7 +417,7 @@ public class TransactionsService {
                     .feeTotal(transaction.getFeeTotal())
                     .clientId(
                             TransactionInfoDto.ClientIdEnum.valueOf(
-                                    transaction.getClientId().toString()
+                                    transaction.getClientId().getEffectiveClient().toString()
                             )
                     )
                     .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
@@ -517,7 +518,7 @@ public class TransactionsService {
                                                             transactionId,
                                                             new CalculateFeeRequestDto()
                                                                     .touchpoint(
-                                                                            clientId
+                                                                            transactionsUtils.getEffectiveClientId(transaction)
                                                                     )
                                                                     .bin(
                                                                             paymentSessionData.cardBin()
@@ -658,7 +659,8 @@ public class TransactionsService {
                                                                     )
                                                             ).toList(),
                                                     paymentNotice.isAllCCP(),
-                                                    new CompanyName(paymentNotice.getCompanyName())
+                                                    new CompanyName(paymentNotice.getCompanyName()),
+                                                    paymentNotice.getCreditorReferenceId()
                                             )
                                     ).toList(),
                                     transactionsUtils.getEmail(transactionDocument),

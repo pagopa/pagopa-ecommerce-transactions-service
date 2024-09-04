@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -45,6 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -57,8 +59,8 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
+import static it.pagopa.ecommerce.commons.documents.v2.Transaction.*;
 
 @Component
 @Slf4j
@@ -88,41 +90,9 @@ public class PaymentGatewayClient {
 
     private final Set<String> npgAuthorizationRetryExcludedErrorCodes;
 
-    static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
-            RedirectPaymentMethodId.RBPR,
-            "Poste addebito in conto Retail",
-            RedirectPaymentMethodId.RBPB,
-            "Poste addebito in conto Business",
-            RedirectPaymentMethodId.RBPP,
-            "Paga con BottonePostePay",
-            RedirectPaymentMethodId.RPIC,
-            "Pago in Conto Intesa",
-            RedirectPaymentMethodId.RBPS,
-            "SCRIGNO Internet Banking"
-    );
     private final NpgApiKeyConfiguration npgApiKeyConfiguration;
 
-    public enum RedirectPaymentMethodId {
-        RBPR,
-        RBPB,
-        RBPP,
-        RPIC,
-        RBPS;
-
-        private static final Map<String, RedirectPaymentMethodId> lookupMap = Arrays
-                .stream(RedirectPaymentMethodId.values())
-                .collect(Collectors.toMap(Enum::toString, Function.identity()));
-
-        static RedirectPaymentMethodId fromPaymentTypeCode(String paymentTypeCode) {
-            RedirectPaymentMethodId converted = lookupMap.get(paymentTypeCode);
-            if (converted == null) {
-                throw new InvalidRequestException(
-                        "Unmanaged payment method with type code: [%s]".formatted(paymentTypeCode)
-                );
-            }
-            return converted;
-        }
-    }
+    private final Map<String, String> redirectPaymentTypeCodeDescription;
 
     @Autowired
     public PaymentGatewayClient(
@@ -143,7 +113,10 @@ public class PaymentGatewayClient {
             NpgApiKeyConfiguration npgApiKeyConfiguration,
             @Value(
                 "${npg.authorization.retry.excluded.error.codes}"
-            ) Set<String> npgAuthorizationRetryExcludedErrorCodes
+            ) Set<String> npgAuthorizationRetryExcludedErrorCodes,
+            @Value(
+                "#{${redirect.paymentTypeCodeDescriptionMapping}}"
+            ) Map<String, String> redirectPaymentTypeCodeDescription
     ) {
         this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
         this.creditCardInternalApiClient = creditCardInternalApiClient;
@@ -161,6 +134,7 @@ public class PaymentGatewayClient {
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
+        this.redirectPaymentTypeCodeDescription = redirectPaymentTypeCodeDescription;
     }
 
     public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
@@ -613,8 +587,7 @@ public class PaymentGatewayClient {
                         Mono::error,
                         outcomeJwtToken -> {
 
-                            RedirectPaymentMethodId idPaymentMethod = RedirectPaymentMethodId
-                                    .fromPaymentTypeCode(authorizationData.paymentTypeCode());
+                            String paymentTypeCode = authorizationData.paymentTypeCode();
 
                             /*
                              * `paName` is shown to users on the payment gateway redirect page. If there is
@@ -660,10 +633,10 @@ public class PaymentGatewayClient {
                                     )
                                     .touchpoint(touchpoint)
                                     .paymentMethod(
-                                            redirectMethodsDescriptions.get(idPaymentMethod)
+                                            redirectPaymentTypeCodeDescription.getOrDefault(paymentTypeCode, null)
                                     )
-                                    .idPaymentMethod(idPaymentMethod.toString())
-                                    .paName(paName);// optional
+                                    .idPaymentMethod(paymentTypeCode)
+                                    .paName(shortenRedirectPaName(paName));// optional
                             Either<RedirectConfigurationException, URI> pspConfiguredUrl = redirectKeysConfig
                                     .getRedirectUrlForPsp(
                                             touchpoint.name(),
@@ -733,6 +706,14 @@ public class PaymentGatewayClient {
 
     }
 
+    private String shortenRedirectPaName(@Nullable String paName) {
+        if (paName == null || paName.length() <= 70) {
+            return paName;
+        } else {
+            return paName.substring(0, 67) + "...";
+        }
+    }
+
     private String encodeMdcFields(AuthorizationRequestData authorizationData) {
         String mdcData;
         try {
@@ -794,12 +775,16 @@ public class PaymentGatewayClient {
                                    TransactionId transactionId,
                                    String sessionToken
     ) {
+        final var touchPoint = switch (ClientId.valueOf(clientId)) {
+            case IO -> ClientId.IO;
+            default -> ClientId.CHECKOUT;
+        };
         return UriComponentsBuilder
                 .fromUriString(npgSessionUrlConfig.basePath().concat(npgSessionUrlConfig.outcomeSuffix()))
                 .build(
                         Map.of(
                                 "clientId",
-                                clientId,
+                                touchPoint.toString(),
                                 "transactionId",
                                 transactionId.value(),
                                 "sessionToken",
