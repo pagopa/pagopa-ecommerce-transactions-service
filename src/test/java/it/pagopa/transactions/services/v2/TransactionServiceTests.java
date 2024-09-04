@@ -18,7 +18,6 @@ import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodStatusDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.RangeDto;
@@ -39,7 +38,6 @@ import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProj
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.*;
-import org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -1276,6 +1274,15 @@ class TransactionServiceTests {
                 .thenReturn(
                         Mono.just(calculateFeeResponseDto)
                 );
+
+        Mockito.when(
+                ecommercePaymentMethodsClient.retrieveCardData(authorizationRequest.getPaymentInstrumentId(), "orderId")
+        ).thenReturn(
+                Mono.just(
+                        new SessionPaymentMethodResponseDto().bin("bin").brand("VISA").sessionId("sessionId")
+                                .expiringDate("0226").lastFourDigits("1234")
+                )
+        );
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
