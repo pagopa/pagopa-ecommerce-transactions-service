@@ -84,6 +84,11 @@ microservice-chart:
           # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
+    advanced:
+      horizontalPodAutoscalerConfig: # see default values https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#default-behavior
+        behavior:
+          scaleUp:
+            stabilizationWindowSeconds: 60
   deployment:
     create: true
     replicas: 5
