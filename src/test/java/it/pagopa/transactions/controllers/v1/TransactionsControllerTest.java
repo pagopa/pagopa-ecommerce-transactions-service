@@ -354,195 +354,6 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void shouldReturnTransactionInfoOnCorrectAuthorizationAndClosure() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        String paymentToken = "paymentToken";
-        TransactionInfoDto transactionInfo = new TransactionInfoDto()
-                .addPaymentsItem(
-                        new PaymentInfoDto()
-                                .amount(100)
-                                .paymentToken(paymentToken)
-                )
-                .authToken("authToken")
-                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
-
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeXpayGatewayDto()
-                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                .authorizationCode("authorizationCode")
-                ).timestampOperation(OffsetDateTime.now());
-
-        /* preconditions */
-        Mockito.when(
-                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
-        )
-                .thenReturn(Mono.just(transactionInfo));
-        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("PATCH");
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "auth-requests"
-                                )
-                        )
-                );
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
-        Hooks.onOperatorDebug();
-        /* test */
-        ResponseEntity<TransactionInfoDto> response = transactionsController
-                .updateTransactionAuthorization(
-                        transactionId.value(),
-                        Mono.just(updateAuthorizationRequest),
-                        mockExchange
-                )
-                .block();
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(transactionInfo, response.getBody());
-        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(
-                        savedDocument -> {
-                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
-                            assertEquals("transactions-service", savedDocument.holderName());
-                            return true;
-                        }
-                )
-        );
-    }
-
-    @Test
-    void shouldReturnNotFoundForAuthorizingNonExistingRequest() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeXpayGatewayDto()
-                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                .authorizationCode("authorizationCode")
-                ).timestampOperation(OffsetDateTime.now());
-
-        /* preconditions */
-        Mockito.when(
-                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
-        )
-                .thenReturn(Mono.error(new TransactionNotFoundException(transactionId.value())));
-        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("PATCH");
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "auth-requests"
-                                )
-                        )
-                );
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
-
-        /* test */
-        StepVerifier.create(
-                transactionsController
-                        .updateTransactionAuthorization(
-                                transactionId.value(),
-                                Mono.just(updateAuthorizationRequest),
-                                mockExchange
-                        )
-        )
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
-                .verify();
-        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(
-                        savedDocument -> {
-                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
-                            assertEquals("transactions-service", savedDocument.holderName());
-                            return true;
-                        }
-                )
-        );
-    }
-
-    @Test
-    void shouldReturnBadGatewayOnNodoHttpError() {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeXpayGatewayDto()
-                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                .authorizationCode("authorizationCode")
-                ).timestampOperation(OffsetDateTime.now());
-
-        /* preconditions */
-        Mockito.when(
-                transactionsService.updateTransactionAuthorization(transactionId.uuid(), updateAuthorizationRequest)
-        )
-                .thenReturn(Mono.error(new BadGatewayException("", HttpStatus.BAD_REQUEST)));
-
-        Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("PATCH");
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "auth-requests"
-                                )
-                        )
-                );
-
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(true);
-
-        /* test */
-
-        StepVerifier.create(
-                transactionsController
-                        .updateTransactionAuthorization(
-                                transactionId.value(),
-                                Mono.just(updateAuthorizationRequest),
-                                mockExchange
-                        )
-        )
-                .expectErrorMatches(error -> error instanceof BadGatewayException)
-                .verify();
-        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(
-                        savedDocument -> {
-                            assertEquals("PATCH-auth-request-%s".formatted(transactionId.value()), savedDocument.id());
-                            assertEquals("transactions-service", savedDocument.holderName());
-                            return true;
-                        }
-                )
-        );
-    }
-
-    @Test
     void testTransactionNotFoundExceptionHandler() {
         final String PAYMENT_TOKEN = "aaa";
 
@@ -1053,7 +864,7 @@ class TransactionsControllerTest {
         String transactionId = new TransactionId(UUID.randomUUID()).value();
         String paymentMethodId = "paymentMethodId";
         String client = "CHECKOUT";
-        String pgsId = "XPAY";
+        String pgsId = "NPG";
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)
@@ -1093,6 +904,78 @@ class TransactionsControllerTest {
                             assertEquals(404, p.getStatus());
                             assertEquals(exception.getMessage(), p.getDetail());
                         }
+                );
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingPaymentMethodInAuthorizationRequestVPOS() {
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+        String paymentMethodId = "paymentMethodId";
+        String client = "CHECKOUT";
+        String pgsId = "VPOS";
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(1)
+                .paymentInstrumentId(paymentMethodId)
+                .pspId("pspId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .isAllCCP(false)
+                .details(
+                        new CardsAuthRequestDetailsDto()
+                                .orderId("orderId")
+                                .detailType("cards")
+                );
+
+        /* test */
+        webTestClient.post()
+                .uri("/transactions/{transactionId}/auth-requests", transactionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authorizationRequest)
+                .header("X-Client-Id", client)
+                .header("X-Pgs-Id", pgsId)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> assertEquals(400, p.getStatus())
+                );
+    }
+
+    @Test
+    void shouldReturnNotFoundForNonExistingPaymentMethodInAuthorizationRequestXPAY() {
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+        String paymentMethodId = "paymentMethodId";
+        String client = "CHECKOUT";
+        String pgsId = "XPAY";
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(1)
+                .paymentInstrumentId(paymentMethodId)
+                .pspId("pspId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .isAllCCP(false)
+                .details(
+                        new CardsAuthRequestDetailsDto()
+                                .orderId("orderId")
+                                .detailType("cards")
+                );
+
+        /* test */
+        webTestClient.post()
+                .uri("/transactions/{transactionId}/auth-requests", transactionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authorizationRequest)
+                .header("X-Client-Id", client)
+                .header("X-Pgs-Id", pgsId)
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> assertEquals(400, p.getStatus())
                 );
     }
 
@@ -1243,8 +1126,6 @@ class TransactionsControllerTest {
 
     private static Stream<Arguments> badRequestForUpdateAuthRequestMethodSource() {
         return Stream.of(
-                Arguments.of("XPAY", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY),
-                Arguments.of("VPOS", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS),
                 Arguments.of("NPG", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG),
                 Arguments.of("REDIRECT", UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT),
                 Arguments.of(null, UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN),
@@ -1598,7 +1479,7 @@ class TransactionsControllerTest {
         String transactionId = new TransactionId(UUID.randomUUID()).value();
         String paymentMethodId = "paymentMethodId";
         String client = "CHECKOUT";
-        String pgsId = "XPAY";
+        String pgsId = "NPG";
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(100)

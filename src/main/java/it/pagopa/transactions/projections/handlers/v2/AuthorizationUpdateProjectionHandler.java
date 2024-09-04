@@ -61,14 +61,11 @@ public class AuthorizationUpdateProjectionHandler
                                 npgData.getOperationResult().toString(),
                                 Optional.ofNullable(npgData.getErrorCode())
                         );
-                        case PgsTransactionGatewayAuthorizationData pgsData -> Tuples.of(
-                                pgsData.getAuthorizationResultDto().toString(),
-                                Optional.ofNullable(pgsData.getErrorCode())
-                        );
                         case RedirectTransactionGatewayAuthorizationData redirectData -> Tuples.of(
                                 redirectData.getOutcome().toString(),
                                 Optional.ofNullable(redirectData.getErrorCode())
                         );
+                        case PgsTransactionGatewayAuthorizationData pgsData -> throw new IllegalArgumentException("Pgs authorization complete data not handled!");
                     };
                     transactionDocument.setAuthorizationErrorCode(gatewayStatusAndErrorCode.getT2().orElse(null));
                     transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());

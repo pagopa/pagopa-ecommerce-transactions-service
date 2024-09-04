@@ -447,8 +447,6 @@ public class TransactionsController implements TransactionsApi {
                     .filter(Predicate.not(List::isEmpty)).map(headers -> headers.get(0));
             String gatewayHeader = gatewayTypeHeader.orElse(pgsIdHeader.orElse(""));
             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger = switch (gatewayHeader) {
-                case "XPAY" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
-                case "VPOS" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
                 case "NPG" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
                 case "REDIRECT" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT;
                 default -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN;
