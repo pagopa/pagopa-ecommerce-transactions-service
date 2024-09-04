@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
@@ -64,6 +65,7 @@ public class AuthorizationUpdateProjectionHandler
                                 redirectData.getOutcome().toString(),
                                 Optional.ofNullable(redirectData.getErrorCode())
                         );
+                        case PgsTransactionGatewayAuthorizationData pgsData -> throw new IllegalArgumentException("Pgs authorization complete data not handled!");
                     };
                     transactionDocument.setAuthorizationErrorCode(gatewayStatusAndErrorCode.getT2().orElse(null));
                     transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());

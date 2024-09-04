@@ -9,9 +9,7 @@ import it.pagopa.ecommerce.commons.domain.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.*;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
@@ -20,6 +18,7 @@ import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
+import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodStatusDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.RangeDto;
@@ -40,7 +39,10 @@ import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProj
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.*;
+import org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
@@ -56,6 +58,7 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -1224,8 +1227,7 @@ class TransactionServiceTests {
                 .pspId("PSP_CODE")
                 .isAllCCP(false)
                 .details(
-                        new CardAuthRequestDetailsDto().cvv("123").pan("123456677").expiryDate("0223")
-                                .brand(CardAuthRequestDetailsDto.BrandEnum.VISA).holderName("Name Surname")
+                        new CardsAuthRequestDetailsDto().orderId("orderId").detailType("cards")
                 );
 
         final var transaction = TransactionTestUtils.transactionDocument(
@@ -1256,12 +1258,18 @@ class TransactionServiceTests {
                 .paymentTypeCode("PO")
                 .addRangesItem(new RangeDto().min(0L).max(100L));
 
-        final var gatewayResponse = new XPayAuthResponseEntityDto()
-                .requestId("requestId")
-                .urlRedirect("http://example.com");
+        StateResponseDto gatewayResponse = new StateResponseDto()
+                .state(WorkflowStateDto.GDI_VERIFICATION)
+                .fieldSet(
+                        new FieldsDto().sessionId("authorizationSessionId")
+                                .addFieldsItem(new FieldDto().src("http://localhost"))
+                );
 
-        final var requestAuthorizationResponse = new RequestAuthorizationResponseDto()
-                .authorizationUrl(gatewayResponse.getUrlRedirect());
+        RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
+                .authorizationRequestId("orderId")
+                .authorizationUrl(
+                        "http://localhost"
+                );
 
         final var calculateFeeRequest = ArgumentCaptor.forClass(CalculateFeeRequestDto.class);
         Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), calculateFeeRequest.capture(), any()))
@@ -1277,7 +1285,8 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(paymentGatewayClient.requestXPayAuthorization(any())).thenReturn(Mono.just(gatewayResponse));
+        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(any(), any()))
+                .thenReturn(Mono.just(gatewayResponse));
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 

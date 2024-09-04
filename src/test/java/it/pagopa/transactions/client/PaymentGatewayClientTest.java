@@ -2804,8 +2804,6 @@ class PaymentGatewayClientTest {
                 )
         );
         PaymentGatewayClient redirectClient = new PaymentGatewayClient(
-                xPayInternalApi,
-                creditCardInternalApi,
                 objectMapper,
                 mockUuidUtils,
                 confidentialMailUtils,
