@@ -91,7 +91,8 @@ public class AuthorizationUpdateProjectionHandler
                                                                         )
                                                                 ).toList(),
                                                         paymentNotice.isAllCCP(),
-                                                        new CompanyName(paymentNotice.getCompanyName())
+                                                        new CompanyName(paymentNotice.getCompanyName()),
+                                                        paymentNotice.getCreditorReferenceId()
                                                 )
                                         ).toList(),
                                 transactionDocument.getEmail(),

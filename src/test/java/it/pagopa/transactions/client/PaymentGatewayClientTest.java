@@ -181,7 +181,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -237,7 +238,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -314,7 +316,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -403,7 +406,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -481,7 +485,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -565,7 +570,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -729,7 +735,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -842,7 +849,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -944,7 +952,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1047,7 +1056,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1223,7 +1233,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1388,7 +1399,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1532,7 +1544,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,
@@ -1823,7 +1836,8 @@ class PaymentGatewayClientTest {
                                         )
                                 ),
                                 false,
-                                new CompanyName(longPaName)
+                                new CompanyName(longPaName),
+                                null
                         )
                 ),
                 EMAIL,
@@ -1966,7 +1980,8 @@ class PaymentGatewayClientTest {
                                         )
                                 ),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         ),
                         new it.pagopa.ecommerce.commons.domain.PaymentNotice(
                                 new PaymentToken("paymentToken"),
@@ -1983,7 +1998,8 @@ class PaymentGatewayClientTest {
                                         )
                                 ),
                                 false,
-                                new CompanyName("companyName2")
+                                new CompanyName("companyName2"),
+                                null
                         )
                 ),
                 EMAIL,
@@ -2412,7 +2428,8 @@ class PaymentGatewayClientTest {
                                 new PaymentContextCode(null),
                                 List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
                                 false,
-                                new CompanyName("companyName")
+                                new CompanyName("companyName"),
+                                null
                         )
                 ),
                 TransactionTestUtils.EMAIL,

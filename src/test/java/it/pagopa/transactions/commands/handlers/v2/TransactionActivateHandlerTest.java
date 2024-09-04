@@ -36,6 +36,7 @@ import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.Queues;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -122,6 +123,14 @@ class TransactionActivateHandlerTest {
             tokenValidityTimeInSeconds
     );
 
+    @BeforeEach
+    void setup() {
+        Mockito.reset(transactionEventActivatedStoreRepository, confidentialMailUtils);
+        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
+    }
+
     @Test
     void shouldHandleCommandForNM3CachedPaymentRequestWithNpgWithV2Api() {
         Duration elapsedTimeFromActivation = Duration.ofSeconds(paymentTokenTimeout);
@@ -155,6 +164,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -175,7 +185,8 @@ class TransactionActivateHandlerTest {
                 transactionActivatedTime.toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null)),
-                false
+                false,
+                null
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -192,6 +203,7 @@ class TransactionActivateHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
                                 false,
+                                null,
                                 null
                         )
                 )
@@ -201,8 +213,7 @@ class TransactionActivateHandlerTest {
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
-        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
-                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
@@ -221,8 +232,6 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Either.right("authToken"));
-
-        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
@@ -308,6 +317,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -328,7 +338,8 @@ class TransactionActivateHandlerTest {
                 transactionActivatedTime.toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null)),
-                false
+                false,
+                null
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -345,6 +356,7 @@ class TransactionActivateHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
                                 false,
+                                null,
                                 null
                         )
                 )
@@ -354,8 +366,7 @@ class TransactionActivateHandlerTest {
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
-        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
-                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
@@ -374,8 +385,6 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Either.right("authToken"));
-
-        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
@@ -446,6 +455,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -466,7 +476,8 @@ class TransactionActivateHandlerTest {
                 null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, AMOUNT, null)),
-                false
+                false,
+                null
         );
 
         TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent();
@@ -483,6 +494,7 @@ class TransactionActivateHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(rptId.getFiscalCode(), false, null, null)),
                                 false,
+                                null,
                                 null
                         )
                 )
@@ -492,8 +504,7 @@ class TransactionActivateHandlerTest {
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
-        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
-                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),
@@ -510,8 +521,6 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Either.right("authToken"));
-
-        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
@@ -563,6 +572,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -655,6 +665,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -675,13 +686,16 @@ class TransactionActivateHandlerTest {
                 null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, amount, null)),
-                false
+                false,
+                null
         );
 
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
-        Mockito.when(nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate)))
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate), any())
+        )
                 .thenReturn(Mono.error(new InvalidNodoResponseException("Invalid payment token received")));
 
         /* run test */
@@ -727,6 +741,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -747,7 +762,8 @@ class TransactionActivateHandlerTest {
                 null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, null, null)),
-                false
+                false,
+                null
         );
 
         PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
@@ -761,18 +777,18 @@ class TransactionActivateHandlerTest {
                 ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null)),
-                false
+                false,
+                null
         );
 
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoBeforeActivation));
-        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
-                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate))
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(
@@ -791,7 +807,6 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
@@ -843,6 +858,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -863,7 +879,8 @@ class TransactionActivateHandlerTest {
                 null,
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, null, null)),
-                false
+                false,
+                null
         );
 
         PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
@@ -877,18 +894,18 @@ class TransactionActivateHandlerTest {
                 ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null)),
-                false
+                false,
+                null
         );
 
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoBeforeActivation));
-        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
-                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(
@@ -907,7 +924,6 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
@@ -959,6 +975,7 @@ class TransactionActivateHandlerTest {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -979,18 +996,18 @@ class TransactionActivateHandlerTest {
                 ZonedDateTime.now().toString(),
                 idempotencyKey,
                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null)),
-                false
+                false,
+                null
         );
 
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.empty());
-        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
-                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(
-                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null))
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoActivation));
         Mockito.when(
@@ -1018,8 +1035,6 @@ class TransactionActivateHandlerTest {
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
-        Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
-
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
                 .handle(command).block();
@@ -1036,4 +1051,117 @@ class TransactionActivateHandlerTest {
         assertEquals(dueDate, paymentRequestInfoArgumentCaptor.getValue().dueDate());
     }
 
+    @Test
+    void shouldActivatePaymentRequestSavingCreditorReferenceId() {
+        final var creditorReferenceId = UUID.randomUUID().toString();
+        final var transactionActivatedEvent = transactionActivateEvent();
+        final var paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
+        final var transactionId = new TransactionId(TRANSACTION_ID);
+        final var rptId = new RptId(paymentNotice.getRptId());
+        final var idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(paymentNotice.getAmount());
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(paymentNoticeInfoDto)
+                .email(EMAIL_STRING);
+
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                List.of(rptId),
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
+                        null,
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false,
+                                        null,
+                                        null
+                                )
+                        ).toList()
+                ),
+                Transaction.ClientId.CHECKOUT.name(),
+                transactionId,
+                userId
+        );
+
+        final var nodoActivateResponse = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                paymentNotice.getDescription(),
+                paymentNotice.getAmount(),
+                dueDate,
+                paymentNotice.getPaymentToken(),
+                ZonedDateTime.now().toString(),
+                idempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null)),
+                false,
+                creditorReferenceId
+        );
+
+        /* preconditions */
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
+                .thenReturn(Optional.empty());
+        Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
+                .save(paymentRequestInfoArgumentCaptor.capture());
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
+        )
+                .thenReturn(Mono.just(nodoActivateResponse));
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn("77700000000");
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn("aabbccddee");
+        Mockito.when(
+                jwtTokenUtils.generateToken(
+                        eq(jwtSecretKey),
+                        eq(tokenValidityTimeInSeconds),
+                        eq(new Claims(transactionId, null, null, userId))
+                )
+        )
+                .thenReturn(Either.right("authToken"));
+        Mockito.when(
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
+        /* run test */
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
+                .handle(command).block();
+
+        /* asserts */
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
+        Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
+        assertNotNull(event.getTransactionId());
+        assertNotNull(event.getEventCode());
+        assertNotNull(event.getCreationDate());
+        assertNotNull(event.getId());
+        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
+        assertEquals(dueDate, paymentRequestInfoArgumentCaptor.getValue().dueDate());
+        assertTrue(
+                event.getData().getPaymentNotices().stream()
+                        .anyMatch(it -> it.getCreditorReferenceId().equals(creditorReferenceId))
+        );
+    }
 }

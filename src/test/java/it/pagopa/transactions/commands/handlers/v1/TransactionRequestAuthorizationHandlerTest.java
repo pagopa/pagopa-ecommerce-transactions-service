@@ -125,7 +125,8 @@ class TransactionRequestAuthorizationHandlerTest {
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ), // TODO
                    // TRANSFER
@@ -227,7 +228,8 @@ class TransactionRequestAuthorizationHandlerTest {
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ), // TODO
                    // TRANSFER
@@ -328,7 +330,8 @@ class TransactionRequestAuthorizationHandlerTest {
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ), // TODO
                    // TRANSFER
@@ -434,7 +437,8 @@ class TransactionRequestAuthorizationHandlerTest {
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ), // TODO
                    // TRANSFER
@@ -528,7 +532,8 @@ class TransactionRequestAuthorizationHandlerTest {
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ), // TODO
                    // TRANSFER
@@ -614,7 +619,8 @@ class TransactionRequestAuthorizationHandlerTest {
                                 nullPaymentContextCode,
                                 new ArrayList<>(),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ), // TODO
                    // TRANSFER

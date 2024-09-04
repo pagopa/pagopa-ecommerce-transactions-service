@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.Claims;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
@@ -51,6 +52,8 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static it.pagopa.ecommerce.commons.documents.v2.Transaction.*;
 
 @Component
 @Slf4j
@@ -627,12 +630,16 @@ public class PaymentGatewayClient {
                                    TransactionId transactionId,
                                    String sessionToken
     ) {
+        final var touchPoint = switch (ClientId.valueOf(clientId)) {
+            case IO -> ClientId.IO;
+            default -> ClientId.CHECKOUT;
+        };
         return UriComponentsBuilder
                 .fromUriString(npgSessionUrlConfig.basePath().concat(npgSessionUrlConfig.outcomeSuffix()))
                 .build(
                         Map.of(
                                 "clientId",
-                                clientId,
+                                touchPoint.toString(),
                                 "transactionId",
                                 transactionId.value(),
                                 "sessionToken",

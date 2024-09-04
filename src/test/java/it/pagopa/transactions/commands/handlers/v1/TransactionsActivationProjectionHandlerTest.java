@@ -54,6 +54,7 @@ class TransactionsActivationProjectionHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null)),
                                 false,
+                                null,
                                 null
                         )
                 )
@@ -96,7 +97,8 @@ class TransactionsActivationProjectionHandlerTest {
                                         )
                                 ),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ),
                 email,
