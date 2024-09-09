@@ -81,7 +81,7 @@ resources:
     - repository: pagopaCheckoutTests
       type: github
       name: pagopa/pagopa-checkout-tests
-      ref: main
+      ref: CHK-3204-update-api-tests
       endpoint: 'io-azure-devops-github-ro'
 
 pool:
