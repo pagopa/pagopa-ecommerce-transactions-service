@@ -32,6 +32,7 @@ microservice-chart:
     tag: "1.36.2"
     pullPolicy: Always
   livenessProbe:
+    handlerType: httpGet
     httpGet:
       path: /actuator/health/liveness
       port: 8080
@@ -39,6 +40,7 @@ microservice-chart:
     failureThreshold: 6
     periodSeconds: 10
   readinessProbe:
+    handlerType: httpGet
     httpGet:
       path: /actuator/health/readiness
       port: 8080
@@ -74,19 +76,24 @@ microservice-chart:
       cpu: "300m"
     limits:
       memory: "512Mi"
-      cpu: "500m"
+      cpu: "900m"
   autoscaling:
     enable: true
     minReplica: 1
     maxReplica: 5
     pollingInterval: 30 # seconds
-    cooldownPeriod: 300 # seconds
+    cooldownPeriod: 30 # seconds
     triggers:
       - type: cpu
         metadata:
           # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
+    advanced:
+      horizontalPodAutoscalerConfig:
+        behavior:
+          scaleUp:
+            stabilizationWindowSeconds: 60
   envConfig:
     MONGO_HOST: pagopa-u-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-u-weu-ecommerce-cosmos-account
