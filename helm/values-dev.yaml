@@ -65,6 +65,12 @@ microservice-chart:
     create: false
     annotations: {}
     name: ""
+  serviceMonitor:
+    create: true
+    endpoints:
+      - interval: 10s
+        targetPort: 8080
+        path: /actuator/prometheus
   podAnnotations: {}
   podSecurityContext:
     seccompProfile:
