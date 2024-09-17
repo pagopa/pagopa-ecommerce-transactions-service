@@ -157,12 +157,12 @@ public class TransactionsController implements TransactionsApi {
                             "POST-auth-request-%s".formatted(transactionId),
                             "transactions-service"
                     );
-                    // fix CHK-3222: auth request operations are not idempotent on the NPG side, so this
-                    // lock prevents multiple auth request to be performed for a single transaction
-                    // (for timeouts scenarios, etc.). The lock duration has been set to the
-                    // payment token validity time in order to make this API call performable only
-                    // once per transaction (further attempts will find the transaction in an expired
-                    // status and return an error)
+                    // fix CHK-3222: auth request operations are not idempotent on the NPG side, so
+                    // this lock prevents multiple auth request to be performed for a single
+                    // transaction (for timeouts scenarios, etc.). The lock duration has been set to
+                    // the payment token validity time in order to make this API call performable
+                    // only once per transaction (further attempts will find the transaction in an
+                    // expired status and return an error)
                     boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
                             lockDocument,
                             Duration.ofSeconds(paymentTokenValidityTimeSeconds)
