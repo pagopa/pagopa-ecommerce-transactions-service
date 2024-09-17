@@ -158,6 +158,7 @@ class TransactionsControllerTest {
                             UUID.randomUUID(),
                             Mono.just(newTransactionRequestDto),
                             UUID.randomUUID(),
+                            "it",
                             mockExchange
                     )
                     .block();
