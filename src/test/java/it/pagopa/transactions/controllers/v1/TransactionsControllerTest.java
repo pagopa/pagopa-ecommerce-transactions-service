@@ -937,7 +937,6 @@ class TransactionsControllerTest {
                                 .orderId("orderId")
                                 .detailType("cards")
                 );
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
 
         /* test */
         webTestClient.post()
@@ -975,8 +974,6 @@ class TransactionsControllerTest {
                                 .orderId("orderId")
                                 .detailType("cards")
                 );
-
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
 
         /* test */
         webTestClient.post()
@@ -1554,7 +1551,6 @@ class TransactionsControllerTest {
                 ).timestampOperation(OffsetDateTime.now());
 
         Mockito.when(uuidUtils.uuidFromBase64(b64TransactionId)).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(false);
         /* test */
         webTestClient.patch()
                 .uri("/transactions/{transactionId}/auth-requests", b64TransactionId)
