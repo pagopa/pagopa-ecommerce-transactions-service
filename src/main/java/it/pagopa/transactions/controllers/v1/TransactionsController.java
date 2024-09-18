@@ -19,6 +19,7 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,6 +61,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+
+    @Value("${payment.token.validity}")
+    private Integer paymentTokenValidityTimeSeconds;
 
     @ExceptionHandler(
         {
@@ -148,6 +152,32 @@ public class TransactionsController implements TransactionsApi {
     ) {
         return requestAuthorizationRequestDto
                 .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId))
+                .map(updateAuthorizationRequest -> {
+                    ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                            "POST-auth-request-%s".formatted(transactionId),
+                            "transactions-service"
+                    );
+                    // fix CHK-3222: auth request operations are not idempotent on the NPG side, so
+                    // this lock prevents multiple auth request to be performed for a single
+                    // transaction (for timeouts scenarios, etc.). The lock duration has been set to
+                    // the payment token validity time in order to make this API call performable
+                    // only once per transaction (further attempts will find the transaction in an
+                    // expired status and return an error)
+                    boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
+                            lockDocument,
+                            Duration.ofSeconds(paymentTokenValidityTimeSeconds)
+                    );
+                    log.info(
+                            "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
+                            transactionId,
+                            lockDocument.id(),
+                            lockAcquired
+                    );
+                    if (!lockAcquired) {
+                        throw new LockNotAcquiredException(new TransactionId(transactionId), lockDocument);
+                    }
+                    return updateAuthorizationRequest;
+                })
                 .flatMap(
                         requestAuthorizationRequest -> transactionsService
                                 .requestTransactionAuthorization(
@@ -288,7 +318,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     /**
-     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.SendPaymentResultOutcomeInfo} operation outcome record
+     * This method maps input throwable to proper {@link SendPaymentResultOutcomeInfo} operation outcome record
      *
      * @param throwable the caught throwable
      * @return the mapped outcome to be traced
