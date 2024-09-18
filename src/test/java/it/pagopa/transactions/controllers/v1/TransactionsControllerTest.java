@@ -51,7 +51,6 @@ import reactor.test.StepVerifier;
 import javax.crypto.SecretKey;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -296,7 +295,6 @@ class TransactionsControllerTest {
                         .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
         )
                 .thenReturn(Mono.just(authorizationResponse));
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
 
         /* test */
         webTestClient.post()
@@ -310,14 +308,6 @@ class TransactionsControllerTest {
                 .isOk()
                 .expectBody(RequestAuthorizationResponseDto.class)
                 .value(response -> assertEquals(authorizationResponse, response));
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals("POST-auth-request-%s".formatted(transactionId), lockDocument.id());
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(paymentTokenValidityTime))
-        );
 
     }
 
@@ -349,7 +339,6 @@ class TransactionsControllerTest {
                         .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
         )
                 .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
 
         /* test */
         webTestClient.post()
@@ -373,14 +362,6 @@ class TransactionsControllerTest {
                                 p
                         )
                 );
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals("POST-auth-request-%s".formatted(transactionId), lockDocument.id());
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(paymentTokenValidityTime))
-        );
 
     }
 
@@ -918,8 +899,6 @@ class TransactionsControllerTest {
                         .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
         )
                 .thenReturn(Mono.error(exception));
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
-
         /* test */
         webTestClient.post()
                 .uri("/transactions/{transactionId}/auth-requests", transactionId)
@@ -937,14 +916,6 @@ class TransactionsControllerTest {
                             assertEquals(exception.getMessage(), p.getDetail());
                         }
                 );
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals("POST-auth-request-%s".formatted(transactionId), lockDocument.id());
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(paymentTokenValidityTime))
-        );
     }
 
     @Test
@@ -1550,7 +1521,6 @@ class TransactionsControllerTest {
                         .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
         )
                 .thenReturn(Mono.error(exception));
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
 
         /* test */
         webTestClient.post()
@@ -1569,14 +1539,6 @@ class TransactionsControllerTest {
                             assertEquals(exception.getDetail(), p.getDetail());
                         }
                 );
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals("POST-auth-request-%s".formatted(transactionId), lockDocument.id());
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(paymentTokenValidityTime))
-        );
     }
 
     @Test
@@ -1612,59 +1574,6 @@ class TransactionsControllerTest {
                             );
                         }
                 );
-    }
-
-    @Test
-    void shouldReturn422UnprocessableEntityForErrorAcquiringLockOnAuthorizationRequest() {
-        String transactionId = new TransactionId(UUID.randomUUID()).value();
-        String paymentMethodId = "paymentMethodId";
-        String client = "CHECKOUT";
-        String pgsId = "NPG";
-
-        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
-                .fee(1)
-                .paymentInstrumentId(paymentMethodId)
-                .pspId("pspId")
-                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
-                .isAllCCP(false)
-                .details(
-                        new CardsAuthRequestDetailsDto()
-                                .orderId("orderId")
-                                .detailType("cards")
-                );
-
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(false);
-
-        /* test */
-        webTestClient.post()
-                .uri("/transactions/{transactionId}/auth-requests", transactionId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(authorizationRequest)
-                .header("X-Client-Id", client)
-                .header("X-Pgs-Id", pgsId)
-                .exchange()
-                .expectStatus()
-                .isEqualTo(422)
-                .expectBody(ProblemJsonDto.class)
-                .value(
-                        p -> {
-                            assertEquals(422, p.getStatus());
-                            assertEquals(
-                                    "Lock not acquired for transaction with id: [%1$s] and locking key: [POST-auth-request-%1$s]"
-                                            .formatted(transactionId),
-                                    p.getDetail()
-                            );
-                        }
-                );
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals("POST-auth-request-%s".formatted(transactionId), lockDocument.id());
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(paymentTokenValidityTime))
-        );
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
