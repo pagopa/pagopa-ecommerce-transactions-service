@@ -148,6 +148,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto,
                                                                                                  UUID xUserId,
                                                                                                  String xPgsId,
+                                                                                                 String lang,
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
