@@ -2408,7 +2408,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         any(),
                         eq(true),
                         eq(Transaction.ClientId.IO.name()),
-                        null,
+                        any(),
                         eq(UUID.fromString(TransactionTestUtils.USER_ID))
                 );
         verify(paymentGatewayClient, times(0)).requestNpgCardsAuthorization(any(), any());
