@@ -620,7 +620,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         eq(NpgClient.PaymentMethod.CARDS),
                         eq(npgDefaultApiKey),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
@@ -785,7 +786,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         )
                 .thenReturn(
@@ -899,7 +901,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         )
                 .thenReturn(
@@ -1003,7 +1006,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         )
                 .thenReturn(
@@ -1108,7 +1112,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         eq(NpgClient.PaymentMethod.CARDS),
                         eq(npgDefaultApiKey),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
