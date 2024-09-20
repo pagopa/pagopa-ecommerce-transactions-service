@@ -19,7 +19,6 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,9 +60,6 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
-
-    @Value("${payment.token.validity}")
-    private Integer paymentTokenValidityTimeSeconds;
 
     @ExceptionHandler(
         {
@@ -151,6 +147,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  String lang,
                                                                                                  ServerWebExchange exchange
     ) {
+        lang = "it";
         return requestAuthorizationRequestDto
                 .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId))
                 .flatMap(
@@ -293,7 +290,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     /**
-     * This method maps input throwable to proper {@link SendPaymentResultOutcomeInfo} operation outcome record
+     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.SendPaymentResultOutcomeInfo} operation outcome record
      *
      * @param throwable the caught throwable
      * @return the mapped outcome to be traced
