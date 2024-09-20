@@ -1195,7 +1195,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 );
         verify(npgClient, times(0))
                 .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
