@@ -79,7 +79,6 @@ public class TransactionsController implements V21Api {
                                                                           UUID correlationId,
                                                                           Mono<NewTransactionRequestDto> newTransactionRequest,
                                                                           UUID xUserId,
-                                                                          String lang,
                                                                           ServerWebExchange exchange
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
