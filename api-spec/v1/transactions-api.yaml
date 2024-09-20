@@ -175,6 +175,12 @@ paths:
             pattern: 'NPG|REDIRECT'
           required: false
           description: Pgs identifier (populated by APIM policy)
+        - in: header
+          name: lang
+          required: false
+          description: language selection
+          schema:
+            $ref: '#/components/schemas/Lang'
       requestBody:
         $ref: "#/components/requestBodies/RequestAuthorizationRequest"
       responses:
@@ -303,6 +309,9 @@ paths:
                 $ref: "#/components/schemas/ProblemJson"
 components:
   schemas:
+    Lang:
+      description: header lang identifier
+      type: string
     RptId:
       description: Digital payment receipt identifier
       type: string

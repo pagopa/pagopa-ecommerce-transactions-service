@@ -42,12 +42,7 @@ paths:
           description: User id (valued for authenticated payments)
           schema:
             $ref: '#/components/schemas/UserId'
-        - in: header
-          name: lang
-          required: false
-          description: language selection
-          schema:
-            $ref: '#/components/schemas/Lang'
+
       summary: Make a new transaction
       requestBody:
         $ref: "#/components/requestBodies/NewTransactionRequest"
@@ -98,9 +93,6 @@ paths:
                 $ref: '#/components/schemas/PartyConfigurationFaultPaymentProblemJson'
 components:
   schemas:
-    Lang:
-      description: header lang identifier
-      type: string
     RptId:
       description: Digital payment receipt identifier
       type: string
