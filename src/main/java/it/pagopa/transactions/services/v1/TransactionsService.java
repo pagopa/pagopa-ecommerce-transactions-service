@@ -470,6 +470,7 @@ public class TransactionsService {
             String transactionId,
             UUID xUserId,
             String paymentGatewayId,
+            String lang,
             RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
         return getBaseTransactionView(transactionId, xUserId)
@@ -685,6 +686,7 @@ public class TransactionsService {
 
                             TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                                     transactionsUtils.getRptIds(transactionDocument).stream().map(RptId::new).toList(),
+                                    lang,
                                     authorizationData
                             );
                             Mono<RequestAuthorizationResponseDto> authPipeline = switch (transactionDocument) {

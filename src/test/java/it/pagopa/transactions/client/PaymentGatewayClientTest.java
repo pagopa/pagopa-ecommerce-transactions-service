@@ -635,6 +635,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -813,6 +814,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -925,6 +927,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1028,6 +1031,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1117,6 +1121,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1304,6 +1309,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1513,6 +1519,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1613,6 +1620,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 false,
                                 clientId.name(),
+                                null,
                                 userId
                         )
                 )

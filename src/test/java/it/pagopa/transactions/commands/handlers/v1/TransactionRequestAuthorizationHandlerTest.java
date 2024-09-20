@@ -172,6 +172,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 List.of(transaction.getPaymentNotices().get(0).rptId()),
+                null,
                 authorizationData
         );
 
@@ -274,6 +275,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 List.of(transaction.getPaymentNotices().get(0).rptId()),
+                null,
                 authorizationData
         );
 
@@ -376,6 +378,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 List.of(transaction.getPaymentNotices().get(0).rptId()),
+                null,
                 authorizationData
         );
 
@@ -483,6 +486,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 List.of(transaction.getPaymentNotices().get(0).rptId()),
+                null,
                 authorizationData
         );
 
@@ -578,6 +582,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 List.of(transaction.getPaymentNotices().get(0).rptId()),
+                null,
                 authorizationData
         );
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -665,6 +670,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 List.of(transaction.getPaymentNotices().get(0).rptId()),
+                null,
                 authorizationData
         );
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))

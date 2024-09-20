@@ -484,6 +484,7 @@ class TransactionServiceTests {
                                         TRANSACTION_ID,
                                         null,
                                         null,
+                                        null,
                                         authorizationRequest
                                 )
                 )
@@ -515,7 +516,7 @@ class TransactionServiceTests {
 
         /* test */
         Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsServiceV1
-                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest);
+                .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> {
@@ -745,6 +746,7 @@ class TransactionServiceTests {
                                         TRANSACTION_ID,
                                         null,
                                         null,
+                                        null,
                                         authorizationRequest
                                 )
                 )
@@ -833,7 +835,7 @@ class TransactionServiceTests {
 
         StepVerifier.create(
                 transactionsServiceV1
-                        .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                        .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest)
         )
                 .expectError(PaymentMethodNotFoundException.class)
                 .verify();
@@ -969,6 +971,7 @@ class TransactionServiceTests {
                                         TRANSACTION_ID,
                                         null,
                                         null,
+                                        null,
                                         authorizationRequest
                                 )
                 )
@@ -1066,6 +1069,7 @@ class TransactionServiceTests {
                         transactionsServiceV1
                                 .requestTransactionAuthorization(
                                         TRANSACTION_ID,
+                                        null,
                                         null,
                                         null,
                                         authorizationRequest
@@ -1175,6 +1179,7 @@ class TransactionServiceTests {
                         transactionsServiceV1
                                 .requestTransactionAuthorization(
                                         TRANSACTION_ID,
+                                        null,
                                         null,
                                         null,
                                         authorizationRequest

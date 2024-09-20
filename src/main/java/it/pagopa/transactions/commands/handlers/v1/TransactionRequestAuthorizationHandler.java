@@ -98,6 +98,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                 authorizationRequestData,
                                 null,
                                 tx.getClientId().name(),
+                                command.lang,
                                 null
                         )
                 )

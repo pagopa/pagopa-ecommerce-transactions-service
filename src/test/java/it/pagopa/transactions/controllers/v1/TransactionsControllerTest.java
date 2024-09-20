@@ -292,7 +292,7 @@ class TransactionsControllerTest {
 
         Mockito.when(
                 transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                        .requestTransactionAuthorization(transactionId, null, pgsId, null, authorizationRequest)
         )
                 .thenReturn(Mono.just(authorizationResponse));
 
@@ -336,7 +336,7 @@ class TransactionsControllerTest {
 
         Mockito.when(
                 transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                        .requestTransactionAuthorization(transactionId, null, pgsId, null, authorizationRequest)
         )
                 .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
 
@@ -896,7 +896,7 @@ class TransactionsControllerTest {
 
         Mockito.when(
                 transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                        .requestTransactionAuthorization(transactionId, null, pgsId, null, authorizationRequest)
         )
                 .thenReturn(Mono.error(exception));
         /* test */
@@ -1515,7 +1515,7 @@ class TransactionsControllerTest {
 
         Mockito.when(
                 transactionsService
-                        .requestTransactionAuthorization(transactionId, null, pgsId, authorizationRequest)
+                        .requestTransactionAuthorization(transactionId, null, pgsId, null, authorizationRequest)
         )
                 .thenReturn(Mono.error(exception));
 

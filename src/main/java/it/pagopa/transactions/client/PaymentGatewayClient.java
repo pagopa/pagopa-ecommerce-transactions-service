@@ -128,10 +128,11 @@ public class PaymentGatewayClient {
                                                                   String correlationId,
                                                                   boolean isWalletPayment,
                                                                   String clientId,
+                                                                  String lang,
                                                                   UUID userId
 
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId, userId);
+        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId, lang, userId);
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(
@@ -139,9 +140,10 @@ public class PaymentGatewayClient {
                                                                      String correlationId,
                                                                      boolean isWalletPayment,
                                                                      String clientId,
+                                                                     String lang,
                                                                      UUID userId
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId, userId);
+        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId, lang, userId);
     }
 
     private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -150,6 +152,7 @@ public class PaymentGatewayClient {
                                                                    boolean isApmPayment,
                                                                    boolean isWalletPayment,
                                                                    String clientId,
+                                                                   String lang,
                                                                    UUID userId
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
@@ -228,7 +231,8 @@ public class PaymentGatewayClient {
                                                             () -> new InternalServerErrorException(
                                                                     "Invalid request missing contractId"
                                                             )
-                                                    )
+                                                    ),
+                                                    lang
                                             ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                                         }
                                     }

@@ -147,7 +147,6 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  String lang,
                                                                                                  ServerWebExchange exchange
     ) {
-        lang = "it";
         return requestAuthorizationRequestDto
                 .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId))
                 .flatMap(
@@ -156,6 +155,7 @@ public class TransactionsController implements TransactionsApi {
                                         transactionId,
                                         xUserId,
                                         xPgsId,
+                                        lang,
                                         requestAuthorizationRequest
                                 )
                 )
