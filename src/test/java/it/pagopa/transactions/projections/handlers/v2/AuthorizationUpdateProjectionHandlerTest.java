@@ -30,7 +30,7 @@ class AuthorizationUpdateProjectionHandlerTest {
             paymentTokenValidity
     );
 
-    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
+    private static final String expectedOperationTimeStamp = "2023-01-01T01:02:03";
 
     @Test
     void shouldHandleTransactionNpg() {
@@ -58,7 +58,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
                 "rrn",
-                expectedOperationTimestamp,
+                expectedOperationTimeStamp,
                 new NpgTransactionGatewayAuthorizationData(
                         OperationResultDto.EXECUTED,
                         "operationId",
@@ -141,7 +141,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
                 "rrn",
-                expectedOperationTimestamp,
+                expectedOperationTimeStamp,
                 new RedirectTransactionGatewayAuthorizationData(
                         RedirectTransactionGatewayAuthorizationData.Outcome.KO,
                         authorizationErrorCode
@@ -220,7 +220,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
                 "authorizationCode",
                 "rrn",
-                expectedOperationTimestamp,
+                expectedOperationTimeStamp,
                 new NpgTransactionGatewayAuthorizationData(
                         OperationResultDto.DECLINED,
                         "operationId",
