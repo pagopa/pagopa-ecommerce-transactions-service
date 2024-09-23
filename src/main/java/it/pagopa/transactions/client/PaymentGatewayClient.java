@@ -314,16 +314,20 @@ public class PaymentGatewayClient {
     }
 
     public Mono<StateResponseDto> requestNpgCardsAuthorization(
-            AuthorizationRequestData authorizationData,
-            String correlationId
+                                                               AuthorizationRequestData authorizationData,
+                                                               String correlationId
     ) {
         return Mono.just(authorizationData)
                 .filter(this::isValidPaymentType)
                 .switchIfEmpty(Mono.empty())
                 .filter(this::isValidAuthDetails)
-                .switchIfEmpty(Mono.error(new InvalidRequestException(
-                        "Cannot perform NPG authorization for invalid input CardsAuthRequestDetailsDto or WalletAuthRequestDetailsDto"
-                )))
+                .switchIfEmpty(
+                        Mono.error(
+                                new InvalidRequestException(
+                                        "Cannot perform NPG authorization for invalid input CardsAuthRequestDetailsDto or WalletAuthRequestDetailsDto"
+                                )
+                        )
+                )
                 .flatMap(authData -> processAuthorization(authData, correlationId));
     }
 
@@ -339,22 +343,33 @@ public class PaymentGatewayClient {
                 data.authDetails() instanceof WalletAuthRequestDetailsDto;
     }
 
-    private Mono<StateResponseDto> processAuthorization(AuthorizationRequestData data, String correlationId) {
+    private Mono<StateResponseDto> processAuthorization(
+                                                        AuthorizationRequestData data,
+                                                        String correlationId
+    ) {
         BigDecimal grandTotal = calculateGrandTotal(data);
         if (data.sessionId().isEmpty()) {
-            return Mono.error(new BadGatewayException(
-                    "Missing sessionId for transactionId: " + data.transactionId(),
-                    HttpStatus.BAD_GATEWAY
-            ));
+            return Mono.error(
+                    new BadGatewayException(
+                            "Missing sessionId for transactionId: " + data.transactionId(),
+                            HttpStatus.BAD_GATEWAY
+                    )
+            );
         }
 
         return npgApiKeyConfiguration.getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, data.pspId())
-                .fold(Mono::error, apiKey -> npgClient.confirmPayment(
-                        UUID.fromString(correlationId),
-                        data.sessionId().get(),
-                        grandTotal,
-                        apiKey
-                ).onErrorMap(NpgResponseException.class, exception -> handleNpgResponseException(exception, data, correlationId)));
+                .fold(
+                        Mono::error,
+                        apiKey -> npgClient.confirmPayment(
+                                UUID.fromString(correlationId),
+                                data.sessionId().get(),
+                                grandTotal,
+                                apiKey
+                        ).onErrorMap(
+                                NpgResponseException.class,
+                                exception -> handleNpgResponseException(exception, data, correlationId)
+                        )
+                );
     }
 
     private BigDecimal calculateGrandTotal(AuthorizationRequestData data) {
@@ -364,31 +379,49 @@ public class PaymentGatewayClient {
         return BigDecimal.valueOf(totalAmount + data.fee());
     }
 
-    private Throwable handleNpgResponseException(NpgResponseException exception, AuthorizationRequestData data, String correlationId) {
+    private Throwable handleNpgResponseException(
+                                                 NpgResponseException exception,
+                                                 AuthorizationRequestData data,
+                                                 String correlationId
+    ) {
         return exception.getStatusCode()
                 .map(statusCode -> {
                     List<String> errorCodes = exception.getErrors();
-                    log.error("KO performing NPG confirmPayment: HTTP status code: [{}], errorCodes: {}", statusCode, errorCodes, exception);
+                    log.error(
+                            "KO performing NPG confirmPayment: HTTP status code: [{}], errorCodes: {}",
+                            statusCode,
+                            errorCodes,
+                            exception
+                    );
                     if (errorCodes.stream().anyMatch(npgAuthorizationRetryExcludedErrorCodes::contains)) {
                         return new NpgNotRetryableErrorException(
-                                "Npg received error codes: " + errorCodes + ", retry excluded error codes: " + npgAuthorizationRetryExcludedErrorCodes,
+                                "Npg received error codes: " + errorCodes + ", retry excluded error codes: "
+                                        + npgAuthorizationRetryExcludedErrorCodes,
                                 statusCode
                         );
                     }
                     if (statusCode.is4xxClientError()) {
                         return new NpgNotRetryableErrorException(
-                                "Npg 4xx error for transactionId: [" + data.transactionId().value() + "], correlationId: [" + correlationId + "]",
+                                "Npg 4xx error for transactionId: [" + data.transactionId().value()
+                                        + "], correlationId: [" + correlationId + "]",
                                 statusCode
                         );
                     } else if (statusCode.is5xxServerError()) {
                         return new BadGatewayException("NPG internal server error response received", statusCode);
                     } else {
-                        return new BadGatewayException("Received NPG error response with unmanaged HTTP response status code", statusCode);
+                        return new BadGatewayException(
+                                "Received NPG error response with unmanaged HTTP response status code",
+                                statusCode
+                        );
                     }
                 })
-                .orElse(new BadGatewayException("Received NPG error response with unknown HTTP response status code", null));
+                .orElse(
+                        new BadGatewayException(
+                                "Received NPG error response with unknown HTTP response status code",
+                                null
+                        )
+                );
     }
-
 
     /**
      * Perform authorization request with PSP retrieving redirection URL
