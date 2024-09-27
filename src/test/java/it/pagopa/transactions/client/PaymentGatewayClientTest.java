@@ -146,7 +146,7 @@ class PaymentGatewayClientTest {
     private final NpgApiKeyConfiguration npgApiKeyHandler = Mockito.mock(NpgApiKeyConfiguration.class);
 
     @BeforeEach
-    private void init() {
+    public void init() {
         client = new PaymentGatewayClient(
                 objectMapper,
                 mockUuidUtils,
@@ -1514,7 +1514,8 @@ class PaymentGatewayClientTest {
                         eq(NpgClient.PaymentMethod.PAYPAL),
                         eq("pspKey1"),
                         eq(contractId),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
@@ -1536,7 +1537,7 @@ class PaymentGatewayClientTest {
                 .verify();
 
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), eq(orderId), any(), any(), any(), any(), any());
+                .buildFormForPayment(any(), any(), any(), any(), any(), eq(orderId), any(), any(), any(), any(), any(), any());
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.PAYPAL, "pspId2");
@@ -1615,7 +1616,8 @@ class PaymentGatewayClientTest {
                         eq(NpgClient.PaymentMethod.BANCOMATPAY),
                         any(),
                         eq(null),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any())).thenReturn(Either.right("pspKey1"));
@@ -1696,7 +1698,8 @@ class PaymentGatewayClientTest {
                         any(),
                         eq("pspKey1"),
                         eq(null),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
