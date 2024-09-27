@@ -213,7 +213,8 @@ public class PaymentGatewayClient {
                                                                     paymentNotice -> paymentNotice.transactionAmount()
                                                                             .value()
                                                             ).sum()
-                                                            + authorizationData.fee()
+                                                            + authorizationData.fee(),
+                                                    lang
                                             ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                                         } else {
                                             return npgClient.buildForm(
