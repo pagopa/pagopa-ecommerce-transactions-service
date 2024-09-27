@@ -709,7 +709,20 @@ class PaymentGatewayClientTest {
                         any()
                 );
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),any());
+                .buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
         verify(npgApiKeyHandler, times(1)).getDefaultApiKey();
     }
 
@@ -1200,7 +1213,20 @@ class PaymentGatewayClientTest {
                         any()
                 );
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                .buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
         verify(npgApiKeyHandler, times(1)).getDefaultApiKey();
     }
 
@@ -1537,7 +1563,20 @@ class PaymentGatewayClientTest {
                 .verify();
 
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), eq(orderId), any(), any(), any(), any(), any(), any());
+                .buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.PAYPAL, "pspId2");
