@@ -709,7 +709,7 @@ class PaymentGatewayClientTest {
                         any()
                 );
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),any());
         verify(npgApiKeyHandler, times(1)).getDefaultApiKey();
     }
 
@@ -1200,7 +1200,7 @@ class PaymentGatewayClientTest {
                         any()
                 );
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(npgApiKeyHandler, times(1)).getDefaultApiKey();
     }
 
@@ -1301,7 +1301,8 @@ class PaymentGatewayClientTest {
                         eq(NpgClient.PaymentMethod.PAYPAL),
                         any(),
                         eq(contractId),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
@@ -1386,7 +1387,8 @@ class PaymentGatewayClientTest {
                         any(),
                         eq("pspKey1"),
                         eq(contractId),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
