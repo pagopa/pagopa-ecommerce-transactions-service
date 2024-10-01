@@ -327,10 +327,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                     e.getData()
                                                                             .getPaymentGateway()
                                                             )
-                                                            .filter(
-                                                                    gateway -> gateway
-                                                                            .equals(PaymentGateway.NPG)
-                                                            )
                                                             .flatMap(
                                                                     p -> tracingUtils.traceMono(
                                                                             this.getClass().getSimpleName(),

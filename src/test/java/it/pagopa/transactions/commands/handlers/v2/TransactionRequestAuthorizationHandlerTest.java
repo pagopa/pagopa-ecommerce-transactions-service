@@ -2943,15 +2943,23 @@ class TransactionRequestAuthorizationHandlerTest {
         when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
 
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
-        verify(transactionAuthorizationRequestedQueueAsyncClient, times(0)).sendMessageWithResponse(
+        verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
+                any(QueueEvent.class),
                 any(),
-                any(),
-                any()
+                durationArgumentCaptor.capture()
         );
         TransactionEvent<TransactionAuthorizationRequestData> authorizationRequestedEvent = eventStoreCaptor.getValue();
         TransactionAuthorizationRequestData authRequestedData = authorizationRequestedEvent.getData();
@@ -4063,7 +4071,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertEquals(
-                walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId()
+                walletId,
+                npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
