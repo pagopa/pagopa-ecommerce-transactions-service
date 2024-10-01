@@ -2289,7 +2289,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
-        ;
+
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
@@ -2304,6 +2304,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         verify(transactionTemplateWrapper, times(1)).save(any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
@@ -2562,6 +2564,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         verify(transactionTemplateWrapper, times(1)).save(any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
@@ -3737,6 +3741,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         verify(transactionTemplateWrapper, times(1)).save(any());
 
         final var tracingArgument = ArgumentCaptor.forClass(TracingInfo.class);
@@ -4056,6 +4062,10 @@ class TransactionRequestAuthorizationHandlerTest {
                 "sessionId",
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
+        assertEquals(
+                walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId()
+        );
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
         verify(transactionTemplateWrapper, times(1)).save(any());
 
