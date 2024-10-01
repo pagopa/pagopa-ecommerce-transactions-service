@@ -249,8 +249,6 @@ class TransactionServiceTests {
 
     private static final String NPG_URL_IFRAME = "http://iframe";
 
-    private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
-
     @Test
     void getTransactionReturnsTransactionDataOriginProvided() {
 
@@ -484,6 +482,7 @@ class TransactionServiceTests {
                                         TRANSACTION_ID,
                                         null,
                                         null,
+                                        null,
                                         authorizationRequest
                                 )
                 )
@@ -515,7 +514,7 @@ class TransactionServiceTests {
 
         /* test */
         Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsServiceV1
-                .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest);
+                .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest);
         assertThrows(
                 TransactionNotFoundException.class,
                 () -> {
@@ -745,6 +744,7 @@ class TransactionServiceTests {
                                         TRANSACTION_ID,
                                         null,
                                         null,
+                                        null,
                                         authorizationRequest
                                 )
                 )
@@ -833,7 +833,7 @@ class TransactionServiceTests {
 
         StepVerifier.create(
                 transactionsServiceV1
-                        .requestTransactionAuthorization(TRANSACTION_ID, null, null, authorizationRequest)
+                        .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest)
         )
                 .expectError(PaymentMethodNotFoundException.class)
                 .verify();
@@ -969,6 +969,7 @@ class TransactionServiceTests {
                                         TRANSACTION_ID,
                                         null,
                                         null,
+                                        null,
                                         authorizationRequest
                                 )
                 )
@@ -1066,6 +1067,7 @@ class TransactionServiceTests {
                         transactionsServiceV1
                                 .requestTransactionAuthorization(
                                         TRANSACTION_ID,
+                                        null,
                                         null,
                                         null,
                                         authorizationRequest
@@ -1175,6 +1177,7 @@ class TransactionServiceTests {
                         transactionsServiceV1
                                 .requestTransactionAuthorization(
                                         TRANSACTION_ID,
+                                        null,
                                         null,
                                         null,
                                         authorizationRequest

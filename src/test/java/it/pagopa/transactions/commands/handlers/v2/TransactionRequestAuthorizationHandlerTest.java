@@ -225,6 +225,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -367,6 +368,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -514,6 +516,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -670,6 +673,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -824,6 +828,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -940,6 +945,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -1029,6 +1035,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -1131,6 +1138,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -1250,6 +1258,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -1372,6 +1381,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -1495,6 +1505,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -1618,6 +1629,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -1740,6 +1752,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -1882,6 +1895,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -2029,6 +2043,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -2207,6 +2222,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -2229,6 +2245,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 correlationId,
                                 true,
                                 clientId.name(),
+                                null,
                                 UUID.fromString(TransactionTestUtils.USER_ID)
                         )
         )
@@ -2373,6 +2390,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
@@ -2390,6 +2408,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         any(),
                         eq(true),
                         eq(Transaction.ClientId.IO.name()),
+                        any(),
                         eq(UUID.fromString(TransactionTestUtils.USER_ID))
                 );
         verify(paymentGatewayClient, times(0)).requestNpgCardsAuthorization(any(), any());
@@ -2481,6 +2500,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -2499,6 +2519,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 correlationId,
                                 true,
                                 clientId.name(),
+                                null,
                                 UUID.fromString(TransactionTestUtils.USER_ID)
                         )
         )
@@ -2625,6 +2646,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -2642,6 +2664,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         correlationId,
                         false,
                         Transaction.ClientId.CHECKOUT.name(),
+                        null,
                         UUID.fromString(TransactionTestUtils.USER_ID)
                 )
         )
@@ -2774,6 +2797,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -2792,6 +2816,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 correlationId,
                                 true,
                                 clientId.name(),
+                                null,
                                 UUID.fromString(TransactionTestUtils.USER_ID)
                         )
         )
@@ -2895,6 +2920,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -3020,6 +3046,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -3164,6 +3191,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -3307,6 +3335,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -3450,6 +3479,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -3620,6 +3650,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -3641,6 +3672,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         correlationId,
                         true,
                         clientId.name(),
+                        null,
                         UUID.fromString(TransactionTestUtils.USER_ID)
                 )
         )
@@ -3796,6 +3828,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -3941,6 +3974,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 
@@ -3962,6 +3996,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         correlationId,
                         true,
                         clientId.name(),
+                        null,
                         UUID.fromString(TransactionTestUtils.USER_ID)
                 )
         )
@@ -4114,6 +4149,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
                 authorizationData
         );
 

@@ -281,6 +281,7 @@ class CircuitBreakerTest {
                                 "transactionId",
                                 null,
                                 "",
+                                null,
                                 new RequestAuthorizationRequestDto()
                         )
                 )

@@ -146,7 +146,7 @@ class PaymentGatewayClientTest {
     private final NpgApiKeyConfiguration npgApiKeyHandler = Mockito.mock(NpgApiKeyConfiguration.class);
 
     @BeforeEach
-    private void init() {
+    public void init() {
         client = new PaymentGatewayClient(
                 objectMapper,
                 mockUuidUtils,
@@ -620,7 +620,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         eq(NpgClient.PaymentMethod.CARDS),
                         eq(npgDefaultApiKey),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
@@ -635,6 +636,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -703,10 +705,24 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 );
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                .buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
         verify(npgApiKeyHandler, times(1)).getDefaultApiKey();
     }
 
@@ -784,7 +800,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         )
                 .thenReturn(
@@ -813,6 +830,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -897,7 +915,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         )
                 .thenReturn(
@@ -925,6 +944,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1000,7 +1020,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         )
                 .thenReturn(
@@ -1028,6 +1049,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1104,7 +1126,8 @@ class PaymentGatewayClientTest {
                         eq(null),
                         eq(NpgClient.PaymentMethod.CARDS),
                         eq(npgDefaultApiKey),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
@@ -1117,6 +1140,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1185,10 +1209,24 @@ class PaymentGatewayClientTest {
                         eq(null),
                         any(),
                         any(),
-                        eq(contractId)
+                        eq(contractId),
+                        any()
                 );
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+                .buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
         verify(npgApiKeyHandler, times(1)).getDefaultApiKey();
     }
 
@@ -1289,7 +1327,8 @@ class PaymentGatewayClientTest {
                         eq(NpgClient.PaymentMethod.PAYPAL),
                         any(),
                         eq(contractId),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
@@ -1304,6 +1343,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1373,7 +1413,8 @@ class PaymentGatewayClientTest {
                         any(),
                         eq("pspKey1"),
                         eq(contractId),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
@@ -1499,7 +1540,8 @@ class PaymentGatewayClientTest {
                         eq(NpgClient.PaymentMethod.PAYPAL),
                         eq("pspKey1"),
                         eq(contractId),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
@@ -1513,6 +1555,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 true,
                                 it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1520,7 +1563,20 @@ class PaymentGatewayClientTest {
                 .verify();
 
         verify(npgClient, times(0))
-                .buildFormForPayment(any(), any(), any(), any(), any(), eq(orderId), any(), any(), any(), any(), any());
+                .buildFormForPayment(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        eq(orderId),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(npgApiKeyHandler, times(1)).getApiKeyForPaymentMethod(NpgClient.PaymentMethod.PAYPAL, "pspId2");
@@ -1599,7 +1655,8 @@ class PaymentGatewayClientTest {
                         eq(NpgClient.PaymentMethod.BANCOMATPAY),
                         any(),
                         eq(null),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any())).thenReturn(Either.right("pspKey1"));
@@ -1613,6 +1670,7 @@ class PaymentGatewayClientTest {
                                 correlationId,
                                 false,
                                 clientId.name(),
+                                null,
                                 userId
                         )
                 )
@@ -1679,7 +1737,8 @@ class PaymentGatewayClientTest {
                         any(),
                         eq("pspKey1"),
                         eq(null),
-                        eq(totalAmount)
+                        eq(totalAmount),
+                        any()
                 );
         verify(npgClient, times(0))
                 .buildForm(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());

@@ -156,6 +156,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         ? transactionGatewayActivationData.getCorrelationId()
                                         : null,
                                 tx.getClientId().getEffectiveClient().name(),
+                                command.lang,
                                 Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
                                         .map(UUID::fromString).orElse(null)
                         )
