@@ -5,6 +5,7 @@ import org.slf4j.MDC;
 import reactor.core.CoreSubscriber;
 import reactor.util.context.Context;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +59,10 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
         if (!context.isEmpty()) {
             Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElseGet(HashMap::new);
             Map<String, String> reactorContextMap = context.stream()
+                    .filter(
+                            e -> Arrays.stream(TransactionTracingUtils.TracingEntry.values())
+                                    .anyMatch(tracingEntry -> tracingEntry.getKey().equals(e.getKey()))
+                    )
                     .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
             if (reactorContextMap.getOrDefault("contextKey", "").equals(mdcContextMap.getOrDefault("contextKey", ""))) {
                 reactorContextMap.putAll(mdcContextMap);
