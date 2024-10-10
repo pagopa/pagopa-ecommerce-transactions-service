@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGateway
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.WalletInfo;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
@@ -264,12 +265,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
                                     String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
-                                        /*case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
-                                                logo,
-                                                PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
-                                        );*/
-                                        //TODO: how to handle this case? We should remove this value for enum from document definition, but it should not be safe for old transaction and for helpdesk scope
-                                        case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
+                                       case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
                                                 authorizationRequestData
@@ -290,12 +286,9 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                 )
                                                         ),
                                                 authorizationOutput.npgConfirmSessionId().orElse(null),
-                                                /* @formatter:off
-                                                 * FIXME walletInfo set to null: this modification is addressed in
-                                                 * PR: https://github.com/pagopa/pagopa-ecommerce-transactions-service/pull/475
-                                                 * @formatter:on
-                                                 */
-                                                null
+                                                authorizationRequestData
+                                                        .authDetails() instanceof WalletAuthRequestDetailsDto ?
+                                                        new WalletInfo(((WalletAuthRequestDetailsDto) authorizationRequestData.authDetails()).getWalletId(), null) : null
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
@@ -333,10 +326,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                             .just(
                                                                     e.getData()
                                                                             .getPaymentGateway()
-                                                            )
-                                                            .filter(
-                                                                    gateway -> gateway
-                                                                            .equals(PaymentGateway.NPG)
                                                             )
                                                             .flatMap(
                                                                     p -> tracingUtils.traceMono(
