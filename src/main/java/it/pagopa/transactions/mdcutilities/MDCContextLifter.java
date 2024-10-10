@@ -42,6 +42,7 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
     @Override
     public void onComplete() {
         coreSubscriber.onComplete();
+        MDC.clear();
     }
 
     @Override
@@ -64,13 +65,8 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
                                     .anyMatch(tracingEntry -> tracingEntry.getKey().equals(e.getKey()))
                     )
                     .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
-            if (reactorContextMap.getOrDefault("contextKey", "").equals(mdcContextMap.getOrDefault("contextKey", ""))) {
-                reactorContextMap.putAll(mdcContextMap);
-                MDC.setContextMap(reactorContextMap);
-            } else {
-                mdcContextMap.putAll(reactorContextMap);
-                MDC.setContextMap(mdcContextMap);
-            }
+            mdcContextMap.putAll(reactorContextMap);
+            MDC.setContextMap(mdcContextMap);
         } else {
             MDC.clear();
         }
