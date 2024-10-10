@@ -83,7 +83,7 @@ public class TransactionsController implements V2Api {
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
-                .flatMap(ntr -> transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId)
+                .flatMap(ntr -> transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
