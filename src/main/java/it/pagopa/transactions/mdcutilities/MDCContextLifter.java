@@ -61,7 +61,7 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
                     .map(
                             key -> new AbstractMap.SimpleEntry<>(
                                     key.toString(),
-                                    context.getOrEmpty(key.toString()).map(Object::toString)
+                                    context.getOrEmpty(key.getKey()).map(Object::toString)
                                             .orElse(key.getDefaultValue())
                             )
                     )
