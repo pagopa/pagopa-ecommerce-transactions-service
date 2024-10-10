@@ -59,12 +59,16 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
     private void copyToMdc(Context context) {
         if (!context.isEmpty()) {
             Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElseGet(HashMap::new);
-            Map<String, String> reactorContextMap = context.stream()
-                    .filter(
-                            e -> Arrays.stream(TransactionTracingUtils.TracingEntry.values())
-                                    .anyMatch(tracingEntry -> tracingEntry.getKey().equals(e.getKey()))
+             Map<String, String> reactorContextMap = Arrays
+                    .stream(TransactionTracingUtils.TracingEntry.values())
+                    .map(
+                            key -> new AbstractMap.SimpleEntry<>(
+                                    key.toString(),
+                                    context.getOrEmpty(key.toString()).map(Object::toString)
+                                            .orElse(key.getDefaultValue())
+                            )
                     )
-                    .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
+                    .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
             mdcContextMap.putAll(reactorContextMap);
             MDC.setContextMap(mdcContextMap);
         } else {
