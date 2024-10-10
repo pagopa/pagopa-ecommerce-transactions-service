@@ -30,7 +30,7 @@ microservice-chart:
         CHECKOUT_OUTCOME_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/esito"
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.41.0" #improve
+    tag: "1.41.1" #improve
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
