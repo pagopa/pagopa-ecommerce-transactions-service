@@ -93,15 +93,7 @@ public class TransactionsController implements TransactionsApi {
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
-                .flatMap(ntr -> {
-                    log.info(
-                            "Create new Transaction for rptIds: {}. ClientId: [{}]",
-                            ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList(),
-                            xClientId.getValue()
-
-                    );
-                    return transactionsService.newTransaction(ntr, xClientId, transactionId);
-                })
+                .flatMap(ntr -> transactionsService.newTransaction(ntr, xClientId, transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
