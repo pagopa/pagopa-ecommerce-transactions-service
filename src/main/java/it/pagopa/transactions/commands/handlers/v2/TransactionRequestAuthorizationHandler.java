@@ -71,7 +71,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     private final Optional<WalletAsyncQueueClient> walletAsyncQueueClient;
 
-    protected final Integer npgAuthRequestTimeout;
+    protected final Integer saveLastUsedMethodTimeout;
     protected final Integer transientQueuesTTLSeconds;
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
@@ -95,7 +95,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 "walletAsyncQueueClient"
             ) Optional<WalletAsyncQueueClient> walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
-            @Value("${npg.authorization.request.timeout.seconds}") Integer npgAuthRequestTimeout,
+            @Value("${authorization.savelastmethod.seconds}") Integer saveLastUsedMethodTimeout,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
             JwtTokenUtils jwtTokenUtils,
@@ -120,7 +120,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
-        this.npgAuthRequestTimeout = npgAuthRequestTimeout;
+        this.saveLastUsedMethodTimeout = saveLastUsedMethodTimeout;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.walletAsyncQueueClient = walletAsyncQueueClient;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
@@ -337,7 +337,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                     tracingInfo
                                                                                             ),
                                                                                             Duration.ofSeconds(
-                                                                                                    npgAuthRequestTimeout
+                                                                                                    saveLastUsedMethodTimeout
                                                                                             ),
                                                                                             Duration.ofSeconds(
                                                                                                     transientQueuesTTLSeconds

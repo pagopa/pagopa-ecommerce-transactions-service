@@ -111,7 +111,7 @@ class TransactionRequestAuthorizationHandlerTest {
     private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
     private final int transientQueueEventsTtlSeconds = 30;
-    private final int npgAuthRequestTimeout = 150;
+    private final int saveLastUsedMethodTimeout = 0;
 
     private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
 
@@ -142,7 +142,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 transactionAuthorizationRequestedQueueAsyncClient,
                 Optional.of(walletAsyncQueueClient),
                 transientQueueEventsTtlSeconds,
-                npgAuthRequestTimeout,
+                saveLastUsedMethodTimeout,
                 tracingUtils,
                 openTelemetryUtils,
                 jwtTokenUtils,
