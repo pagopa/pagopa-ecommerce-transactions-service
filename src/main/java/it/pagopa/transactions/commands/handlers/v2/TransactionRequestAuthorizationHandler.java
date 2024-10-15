@@ -26,7 +26,6 @@ import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.client.WalletAsyncQueueClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationOutput;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -69,8 +68,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     protected final OpenTelemetryUtils openTelemetryUtils;
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
 
-    private final Optional<WalletAsyncQueueClient> walletAsyncQueueClient;
-
     protected final Integer saveLastUsedMethodTimeout;
     protected final Integer transientQueuesTTLSeconds;
 
@@ -91,9 +88,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Qualifier(
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
-            @Qualifier(
-                "walletAsyncQueueClient"
-            ) Optional<WalletAsyncQueueClient> walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
             @Value("${authorization.savelastmethoddelay.seconds}") Integer saveLastUsedMethodTimeout,
             TracingUtils tracingUtils,
@@ -122,7 +116,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
         this.saveLastUsedMethodTimeout = saveLastUsedMethodTimeout;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
-        this.walletAsyncQueueClient = walletAsyncQueueClient;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
         this.exclusiveLockDocumentWrapper = exclusiveLockDocumentWrapper;
     }
@@ -193,8 +186,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 )
                 .orElse(Mono.empty());
         return transactionActivated
-                .doOnNext(t -> this.fireWalletLastUsageEvent(command, t)
-                )
                 .flatMap(t -> switch (command.getData().authDetails()) {
                     case CardsAuthRequestDetailsDto authRequestDetails -> paymentMethodsClient.updateSession(
                             command.getData().paymentInstrumentId(),
@@ -414,47 +405,4 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         return redirectionAuthRequestPipeline(authorizationData, touchpoint, userId);
     }
 
-    /**
-     * Emit Wallet Used event on wallet queue. The semantic
-     * of this method is fire-and-forget, so any action performed by this
-     * method is executed asynchronously.
-     * e.g. doOnNext(_ -> fireWalletLastUsageEvent(...))
-     */
-    private void fireWalletLastUsageEvent(
-            TransactionRequestAuthorizationCommand command,
-            TransactionActivated transactionActivated
-    ) {
-        final var wallet = switch (command.getData().authDetails()) {
-            case WalletAuthRequestDetailsDto walletData -> Mono.just(walletData);
-            default -> Mono.<WalletAuthRequestDetailsDto>empty();
-        };
-
-        walletAsyncQueueClient.ifPresent(
-                queueClient -> wallet.flatMap(walletData -> tracingUtils.traceMono(
-                                        this.getClass().getSimpleName(),
-                                        (tracingInfo) -> queueClient.fireWalletLastUsageEvent(
-                                                walletData.getWalletId(),
-                                                transactionActivated.getClientId(),
-                                                tracingInfo
-                                        )
-                                ).doOnError(
-                                        exception -> log.error(
-                                                "Failed to send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
-                                                transactionActivated.getTransactionId(),
-                                                walletData.getWalletId(),
-                                                transactionActivated.getClientId(),
-                                                exception
-                                        )
-                                )
-                                .doOnNext(
-                                        ignored -> log.info(
-                                                "Send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
-                                                transactionActivated.getTransactionId(),
-                                                walletData.getWalletId(),
-                                                transactionActivated.getClientId()
-                                        )
-                                ).then())
-                        .subscribeOn(Schedulers.boundedElastic())
-                        .subscribe());
-    }
 }

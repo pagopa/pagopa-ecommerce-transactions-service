@@ -24,7 +24,6 @@ microservice-chart:
         TRANSACTION_REFUND_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-refund-queue-b
         TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-notifications-queue-b
         TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-auth-requested-queue-b
-        WALLET_USAGE_QUEUE_NAME: pagopa-p-weu-wallet-usage-update-queue-b
         OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
         ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
@@ -178,9 +177,6 @@ microservice-chart:
     NODE_FORWARDER_URL: "https://api.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
-    FEATURE_WALLET_USAGE_ENABLED: "false"
-    WALLET_USAGE_QUEUE_NAME: pagopa-p-weu-wallet-usage-update-queue
-    WALLET_USAGE_QUEUE_TTL: "3600"
     CHECKOUT_NPG_GDI_URL: "https://checkout.pagopa.it/gdi-check"
     CHECKOUT_OUTCOME_URL: "https://checkout.pagopa.it/esito"
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
@@ -206,7 +202,6 @@ microservice-chart:
     NPG_PAYPAL_PSP_KEYS: npg-paypal-psp-keys
     NPG_BANCOMATPAY_PSP_KEYS: npg-bancomatpay-psp-keys
     NPG_MYBANK_PSP_KEYS: npg-mybank-psp-keys
-    WALLET_STORAGE_CONNECTION_STRING: wallet-storage-connection-string
     NPG_SATISPAY_PSP_KEYS: npg-satispay-psp-keys
     NPG_APPLEPAY_PSP_KEYS: npg-apple-pay-psp-keys
   keyvault:
