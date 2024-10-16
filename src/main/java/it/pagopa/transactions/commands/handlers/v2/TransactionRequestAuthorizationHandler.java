@@ -95,7 +95,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 "walletAsyncQueueClient"
             ) Optional<WalletAsyncQueueClient> walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
-            @Value("${authorization.savelastmethoddelay.seconds}") Integer saveLastUsedMethodTimeout,
+            @Value("${authorization.event.visibilityTimeoutSeconds}") Integer saveLastUsedMethodTimeout,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
             JwtTokenUtils jwtTokenUtils,
@@ -265,7 +265,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
                                     String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
-                                       case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
+                                        case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
                                                 authorizationRequestData
