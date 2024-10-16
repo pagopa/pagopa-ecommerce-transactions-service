@@ -67,7 +67,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     protected final OpenTelemetryUtils openTelemetryUtils;
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
 
-    protected final Integer saveLastUsedMethodTimeout;
+    protected final Integer authRequestEventVisibilityTimeoutSeconds;
     protected final Integer transientQueuesTTLSeconds;
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
@@ -88,7 +88,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
-            @Value("${authorization.savelastmethoddelay.seconds}") Integer saveLastUsedMethodTimeout,
+            @Value("${authorization.event.visibilityTimeoutSeconds}") Integer authRequestEventVisibilityTimeoutSeconds,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
             JwtTokenUtils jwtTokenUtils,
@@ -113,7 +113,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
-        this.saveLastUsedMethodTimeout = saveLastUsedMethodTimeout;
+        this.authRequestEventVisibilityTimeoutSeconds = authRequestEventVisibilityTimeoutSeconds;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
         this.exclusiveLockDocumentWrapper = exclusiveLockDocumentWrapper;
@@ -255,7 +255,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
                                     String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
-                                       case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
+                                        case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
                                                 authorizationRequestData
