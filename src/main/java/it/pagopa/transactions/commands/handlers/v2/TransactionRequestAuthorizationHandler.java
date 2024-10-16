@@ -327,7 +327,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                     tracingInfo
                                                                                             ),
                                                                                             Duration.ofSeconds(
-                                                                                                    saveLastUsedMethodTimeout
+                                                                                                    authRequestEventVisibilityTimeoutSeconds
                                                                                             ),
                                                                                             Duration.ofSeconds(
                                                                                                     transientQueuesTTLSeconds
