@@ -8,12 +8,10 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.StrictJsonSerializerProvider;
 import it.pagopa.ecommerce.commons.queues.mixin.serialization.v1.QueueEventMixInEventCodeFieldDiscriminator;
 import it.pagopa.ecommerce.commons.queues.mixin.serialization.v2.QueueEventMixInClassFieldDiscriminator;
-import it.pagopa.transactions.client.WalletAsyncQueueClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.netty.http.client.HttpClient;
@@ -170,33 +168,6 @@ public class AzureStorageConfig {
                                                                                 JsonSerializer jsonSerializerV2
     ) {
         return buildQueueAsyncClient(storageConnectionString, queueName, jsonSerializerV2);
-    }
-
-    @Bean("walletAsyncQueueClient")
-    @ConditionalOnExpression("${feature.walletusage.enabled:false}")
-    public WalletAsyncQueueClient walletUsageQueueAsyncClient(
-                                                              @Value(
-                                                                  "${azurestorage.wallet.connectionstring}"
-                                                              ) String storageConnectionString,
-                                                              @Value(
-                                                                  "${azurestorage.queues.walletusage.ttlSeconds}"
-                                                              ) int secondsTtl,
-                                                              @Value(
-                                                                  "${azurestorage.queues.walletusage.name}"
-                                                              ) String queueName
-    ) {
-        final var serializer = new StrictJsonSerializerProvider().createInstance();
-        final var queueAsyncClient = new QueueClientBuilder()
-                .connectionString(storageConnectionString)
-                .queueName(queueName)
-                .httpClient(
-                        new NettyAsyncHttpClientBuilder(
-                                HttpClient.create().resolver(nameResolverSpec -> nameResolverSpec.ndots(1))
-                        ).build()
-                )
-                .buildAsyncClient();
-        queueAsyncClient.createIfNotExists().block();
-        return new WalletAsyncQueueClient(queueAsyncClient, secondsTtl, serializer);
     }
 
     private QueueAsyncClient buildQueueAsyncClient(
