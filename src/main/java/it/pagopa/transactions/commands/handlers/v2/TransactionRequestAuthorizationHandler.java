@@ -71,7 +71,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     private final Optional<WalletAsyncQueueClient> walletAsyncQueueClient;
 
-    protected final Integer saveLastUsedMethodTimeout;
+    protected final Integer authRequestEventVisibilityTimeoutSeconds;
     protected final Integer transientQueuesTTLSeconds;
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
@@ -95,7 +95,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 "walletAsyncQueueClient"
             ) Optional<WalletAsyncQueueClient> walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
-            @Value("${authorization.event.visibilityTimeoutSeconds}") Integer saveLastUsedMethodTimeout,
+            @Value("${authorization.event.visibilityTimeoutSeconds}") Integer authRequestEventVisibilityTimeoutSeconds,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
             JwtTokenUtils jwtTokenUtils,
@@ -120,7 +120,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
-        this.saveLastUsedMethodTimeout = saveLastUsedMethodTimeout;
+        this.authRequestEventVisibilityTimeoutSeconds = authRequestEventVisibilityTimeoutSeconds;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.walletAsyncQueueClient = walletAsyncQueueClient;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
@@ -337,7 +337,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                     tracingInfo
                                                                                             ),
                                                                                             Duration.ofSeconds(
-                                                                                                    saveLastUsedMethodTimeout
+                                                                                                    authRequestEventVisibilityTimeoutSeconds
                                                                                             ),
                                                                                             Duration.ofSeconds(
                                                                                                     transientQueuesTTLSeconds
