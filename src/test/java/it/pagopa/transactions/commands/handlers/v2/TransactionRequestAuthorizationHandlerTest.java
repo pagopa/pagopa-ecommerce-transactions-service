@@ -106,8 +106,6 @@ class TransactionRequestAuthorizationHandlerTest {
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
 
-    private static boolean cardsTested = false;
-
     private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
     private final int transientQueueEventsTtlSeconds = 30;
@@ -156,7 +154,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEventNpgCardsRedirectToExternalDomain() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -180,9 +177,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -299,7 +294,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEventNpgCardsPaymentCompleteCheckoutClient() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -323,9 +317,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -447,7 +439,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEventNpgCardsPaymentCompleteIOClient() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -471,9 +462,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -604,7 +593,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEventGdiVerification() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -628,9 +617,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -759,7 +746,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEventBadGatewayException() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -783,9 +770,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -900,9 +885,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 faultCode,
                 faultCodeString,
@@ -990,9 +973,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 faultCode,
                 faultCodeString,
@@ -1069,7 +1050,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldReturnErrorForMissingStateInNPGConfirmPaymentResponse() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -1093,9 +1074,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -1189,7 +1168,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldReturnErrorForNPGGdiVerificationResponseStateWithNoFieldSetReceived() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -1213,9 +1192,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -1312,7 +1289,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldReturnErrorForNPGGdiVerificationResponseStateWithNoFieldsReceivedIntoFieldSet() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -1336,9 +1313,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -1436,7 +1411,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldReturnErrorForNPGGdiVerificationResponseStateWithNullSrcReceivedInField0() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -1460,9 +1435,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -1560,7 +1533,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldReturnErrorForNPGRedirectToExternalDomainStateResponseWithoutPopulatedUrl() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -1584,9 +1557,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -1683,7 +1654,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEventNpgCardsRedirectToExternalDomainSavingReceivedSessionIdInEvent() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -1707,9 +1678,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -1826,7 +1795,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEventNpgCardsPaymentCompleteSavingReceivedSessionIdInEvent() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -1850,9 +1819,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -1974,7 +1941,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSaveAuthorizationEventGdiVerificationSavingReceivedSessionIdInEvent() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -1998,9 +1965,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -2130,7 +2095,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String contractId = "contractId";
         String sessionId = "sessionId";
         String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -2154,9 +2119,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -2325,7 +2288,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String contractId = "contractId";
         String sessionId = "sessionId";
         String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -2347,9 +2310,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -2435,7 +2396,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String contractId = "contractId";
         String sessionId = "sessionId";
         String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -2584,7 +2545,7 @@ class TransactionRequestAuthorizationHandlerTest {
     void shouldPerformTransactionAuthorizationForApmPaymentMethodUsingOrderBuildNpgCall() {
         String sessionId = "sessionId";
         String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -2734,7 +2695,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String contractId = "contractId";
         String sessionId = "sessionId";
         String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -2858,7 +2819,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldHandleAuthorizationRequestForRedirectionPaymentGateway() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -2989,7 +2950,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldUseDefaultAssetLogoWithNoMappingConfigurationMatchFoundInBrandLogoMap() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3013,9 +2974,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -3134,7 +3093,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldUseDefaultAssetLogoWithNoBrandLogoConfiguration() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3158,9 +3117,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -3278,7 +3235,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldUseBrandAssetLogoForCardPaymentWithConfiguredBrand() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3302,9 +3259,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -3422,7 +3377,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldUseDefaultLogoForNoBrandInformation() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3446,9 +3401,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -3570,7 +3523,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String contractId = "contractId";
         String sessionId = "sessionId";
         String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3594,9 +3547,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -3775,7 +3726,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldNotFireWalletUsedEventWhenRequestAuthorizationWithoutWallet() {
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3797,9 +3748,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -3896,7 +3845,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String contractId = "contractId";
         String sessionId = "sessionId";
         String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3920,9 +3869,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 new CompanyName(null),
                                 null
                         )
-                ), // TODO
-                   // TRANSFER
-                   // LIST
+                ),
                 email,
                 null,
                 null,
@@ -4100,9 +4047,8 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldNotPerformGatewayCallForErrorAcquiringLock() {
-        String sessionId = "sessionId";
         String orderId = "oderId";
-        TransactionId transactionId = new TransactionId(transactionIdUUID);
+
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
