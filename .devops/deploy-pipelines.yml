@@ -87,92 +87,8 @@ resources:
 pool:
   vmImage: ubuntu-latest
 
-# --- START Deploy DEV --- #
 stages:
 
-  - stage: 'Build_for_DEV'
-    displayName: 'Build for DEV'
-    condition: and(succeeded(), not(${{ parameters.SKIP_BUILD }}), eq(${{parameters.DEV_DEPLOY}}, true))
-    jobs:
-      - job: Build_docker
-        displayName: Build docker with Build.SourceVersion as TAG
-        steps:
-          - template: templates/docker-release/template.yaml@pagopaCommons
-            parameters:
-              CONTAINER_REGISTRY_SERVICE_CONN: $(DEV_CONTAINER_REGISTRY_SERVICE_CONN)
-              CONTAINER_REGISTRY_FQDN: $(DEV_CONTAINER_NAMESPACE)
-              DOCKER_IMAGE_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
-              DOCKER_IMAGE_TAG: $(Build.SourceVersion)
-              FORCE_REPLACE_DOCKER_IMAGE: ${{ parameters.FORCE_REPLACE_DOCKER_IMAGE }}
-
-  - stage: 'Deploy_for_DEV'
-    displayName: 'Deploy DEV'
-    dependsOn: Build_for_DEV
-    condition: or(succeeded(), ${{ parameters.SKIP_BUILD }}, eq(${{parameters.DEV_DEPLOY}}, true) )
-    jobs:
-      - deployment: "deploy"
-        environment: 'DEV'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - checkout: self
-                  displayName: "Checkout"
-                - task: Bash@3
-                  name: update_chart_version
-                  displayName: 'Setup helm microservice chart'
-                  inputs:
-                    targetType: "inline"
-                    script: |
-                      helm repo add microservice-chart https://pagopa.github.io/aks-microservice-chart-blueprint
-                      helm dep build helm
-                - task: Kubernetes@1
-                  displayName: (workaround) Delete old beta deployment
-                  continueOnError: true
-                  inputs:
-                    kubernetesServiceEndpoint: $(DEV_KUBERNETES_SERVICE_CONN)
-                    kubernetesCluster: $(kubernetesCluster)
-                    namespace: ecommerce
-                    command: delete
-                    arguments: deployment beta-pagopaecommercetransactionsservice-microservice-chart
-                - template: azure-templates/helm-microservice-chart-deploy.yml
-                  parameters:
-                    DO_DEPLOY: true
-                    DO_BLUE_GREEN_DEPLOY: true
-                    ENV: 'DEV'
-                    KUBERNETES_SERVICE_CONN: $(DEV_KUBERNETES_SERVICE_CONN)
-                    NAMESPACE: ecommerce
-                    APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
-                    VALUE_FILE: "helm/values-dev.yaml"
-                    GREEN_VERSION: $(Build.SourceVersion)
-                    BLUE_VERSION: $(Build.SourceVersion)
-
-  - stage: "API_DEV_test"
-    displayName: 'Running API test on dev app'
-    dependsOn: Deploy_for_DEV
-    jobs:
-      - job: newman_api_test
-        steps:
-          - checkout: pagopaCheckoutTests
-          - template: azure-templates/api-tests.yml
-            parameters:
-              COLLECTION_TEST_FILE: "api-tests/checkout-tests/npg/checkout-for-ecommerce-api.tests.json"
-              ENV_FILE: "api-tests/dev.envs.json"
-              TEST_FILE_PREFIX: "dev"
-
-  - stage: "E2E_Tests_Checkout_DEV_environment"
-    displayName: 'Running E2E test on dev app'
-    pool:
-      vmImage: 'ubuntu-latest'
-    dependsOn: Deploy_for_DEV
-    jobs:
-      - job: e2e_tests
-        steps:
-          - template: .devops/azure-templates/e2e-tests.yaml@pagopaCheckoutTests
-            parameters:
-              ENVIRONMENT: DEV
-              CHECKOUT_RESOURCE_REPO_NAME: pagopaCheckoutTests
-  # --- END Deploy DEV --- #
 
   # --- START Deploy UAT --- #
   - stage: "Build_release_candidate"
@@ -239,18 +155,6 @@ stages:
                     GREEN_VERSION: $(green_app_version)
                     BLUE_VERSION: $(Build.SourceVersion)
 
-  - stage: "API_Blue_UAT_test"
-    displayName: 'Running API test on blue app'
-    dependsOn: Deploy_UAT_Blue
-    jobs:
-      - job: newman_api_test
-        steps:
-          - checkout: pagopaCheckoutTests
-          - template: azure-templates/api-tests.yml
-            parameters:
-              COLLECTION_TEST_FILE: "api-tests/checkout-tests/pgs/checkout-for-ecommerce-api.tests.json"
-              ENV_FILE: "api-tests/uat.transactions.blue.envs.json"
-              TEST_FILE_PREFIX: "blue-uat"
 
   - stage: "Bluegreen_WaitForApproval"
     displayName: 'UAT green approval deployment'
