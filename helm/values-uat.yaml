@@ -1,7 +1,7 @@
 microservice-chart:
   namespace: "ecommerce"
-  nameOverride: ""
-  fullnameOverride: ""
+  nameOverride: "b-pagopa-ecommerce-transactions-service"
+  fullnameOverride: "b-pagopaecommercetransactionsservice"
   canaryDelivery:
     create: false
     ingress:
