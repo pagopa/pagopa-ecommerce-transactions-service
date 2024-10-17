@@ -71,7 +71,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     private final Optional<WalletAsyncQueueClient> walletAsyncQueueClient;
 
-    protected final Integer npgAuthRequestTimeout;
+    protected final Integer authRequestEventVisibilityTimeoutSeconds;
     protected final Integer transientQueuesTTLSeconds;
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
@@ -95,7 +95,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 "walletAsyncQueueClient"
             ) Optional<WalletAsyncQueueClient> walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
-            @Value("${npg.authorization.request.timeout.seconds}") Integer npgAuthRequestTimeout,
+            @Value("${authorization.event.visibilityTimeoutSeconds}") Integer authRequestEventVisibilityTimeoutSeconds,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
             JwtTokenUtils jwtTokenUtils,
@@ -120,7 +120,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
-        this.npgAuthRequestTimeout = npgAuthRequestTimeout;
+        this.authRequestEventVisibilityTimeoutSeconds = authRequestEventVisibilityTimeoutSeconds;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.walletAsyncQueueClient = walletAsyncQueueClient;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
@@ -265,7 +265,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
                                     String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
-                                       case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
+                                        case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
                                                 authorizationRequestData
@@ -287,14 +287,15 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                         ),
                                                 authorizationOutput.npgConfirmSessionId().orElse(null),
                                                 authorizationRequestData
-                                                        .authDetails() instanceof WalletAuthRequestDetailsDto ?
-                                                        new WalletInfo(((WalletAuthRequestDetailsDto) authorizationRequestData.authDetails()).getWalletId(), null) : null
+                                                        .authDetails() instanceof WalletAuthRequestDetailsDto walletAuthRequestDetailsDto ?
+                                                        new WalletInfo(walletAuthRequestDetailsDto.getWalletId(), null) : null
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 authorizationOutput.authorizationTimeoutMillis().orElse(600000)
                                         );
-                                        default -> throw new RuntimeException();
+                                        default ->
+                                                throw new InvalidRequestException("Unhandled payment gateway: [%s]".formatted(paymentGateway));
                                     };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
@@ -337,7 +338,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                                     tracingInfo
                                                                                             ),
                                                                                             Duration.ofSeconds(
-                                                                                                    npgAuthRequestTimeout
+                                                                                                    authRequestEventVisibilityTimeoutSeconds
                                                                                             ),
                                                                                             Duration.ofSeconds(
                                                                                                     transientQueuesTTLSeconds
@@ -432,7 +433,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         walletAsyncQueueClient.ifPresent(
                 queueClient -> wallet.flatMap(walletData -> tracingUtils.traceMono(
                                         this.getClass().getSimpleName(),
-                                        (tracingInfo) -> queueClient.fireWalletLastUsageEvent(
+                                        tracingInfo -> queueClient.fireWalletLastUsageEvent(
                                                 walletData.getWalletId(),
                                                 transactionActivated.getClientId(),
                                                 tracingInfo
