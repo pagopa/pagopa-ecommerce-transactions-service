@@ -470,6 +470,7 @@ public class TransactionsService {
             String transactionId,
             UUID xUserId,
             String paymentGatewayId,
+            String lang,
             RequestAuthorizationRequestDto requestAuthorizationRequestDto
     ) {
         return getBaseTransactionView(transactionId, xUserId)
@@ -685,6 +686,7 @@ public class TransactionsService {
 
                             TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                                     transactionsUtils.getRptIds(transactionDocument).stream().map(RptId::new).toList(),
+                                    lang,
                                     authorizationData
                             );
                             Mono<RequestAuthorizationResponseDto> authPipeline = switch (transactionDocument) {
@@ -802,32 +804,6 @@ public class TransactionsService {
 
         Mono<Tuple2<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext>> authUpdateContext = txData
                 .map(TupleUtils.function((pspId, paymentMethodTypeCode, clientId, isWalletPayment) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
-                    case OutcomeXpayGatewayDto outcome -> Tuples.of(
-                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY,
-                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                                    pspId,
-                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                            outcome.getOutcome().toString(),
-                                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeXpayGatewayDto.ErrorCodeEnum::toString)
-                                    ),
-                                    paymentMethodTypeCode,
-                                    clientId,
-                                    isWalletPayment
-                            )
-                    );
-                    case OutcomeVposGatewayDto outcome -> Tuples.of(
-                            UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS,
-                            new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
-                                    pspId,
-                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                            outcome.getOutcome().toString(),
-                                            Optional.ofNullable(outcome.getErrorCode()).map(OutcomeVposGatewayDto.ErrorCodeEnum::toString)
-                                    ),
-                                    paymentMethodTypeCode,
-                                    clientId,
-                                    isWalletPayment
-                            )
-                    );
                     case OutcomeNpgGatewayDto outcome -> Tuples.of(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
                             new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
@@ -1462,8 +1438,6 @@ public class TransactionsService {
 
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
-            case CardAuthRequestDetailsDto cardData ->
-                    Mono.just(new PaymentSessionData(cardData.getPan().substring(0, 6), null, Optional.of(cardData.getBrand()).map(Enum::toString).orElse(null), null));
             case CardsAuthRequestDetailsDto cards ->
                     ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(), response.getSessionId(), response.getBrand(), null));
             case WalletAuthRequestDetailsDto wallet -> walletClient

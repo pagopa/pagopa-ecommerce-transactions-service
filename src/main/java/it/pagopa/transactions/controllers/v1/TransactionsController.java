@@ -93,15 +93,7 @@ public class TransactionsController implements TransactionsApi {
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
-                .flatMap(ntr -> {
-                    log.info(
-                            "Create new Transaction for rptIds: {}. ClientId: [{}]",
-                            ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList(),
-                            xClientId.getValue()
-
-                    );
-                    return transactionsService.newTransaction(ntr, xClientId, transactionId);
-                })
+                .flatMap(ntr -> transactionsService.newTransaction(ntr, xClientId, transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
@@ -144,6 +136,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  Mono<RequestAuthorizationRequestDto> requestAuthorizationRequestDto,
                                                                                                  UUID xUserId,
                                                                                                  String xPgsId,
+                                                                                                 String lang,
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
@@ -154,6 +147,7 @@ public class TransactionsController implements TransactionsApi {
                                         transactionId,
                                         xUserId,
                                         xPgsId,
+                                        lang,
                                         requestAuthorizationRequest
                                 )
                 )
@@ -447,8 +441,6 @@ public class TransactionsController implements TransactionsApi {
                     .filter(Predicate.not(List::isEmpty)).map(headers -> headers.get(0));
             String gatewayHeader = gatewayTypeHeader.orElse(pgsIdHeader.orElse(""));
             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger trigger = switch (gatewayHeader) {
-                case "XPAY" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_XPAY;
-                case "VPOS" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.PGS_VPOS;
                 case "NPG" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG;
                 case "REDIRECT" -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT;
                 default -> UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.UNKNOWN;

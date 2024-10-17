@@ -8,14 +8,17 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestD
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.WalletInfo;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -31,6 +34,7 @@ import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationH
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.LockNotAcquiredException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -72,6 +76,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
+    private final ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+
     @Autowired
     public TransactionRequestAuthorizationHandler(
             PaymentGatewayClient paymentGatewayClient,
@@ -95,7 +101,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             JwtTokenUtils jwtTokenUtils,
             @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds,
-            UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils
+            UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
+            ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper
     ) {
         super(
                 paymentGatewayClient,
@@ -117,6 +124,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.walletAsyncQueueClient = walletAsyncQueueClient;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
+        this.exclusiveLockDocumentWrapper = exclusiveLockDocumentWrapper;
     }
 
     @Override
@@ -140,24 +148,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoXPay = xpayAuthRequestPipeline(
-                authorizationRequestData
-        ).map(
-                authorizationOutput -> Tuples.of(
-                        authorizationOutput,
-                        PaymentGateway.XPAY
-                )
-        );
-
-        Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoVPOS = vposAuthRequestPipeline(
-                authorizationRequestData
-        ).map(
-                authorizationOutput -> Tuples.of(
-                        authorizationOutput,
-                        PaymentGateway.VPOS
-                )
-        );
-
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> monoNpg = transactionActivated
                 .flatMap(
                         tx -> npgAuthRequestPipeline(
@@ -167,6 +157,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                         ? transactionGatewayActivationData.getCorrelationId()
                                         : null,
                                 tx.getClientId().getEffectiveClient().name(),
+                                command.lang,
                                 Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
                                         .map(UUID::fromString).orElse(null)
                         )
@@ -193,7 +184,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 );
 
         List<Mono<Tuple2<AuthorizationOutput, PaymentGateway>>> gatewayRequests = List
-                .of(monoXPay, monoVPOS, monoNpg, monoRedirect);
+                .of(monoNpg, monoRedirect);
 
         Mono<Tuple2<AuthorizationOutput, PaymentGateway>> gatewayAttempts = gatewayRequests
                 .stream()
@@ -211,6 +202,33 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                             command.getData().transactionId().value()
                     ).thenReturn(t);
                     default -> Mono.just(t);
+                })
+                .map(t -> {
+                    TransactionId transactionId = t.getTransactionId();
+                    ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                            "POST-auth-request-%s".formatted(transactionId.value()),
+                            "transactions-service"
+                    );
+                    // fix CHK-3222: auth request operations are not idempotent on the NPG side, so
+                    // this lock prevents multiple auth request to be performed for a single
+                    // transaction (for timeouts scenarios, etc.). The lock duration has been set to
+                    // the payment token validity time in order to make this API call performable
+                    // only once per transaction (further attempts will find the transaction in an
+                    // expired status and return an error)
+                    boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
+                            lockDocument,
+                            Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds())
+                    );
+                    log.info(
+                            "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
+                            transactionId,
+                            lockDocument.id(),
+                            lockAcquired
+                    );
+                    if (!lockAcquired) {
+                        throw new LockNotAcquiredException(transactionId, lockDocument);
+                    }
+                    return t;
                 })
                 .flatMap(
                         t -> gatewayAttempts.switchIfEmpty(Mono.error(new InvalidRequestException("No gateway matched")))
@@ -247,11 +265,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     PaymentGateway paymentGateway = authorizationOutputAndPaymentGateway.getT2();
                                     String brand = authorizationRequestData.brand();
                                     TransactionGatewayAuthorizationRequestedData transactionGatewayAuthorizationRequestedData = switch (paymentGateway) {
-                                        case VPOS, XPAY -> new PgsTransactionGatewayAuthorizationRequestedData(
-                                                logo,
-                                                PgsTransactionGatewayAuthorizationRequestedData.CardBrand.valueOf(brand)
-                                        );
-                                        case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
+                                       case NPG -> new NpgTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 brand,
                                                 authorizationRequestData
@@ -272,17 +286,15 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                 )
                                                         ),
                                                 authorizationOutput.npgConfirmSessionId().orElse(null),
-                                                /* @formatter:off
-                                                 * FIXME walletInfo set to null: this modification is addressed in
-                                                 * PR: https://github.com/pagopa/pagopa-ecommerce-transactions-service/pull/475
-                                                 * @formatter:on
-                                                 */
-                                                null
+                                                authorizationRequestData
+                                                        .authDetails() instanceof WalletAuthRequestDetailsDto ?
+                                                        new WalletInfo(((WalletAuthRequestDetailsDto) authorizationRequestData.authDetails()).getWalletId(), null) : null
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 authorizationOutput.authorizationTimeoutMillis().orElse(600000)
                                         );
+                                        default -> throw new RuntimeException();
                                     };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
@@ -314,10 +326,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                             .just(
                                                                     e.getData()
                                                                             .getPaymentGateway()
-                                                            )
-                                                            .filter(
-                                                                    gateway -> gateway
-                                                                            .equals(PaymentGateway.NPG)
                                                             )
                                                             .flatMap(
                                                                     p -> tracingUtils.traceMono(

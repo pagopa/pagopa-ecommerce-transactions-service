@@ -195,7 +195,7 @@ class UpdateAuthorizationStatusDataTest {
         );
 
         assertEquals(
-                "Redirect update auth request received for transaction performed with gateway: [VPOS]",
+                "Redirect update auth request received for transaction performed with gateway: [NPG]",
                 exception.getMessage()
         );
 

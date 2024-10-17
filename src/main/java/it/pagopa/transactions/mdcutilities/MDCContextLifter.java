@@ -5,9 +5,7 @@ import org.slf4j.MDC;
 import reactor.core.CoreSubscriber;
 import reactor.util.context.Context;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +39,7 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
     @Override
     public void onComplete() {
         coreSubscriber.onComplete();
+        MDC.clear();
     }
 
     @Override
@@ -57,15 +56,18 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
     private void copyToMdc(Context context) {
         if (!context.isEmpty()) {
             Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElseGet(HashMap::new);
-            Map<String, String> reactorContextMap = context.stream()
-                    .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
-            if (reactorContextMap.getOrDefault("contextKey", "").equals(mdcContextMap.getOrDefault("contextKey", ""))) {
-                reactorContextMap.putAll(mdcContextMap);
-                MDC.setContextMap(reactorContextMap);
-            } else {
-                mdcContextMap.putAll(reactorContextMap);
-                MDC.setContextMap(mdcContextMap);
-            }
+            Map<String, String> reactorContextMap = Arrays
+                    .stream(TransactionTracingUtils.TracingEntry.values())
+                    .map(
+                            key -> new AbstractMap.SimpleEntry<>(
+                                    key.getKey(),
+                                    context.getOrEmpty(key.getKey()).map(Object::toString)
+                                            .orElse(key.getDefaultValue())
+                            )
+                    )
+                    .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+            mdcContextMap.putAll(reactorContextMap);
+            MDC.setContextMap(mdcContextMap);
         } else {
             MDC.clear();
         }

@@ -11,13 +11,11 @@ import reactor.util.context.Context;
 
 import java.util.ArrayList;
 import java.util.Optional;
-import java.util.UUID;
 
 @Component
 @Slf4j
 public class MDCFilter implements WebFilter {
 
-    public static final String CONTEXT_KEY = "contextKey";
     public static final String HEADER_TRANSACTION_ID = "x-transaction-id";
     public static final String HEADER_RPT_ID = "x-rpt-id";
     public static final String HEADER_NPG_CORRELATION_ID = "x-correlation-id";
@@ -38,7 +36,6 @@ public class MDCFilter implements WebFilter {
                 .findFirst().orElse(TransactionTracingUtils.TracingEntry.CORRELATION_ID.getDefaultValue());
 
         return chain.filter(exchange)
-                .contextWrite(Context.of(CONTEXT_KEY, UUID.randomUUID().toString()))
                 .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.TRANSACTION_ID.getKey(), transactionId))
                 .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.RPT_IDS.getKey(), rptId))
                 .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.CORRELATION_ID.getKey(), correlationId));

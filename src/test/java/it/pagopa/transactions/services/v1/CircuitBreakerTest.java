@@ -14,6 +14,7 @@ import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
@@ -95,7 +96,11 @@ class CircuitBreakerTest {
             new NodoErrorException(new CtFaultBean()),
             new InvalidNodoResponseException(""),
             new PaymentMethodNotFoundException("paymentMethodId", "clientId"),
-            new NpgNotRetryableErrorException("", HttpStatus.INTERNAL_SERVER_ERROR)
+            new NpgNotRetryableErrorException("", HttpStatus.INTERNAL_SERVER_ERROR),
+            new LockNotAcquiredException(
+                    new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                    new ExclusiveLockDocument("id", "holderName")
+            )
     ).collect(Collectors.toMap(exception -> exception.getClass().getCanonicalName(), Function.identity()));
 
     static {
@@ -276,6 +281,7 @@ class CircuitBreakerTest {
                                 "transactionId",
                                 null,
                                 "",
+                                null,
                                 new RequestAuthorizationRequestDto()
                         )
                 )

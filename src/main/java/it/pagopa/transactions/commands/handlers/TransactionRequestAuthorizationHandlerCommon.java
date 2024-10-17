@@ -76,59 +76,13 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     }
 
     /**
-     * XPAY authorization pipeline
-     *
-     * @param authorizationData the authorization requested data
-     * @return the authorization output data containing authorization id and
-     *         redirect URL
-     */
-    protected Mono<AuthorizationOutput> xpayAuthRequestPipeline(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData)
-                .flatMap(
-                        paymentGatewayClient::requestXPayAuthorization
-                )
-                .map(
-                        xPayAuthResponseEntityDto -> new AuthorizationOutput(
-                                xPayAuthResponseEntityDto.getRequestId(),
-                                xPayAuthResponseEntityDto.getUrlRedirect(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                Optional.empty()
-                        )
-                );
-    }
-
-    /**
-     * VPOS authorization pipeline
-     *
-     * @param authorizationData the authorization requested data
-     * @return the authorization output data containing authorization id and
-     *         redirect URL
-     */
-    protected Mono<AuthorizationOutput> vposAuthRequestPipeline(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData)
-                .flatMap(
-                        paymentGatewayClient::requestCreditCardAuthorization
-                )
-                .map(
-                        creditCardAuthResponseDto -> new AuthorizationOutput(
-                                creditCardAuthResponseDto.getRequestId(),
-                                creditCardAuthResponseDto.getUrlRedirect(),
-                                Optional.empty(),
-                                Optional.empty(),
-                                Optional.empty()
-                        )
-                );
-    }
-
-    /**
      * NPG authorization pipeline
      *
      * @param authorizationData the authorization requested data
      * @return the authorization output data containing authorization id, redirect URL, session id, confirm payment session id (if present)
      */
     protected Mono<AuthorizationOutput> npgAuthRequestPipeline(
-            AuthorizationRequestData authorizationData, String correlationId, String clientId, UUID userId
+            AuthorizationRequestData authorizationData, String correlationId, String clientId, String lang, UUID userId
     ) {
         return Mono.just(authorizationData).flatMap(authData -> switch (authData.authDetails()) {
             case CardsAuthRequestDetailsDto cards -> invokeNpgConfirmPayment(authorizationData, cards
@@ -137,12 +91,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             case WalletAuthRequestDetailsDto ignored -> {
                 NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.valueOf(authorizationData.paymentMethodName());
                 if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
-                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId, clientId, userId);
+                    yield walletNpgCardsPaymentFlow(authorizationData, correlationId, clientId, lang, userId);
                 } else {
-                    yield npgApmPaymentFlow(authorizationData, correlationId, true, clientId, userId);
+                    yield npgApmPaymentFlow(authorizationData, correlationId, true, clientId, lang, userId);
                 }
             }
-            case ApmAuthRequestDetailsDto ignored -> npgApmPaymentFlow(authorizationData, correlationId, false, clientId, userId);
+            case ApmAuthRequestDetailsDto ignored -> npgApmPaymentFlow(authorizationData, correlationId, false, clientId, lang, userId);
             default -> Mono.empty();
         });
 
@@ -160,9 +114,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                 AuthorizationRequestData authorizationData,
                                                                 String correlationId,
                                                                 String clientId,
+                                                                String lang,
                                                                 UUID userId
     ) {
-        return paymentGatewayClient.requestNpgBuildSession(authorizationData, correlationId, true, clientId, userId)
+        return paymentGatewayClient
+                .requestNpgBuildSession(authorizationData, correlationId, true, clientId, lang, userId)
                 .map(orderIdAndFieldsDto -> {
                     transactionTemplateWrapper.save(
                             new TransactionCacheInfo(
@@ -232,10 +188,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                         String correlationId,
                                                         boolean isWalletPayment,
                                                         String clientId,
+                                                        String lang,
                                                         UUID userId
     ) {
         return paymentGatewayClient
-                .requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment, clientId, userId)
+                .requestNpgBuildApmPayment(authorizationData, correlationId, isWalletPayment, clientId, lang, userId)
                 .filter(orderIdAndFieldsDto -> {
                     String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
                     boolean isReturnUrlValued = returnUrl != null && !returnUrl.isEmpty();
