@@ -108,60 +108,13 @@ stages:
               CONTAINER_REGISTRY_SERVICE_CONN: $(UAT_CONTAINER_REGISTRY_SERVICE_CONN)
               CONTAINER_REGISTRY_FQDN: $(UAT_CONTAINER_NAMESPACE)
               DOCKER_IMAGE_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
-              DOCKER_IMAGE_TAG: $(Build.SourceVersion)
+              DOCKER_IMAGE_TAG: perf
               FORCE_REPLACE_DOCKER_IMAGE: ${{ parameters.FORCE_REPLACE_DOCKER_IMAGE }}
           - template: azure-templates/chart-current-version.yml
 
-
-  - stage: Release
-    ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], True) }}:
-      dependsOn: Build_release_candidate
-    ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], False) }}:
-      dependsOn: Bluegreen_WaitForApproval
-      condition: succeeded()
-    jobs:
-      - job: make_release
-        displayName: Make github release
-        steps:
-          - template: azure-templates/chart-current-version.yml
-
-  - stage: "tag_docker_release"
-    displayName: 'Tag Docker image to be release'
-    dependsOn: Release
-    condition:
-      and(
-      succeeded(),
-      ne('${{parameters.RELEASE_SEMVER}}', 'none')
-      )
-    variables:
-      app_version: perf
-    jobs:
-      - job: "build"
-        displayName: 'Build UAT service beta'
-        steps:
-          - task: Docker@2
-            displayName: "docker login"
-            inputs:
-              containerRegistry: $(UAT_CONTAINER_REGISTRY_SERVICE_CONN)
-              command: "login"
-          - task: Bash@3
-            displayName: "docker tag new version"
-            inputs:
-              targetType: "inline"
-              script: |
-                docker pull $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(Build.SourceVersion)
-                docker tag $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(Build.SourceVersion) $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(app_version)
-                docker push $(UAT_CONTAINER_NAMESPACE)/$(K8S_IMAGE_REPOSITORY_NAME):$(app_version)
-
   - stage: "Deploy_UAT_Green"
     displayName: 'UAT green deployment'
-    dependsOn: [tag_docker_release,Release]
-    condition: |
-      and(
-        eq(${{parameters.UAT_PROD_DEPLOY}}, true),
-        in(dependencies.tag_docker_release.result, 'Succeeded', 'Skipped'),
-        in(dependencies.Release.result, 'Succeeded', 'Skipped')
-      )
+    dependsOn: [Build_release_candidate]
     variables:
       app_version: perf
     jobs:
