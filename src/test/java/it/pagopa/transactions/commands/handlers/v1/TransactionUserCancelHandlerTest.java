@@ -56,7 +56,7 @@ class TransactionUserCancelHandlerTest {
     private ArgumentCaptor<Duration> durationCaptor;
 
     @BeforeEach
-    private void init() {
+    public void init() {
         transactionUserCancelHandler = new it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler(
                 transactionEventUserCancelStoreRepository,
                 transactionUserCancelQueueClient,
