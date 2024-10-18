@@ -61,7 +61,7 @@ class TransactionSendClosureRequestedHandlerTest {
     private ArgumentCaptor<Duration> durationCaptor;
 
     @BeforeEach
-    private void init() {
+    public void init() {
         transactionSendClosureRequestHandler = new TransactionSendClosureRequestHandler(
                 transactionEventClosureRequestedRepository,
                 transactionSendClosureRequestQueueClient,
