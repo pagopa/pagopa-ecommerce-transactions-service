@@ -277,14 +277,15 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                         ),
                                                 authorizationOutput.npgConfirmSessionId().orElse(null),
                                                 authorizationRequestData
-                                                        .authDetails() instanceof WalletAuthRequestDetailsDto ?
-                                                        new WalletInfo(((WalletAuthRequestDetailsDto) authorizationRequestData.authDetails()).getWalletId(), null) : null
+                                                        .authDetails() instanceof WalletAuthRequestDetailsDto walletAuthRequestDetailsDto ?
+                                                        new WalletInfo(walletAuthRequestDetailsDto.getWalletId(), null) : null
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 authorizationOutput.authorizationTimeoutMillis().orElse(600000)
                                         );
-                                        default -> throw new RuntimeException();
+                                        default ->
+                                                throw new InvalidRequestException("Unhandled payment gateway: [%s]".formatted(paymentGateway));
                                     };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
