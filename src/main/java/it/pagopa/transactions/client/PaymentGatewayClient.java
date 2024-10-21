@@ -645,7 +645,7 @@ public class PaymentGatewayClient {
         };
         return UriComponentsBuilder
                 .fromUriString(npgSessionUrlConfig.basePath().concat(npgSessionUrlConfig.outcomeSuffix()))
-                //append query param to prevent caching
+                // append query param to prevent caching
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(

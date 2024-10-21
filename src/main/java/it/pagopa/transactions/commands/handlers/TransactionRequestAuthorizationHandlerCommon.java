@@ -485,12 +485,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
         return UriComponentsBuilder
                 .fromUri(uri)
-                //append query param to prevent caching
+                // append query param to prevent caching
                 .queryParam("t", Instant.now().toEpochMilli())
                 .fragment(fragment).build().toUri();
     }
 
-    //append query param to prevent caching
+    // append query param to prevent caching
     private URI appendTimestampAsQueryParam(URI uri) {
         return UriComponentsBuilder.fromUri(uri).queryParam("t", Instant.now().toEpochMilli()).build().toUri();
     }
