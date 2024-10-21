@@ -51,6 +51,7 @@ import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
 
 import static it.pagopa.ecommerce.commons.documents.v2.Transaction.*;
@@ -644,6 +645,8 @@ public class PaymentGatewayClient {
         };
         return UriComponentsBuilder
                 .fromUriString(npgSessionUrlConfig.basePath().concat(npgSessionUrlConfig.outcomeSuffix()))
+                //append query param to prevent caching
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
