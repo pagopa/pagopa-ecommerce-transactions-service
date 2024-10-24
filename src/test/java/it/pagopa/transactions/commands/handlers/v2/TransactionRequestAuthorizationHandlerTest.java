@@ -28,7 +28,6 @@ import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.client.WalletAsyncQueueClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -116,8 +115,6 @@ class TransactionRequestAuthorizationHandlerTest {
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClient = Mockito
             .mock(QueueAsyncClient.class);
 
-    private final WalletAsyncQueueClient walletAsyncQueueClient = Mockito.mock(WalletAsyncQueueClient.class);
-
     private static final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
@@ -127,7 +124,7 @@ class TransactionRequestAuthorizationHandlerTest {
             .mock(ExclusiveLockDocumentWrapper.class);
 
     @BeforeEach
-    private void init() {
+    public void init() {
         requestAuthorizationHandler = new TransactionRequestAuthorizationHandler(
                 paymentGatewayClient,
                 transactionEventStoreRepository,
@@ -138,7 +135,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 paymentMethodsClient,
                 transactionTemplateWrapper,
                 transactionAuthorizationRequestedQueueAsyncClient,
-                Optional.of(walletAsyncQueueClient),
                 transientQueueEventsTtlSeconds,
                 authRequestEventVisibilityTimeoutSeconds,
                 tracingUtils,
@@ -149,7 +145,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 updateTransactionStatusTracerUtils,
                 exclusiveLockDocumentWrapper
         );
-        Mockito.reset(walletAsyncQueueClient);
     }
 
     @Test

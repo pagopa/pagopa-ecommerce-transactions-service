@@ -30,7 +30,7 @@ microservice-chart:
         CHECKOUT_OUTCOME_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/esito"
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.41.3" #improve
+    tag: "1.42.0" #improve
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -136,9 +136,6 @@ microservice-chart:
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-d-weu-ecommerce-transactions-refund-queue
     TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-notifications-queue
     TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-auth-requested-queue
-    FEATURE_WALLET_USAGE_ENABLED: "true"
-    WALLET_USAGE_QUEUE_NAME: pagopa-d-weu-wallet-usage-update-queue
-    WALLET_USAGE_QUEUE_TTL: "3600"
     PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
@@ -203,7 +200,6 @@ microservice-chart:
     NPG_PAYPAL_PSP_KEYS: npg-paypal-psp-keys
     NPG_BANCOMATPAY_PSP_KEYS: npg-bancomatpay-psp-keys
     NPG_MYBANK_PSP_KEYS: npg-mybank-psp-keys
-    WALLET_STORAGE_CONNECTION_STRING: wallet-storage-connection-string
     NPG_SATISPAY_PSP_KEYS: npg-satispay-psp-keys
     NPG_APPLEPAY_PSP_KEYS: npg-apple-pay-psp-keys
   keyvault:

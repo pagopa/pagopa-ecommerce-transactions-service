@@ -87,7 +87,7 @@ class TransactionRequestAuthorizationHandlerTest {
     private static final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
 
     @BeforeEach
-    private void init() {
+    public void init() {
         requestAuthorizationHandler = new TransactionRequestAuthorizationHandler(
                 paymentGatewayClient,
                 transactionEventStoreRepository,
