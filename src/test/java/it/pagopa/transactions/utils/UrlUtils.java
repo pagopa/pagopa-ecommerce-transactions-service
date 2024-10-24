@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class UrlUtils {
@@ -37,19 +38,18 @@ public class UrlUtils {
                                                          String query,
                                                          boolean removeRandom
     ) {
-        if (query == null || query.isEmpty()) {
-            return Map.of();
-        }
-
-        return Arrays.stream(query.split("&"))
+        return Optional.ofNullable(query)
+            .filter(q -> !q.isEmpty())
+            .map(q -> Arrays.stream(q.split("&"))
                 .map(param -> param.split("="))
                 // remove t queryparam
                 .filter(pair -> !removeRandom || !pair[0].equals("t"))
                 .collect(
-                        Collectors.toMap(
-                                pair -> pair[0],
-                                pair -> pair.length > 1 ? pair[1] : ""
-                        )
-                );
+                    Collectors.toMap(
+                        pair -> pair[0],
+                        pair -> pair.length > 1 ? pair[1] : ""
+                    )
+                ))
+            .orElse(Map.of());
     }
 }
