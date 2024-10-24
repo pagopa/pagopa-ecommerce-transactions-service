@@ -58,6 +58,7 @@ import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -656,6 +657,7 @@ class PaymentGatewayClientTest {
 
         String npgOutcomeUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -667,18 +669,13 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
 
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
         verify(npgClient, times(1))
                 .buildForm(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -686,7 +683,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
+                                        npgNotificationUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -694,7 +691,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1149,6 +1146,7 @@ class PaymentGatewayClientTest {
 
         String npgOutcomeUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1160,9 +1158,6 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
 
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
         String npgNotificationUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.notificationUrl())
                 .build(
@@ -1173,15 +1168,14 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         verify(npgClient, times(1))
                 .buildForm(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1190,7 +1184,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
+                                        npgNotificationUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1198,7 +1192,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1352,6 +1346,7 @@ class PaymentGatewayClientTest {
 
         String npgOutcomeUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1363,9 +1358,6 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
 
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
         String npgNotificationUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.notificationUrl())
                 .build(
@@ -1376,15 +1368,14 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         verify(npgClient, times(1))
                 .buildFormForPayment(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1393,7 +1384,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
+                                        npgNotificationUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1401,7 +1392,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1486,6 +1477,7 @@ class PaymentGatewayClientTest {
         /* preconditions */
         String npgOutcomeUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1497,9 +1489,6 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
 
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
         String npgNotificationUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.notificationUrl())
                 .build(
@@ -1510,15 +1499,14 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         Mockito.when(
                 npgClient.buildFormForPayment(
                         eq(UUID.fromString(correlationId)),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1526,7 +1514,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
+                                        npgNotificationUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1689,6 +1677,7 @@ class PaymentGatewayClientTest {
                 ).toString();
         String npgOutcomeUrl = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1699,17 +1688,13 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
         verify(npgClient, times(1))
                 .buildFormForPayment(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1717,7 +1702,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
+                                        npgNotificationUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1725,7 +1710,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1796,6 +1781,7 @@ class PaymentGatewayClientTest {
 
         String urlBack = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1806,9 +1792,6 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
@@ -1850,7 +1833,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -1946,6 +1929,7 @@ class PaymentGatewayClientTest {
 
         String urlBack = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1956,9 +1940,6 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
@@ -2000,7 +1981,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -2107,6 +2088,7 @@ class PaymentGatewayClientTest {
 
         String urlBack = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -2117,9 +2099,6 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
@@ -2161,7 +2140,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -2228,6 +2207,7 @@ class PaymentGatewayClientTest {
 
         String urlBack = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -2238,9 +2218,6 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
 
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
@@ -2284,7 +2261,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -2338,6 +2315,7 @@ class PaymentGatewayClientTest {
 
         String urlBack = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -2348,9 +2326,6 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
 
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
@@ -2387,7 +2362,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -2836,6 +2811,7 @@ class PaymentGatewayClientTest {
 
         String urlBack = UriComponentsBuilder
                 .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -2846,9 +2822,6 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
@@ -2907,7 +2880,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()

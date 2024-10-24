@@ -42,8 +42,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.ECOMMERCE_JWT_SIGNING_KEY;
-import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.TOKEN_VALIDITY_TIME_SECONDS;
+import static it.pagopa.transactions.commands.handlers.TransactionAuthorizationHandlerCommon.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 
@@ -305,7 +304,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .authorizationUrl(CHECKOUT_OUTCOME_PATH);
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNext(responseDto)
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());
@@ -413,7 +412,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNext(responseDto)
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1)).save(any());

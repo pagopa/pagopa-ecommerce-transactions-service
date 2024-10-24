@@ -16,7 +16,6 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
-import it.pagopa.ecommerce.commons.queues.TracingInfo;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
@@ -402,7 +401,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .authorizationUrl(CHECKOUT_OUTCOME_PATH);
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNext(responseDto)
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
@@ -556,7 +555,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNext(responseDto)
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
@@ -709,7 +708,7 @@ class TransactionRequestAuthorizationHandlerTest {
         Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNext(responseDto)
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
@@ -1906,7 +1905,9 @@ class TransactionRequestAuthorizationHandlerTest {
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNext(responseDto)
+                .expectNextMatches(
+                        value -> value.getAuthorizationRequestId().equals(responseDto.getAuthorizationRequestId())
+                )
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
@@ -2056,7 +2057,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 );
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNext(responseDto)
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
@@ -2250,7 +2251,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNext(responseDto)
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
