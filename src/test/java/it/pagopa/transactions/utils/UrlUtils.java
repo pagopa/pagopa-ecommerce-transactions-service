@@ -39,17 +39,19 @@ public class UrlUtils {
                                                          boolean removeRandom
     ) {
         return Optional.ofNullable(query)
-            .filter(q -> !q.isEmpty())
-            .map(q -> Arrays.stream(q.split("&"))
-                .map(param -> param.split("="))
-                // remove t queryparam
-                .filter(pair -> !removeRandom || !pair[0].equals("t"))
-                .collect(
-                    Collectors.toMap(
-                        pair -> pair[0],
-                        pair -> pair.length > 1 ? pair[1] : ""
-                    )
-                ))
-            .orElse(Map.of());
+                .filter(q -> !q.isEmpty())
+                .map(
+                        q -> Arrays.stream(q.split("&"))
+                                .map(param -> param.split("="))
+                                // remove t queryparam
+                                .filter(pair -> !removeRandom || !pair[0].equals("t"))
+                                .collect(
+                                        Collectors.toMap(
+                                                pair -> pair[0],
+                                                pair -> pair.length > 1 ? pair[1] : ""
+                                        )
+                                )
+                )
+                .orElse(Map.of());
     }
 }
