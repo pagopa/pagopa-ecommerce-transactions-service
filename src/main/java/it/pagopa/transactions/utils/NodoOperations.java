@@ -305,19 +305,20 @@ public class NodoOperations {
                 .map(CtMapEntry::getValue)
                 .findFirst();
 
-        return (conventionValue.isPresent())
-                ? Stream.concat(
-                        baseTransferList.stream(),
-                        Stream.of(
-                                new PaymentTransferInfo(
-                                        CONVENTION_TRANSFER_FISCAL_CODE,
-                                        false,
-                                        0,
-                                        conventionValue
+        return conventionValue
+                .map(
+                        value -> Stream.concat(
+                                baseTransferList.stream(),
+                                Stream.of(
+                                        new PaymentTransferInfo(
+                                                CONVENTION_TRANSFER_FISCAL_CODE,
+                                                false,
+                                                0,
+                                                value
+                                        )
                                 )
-                        )
+                        ).toList()
                 )
-                        .toList()
-                : baseTransferList;
+                .orElse(baseTransferList);
     }
 }
