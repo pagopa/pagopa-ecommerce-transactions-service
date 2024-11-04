@@ -297,16 +297,15 @@ public class NodoOperations {
                 )
                 .toList();
 
-        String conventionValue = Optional.ofNullable(metadata)
+        Optional<String> conventionValue = Optional.ofNullable(metadata)
                 .map(CtMetadata::getMapEntry)
                 .orElse(List.of())
                 .stream()
                 .filter(entry -> "codiceConvenzione".equals(entry.getKey()))
                 .map(CtMapEntry::getValue)
-                .findFirst()
-                .orElse(null);
+                .findFirst();
 
-        return (conventionValue != null)
+        return (conventionValue.isPresent())
                 ? Stream.concat(
                         baseTransferList.stream(),
                         Stream.of(
