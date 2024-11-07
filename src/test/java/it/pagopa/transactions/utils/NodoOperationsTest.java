@@ -24,6 +24,7 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -1957,5 +1958,78 @@ class NodoOperationsTest {
                         .block()
         );
         assertTrue(error.getErrorDescription().contains("Mandatory creditorReferenceId"));
+    }
+
+    @Test
+    void shouldActiveNM3PaymentRequestWithConventionMetadata() {
+        instantiateNodoOperations(false);
+        final var rptId = new RptId("77777777777302016723749670035");
+        final var idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        final var transactionId = UUID.randomUUID().toString();
+        final var amount = 1234;
+        final var idCart = "idCart";
+        final var codiceConvenzioneValue = "TEST-codice-convenzione";
+        final var codiceConvenzioneKey = "codiceConvenzione";
+
+        it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
+
+        BigDecimal amountBigDec = BigDecimal.valueOf(amount / 100d)
+                .setScale(2, RoundingMode.CEILING);
+
+        ActivatePaymentNoticeV2Request activatePaymentReq = objectFactoryUtil.createActivatePaymentNoticeV2Request();
+        CtQrCode qrCode = new CtQrCode();
+        qrCode.setFiscalCode("77777777777");
+        qrCode.setNoticeNumber("302000100000009424");
+        activatePaymentReq.setAmount(amountBigDec);
+        activatePaymentReq.setQrCode(qrCode);
+
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
+        activatePaymentRes.setPaymentToken(UUID.randomUUID().toString());
+        activatePaymentRes.setFiscalCodePA("77777777777");
+        activatePaymentRes.setTotalAmount(amountBigDec);
+        activatePaymentRes.setPaymentDescription("Description");
+        activatePaymentRes.setOutcome(StOutcome.OK);
+        activatePaymentRes.setCreditorReferenceId(null);
+        activatePaymentRes.setTransferList(objectFactoryUtil.createCtTransferListPSPV2());
+        CtMetadata metadata = objectFactoryUtil.createCtMetadata();
+        CtMapEntry metadataEntry = objectFactoryUtil.createCtMapEntry();
+        metadataEntry.setKey(codiceConvenzioneKey);
+        metadataEntry.setValue(codiceConvenzioneValue);
+        metadata.getMapEntry().add(metadataEntry);
+        activatePaymentRes.setMetadata(metadata);
+
+        /* preconditions */
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+                .thenReturn(Mono.just(activatePaymentRes));
+        Mockito.when(
+                objectFactoryNodeForPsp
+                        .createActivatePaymentNoticeV2Request(activatePaymentNoticeReqArgumentCaptor.capture())
+        )
+                .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
+
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
+
+        /* test */
+        PaymentRequestInfo response = nodoOperations
+                .activatePaymentRequest(
+                        rptId,
+                        idempotencyKey,
+                        amount,
+                        transactionId,
+                        900,
+                        idCart,
+                        dueDate,
+                        Transaction.ClientId.CHECKOUT
+                )
+                .block();
+
+        /* asserts */
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+
+        assert response != null;
+        assert response.transferList() != null;
+        assert Objects.equals(response.transferList().get(0).transferCategory(), codiceConvenzioneValue);
+        assert Objects.equals(response.transferList().get(0).transferAmount(), 0);
+        assert Objects.equals(response.transferList().get(0).paFiscalCode(), "66666666666");
     }
 }
