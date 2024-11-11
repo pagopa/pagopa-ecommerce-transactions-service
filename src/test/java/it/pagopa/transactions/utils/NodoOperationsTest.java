@@ -2030,6 +2030,6 @@ class NodoOperationsTest {
         assert response.transferList() != null;
         assert Objects.equals(response.transferList().get(0).transferCategory(), codiceConvenzioneValue);
         assert Objects.equals(response.transferList().get(0).transferAmount(), 0);
-        assert Objects.equals(response.transferList().get(0).paFiscalCode(), "66666666666");
+        assert Objects.equals(response.transferList().get(0).paFiscalCode(), "77777777777");
     }
 }

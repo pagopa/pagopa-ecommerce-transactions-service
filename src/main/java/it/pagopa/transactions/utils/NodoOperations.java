@@ -196,7 +196,7 @@ public class NodoOperations {
                                 getPaymentTransferInfoList(
                                         response.getTransferList().getTransfer(),
                                         response.getMetadata(),
-                                        response.getCreditorReferenceId()
+                                        response.getFiscalCodePA()
                                 ),
                                 isAllCCP(response, allCCPOnTransferIbanEnabled),
                                 response.getCreditorReferenceId()
@@ -270,14 +270,14 @@ public class NodoOperations {
      * included in the resulting list (for more details see CHK-3525).
      * </p>
      *
-     * @param transferPSPV2List   a list of {@link CtTransferPSPV2} objects
-     *                            containing the payment transfer data to be
-     *                            processed.
-     * @param metadata            an instance of {@link CtMetadata} containing
-     *                            relevant metadata for processing the transfers,
-     *                            which may include conventions for adding
-     *                            additional transfers.
-     * @param creditorReferenceId paFiscalCode for transfer related to convention
+     * @param transferPSPV2List a list of {@link CtTransferPSPV2} objects containing
+     *                          the payment transfer data to be processed.
+     * @param metadata          an instance of {@link CtMetadata} containing
+     *                          relevant metadata for processing the transfers,
+     *                          which may include conventions for adding additional
+     *                          transfers.
+     * @param primaryFiscalCode primary paFiscalCode for transfer related to
+     *                          convention
      * @return a list of {@link PaymentTransferInfo} objects, each representing
      *         detailed information about a payment transfer, including any
      *         additional transfers specified by the metadata.
@@ -287,7 +287,7 @@ public class NodoOperations {
     private List<PaymentTransferInfo> getPaymentTransferInfoList(
                                                                  List<CtTransferPSPV2> transferPSPV2List,
                                                                  CtMetadata metadata,
-                                                                 String creditorReferenceId
+                                                                 String primaryFiscalCode
     ) {
         List<PaymentTransferInfo> baseTransferList = transferPSPV2List.stream()
                 .map(
@@ -314,7 +314,7 @@ public class NodoOperations {
                                 baseTransferList.stream(),
                                 Stream.of(
                                         new PaymentTransferInfo(
-                                                creditorReferenceId,
+                                                primaryFiscalCode,
                                                 false,
                                                 0,
                                                 value
