@@ -1989,7 +1989,7 @@ class NodoOperationsTest {
         activatePaymentRes.setTotalAmount(amountBigDec);
         activatePaymentRes.setPaymentDescription("Description");
         activatePaymentRes.setOutcome(StOutcome.OK);
-        activatePaymentRes.setCreditorReferenceId(null);
+        activatePaymentRes.setCreditorReferenceId("66666666666");
         activatePaymentRes.setTransferList(objectFactoryUtil.createCtTransferListPSPV2());
         CtMetadata metadata = objectFactoryUtil.createCtMetadata();
         CtMapEntry metadataEntry = objectFactoryUtil.createCtMapEntry();
