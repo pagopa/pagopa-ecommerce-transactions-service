@@ -209,7 +209,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -349,7 +350,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -494,7 +496,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -649,7 +652,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -802,7 +806,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -917,7 +922,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 null,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1005,7 +1011,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1106,7 +1113,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1224,7 +1232,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1345,7 +1354,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1467,7 +1477,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1589,7 +1600,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1710,7 +1722,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1851,7 +1864,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -1999,7 +2013,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -2101,6 +2116,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
         String correlationId = UUID.randomUUID().toString();
+        String idBundle = UUID.randomUUID().toString();
+
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2153,7 +2170,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                idBundle
         );
 
         AuthorizationRequestData authorizationDataAfterBuildSession = new AuthorizationRequestData(
@@ -2176,7 +2194,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                idBundle
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -2344,7 +2363,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 Mockito.mock(RequestAuthorizationRequestDetailsDto.class),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -2454,7 +2474,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -2602,7 +2623,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "BANCOMATPAY",
                 new ApmAuthRequestDetailsDto().detailType("apm"),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -2753,7 +2775,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -2876,7 +2899,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 new RedirectionAuthRequestDetailsDto(),
                 expectedLogo,
-                Optional.empty()
+                Optional.empty(),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -3008,7 +3032,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "UNMATCHED",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 expectedLogo,
-                Optional.of(Map.of("VISA", "http://visa"))
+                Optional.of(Map.of("VISA", "http://visa")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -3151,7 +3176,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 expectedLogo,
-                Optional.empty()
+                Optional.empty(),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -3293,7 +3319,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "VISA",
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http//defaultLogo",
-                Optional.of(Map.of("VISA", expectedLogo))
+                Optional.of(Map.of("VISA", expectedLogo)),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -3435,7 +3462,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 expectedLogo,
-                Optional.of(Map.of("VISA", "http://visaLogo"))
+                Optional.of(Map.of("VISA", "http://visaLogo")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -3577,7 +3605,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 "BANCOMATPAY",
                 new ApmAuthRequestDetailsDto().detailType("apm"),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
