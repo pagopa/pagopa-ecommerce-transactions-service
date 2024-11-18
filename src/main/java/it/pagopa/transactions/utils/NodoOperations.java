@@ -62,14 +62,14 @@ public class NodoOperations {
     }
 
     public Mono<PaymentRequestInfo> activatePaymentRequest(
-            RptId rptId,
-            IdempotencyKey idempotencyKey,
-            Integer amount,
-            String transactionId,
-            Integer paymentTokenTimeout,
-            String idCart,
-            String dueDate,
-            Transaction.ClientId clientId
+                                                           RptId rptId,
+                                                           IdempotencyKey idempotencyKey,
+                                                           Integer amount,
+                                                           String transactionId,
+                                                           Integer paymentTokenTimeout,
+                                                           String idCart,
+                                                           String dueDate,
+                                                           Transaction.ClientId clientId
     ) {
         return activatePaymentRequest(
                 rptId,
@@ -98,13 +98,13 @@ public class NodoOperations {
     }
 
     private Mono<PaymentRequestInfo> activatePaymentRequest(
-            RptId rptId,
-            IdempotencyKey idempotencyKey,
-            Integer amount,
-            String transactionId,
-            Integer paymentTokenTimeout,
-            String idCart,
-            String dueDate
+                                                            RptId rptId,
+                                                            IdempotencyKey idempotencyKey,
+                                                            Integer amount,
+                                                            String transactionId,
+                                                            Integer paymentTokenTimeout,
+                                                            String idCart,
+                                                            String dueDate
     ) {
 
         final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount.doubleValue() / 100)
@@ -122,13 +122,13 @@ public class NodoOperations {
     }
 
     private Mono<PaymentRequestInfo> nodoActivationForNM3PaymentRequest(
-            RptId rptId,
-            BigDecimal amount,
-            String idempotencyKey,
-            String transactionId,
-            Integer paymentTokenTimeout,
-            String idCart,
-            String dueDate
+                                                                        RptId rptId,
+                                                                        BigDecimal amount,
+                                                                        String idempotencyKey,
+                                                                        String transactionId,
+                                                                        Integer paymentTokenTimeout,
+                                                                        String idCart,
+                                                                        String dueDate
     ) {
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(rptId.getFiscalCode());
@@ -205,30 +205,30 @@ public class NodoOperations {
     }
 
     private boolean isAllCCP(
-            ActivatePaymentNoticeV2Response response,
-            boolean allCCPOnTransferIbanEnabled
+                             ActivatePaymentNoticeV2Response response,
+                             boolean allCCPOnTransferIbanEnabled
     ) {
         return allCCPOnTransferIbanEnabled
                 ? response.getTransferList().getTransfer().parallelStream().allMatch(t -> isIbanCCP(t.getIBAN()))
                 : response.getTransferList().getTransfer().parallelStream().allMatch(
-                ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
-                        ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
-                                .allMatch(
-                                        ctMapEntry -> ctMapEntry.getKey()
-                                                .equals(IBANAPPOGGIO)
-                                )
-                        &&
-                        (isIbanCCP(ctTransferPSPV2.getIBAN())
-                                ||
-                                ctTransferPSPV2.getMetadata().getMapEntry()
-                                        .parallelStream()
-                                        .anyMatch(
-                                                ctMapEntry -> ctMapEntry
-                                                        .getKey()
+                        ctTransferPSPV2 -> ctTransferPSPV2.getMetadata() != null &&
+                                ctTransferPSPV2.getMetadata().getMapEntry().parallelStream()
+                                        .allMatch(
+                                                ctMapEntry -> ctMapEntry.getKey()
                                                         .equals(IBANAPPOGGIO)
-                                                        && isIbanCCP(ctMapEntry.getValue())
-                                        ))
-        );
+                                        )
+                                &&
+                                (isIbanCCP(ctTransferPSPV2.getIBAN())
+                                        ||
+                                        ctTransferPSPV2.getMetadata().getMapEntry()
+                                                .parallelStream()
+                                                .anyMatch(
+                                                        ctMapEntry -> ctMapEntry
+                                                                .getKey()
+                                                                .equals(IBANAPPOGGIO)
+                                                                && isIbanCCP(ctMapEntry.getValue())
+                                                ))
+                );
     }
 
     private boolean isOkPaymentToken(String paymentToken) {
@@ -285,9 +285,9 @@ public class NodoOperations {
      * @throws IllegalArgumentException if the input parameters are null or invalid.
      */
     private List<PaymentTransferInfo> getPaymentTransferInfoList(
-            List<CtTransferPSPV2> transferPSPV2List,
-            CtMetadata metadata,
-            String primaryFiscalCode
+                                                                 List<CtTransferPSPV2> transferPSPV2List,
+                                                                 CtMetadata metadata,
+                                                                 String primaryFiscalCode
     ) {
         List<PaymentTransferInfo> baseTransferList = transferPSPV2List.stream()
                 .map(
