@@ -2116,6 +2116,8 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
         String correlationId = UUID.randomUUID().toString();
+        String idBundle = UUID.randomUUID().toString();
+
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -2148,6 +2150,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -2169,7 +2172,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                idBundle
         );
 
         AuthorizationRequestData authorizationDataAfterBuildSession = new AuthorizationRequestData(
@@ -2193,7 +2196,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                idBundle
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
