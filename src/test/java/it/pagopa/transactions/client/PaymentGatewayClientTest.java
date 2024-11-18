@@ -214,7 +214,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 Mockito.mock(RequestAuthorizationRequestDetailsDto.class),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         /* test */
@@ -272,7 +273,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
         /* preconditions */
@@ -350,7 +352,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         /* preconditions */
@@ -440,7 +443,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         /* preconditions */
@@ -519,7 +523,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         /* preconditions */
@@ -604,7 +609,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -781,7 +787,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
@@ -897,7 +904,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
@@ -1002,7 +1010,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
@@ -1108,7 +1117,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         /* preconditions */
@@ -1298,7 +1308,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1464,7 +1475,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1620,7 +1632,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 apmDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1765,7 +1778,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1913,7 +1927,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -2072,7 +2087,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -2191,7 +2207,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         String idPaymentMethod = "RBPS";
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
@@ -2299,7 +2316,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         String idPaymentMethod = "RBPS";
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
@@ -2399,7 +2417,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         Hooks.onOperatorDebug();
@@ -2495,7 +2514,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         HttpStatus httpStatusErrorCode = HttpStatus.INTERNAL_SERVER_ERROR;
         /* preconditions */
@@ -2647,7 +2667,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
@@ -2738,7 +2759,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         Hooks.onOperatorDebug();
@@ -2795,7 +2817,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();

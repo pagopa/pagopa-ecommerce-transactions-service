@@ -35,6 +35,7 @@ public record AuthorizationRequestData(
 
         String asset,
 
-        Optional<Map<String, String>> brandAssets
+        Optional<Map<String, String>> brandAssets,
+        String idBundle
 ) {
 }
