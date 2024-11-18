@@ -2150,7 +2150,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
-
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
