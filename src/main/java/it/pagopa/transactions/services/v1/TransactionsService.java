@@ -681,7 +681,8 @@ public class TransactionsService {
                                     brand,
                                     requestAuthorizationRequestDto.getDetails(),
                                     asset,
-                                    Optional.ofNullable(brandAssets)
+                                    Optional.ofNullable(brandAssets),
+                                    bundle.getIdBundle()
                             );
 
                             TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(

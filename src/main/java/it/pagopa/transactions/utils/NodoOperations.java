@@ -24,7 +24,9 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -191,15 +193,11 @@ public class NodoOperations {
                                 response.getPaymentToken(),
                                 ZonedDateTime.now().toString(),
                                 new IdempotencyKey(idempotencyKey),
-                                response.getTransferList().getTransfer().stream()
-                                        .map(
-                                                transfer -> new PaymentTransferInfo(
-                                                        transfer.getFiscalCodePA(),
-                                                        transfer.getRichiestaMarcaDaBollo() != null,
-                                                        EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
-                                                        transfer.getTransferCategory()
-                                                )
-                                        ).toList(),
+                                getPaymentTransferInfoList(
+                                        response.getTransferList().getTransfer(),
+                                        response.getMetadata(),
+                                        response.getFiscalCodePA()
+                                ),
                                 isAllCCP(response, allCCPOnTransferIbanEnabled),
                                 response.getCreditorReferenceId()
                         )
@@ -259,5 +257,71 @@ public class NodoOperations {
 
     public String getEcommerceFiscalCode() {
         return nodoConfig.nodoConnectionString().getIdBrokerPSP();
+    }
+
+    /**
+     * Retrieves a list of payment transfer information based on the provided
+     * transfer data and metadata.
+     *
+     * <p>
+     * This method processes a list of transfer objects and associated metadata to
+     * generate a corresponding list of payment transfer information. If the
+     * metadata contains a convention specifying additional transfers, these will be
+     * included in the resulting list (for more details see CHK-3525).
+     * </p>
+     *
+     * @param transferPSPV2List a list of {@link CtTransferPSPV2} objects containing
+     *                          the payment transfer data to be processed.
+     * @param metadata          an instance of {@link CtMetadata} containing
+     *                          relevant metadata for processing the transfers,
+     *                          which may include conventions for adding additional
+     *                          transfers.
+     * @param primaryFiscalCode primary paFiscalCode for transfer related to
+     *                          convention
+     * @return a list of {@link PaymentTransferInfo} objects, each representing
+     *         detailed information about a payment transfer, including any
+     *         additional transfers specified by the metadata.
+     *
+     * @throws IllegalArgumentException if the input parameters are null or invalid.
+     */
+    private List<PaymentTransferInfo> getPaymentTransferInfoList(
+                                                                 List<CtTransferPSPV2> transferPSPV2List,
+                                                                 CtMetadata metadata,
+                                                                 String primaryFiscalCode
+    ) {
+        List<PaymentTransferInfo> baseTransferList = transferPSPV2List.stream()
+                .map(
+                        transfer -> new PaymentTransferInfo(
+                                transfer.getFiscalCodePA(),
+                                transfer.getRichiestaMarcaDaBollo() != null,
+                                EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
+                                transfer.getTransferCategory()
+                        )
+                )
+                .toList();
+
+        Optional<String> conventionValue = Optional.ofNullable(metadata)
+                .map(CtMetadata::getMapEntry)
+                .orElse(List.of())
+                .stream()
+                .filter(entry -> "codiceConvenzione".equals(entry.getKey()))
+                .map(CtMapEntry::getValue)
+                .findFirst();
+
+        return conventionValue
+                .map(
+                        value -> Stream.concat(
+                                baseTransferList.stream(),
+                                Stream.of(
+                                        new PaymentTransferInfo(
+                                                primaryFiscalCode,
+                                                false,
+                                                0,
+                                                value
+                                        )
+                                )
+                        ).toList()
+                )
+                .orElse(baseTransferList);
     }
 }

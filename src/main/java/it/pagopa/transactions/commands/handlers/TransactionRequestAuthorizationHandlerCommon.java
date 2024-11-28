@@ -29,6 +29,7 @@ import reactor.util.function.Tuples;
 import javax.crypto.SecretKey;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -155,7 +156,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         authorizationData.brand(),
                                         authorizationData.authDetails(),
                                         authorizationData.asset(),
-                                        authorizationData.brandAssets()
+                                        authorizationData.brandAssets(),
+                                        authorizationData.idBundle()
                                 ),
                                 orderIdAndFieldsDto.getT1(),
                                 correlationId,
@@ -332,8 +334,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     );
 
                                             yield gdiCheckPathWithFragment.map(
-                                                    path -> URI.create(checkoutBasePath)
-                                                            .resolve(path).toString()
+                                                    path -> appendTimestampAsQueryParam(
+                                                            URI.create(checkoutBasePath)
+                                                                    .resolve(path)
+                                                    ).toString()
                                             );
 
                                         }
@@ -368,9 +372,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                 ).toString()
                                         )
                                                 : Mono.just(
-                                                        URI.create(checkoutBasePath)
-                                                                .resolve(checkoutOutcomeUrl)
-                                                                .toString()
+                                                        appendTimestampAsQueryParam(
+                                                                URI.create(checkoutBasePath)
+                                                                        .resolve(checkoutOutcomeUrl)
+                                                        ).toString()
                                                 );
                                         default -> throw new BadGatewayException(
                                                 "Invalid NPG confirm payment state response: " + npgResponse.getState(),
@@ -479,7 +484,16 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 .map(entry -> String.format("%s=%s", entry.getT1(), entry.getT2()))
                 .collect(Collectors.joining("&"));
 
-        return UriComponentsBuilder.fromUri(uri).fragment(fragment).build().toUri();
+        return UriComponentsBuilder
+                .fromUri(uri)
+                // append query param to prevent caching
+                .queryParam("t", Instant.now().toEpochMilli())
+                .fragment(fragment).build().toUri();
+    }
+
+    // append query param to prevent caching
+    private URI appendTimestampAsQueryParam(URI uri) {
+        return UriComponentsBuilder.fromUri(uri).queryParam("t", Instant.now().toEpochMilli()).build().toUri();
     }
 
     private Mono<String> generateWebviewToken(

@@ -1,8 +1,11 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationResponseDto;
 import it.pagopa.transactions.configurations.SecretsConfigurations;
 
 import javax.crypto.SecretKey;
+
+import static it.pagopa.transactions.utils.UrlUtils.urlsEqualsWithRandomParam;
 
 public class TransactionAuthorizationHandlerCommon {
     public static final String MOCK_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw";
@@ -13,4 +16,13 @@ public class TransactionAuthorizationHandlerCommon {
 
     public static final SecretKey ECOMMERCE_JWT_SIGNING_KEY = new SecretsConfigurations()
             .ecommerceSigningKey(STRONG_KEY);
+
+    public static boolean requestAuthResponseDtoComparator(
+                                                           RequestAuthorizationResponseDto actual,
+                                                           RequestAuthorizationResponseDto expected
+    ) {
+        return actual.getAuthorizationRequestId().equals(expected.getAuthorizationRequestId()) &&
+                urlsEqualsWithRandomParam(actual.getAuthorizationUrl(), expected.getAuthorizationUrl());
+
+    }
 }
