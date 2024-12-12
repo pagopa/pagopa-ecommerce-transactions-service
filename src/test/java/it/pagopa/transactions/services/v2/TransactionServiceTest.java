@@ -60,8 +60,8 @@ class TransactionServiceTest {
             transactionActivateHandlerV2,
             transactionsActivationProjectionHandlerV2,
             transactionsUtils,
-            confidentialMailUtils
-    );
+            confidentialMailUtils,
+            transactionsViewRepository);
 
     @Test
     void shouldHandleNewTransactionTransactionActivated() {
@@ -155,7 +155,7 @@ class TransactionServiceTest {
                                 && res.getIdCart().equals("idCart")
                                 && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
                                 && res.getClientId()
-                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
                                 && !res.getTransactionId().isEmpty()
                                 && !res.getAuthToken().isEmpty()
                 )
@@ -257,7 +257,7 @@ class TransactionServiceTest {
                                 && res.getIdCart().equals("idCart")
                                 && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
                                 && res.getClientId()
-                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
                                 && !res.getTransactionId().isEmpty()
                                 && !res.getAuthToken().isEmpty()
                 )
@@ -358,7 +358,7 @@ class TransactionServiceTest {
                                 && res.getIdCart().equals("idCart")
                                 && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
                                 && res.getClientId()
-                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
+                                .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
                                 && !res.getTransactionId().isEmpty()
                                 && !res.getAuthToken().isEmpty()
                 )
@@ -383,8 +383,8 @@ class TransactionServiceTest {
     @ParameterizedTest
     @MethodSource("clientIdMapping")
     void shouldConvertClientIdSuccessfully(
-                                           String expected,
-                                           Transaction.ClientId clientId
+            String expected,
+            Transaction.ClientId clientId
     ) {
         assertEquals(expected, transactionsService.convertClientId(clientId).toString());
     }
