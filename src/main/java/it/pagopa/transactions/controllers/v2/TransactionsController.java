@@ -74,6 +74,15 @@ public class TransactionsController implements V2Api {
     }
 
     @Override
+    public Mono<ResponseEntity<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto>> getTransactionInfo(
+                                                                                                                        String transactionId,
+                                                                                                                        UUID xUserId,
+                                                                                                                        ServerWebExchange exchange
+    ) {
+        return null;
+    }
+
+    @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
                                                                           ClientIdDto xClientId,
                                                                           UUID correlationId,
