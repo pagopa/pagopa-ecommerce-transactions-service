@@ -50,9 +50,9 @@ public class TransactionsController implements V2Api {
     private OpenTelemetryUtils openTelemetryUtils;
 
     @ExceptionHandler(
-            {
-                    CallNotPermittedException.class
-            }
+        {
+                CallNotPermittedException.class
+        }
     )
     public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(CallNotPermittedException error) {
         log.error("Error - OPEN circuit breaker", error);
@@ -75,11 +75,12 @@ public class TransactionsController implements V2Api {
 
     @Override
     public Mono<ResponseEntity<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto>> getTransactionInfo(
-            String transactionId,
-            UUID xUserId,
-            ServerWebExchange exchange
+                                                                                                                        String transactionId,
+                                                                                                                        UUID xUserId,
+                                                                                                                        ServerWebExchange exchange
     ) {
-        return transactionsService.getTransactionInfo(transactionId, xUserId).doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
+        return transactionsService.getTransactionInfo(transactionId, xUserId)
+                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
@@ -96,11 +97,11 @@ public class TransactionsController implements V2Api {
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
-            ClientIdDto xClientId,
-            UUID correlationId,
-            Mono<NewTransactionRequestDto> newTransactionRequest,
-            UUID xUserId,
-            ServerWebExchange exchange
+                                                                          ClientIdDto xClientId,
+                                                                          UUID correlationId,
+                                                                          Mono<NewTransactionRequestDto> newTransactionRequest,
+                                                                          UUID xUserId,
+                                                                          ServerWebExchange exchange
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
@@ -185,12 +186,12 @@ public class TransactionsController implements V2Api {
     }
 
     @ExceptionHandler(
-            {
-                    InvalidRequestException.class,
-                    ConstraintViolationException.class,
-                    ServerWebInputException.class,
-                    MethodArgumentTypeMismatchException.class
-            }
+        {
+                InvalidRequestException.class,
+                ConstraintViolationException.class,
+                ServerWebInputException.class,
+                MethodArgumentTypeMismatchException.class
+        }
     )
     ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
         log.warn("Got invalid input: {}", exception.getMessage());
@@ -204,9 +205,9 @@ public class TransactionsController implements V2Api {
     }
 
     @ExceptionHandler(
-            {
-                    JWTTokenGenerationException.class
-            }
+        {
+                JWTTokenGenerationException.class
+        }
     )
     ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JWTTokenGenerationException exception) {
         log.warn(exception.getMessage());
@@ -245,9 +246,9 @@ public class TransactionsController implements V2Api {
     }
 
     @ExceptionHandler(
-            {
-                    InvalidNodoResponseException.class,
-            }
+        {
+                InvalidNodoResponseException.class,
+        }
     )
     ResponseEntity<ProblemJsonDto> invalidNodoResponse(InvalidNodoResponseException exception) {
         log.warn(exception.getMessage());
@@ -280,7 +281,7 @@ public class TransactionsController implements V2Api {
                             .create()
                             .get()
                             .uri(
-                                    "http://localhost:8080/transactions/{transactionId}",
+                                    "http://localhost:8080/v2/transactions/{transactionId}",
                                     newTransactionResponseDto.getTransactionId()
                             )
                             .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())

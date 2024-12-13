@@ -27,6 +27,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,14 +50,15 @@ public class TransactionsService {
     @Autowired
     public TransactionsService(
             @Qualifier(
-                    TransactionActivateHandler.QUALIFIER_NAME
+                TransactionActivateHandler.QUALIFIER_NAME
             ) TransactionActivateHandler transactionActivateHandlerV2,
             @Qualifier(
-                    TransactionsActivationProjectionHandler.QUALIFIER_NAME
+                TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsUtils transactionsUtils,
             ConfidentialMailUtils confidentialMailUtils,
-            TransactionsViewRepository transactionsViewRepository) {
+            TransactionsViewRepository transactionsViewRepository
+    ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;
         this.transactionsUtils = transactionsUtils;
@@ -66,11 +69,11 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-            NewTransactionRequestDto newTransactionRequestDto,
-            ClientIdDto clientIdDto,
-            UUID correlationId,
-            TransactionId transactionId,
-            UUID userId
+                                                          NewTransactionRequestDto newTransactionRequestDto,
+                                                          ClientIdDto clientIdDto,
+                                                          UUID correlationId,
+                                                          TransactionId transactionId,
+                                                          UUID userId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -134,8 +137,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEvent(
-            it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivatedEvent,
-            String authToken
+                                                                  it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivatedEvent,
+                                                                  String authToken
     ) {
         return transactionsActivationProjectionHandlerV2
                 .handle(transactionActivatedEvent)
@@ -188,7 +191,7 @@ public class TransactionsService {
     }
 
     public NewTransactionResponseDto.ClientIdEnum convertClientId(
-            Transaction.ClientId clientId
+                                                                  Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId)
                 .map(
@@ -207,8 +210,8 @@ public class TransactionsService {
     @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionInfo")
     public Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> getTransactionInfo(
-            String transactionId,
-            UUID xUserId
+                                                                                                        String transactionId,
+                                                                                                        UUID xUserId
     ) {
         log.info("Get Transaction Invoked with id {} ", transactionId);
         return getBaseTransactionView(transactionId, xUserId)
@@ -221,99 +224,76 @@ public class TransactionsService {
                 .filter(transactionDocument -> switch (transactionDocument) {
                     case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
                     case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->
-                            xUserId == null ? t.getUserId() == null : t.getUserId().equals(xUserId.toString());
+                            Optional.ofNullable(xUserId).map(UUID::toString).equals(Optional.ofNullable(t.getUserId()));
                     default ->
                             throw new NotImplementedException("Handling for transaction document version: [%s] not implemented yet".formatted(transactionDocument.getClass()));
                 });
     }
 
+    private it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto buildTransactionInfoDtoFromView(
+                                                                                                                BaseTransactionView baseTransactionView
+    ) {
+        if (baseTransactionView instanceof it.pagopa.ecommerce.commons.documents.v2.Transaction transaction) {
+            List<PaymentInfoDto> payments = transaction.getPaymentNotices().stream().map(
+                    paymentNotice -> new it.pagopa.generated.transactions.v2.server.model.PaymentInfoDto()
+                            .amount(paymentNotice.getAmount())
+                            .reason(paymentNotice.getDescription())
+                            .paymentToken(paymentNotice.getPaymentToken())
+                            .rptId(paymentNotice.getRptId())
+                            .isAllCCP(paymentNotice.isAllCCP())
+                            .transferList(
+                                    paymentNotice.getTransferList().stream().map(
+                                            notice -> new it.pagopa.generated.transactions.v2.server.model.TransferDto()
+                                                    .transferCategory(
+                                                            notice.getTransferCategory()
+                                                    )
+                                                    .transferAmount(
+                                                            notice.getTransferAmount()
+                                                    ).digitalStamp(notice.getDigitalStamp())
+                                                    .paFiscalCode(notice.getPaFiscalCode())
+                                    ).toList()
+                            )
+            ).toList();
+            TransactionInfoGatewayInfoDto gatewayInfoDto = new TransactionInfoGatewayInfoDto()
+                    .gateway(transaction.getPaymentGateway())
+                    .authorizationCode(transaction.getAuthorizationCode())
+                    .authorizationStatus(transaction.getGatewayAuthorizationStatus())
+                    .errorCode(transaction.getAuthorizationErrorCode());
+            TransactionInfoNodeInfoClosePaymentResultErrorDto closePaymentResultErrorDto = null;
+            if (transaction.getClosureErrorData() != null) {
+                closePaymentResultErrorDto = new TransactionInfoNodeInfoClosePaymentResultErrorDto()
+                        .description(transaction.getClosureErrorData().getErrorDescription())
+                        .statusCode(
+                                Optional.ofNullable(transaction.getClosureErrorData().getHttpErrorCode())
+                                        .map(httpCode -> BigDecimal.valueOf(httpCode.value())).orElse(null)
+                        );
+            }
+            TransactionInfoNodeInfoDto nodeInfoDto = new TransactionInfoNodeInfoDto()
+                    .closePaymentResultError(closePaymentResultErrorDto)
+                    .sendPaymentResultOutcome(
+                            transaction.getSendPaymentResultOutcome() == null ? null
+                                    : TransactionInfoNodeInfoDto.SendPaymentResultOutcomeEnum
+                                            .fromValue(transaction.getSendPaymentResultOutcome().toString())
+                    );
+            return new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
+                    .transactionId(transaction.getTransactionId())
+                    .payments(payments)
+                    .feeTotal(transaction.getFeeTotal())
+                    .clientId(
+                            it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto.ClientIdEnum.valueOf(
+                                    transaction.getClientId().getEffectiveClient().toString()
+                            )
+                    )
+                    .status(transactionsUtils.convertEnumerationV2(transaction.getStatus()))
+                    .idCart(transaction.getIdCart())
+                    .gatewayInfo(gatewayInfoDto)
+                    .nodeInfo(nodeInfoDto);
+        }
 
-    private it.pagopa.generated.transactions.server.model.TransactionInfoDto buildTransactionInfoDtoFromView(BaseTransactionView baseTransactionView) {
-        return switch (baseTransactionView) {
-            case it.pagopa.ecommerce.commons.documents.v1.Transaction transaction ->
-                    new it.pagopa.generated.transactions.server.model.TransactionInfoDto()
-                            .transactionId(transaction.getTransactionId())
-                            .payments(
-                                    transaction.getPaymentNotices().stream().map(
-                                            paymentNotice -> new it.pagopa.generated.transactions.server.model.PaymentInfoDto()
-                                                    .amount(paymentNotice.getAmount())
-                                                    .reason(paymentNotice.getDescription())
-                                                    .paymentToken(paymentNotice.getPaymentToken())
-                                                    .rptId(paymentNotice.getRptId())
-                                                    .isAllCCP(paymentNotice.isAllCCP())
-                                                    .transferList(
-                                                            paymentNotice.getTransferList().stream().map(
-                                                                    notice -> new it.pagopa.generated.transactions.server.model.TransferDto()
-                                                                            .transferCategory(
-                                                                                    notice.getTransferCategory()
-                                                                            )
-                                                                            .transferAmount(
-                                                                                    notice.getTransferAmount()
-                                                                            ).digitalStamp(notice.getDigitalStamp())
-                                                                            .paFiscalCode(notice.getPaFiscalCode())
-                                                            ).toList()
-                                                    )
-                                    ).toList()
-                            )
-                            .feeTotal(transaction.getFeeTotal())
-                            .clientId(
-                                    it.pagopa.generated.transactions.server.model.TransactionInfoDto.ClientIdEnum.valueOf(
-                                            transaction.getClientId().toString()
-                                    )
-                            )
-                            .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
-                            .idCart(transaction.getIdCart())
-                            .gateway(transaction.getPaymentGateway())
-                            .sendPaymentResultOutcome(
-                                    transaction.getSendPaymentResultOutcome() == null ? null
-                                            : it.pagopa.generated.transactions.server.model.TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                            .valueOf(transaction.getSendPaymentResultOutcome().name())
-                            )
-                            .authorizationCode(transaction.getAuthorizationCode())
-                            .errorCode(transaction.getAuthorizationErrorCode());
-            case it.pagopa.ecommerce.commons.documents.v2.Transaction transaction ->
-                    new it.pagopa.generated.transactions.server.model.TransactionInfoDto()
-                            .transactionId(transaction.getTransactionId())
-                            .payments(
-                                    transaction.getPaymentNotices().stream().map(
-                                            paymentNotice -> new it.pagopa.generated.transactions.server.model.PaymentInfoDto()
-                                                    .amount(paymentNotice.getAmount())
-                                                    .reason(paymentNotice.getDescription())
-                                                    .paymentToken(paymentNotice.getPaymentToken())
-                                                    .rptId(paymentNotice.getRptId())
-                                                    .isAllCCP(paymentNotice.isAllCCP())
-                                                    .transferList(
-                                                            paymentNotice.getTransferList().stream().map(
-                                                                    notice -> new it.pagopa.generated.transactions.server.model.TransferDto()
-                                                                            .transferCategory(
-                                                                                    notice.getTransferCategory()
-                                                                            )
-                                                                            .transferAmount(
-                                                                                    notice.getTransferAmount()
-                                                                            ).digitalStamp(notice.getDigitalStamp())
-                                                                            .paFiscalCode(notice.getPaFiscalCode())
-                                                            ).toList()
-                                                    )
-                                    ).toList()
-                            )
-                            .feeTotal(transaction.getFeeTotal())
-                            .clientId(
-                                    it.pagopa.generated.transactions.server.model.TransactionInfoDto.ClientIdEnum.valueOf(
-                                            transaction.getClientId().getEffectiveClient().toString()
-                                    )
-                            )
-                            .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
-                            .idCart(transaction.getIdCart())
-                            .gateway(transaction.getPaymentGateway())
-                            .sendPaymentResultOutcome(
-                                    transaction.getSendPaymentResultOutcome() == null ? null
-                                            : it.pagopa.generated.transactions.server.model.TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                            .valueOf(transaction.getSendPaymentResultOutcome().name())
-                            )
-                            .authorizationCode(transaction.getAuthorizationCode())
-                            .errorCode(transaction.getAuthorizationErrorCode())
-                            .gatewayAuthorizationStatus(transaction.getGatewayAuthorizationStatus());
-            default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
-        };
+        throw new NotImplementedException(
+                "Handling for transaction document version: [%s] not implemented yet"
+                        .formatted(baseTransactionView.getClass())
+        );
     }
+
 }
