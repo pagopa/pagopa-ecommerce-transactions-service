@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
+import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.RptId;
@@ -260,11 +261,12 @@ public class TransactionsService {
                     .authorizationStatus(transaction.getGatewayAuthorizationStatus())
                     .errorCode(transaction.getAuthorizationErrorCode());
             TransactionInfoNodeInfoClosePaymentResultErrorDto closePaymentResultErrorDto = null;
-            if (transaction.getClosureErrorData() != null) {
+            ClosureErrorData closureErrorData = transaction.getClosureErrorData();
+            if (closureErrorData != null) {
                 closePaymentResultErrorDto = new TransactionInfoNodeInfoClosePaymentResultErrorDto()
-                        .description(transaction.getClosureErrorData().getErrorDescription())
+                        .description(closureErrorData.getErrorDescription())
                         .statusCode(
-                                Optional.ofNullable(transaction.getClosureErrorData().getHttpErrorCode())
+                                Optional.ofNullable(closureErrorData.getHttpErrorCode())
                                         .map(httpCode -> BigDecimal.valueOf(httpCode.value())).orElse(null)
                         );
             }
