@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.domain.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.RptId;
 import it.pagopa.ecommerce.commons.domain.TransactionAmount;
@@ -273,9 +274,11 @@ public class TransactionsService {
             TransactionInfoNodeInfoDto nodeInfoDto = new TransactionInfoNodeInfoDto()
                     .closePaymentResultError(closePaymentResultErrorDto)
                     .sendPaymentResultOutcome(
-                            transaction.getSendPaymentResultOutcome() == null ? null
-                                    : TransactionInfoNodeInfoDto.SendPaymentResultOutcomeEnum
-                                            .fromValue(transaction.getSendPaymentResultOutcome().toString())
+                            Optional
+                                    .ofNullable(transaction.getSendPaymentResultOutcome())
+                                    .map(TransactionUserReceiptData.Outcome::toString)
+                                    .map(TransactionInfoNodeInfoDto.SendPaymentResultOutcomeEnum::fromValue)
+                                    .orElse(null)
                     );
             return new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
                     .transactionId(transaction.getTransactionId())
