@@ -74,6 +74,28 @@ public class TransactionsController implements V2Api {
     }
 
     @Override
+    public Mono<ResponseEntity<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto>> getTransactionInfo(
+                                                                                                                        String transactionId,
+                                                                                                                        UUID xUserId,
+                                                                                                                        ServerWebExchange exchange
+    ) {
+        return transactionsService.getTransactionInfo(transactionId, xUserId)
+                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
+                .map(ResponseEntity::ok)
+                .contextWrite(
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        new TransactionId(transactionId),
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
+                                ),
+                                context
+                        )
+                );
+    }
+
+    @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
                                                                           ClientIdDto xClientId,
                                                                           UUID correlationId,
@@ -259,7 +281,7 @@ public class TransactionsController implements V2Api {
                             .create()
                             .get()
                             .uri(
-                                    "http://localhost:8080/transactions/{transactionId}",
+                                    "http://localhost:8080/v2/transactions/{transactionId}",
                                     newTransactionResponseDto.getTransactionId()
                             )
                             .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())

@@ -44,6 +44,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
@@ -51,6 +52,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @WebFluxTest(it.pagopa.transactions.controllers.v2.TransactionsController.class)
@@ -165,7 +168,7 @@ class TransactionsControllerTest {
                     .block();
 
             // Verify mock
-            Mockito.verify(transactionsService, Mockito.times(1))
+            verify(transactionsService, Mockito.times(1))
                     .newTransaction(
                             newTransactionRequestDto,
                             clientIdDto,
@@ -726,6 +729,56 @@ class TransactionsControllerTest {
                             )
                     );
                 });
+    }
+
+    @Test
+    void shouldHandleGetTransactionSuccessfully() {
+        String transactionId = it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID;
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .gatewayInfo(
+                        new TransactionInfoGatewayInfoDto()
+                                .gateway("NPG")
+                                .authorizationCode("authorizationCode")
+                                .authorizationStatus("authorizationStatus")
+                                .errorCode("errorCode")
+                )
+                .nodeInfo(
+                        new TransactionInfoNodeInfoDto()
+                                .closePaymentResultError(
+                                        new TransactionInfoNodeInfoClosePaymentResultErrorDto()
+                                                .description("errorDescription")
+                                                .statusCode(BigDecimal.valueOf(404))
+                                )
+                                .sendPaymentResultOutcome(TransactionInfoNodeInfoDto.SendPaymentResultOutcomeEnum.KO)
+                )
+                .transactionId(transactionId)
+                .idCart("idCart")
+                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
+                .feeTotal(200)
+                .status(TransactionStatusDto.CLOSED)
+                .addPaymentsItem(
+                        new PaymentInfoDto()
+                                .rptId("rptId")
+                );
+
+        Mockito.when(transactionsService.getTransactionInfo(any(), any()))
+                .thenReturn(Mono.just(expectedResponse));
+        webTestClient.get()
+                .uri("/v2/transactions/{transactionId}", Map.of("transactionId", transactionId))
+                .header("X-Client-Id", "CHECKOUT")
+                .header("x-correlation-id", UUID.randomUUID().toString())
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.OK)
+                .expectBody(TransactionInfoDto.class)
+                .value(response -> {
+                    assertEquals(
+                            expectedResponse,
+                            response
+                    );
+                });
+        verify(transactionsService, times(1)).getTransactionInfo(transactionId, null);
+
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
