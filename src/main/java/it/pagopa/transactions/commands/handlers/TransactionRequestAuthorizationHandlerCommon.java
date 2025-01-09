@@ -334,10 +334,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     );
 
                                             yield gdiCheckPathWithFragment.map(
-                                                    path -> appendTimestampAsQueryParam(
-                                                            URI.create(checkoutBasePath)
-                                                                    .resolve(path)
-                                                    ).toString()
+                                                    path -> URI.create(checkoutBasePath)
+                                                            .resolve(path).toString()
                                             );
 
                                         }
