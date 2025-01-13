@@ -313,6 +313,11 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     );
 
                                     return transactionEventStoreRepository.save(authorizationEvent)
+                                            .doOnNext(e -> {
+                                                String authorizationRequestId = e.getData().getAuthorizationRequestId();
+                                                String transactionId = t.getTransactionId().value();
+                                                log.info("Logging event store saved authorization event for transactionId: [{}] and authorizationRequestId: [{}]", transactionId, authorizationRequestId);
+                                            })
                                             .flatMap(
                                                     e -> Mono
                                                             .just(
