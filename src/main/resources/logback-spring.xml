@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <springProperty name="ECS_SERVICE_VERSION" source="build.version"/>
-    <appender name="ECS_JSON_CONSOLE_MASKED" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="ECS_JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="co.elastic.logging.logback.EcsEncoder">
             <serviceName>${ECS_SERVICE_NAME:-undefined}</serviceName>
             <serviceVersion>${ECS_SERVICE_VERSION}</serviceVersion>
@@ -9,6 +9,6 @@
         </encoder>
     </appender>
     <root level="INFO">
-        <appender-ref ref="ECS_JSON_CONSOLE_MASKED"/>
+        <appender-ref ref="ECS_JSON_CONSOLE"/>
     </root>
 </configuration>
