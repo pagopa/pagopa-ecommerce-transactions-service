@@ -1,5 +1,8 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -37,15 +40,17 @@ class LogFormatterTests {
     }
 
     @Test
-    void testSimpleLog() {
-        String mail = "test@test.it";
-        log.info(mail);
-        String pan16 = "pan: 1234567890123456";
-        log.info(pan16);
-        log.info(pan16);
+    void testShouldNotMaskValues() {
+        // pre-conditions
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+        RptId rptId = new RptId(TransactionTestUtils.RPT_ID);
+        // test
+        log.info("TransactionId: [{}]", transactionId.value());
+        log.info("RPT ID: [{}]", rptId.value());
+        // assertions
         String outcontentString = outContent.toString(StandardCharsets.UTF_8);
-        assertTrue(outcontentString.contains(mail));
-        assertTrue(outcontentString.contains(pan16));
+        assertTrue(outcontentString.contains("TransactionId: [" + transactionId.value() + "]"));
+        assertTrue(outcontentString.contains("RPT ID: [" + rptId.value() + "]"));
         // We expect some additional data in the log string
         assertTrue(outcontentString.contains("@timestamp"));
     }
