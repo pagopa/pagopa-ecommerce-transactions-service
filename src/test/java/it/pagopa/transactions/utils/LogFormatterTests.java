@@ -1,5 +1,8 @@
 package it.pagopa.transactions.utils;
 
+import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -19,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 @SpringBootTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
-class LogMaskTests {
+class LogFormatterTests {
 
     private static final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private static final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
@@ -37,32 +40,19 @@ class LogMaskTests {
     }
 
     @Test
-    void testSimpleLog() {
-        String simpleMail = "test@test.it";
-        log.info(simpleMail);
-        String complexmail = "test.test@test.it";
-        log.info(complexmail);
-        String cvvMsg3 = "cvv: 123";
-        log.info(cvvMsg3);
-        String cvvMsg4 = "cvv: 1234";
-        log.info(cvvMsg4);
-        String pan14 = "pan: 12345678901234";
-        log.info(pan14);
-        String pan16 = "pan: 1234567890123456";
-        log.info(pan16);
+    void testShouldNotMaskValues() {
+        // pre-conditions
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+        RptId rptId = new RptId(TransactionTestUtils.RPT_ID);
+        // test
+        log.info("TransactionId: [{}]", transactionId.value());
+        log.info("RPT ID: [{}]", rptId.value());
+        // assertions
         String outcontentString = outContent.toString(StandardCharsets.UTF_8);
-        assertFalse(outcontentString.contains(simpleMail));
-        assertFalse(outcontentString.contains(complexmail));
-        assertFalse(outcontentString.contains(cvvMsg3));
-        assertFalse(outcontentString.contains(cvvMsg4));
-        assertFalse(outcontentString.contains(pan14));
-        assertFalse(outcontentString.contains(pan16));
-        assertTrue(outcontentString.contains("cvv: ***"));
-        assertTrue(outcontentString.contains("cvv: ****"));
-        assertTrue(outcontentString.contains("pan: ****************"));
-        assertTrue(outcontentString.contains("pan: **************"));
-        assertTrue(outcontentString.contains("*****************"));
-        assertTrue(outcontentString.contains("************"));
+        assertTrue(outcontentString.contains("TransactionId: [" + transactionId.value() + "]"));
+        assertTrue(outcontentString.contains("RPT ID: [" + rptId.value() + "]"));
+        // We expect some additional data in the log string
+        assertTrue(outcontentString.contains("@timestamp"));
     }
 
 }
