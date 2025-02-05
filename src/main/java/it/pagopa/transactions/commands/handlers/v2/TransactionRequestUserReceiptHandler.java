@@ -14,6 +14,7 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.InvalidStatusException;
 import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -106,22 +107,33 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                 )
                                         )
                                         .flatMap(
-                                                tx -> Mono.error(
-                                                        new AlreadyProcessedException(
-                                                                tx.getTransactionId(),
-                                                                tx.getTransactionAuthorizationRequestData().getPspId(),
-                                                                tx.getTransactionAuthorizationRequestData()
-                                                                        .getPaymentTypeCode(),
-                                                                tx.getClientId().name(),
-                                                                transactionsUtils.isWalletPayment(tx).orElseThrow(),
-                                                                new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                                        command.getData().addUserReceiptRequest()
-                                                                                .getOutcome()
-                                                                                .getValue(),
-                                                                        Optional.empty()
+                                                tx -> {
+                                                    if (tx.getStatus() == TransactionStatusDto.CLOSURE_REQUESTED) {
+                                                        return Mono.error(
+                                                                new InvalidStatusException(
+                                                                        "Error processing closure update request: the transaction is in the state "
+                                                                                + tx.getStatus()
                                                                 )
-                                                        )
-                                                )
+                                                        );
+                                                    }
+                                                    return Mono.error(
+                                                            new AlreadyProcessedException(
+                                                                    tx.getTransactionId(),
+                                                                    tx.getTransactionAuthorizationRequestData()
+                                                                            .getPspId(),
+                                                                    tx.getTransactionAuthorizationRequestData()
+                                                                            .getPaymentTypeCode(),
+                                                                    tx.getClientId().name(),
+                                                                    transactionsUtils.isWalletPayment(tx).orElseThrow(),
+                                                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                                            command.getData().addUserReceiptRequest()
+                                                                                    .getOutcome()
+                                                                                    .getValue(),
+                                                                            Optional.empty()
+                                                                    )
+                                                            )
+                                                    );
+                                                }
                                         )
                 );
         return transaction

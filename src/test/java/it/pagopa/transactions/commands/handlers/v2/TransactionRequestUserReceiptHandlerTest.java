@@ -22,6 +22,7 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.InvalidStatusException;
 import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -748,6 +749,69 @@ class TransactionRequestUserReceiptHandlerTest {
         );
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
+    }
+
+    @Test
+    void shouldRejectTransactionInInvalidStateClosureRequested() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
+        );
+
+        TransactionClosureRequestedEvent transactionClosureRequestedEvent = transactionClosureRequestedEvent();
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction.getTransactionId(),
+                addUserReceiptRequest
+        );
+
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData
+        );
+
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
+                .just(
+                        transactionActivatedEvent,
+                        authorizationRequestedEvent,
+                        authorizationCompletedEvent,
+                        transactionClosureRequestedEvent
+                ));
+
+        /* preconditions */
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
+                .expectErrorMatches(error -> error instanceof InvalidStatusException)
+                .verify();
+
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
     }
 
     @Test

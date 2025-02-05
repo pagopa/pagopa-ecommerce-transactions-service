@@ -503,6 +503,33 @@ class CircuitBreakerTest {
 
     }
 
+    @Test
+    @Order(3)
+    void shouldOpenCircuitBreakerForInvalidStatusExceptionPerformingRetry() {
+        Retry retry = retryRegistry.retry("addUserReceipt");
+        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt();
+        long expectedFailedCallsWithRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt() + 1;
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(transactionsViewRepository.findById(any(String.class)))
+                .thenReturn(Mono.error(new InvalidStatusException("Error processing request")));
+
+        StepVerifier
+                .create(
+                        transactionsService.addUserReceipt("", new AddUserReceiptRequestDto())
+                )
+                .expectError(InvalidStatusException.class)
+                .verify();
+        assertEquals(
+                expectedFailedCallsWithoutRetryAttempt,
+                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
+        );
+        assertEquals(expectedFailedCallsWithRetryAttempt, retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt());
+
+    }
+
     private static CtFaultBean faultBeanWithCode(String faultCode) {
         CtFaultBean fault = new CtFaultBean();
         fault.setFaultCode(faultCode);
