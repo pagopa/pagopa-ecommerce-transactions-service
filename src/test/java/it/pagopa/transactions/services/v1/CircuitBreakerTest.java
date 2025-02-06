@@ -505,7 +505,7 @@ class CircuitBreakerTest {
 
     @Test
     @Order(3)
-    void shouldOpenCircuitBreakerForInvalidStatusExceptionPerformingRetry() {
+    void shouldPerformRetryForInvalidStatusExceptionOnAddUserReceipt() {
         Retry retry = retryRegistry.retry("addUserReceipt");
         long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt();
         long expectedFailedCallsWithRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt() + 1;

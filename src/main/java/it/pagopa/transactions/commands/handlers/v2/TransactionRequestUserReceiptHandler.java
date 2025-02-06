@@ -2,7 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -107,33 +107,12 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                 )
                                         )
                                         .flatMap(
-                                                tx -> {
-                                                    if (tx.getStatus() == TransactionStatusDto.CLOSURE_REQUESTED) {
-                                                        return Mono.error(
-                                                                new InvalidStatusException(
-                                                                        "Error processing closure update request: the transaction is in the state "
-                                                                                + tx.getStatus()
-                                                                )
-                                                        );
-                                                    }
-                                                    return Mono.error(
-                                                            new AlreadyProcessedException(
-                                                                    tx.getTransactionId(),
-                                                                    tx.getTransactionAuthorizationRequestData()
-                                                                            .getPspId(),
-                                                                    tx.getTransactionAuthorizationRequestData()
-                                                                            .getPaymentTypeCode(),
-                                                                    tx.getClientId().name(),
-                                                                    transactionsUtils.isWalletPayment(tx).orElseThrow(),
-                                                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                                            command.getData().addUserReceiptRequest()
-                                                                                    .getOutcome()
-                                                                                    .getValue(),
-                                                                            Optional.empty()
-                                                                    )
-                                                            )
-                                                    );
-                                                }
+                                                tx -> validateAndHandleTransactionClosure(
+                                                        tx,
+                                                        command.getData().addUserReceiptRequest()
+                                                                .getOutcome()
+                                                                .getValue()
+                                                )
                                         )
                 );
         return transaction
@@ -262,6 +241,35 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         )
                 );
 
+    }
+
+    private Mono<TransactionClosed> validateAndHandleTransactionClosure(
+                                                                        BaseTransactionWithRequestedAuthorization tx,
+                                                                        String outcome
+    ) {
+        if (tx.getStatus() == TransactionStatusDto.CLOSURE_REQUESTED) {
+            return Mono.error(
+                    new InvalidStatusException(
+                            "Error processing closure update request: the transaction is in the state "
+                                    + tx.getStatus()
+                    )
+            );
+        }
+        return Mono.error(
+                new AlreadyProcessedException(
+                        tx.getTransactionId(),
+                        tx.getTransactionAuthorizationRequestData()
+                                .getPspId(),
+                        tx.getTransactionAuthorizationRequestData()
+                                .getPaymentTypeCode(),
+                        tx.getClientId().name(),
+                        transactionsUtils.isWalletPayment(tx).orElseThrow(),
+                        new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                outcome,
+                                Optional.empty()
+                        )
+                )
+        );
     }
 
     private static it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome requestOutcomeToReceiptOutcome(

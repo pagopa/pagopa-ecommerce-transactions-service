@@ -10,7 +10,6 @@ import it.pagopa.ecommerce.commons.domain.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
-import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
@@ -808,7 +807,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-                .expectErrorMatches(error -> error instanceof InvalidStatusException)
+                .expectErrorMatches(InvalidStatusException.class::isInstance)
                 .verify();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
@@ -864,7 +863,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .expectErrorMatches(AlreadyProcessedException.class::isInstance)
                 .verify();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
@@ -978,7 +977,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .expectErrorMatches(AlreadyProcessedException.class::isInstance)
                 .verify();
 
         verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(
