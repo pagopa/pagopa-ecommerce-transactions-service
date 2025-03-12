@@ -138,7 +138,7 @@ stages:
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
                     DO_DEPLOY: true
-                    DO_BLUE_GREEN_DEPLOY: true
+                    DO_BLUE_GREEN_DEPLOY: false
                     ENV: 'DEV'
                     KUBERNETES_SERVICE_CONN: $(DEV_KUBERNETES_SERVICE_CONN)
                     NAMESPACE: ecommerce
@@ -238,7 +238,7 @@ stages:
                     ENV: 'UAT'
                     KUBERNETES_SERVICE_CONN: $(UAT_KUBERNETES_SERVICE_CONN)
                     NAMESPACE: ecommerce
-                    APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
+                    APP_NAME: beta-$(K8S_IMAGE_REPOSITORY_NAME)
                     VALUE_FILE: "helm/values-uat.yaml"
                     GREEN_VERSION: $(green_app_version)
                     BLUE_VERSION: $(Build.SourceVersion)
@@ -507,7 +507,7 @@ stages:
                     ENV: 'PROD'
                     KUBERNETES_SERVICE_CONN: $(PROD_KUBERNETES_SERVICE_CONN)
                     NAMESPACE: ecommerce
-                    APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
+                    APP_NAME: beta-$(K8S_IMAGE_REPOSITORY_NAME)
                     VALUE_FILE: "helm/values-prod.yaml"
                     GREEN_VERSION: $(app_version)
                     BLUE_VERSION: $(Build.SourceVersion)
