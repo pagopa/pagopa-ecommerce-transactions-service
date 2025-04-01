@@ -107,7 +107,7 @@ microservice-chart:
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
-    NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
+    NODE_FOR_PSP_URI: /nodo-auth/node-for-psp/v1
     NODO_PER_PM_URI: /nodo/nodo-per-pm/v2
     NODO_READ_TIMEOUT: "14000"
     NODO_CONNECTION_TIMEOUT: "14000"
@@ -175,6 +175,8 @@ microservice-chart:
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
     EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "2"
   envSecret:
+    NODO_CLOSEPAYMENT_API_KEY: nodo-nodeforpm-api-key
+    NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
     REDIS_HOST: redis-ecommerce-hostname
