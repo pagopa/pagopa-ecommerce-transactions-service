@@ -36,8 +36,8 @@ public class NodeForPspClient {
     @Value("${nodo.nodeforpsp.apikey}")
     private String nodoPerPspApiKey;
 
-    @Value("${nodo.closepayment.apikey}")
-    private String nodoClosePaymentApiKey;
+    @Value("${nodo.nodeforpm.apikey}")
+    private String nodoPerPmApiKey;
 
     /**
      * ObjectMapper instance used to decode JSON string http response
@@ -118,7 +118,7 @@ public class NodeForPspClient {
                                 .queryParam("clientId", ecommerceClientId).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header("ocp-apim-subscription-key", nodoClosePaymentApiKey)
+                .header("ocp-apim-subscription-key", nodoPerPmApiKey)
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
                 .retrieve()
                 .onStatus(
