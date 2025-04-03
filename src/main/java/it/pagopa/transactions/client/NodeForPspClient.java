@@ -30,14 +30,10 @@ public class NodeForPspClient {
     private final WebClient nodoWebClient;
     private final String nodoPerPspUri;
     private final String ecommerceClientId;
+    private final String nodoPerPspApiKey;
+    private final String nodoPerPmApiKey;
 
     private final String nodoPerPmUri;
-
-    @Value("${nodo.nodeforpsp.apikey}")
-    private String nodoPerPspApiKey;
-
-    @Value("${nodo.nodeforpm.apikey}")
-    private String nodoPerPmApiKey;
 
     /**
      * ObjectMapper instance used to decode JSON string http response
@@ -49,12 +45,16 @@ public class NodeForPspClient {
             @Qualifier("nodoWebClient") WebClient nodoWebClient,
             @Value("${nodo.nodeforpsp.uri}") String nodoPerPspUri,
             @Value("${nodo.ecommerce.clientId}") String ecommerceClientId,
-            @Value("${nodo.nodoperpm.uri}") String nodoPerPmUri
+            @Value("${nodo.nodoperpm.uri}") String nodoPerPmUri,
+            @Value("${nodo.nodeforpsp.apikey}") String nodoPerPspApiKey,
+            @Value("${nodo.nodeforpm.apikey}") String nodoPerPmApiKey
     ) {
         this.nodoWebClient = nodoWebClient;
         this.nodoPerPspUri = nodoPerPspUri;
         this.ecommerceClientId = ecommerceClientId;
         this.nodoPerPmUri = nodoPerPmUri;
+        this.nodoPerPspApiKey = nodoPerPspApiKey;
+        this.nodoPerPmApiKey = nodoPerPmApiKey;
     }
 
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
