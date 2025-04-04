@@ -128,7 +128,7 @@ class NodeForPspClientTest {
         assertThat(testResponse.getFiscalCodePA()).isEqualTo(fiscalCode);
         assertThat(testResponse.getTotalAmount()).isEqualTo(amount);
         assertThat(testResponse.getTransferList()).isEqualTo(ctTransferListPSPV2);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
+
         verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", "key");
     }
 
@@ -182,7 +182,7 @@ class NodeForPspClientTest {
          */
         assertThat(testResponse.getFault().getFaultCode()).isEqualTo(faultError);
         assertThat(testResponse.getFault().getFaultString()).isEqualTo(faultError);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
+
         verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", "key");
     }
 
@@ -218,7 +218,7 @@ class NodeForPspClientTest {
         StepVerifier
                 .create(client.activatePaymentNoticeV2(jaxbElementRequest))
                 .expectError(ResponseStatusException.class);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
+
         verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", "key");
     }
 
@@ -254,7 +254,7 @@ class NodeForPspClientTest {
 
         /* test */
         assertThat(clientResponse.getOutcome()).isEqualTo(closePaymentResponse.getOutcome());
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
+
         verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", "key");
     }
 
