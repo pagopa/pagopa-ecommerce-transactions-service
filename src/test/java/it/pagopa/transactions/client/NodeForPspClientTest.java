@@ -49,18 +49,7 @@ import static org.mockito.Mockito.when;
 class NodeForPspClientTest {
 
     @InjectMocks
-    private NodeForPspClient client = new NodeForPspClient(
-            new WebClientsConfig().nodoWebClient(
-                    "http://localhost:9000",
-                    10000,
-                    10000
-            ),
-            "/",
-            "ecomm",
-            "/nodo-per-pm/v2",
-            "key",
-            "key"
-    );
+    private NodeForPspClient client;
 
     @Mock
     private WebClient nodoWebClient;
