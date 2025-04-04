@@ -5,7 +5,6 @@ import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.configurations.WebClientsConfig;
-import org.springframework.test.util.ReflectionTestUtils;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.utils.soap.SoapEnvelope;
 import okhttp3.mockwebserver.Dispatcher;
@@ -15,10 +14,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -36,7 +32,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -47,25 +42,28 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class NodeForPspClientTest {
 
-    @InjectMocks
-    private NodeForPspClient client;
+    private final WebClient nodoWebClient = Mockito.mock(WebClient.class);
 
-    @Mock
-    private WebClient nodoWebClient;
+    private final RequestBodyUriSpec requestBodyUriSpec = Mockito.mock(RequestBodyUriSpec.class);
 
-    @Mock
-    private RequestBodyUriSpec requestBodyUriSpec;
+    private final RequestHeadersSpec requestHeadersSpec = Mockito.mock(RequestHeadersSpec.class);
 
-    @Mock
-    private RequestHeadersSpec requestHeadersSpec;
+    private final ResponseSpec responseSpec = Mockito.mock(ResponseSpec.class);
 
-    @Mock
-    private ResponseSpec responseSpec;
+    private final String nodoPerPmApiKey = "nodoPerPmApiKey";
 
-    private String nodoClosePaymentApiKey = "key";
+    private final String nodoPerPspApiKey = "nodoPerPspApiKey";
+
+    private final NodeForPspClient client = new NodeForPspClient(
+            nodoWebClient,
+            "http://localhost",
+            "ecommerceClientId",
+            "http://localhost",
+            nodoPerPspApiKey,
+            nodoPerPmApiKey
+    );
 
     private static MockWebServer mockWebServer;
 
@@ -128,8 +126,8 @@ class NodeForPspClientTest {
         assertThat(testResponse.getFiscalCodePA()).isEqualTo(fiscalCode);
         assertThat(testResponse.getTotalAmount()).isEqualTo(amount);
         assertThat(testResponse.getTransferList()).isEqualTo(ctTransferListPSPV2);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
-        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", "key");
+        verify(requestBodyUriSpec, times(1)).header("Content-Type", "text/xml");
+        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", nodoPerPspApiKey);
     }
 
     @Test
@@ -182,8 +180,8 @@ class NodeForPspClientTest {
          */
         assertThat(testResponse.getFault().getFaultCode()).isEqualTo(faultError);
         assertThat(testResponse.getFault().getFaultString()).isEqualTo(faultError);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
-        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", "key");
+        verify(requestBodyUriSpec, times(1)).header("Content-Type", "text/xml");
+        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", nodoPerPspApiKey);
     }
 
     @Test
@@ -218,8 +216,8 @@ class NodeForPspClientTest {
         StepVerifier
                 .create(client.activatePaymentNoticeV2(jaxbElementRequest))
                 .expectError(ResponseStatusException.class);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
-        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", "key");
+        verify(requestBodyUriSpec, times(1)).header("Content-Type", "text/xml");
+        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", nodoPerPspApiKey);
     }
 
     @Test
@@ -255,7 +253,7 @@ class NodeForPspClientTest {
         /* test */
         assertThat(clientResponse.getOutcome()).isEqualTo(closePaymentResponse.getOutcome());
         verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
-        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", "key");
+        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", nodoPerPmApiKey);
     }
 
     @Test
