@@ -31,7 +31,7 @@ public class NodeForPspClient {
     private final String nodoPerPspUri;
     private final String ecommerceClientId;
     private final String nodoPerPspApiKey;
-    private final String nodoPerPmApiKey;
+    private final String nodeForEcommerceApiKey;
 
     private final String nodoPerPmUri;
 
@@ -47,14 +47,14 @@ public class NodeForPspClient {
             @Value("${nodo.ecommerce.clientId}") String ecommerceClientId,
             @Value("${nodo.nodoperpm.uri}") String nodoPerPmUri,
             @Value("${nodo.nodeforpsp.apikey}") String nodoPerPspApiKey,
-            @Value("${nodo.nodeforpm.apikey}") String nodoPerPmApiKey
+            @Value("${nodo.nodeforecommerce.apikey}") String nodeForEcommerceApiKey
     ) {
         this.nodoWebClient = nodoWebClient;
         this.nodoPerPspUri = nodoPerPspUri;
         this.ecommerceClientId = ecommerceClientId;
         this.nodoPerPmUri = nodoPerPmUri;
         this.nodoPerPspApiKey = nodoPerPspApiKey;
-        this.nodoPerPmApiKey = nodoPerPmApiKey;
+        this.nodeForEcommerceApiKey = nodeForEcommerceApiKey;
     }
 
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
@@ -118,7 +118,7 @@ public class NodeForPspClient {
                                 .queryParam("clientId", ecommerceClientId).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header("ocp-apim-subscription-key", nodoPerPmApiKey)
+                .header("ocp-apim-subscription-key", nodeForEcommerceApiKey)
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
                 .retrieve()
                 .onStatus(

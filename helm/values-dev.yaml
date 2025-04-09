@@ -180,7 +180,7 @@ microservice-chart:
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
     EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "2"
   envSecret:
-    NODO_NODEFORPM_API_KEY: nodo-nodeforpm-api-key
+    NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
