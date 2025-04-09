@@ -30,6 +30,8 @@ public class NodeForPspClient {
     private final WebClient nodoWebClient;
     private final String nodoPerPspUri;
     private final String ecommerceClientId;
+    private final String nodoPerPspApiKey;
+    private final String nodeForEcommerceApiKey;
 
     private final String nodoPerPmUri;
 
@@ -43,12 +45,16 @@ public class NodeForPspClient {
             @Qualifier("nodoWebClient") WebClient nodoWebClient,
             @Value("${nodo.nodeforpsp.uri}") String nodoPerPspUri,
             @Value("${nodo.ecommerce.clientId}") String ecommerceClientId,
-            @Value("${nodo.nodoperpm.uri}") String nodoPerPmUri
+            @Value("${nodo.nodoperpm.uri}") String nodoPerPmUri,
+            @Value("${nodo.nodeforpsp.apikey}") String nodoPerPspApiKey,
+            @Value("${nodo.nodeforecommerce.apikey}") String nodeForEcommerceApiKey
     ) {
         this.nodoWebClient = nodoWebClient;
         this.nodoPerPspUri = nodoPerPspUri;
         this.ecommerceClientId = ecommerceClientId;
         this.nodoPerPmUri = nodoPerPmUri;
+        this.nodoPerPspApiKey = nodoPerPspApiKey;
+        this.nodeForEcommerceApiKey = nodeForEcommerceApiKey;
     }
 
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
@@ -64,6 +70,7 @@ public class NodeForPspClient {
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
                 .header("SOAPAction", "activatePaymentNoticeV2")
+                .header("ocp-apim-subscription-key", nodoPerPspApiKey)
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
                 .retrieve()
                 .onStatus(
@@ -111,6 +118,7 @@ public class NodeForPspClient {
                                 .queryParam("clientId", ecommerceClientId).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header("ocp-apim-subscription-key", nodeForEcommerceApiKey)
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
                 .retrieve()
                 .onStatus(
