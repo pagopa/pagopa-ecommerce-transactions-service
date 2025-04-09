@@ -179,10 +179,12 @@ public class TransactionsController implements TransactionsApi {
                             base64TransactionId,
                             transactionIdDecoded
                     );
-                    return handleUpdateAuthorizationRequest(
-                            new TransactionId(transactionIdDecoded),
-                            updateAuthorizationRequestDto,
-                            exchange
+                    return updateAuthorizationRequestDto.flatMap(
+                            updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
+                                    new TransactionId(transactionIdDecoded),
+                                    updateAuthorizationRequest,
+                                    exchange
+                            )
                     )
                             .map(ResponseEntity::ok);
                 }
@@ -191,10 +193,10 @@ public class TransactionsController implements TransactionsApi {
 
     public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
                                                                      TransactionId domainTransactionId,
-                                                                     Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
+                                                                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
                                                                      ServerWebExchange exchange
     ) {
-        return updateAuthorizationRequestDto
+        return Mono.just(updateAuthorizationRequestDto)
                 .map(updateAuthorizationRequest -> {
                     ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
                             "PATCH-auth-request-%s".formatted(domainTransactionId.value()),

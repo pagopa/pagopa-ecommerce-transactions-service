@@ -130,11 +130,15 @@ public class TransactionsController implements V2Api {
                                                                                                Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
                                                                                                ServerWebExchange exchange
     ) {
-        return transactionsControllerV1.handleUpdateAuthorizationRequest(
-                new TransactionId(transactionId),
-                updateAuthorizationRequestDto.map(this::mapUpdateAuthRequestV2ToV1),
-                exchange
-        )
+        return updateAuthorizationRequestDto
+                .map(this::mapUpdateAuthRequestV2ToV1)
+                .flatMap(
+                        updateAuthorizationRequest -> transactionsControllerV1.handleUpdateAuthorizationRequest(
+                                new TransactionId(transactionId),
+                                updateAuthorizationRequest,
+                                exchange
+                        )
+                )
                 .map(
                         transactionInfo -> new UpdateAuthorizationResponseDto()
                                 .status(TransactionStatusDto.fromValue(transactionInfo.getStatus().getValue()))
