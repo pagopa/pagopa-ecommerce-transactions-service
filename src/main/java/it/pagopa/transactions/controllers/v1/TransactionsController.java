@@ -167,59 +167,71 @@ public class TransactionsController implements TransactionsApi {
 
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(
-                                                                                   String transactionId,
+                                                                                   String base64TransactionId,
                                                                                    Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
                                                                                    ServerWebExchange exchange
     ) {
-        return uuidUtils.uuidFromBase64(transactionId).fold(
+        return uuidUtils.uuidFromBase64(base64TransactionId).fold(
                 Mono::error,
-                transactionIdDecoded -> updateAuthorizationRequestDto
-                        .doOnNext(
-                                t -> log.info(
-                                        "UpdateTransactionAuthorization for transactionId: [{}], decoded transaction id: [{}]",
-                                        transactionId,
-                                        transactionIdDecoded
-                                )
-                        ).map(updateAuthorizationRequest -> {
-                            TransactionId domainTransactionId = new TransactionId(transactionIdDecoded);
-                            ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
-                                    "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
-                                    "transactions-service"
-                            );
-                            boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
-                                    lockDocument
-                            );
-                            log.info(
-                                    "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
-                                    domainTransactionId.value(),
-                                    lockDocument.id(),
-                                    lockAcquired
-                            );
-                            if (!lockAcquired) {
-                                throw new LockNotAcquiredException(domainTransactionId, lockDocument);
-                            }
-                            return updateAuthorizationRequest;
-                        })
-                        .flatMap(
-                                updateAuthorizationRequest -> transactionsService
-                                        .updateTransactionAuthorization(
-                                                transactionIdDecoded,
-                                                updateAuthorizationRequest
-                                        )
-                        )
-                        .map(ResponseEntity::ok)
-                        .contextWrite(
-                                context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                        new TransactionTracingUtils.TransactionInfo(
-                                                new TransactionId(transactionIdDecoded),
-                                                new HashSet<>(),
-                                                exchange.getRequest().getMethodValue(),
-                                                exchange.getRequest().getURI().getPath()
-                                        ),
-                                        context
-                                )
-                        )
+                transactionIdDecoded -> {
+                    log.info(
+                            "UpdateTransactionAuthorization for transactionId: [{}], decoded transaction id: [{}]",
+                            base64TransactionId,
+                            transactionIdDecoded
+                    );
+                    return handleUpdateAuthorizationRequest(
+                            new TransactionId(transactionIdDecoded),
+                            updateAuthorizationRequestDto,
+                            exchange
+                    )
+                            .map(ResponseEntity::ok);
+                }
         );
+    }
+
+    public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
+                                                                     TransactionId domainTransactionId,
+                                                                     Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
+                                                                     ServerWebExchange exchange
+    ) {
+        return updateAuthorizationRequestDto
+                .map(updateAuthorizationRequest -> {
+                    ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                            "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
+                            "transactions-service"
+                    );
+                    boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
+                            lockDocument
+                    );
+                    log.info(
+                            "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
+                            domainTransactionId.value(),
+                            lockDocument.id(),
+                            lockAcquired
+                    );
+                    if (!lockAcquired) {
+                        throw new LockNotAcquiredException(domainTransactionId, lockDocument);
+                    }
+                    return updateAuthorizationRequest;
+                })
+                .flatMap(
+                        updateAuthorizationRequest -> transactionsService
+                                .updateTransactionAuthorization(
+                                        domainTransactionId.uuid(),
+                                        updateAuthorizationRequest
+                                )
+                )
+                .contextWrite(
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        domainTransactionId,
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
+                                ),
+                                context
+                        )
+                );
     }
 
     @Override
@@ -282,7 +294,7 @@ public class TransactionsController implements TransactionsApi {
     }
 
     /**
-     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.SendPaymentResultOutcomeInfo} operation outcome record
+     * This method maps input throwable to proper {@link UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate} operation outcome record
      *
      * @param throwable the caught throwable
      * @return the mapped outcome to be traced
