@@ -20,7 +20,9 @@ import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -41,13 +43,17 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -86,6 +92,9 @@ class TransactionsControllerTest {
     @MockBean
     private OpenTelemetryUtils openTelemetryUtils;
 
+    @MockBean
+    private it.pagopa.transactions.controllers.v1.TransactionsController transactionsControllerV1;
+
     @Mock
     ServerWebExchange mockExchange;
 
@@ -95,7 +104,7 @@ class TransactionsControllerTest {
     @Mock
     HttpHeaders mockHeaders;
 
-    private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
+    private final CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
             Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
     );
 
@@ -779,6 +788,73 @@ class TransactionsControllerTest {
                 });
         verify(transactionsService, times(1)).getTransactionInfo(transactionId, null);
 
+    }
+
+    public static Stream<Arguments> patchAuthRequestProxyTestMethodSource() {
+        return Stream.of(
+                Arguments.of(
+                        new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto()
+                                                .authorizationCode("authorizationCode")
+                                                .operationResult(
+                                                        it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                                )
+                                                .orderId("orderId")
+                                                .operationId("operationId")
+                                                .authorizationCode("authorizationCode")
+                                                .errorCode("errorCode")
+                                                .paymentEndToEndId("paymentEndToEndId")
+                                                .rrn("rrn")
+                                                .validationServiceId("validationServiceId")
+                                ).timestampOperation(ZonedDateTime.now(ZoneOffset.UTC).toOffsetDateTime())
+                ),
+                Arguments.of(
+                        new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
+                                .outcomeGateway(
+                                        new it.pagopa.generated.transactions.server.model.OutcomeRedirectGatewayDto()
+                                                .paymentGatewayType("REDIRECT")
+                                                .pspTransactionId("pspTransactionId")
+                                                .outcome(
+                                                        it.pagopa.generated.transactions.server.model.AuthorizationOutcomeDto.OK
+                                                )
+                                                .pspId("pspId")
+                                                .authorizationCode("authorizationCode")
+                                                .errorCode("errorCode")
+
+                                ).timestampOperation(ZonedDateTime.now(ZoneOffset.UTC).toOffsetDateTime())
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("patchAuthRequestProxyTestMethodSource")
+    void shouldProxyPatchAuthRequestToV1Controller(
+                                                   it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto expectedRequest
+    ) {
+        /* preconditions */
+        TransactionId transactionId = new TransactionId(
+                it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID
+        );
+
+        it.pagopa.generated.transactions.server.model.TransactionInfoDto transactionInfoDto = new it.pagopa.generated.transactions.server.model.TransactionInfoDto()
+                .status(it.pagopa.generated.transactions.server.model.TransactionStatusDto.CLOSURE_REQUESTED)
+                .transactionId(transactionId.value());
+        Mockito.when(transactionsControllerV1.handleUpdateAuthorizationRequest(any(), any(), any()))
+                .thenReturn(Mono.just(transactionInfoDto));
+        /* test */
+        Hooks.onOperatorDebug();
+        webTestClient.patch()
+                .uri("/v2/transactions/{transactionId}/auth-requests", transactionId.value())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(expectedRequest)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(200)
+                .expectBody(UpdateAuthorizationResponseDto.class)
+                .value(r -> assertEquals(TransactionStatusDto.CLOSURE_REQUESTED, r.getStatus()));
+        verify(transactionsControllerV1, times(1))
+                .handleUpdateAuthorizationRequest(eq(transactionId), eq(expectedRequest), any());
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
