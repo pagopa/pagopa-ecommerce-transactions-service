@@ -135,7 +135,10 @@ public class TransactionsController implements V2Api {
          * the mainly diff here is that the input transaction id is not base64 encoded
          * in the v2 version. this fact is reflected in the below code too were, except
          * for the input transaction id handling, there are no differences between v1
-         * and v2 versions, making v2 request be processed by v1 handler
+         * and v2 versions, making v2 request be processed by v1 handler. Once migrated
+         * b.e. to v2 version the v1 can be deleted altogether (no one will call this
+         * api) and move all the logic from v1 service to the v2 referring only the v2
+         * api version beans
          */
         return updateAuthorizationRequestDto
                 .map(this::mapUpdateAuthRequestV2ToV1)
@@ -172,8 +175,7 @@ public class TransactionsController implements V2Api {
                             .outcome(it.pagopa.generated.transactions.server.model.AuthorizationOutcomeDto.valueOf(o.getOutcome().toString()))
                             .pspId(o.getPspId())
                             .authorizationCode(o.getAuthorizationCode())
-                            .errorCode(o.getErrorCode())
-                    ;
+                            .errorCode(o.getErrorCode());
             default ->
                     throw new NotImplementedException("Conversion from outcome gateway [%s] not implemented".formatted(requestOutcomeGateway.getPaymentGatewayType()));
         };
