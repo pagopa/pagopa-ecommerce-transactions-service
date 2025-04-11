@@ -130,6 +130,13 @@ public class TransactionsController implements V2Api {
                                                                                                Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
                                                                                                ServerWebExchange exchange
     ) {
+        /*
+         * v1 and v2 api version are the same, same input same logic -> same processing
+         * the mainly diff here is that the input transaction id is not base64 encoded
+         * in the v2 version. this fact is reflected in the below code too were, except
+         * for the input transaction id handling, there are no differences between v1
+         * and v2 versions, making v2 request be processed by v1 handler
+         */
         return updateAuthorizationRequestDto
                 .map(this::mapUpdateAuthRequestV2ToV1)
                 .flatMap(
