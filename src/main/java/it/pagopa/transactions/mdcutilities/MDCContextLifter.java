@@ -58,6 +58,7 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
             Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElseGet(HashMap::new);
             Map<String, String> reactorContextMap = Arrays
                     .stream(TransactionTracingUtils.TracingEntry.values())
+                    .filter(context::hasKey)
                     .map(
                             key -> new AbstractMap.SimpleEntry<>(
                                     key.getKey(),
