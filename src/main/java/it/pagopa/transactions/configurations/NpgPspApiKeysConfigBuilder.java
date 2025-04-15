@@ -174,7 +174,7 @@ public class NpgPspApiKeysConfigBuilder {
         return parseApiKeysMap(
                 apiKeys,
                 pspToHandle,
-                NpgClient.PaymentMethod.APPLEPAY
+                NpgClient.PaymentMethod.GOOGLEPAY
         );
     }
 
