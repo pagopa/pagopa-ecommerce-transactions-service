@@ -85,10 +85,7 @@ public class TransactionsController implements V21Api {
         return newTransactionRequest
                 .flatMap(ntr -> {
                     log.info(
-                            "Create new Transaction for rptIds: {}. ClientId: [{}] ",
-                            ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList(),
-                            xClientId.getValue()
-
+                            "Create new Transaction"
                     );
                     return transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId);
                 })

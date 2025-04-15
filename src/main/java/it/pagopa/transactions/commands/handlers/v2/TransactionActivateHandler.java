@@ -98,8 +98,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 .paymentNoticeList();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
         log.info(
-                "Parallel processed Nodo activation requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
-                nodoParallelRequests,
+                "Start nodo activation, multiple payment notices: [{}] - Id cart: [{}]",
                 multiplePaymentNotices,
                 Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
         );
@@ -205,9 +204,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                             )
                                                             .doOnSuccess(
                                                                     p -> {
-                                                                        log.info(
-                                                                                "PaymentRequestInfo cache update for [{}] with paymentToken [{}]",
-                                                                                p.id(),
+                                                                        log.debug(
+                                                                                "Update PaymentRequestInfo cache - paymentToken [{}}]",
                                                                                 p.paymentToken()
                                                                         );
                                                                         paymentRequestInfoRedisTemplateWrapper.save(p);
@@ -303,10 +301,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     }
 
     private Optional<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
-        Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestInfoRedisTemplateWrapper
+        return paymentRequestInfoRedisTemplateWrapper
                 .findById(rptId.value());
-        log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
-        return paymentInfofromCache;
     }
 
     private boolean isValidPaymentToken(String paymentToken) {

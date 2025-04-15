@@ -89,19 +89,8 @@ public class TransactionsService {
                 transactionId,
                 userId
         );
-        log.info(
-                "Initializing transaction for rptIds: {}. ClientId: {}",
-                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
-                clientId
-        );
 
         return transactionActivateHandlerV2.handle(transactionActivateCommand)
-                .doOnNext(
-                        args -> log.info(
-                                "Transaction initialized for rptId [{}]",
-                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
-                        )
-                )
                 .flatMap(
                         es -> {
                             final Mono<BaseTransactionEvent<?>> transactionActivatedEvent = es

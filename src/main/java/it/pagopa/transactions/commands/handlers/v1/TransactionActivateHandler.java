@@ -354,8 +354,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         )
                                 .doOnNext(
                                         event -> log.info(
-                                                "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
-                                                transactionId
+                                                "Save TRANSACTION_ACTIVATED_EVENT"
                                         )
                                 ).thenReturn(e)
 

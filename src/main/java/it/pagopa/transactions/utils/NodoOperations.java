@@ -152,12 +152,10 @@ public class NodoOperations {
                                     .map(CtFaultBean::getFaultCode)
                                     .orElse("No faultCode received");
                             log.info(
-                                    "Nodo activation for  transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}] faultCode: [{}]",
-                                    transactionId,
-                                    rptId,
-                                    Optional.ofNullable(idCart).orElse("idCart not present"),
+                                    "Complete nodo activation, response outcome: [{}], faultCode: [{}] - idCart: [{}] ",
                                     activatePaymentNoticeV2Response.getOutcome(),
-                                    faultCode
+                                    faultCode,
+                                    Optional.ofNullable(idCart).orElse("idCart not present")
                             );
                             if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
                                 openTelemetryUtils.addSpanWithAttributes(

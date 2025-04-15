@@ -70,7 +70,7 @@ public class TransactionsActivationProjectionHandler
 
         return viewEventStoreRepository
                 .save(transactionDocument)
-                .doOnNext(t -> log.info("Transactions update view for transactionId: {}", t.getTransactionId()))
+                .doOnNext(t -> log.info("Update transaction status to {}", t.getStatus().getValue()))
                 .thenReturn(transaction);
     }
 }

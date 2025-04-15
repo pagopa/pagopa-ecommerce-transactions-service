@@ -283,11 +283,6 @@ public class TransactionsService {
                 transactionId,
                 null
         );
-        log.info(
-                "Initializing transaction for rptIds: {}. ClientId: {}",
-                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
-                clientId
-        );
         return switch (eventVersion) {
             case V1 -> transactionActivateHandlerV1.handle(transactionActivateCommand)
                     .doOnNext(

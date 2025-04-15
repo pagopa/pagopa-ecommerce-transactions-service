@@ -54,9 +54,8 @@ public class NodeForPspClient {
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
                                                                          JAXBElement<ActivatePaymentNoticeV2Request> request
     ) {
-        log.info(
-                "ActivatePaymentNoticeV2 init for noticeNumber [{}]; idPSP: [{}], IdemPK: [{}]",
-                request.getValue().getQrCode().getNoticeNumber(),
+        log.debug(
+                "Initialize ActivatePaymentNoticeV2 - pspId: [{}], idemPK: [{}]",
                 request.getValue().getIdPSP(),
                 request.getValue().getIdempotencyKey()
         );
@@ -81,8 +80,7 @@ public class NodeForPspClient {
                 .bodyToMono(ActivatePaymentNoticeV2Response.class)
                 .doOnSuccess(
                         activateResponse -> log.info(
-                                "ActivatePaymentNoticeV2 completed for noticeNumber [{}], paymentToken [{}]",
-                                request.getValue().getQrCode().getNoticeNumber(),
+                                "Complete ActivatePaymentNoticeV2 - paymentToken [{}]",
                                 activateResponse.getPaymentToken()
 
                         )
