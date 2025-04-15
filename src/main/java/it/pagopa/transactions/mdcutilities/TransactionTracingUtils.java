@@ -84,7 +84,11 @@ public class TransactionTracingUtils {
         }
 
         if (transactionInfo.clientId != null && !transactionInfo.clientId.isEmpty()) {
-            context = putInReactorContextIfSetToDefault(TracingEntry.CLIENT_ID, transactionInfo.clientId, reactorContext);
+            context = putInReactorContextIfSetToDefault(
+                    TracingEntry.CLIENT_ID,
+                    transactionInfo.clientId,
+                    reactorContext
+            );
         }
 
         if (transactionInfo.pspId != null && !transactionInfo.pspId.isEmpty()) {
@@ -92,7 +96,11 @@ public class TransactionTracingUtils {
         }
 
         if (transactionInfo.payMethodId != null && !transactionInfo.payMethodId.isEmpty()) {
-            context = putInReactorContextIfSetToDefault(TracingEntry.PAY_METHOD_ID, transactionInfo.payMethodId, reactorContext);
+            context = putInReactorContextIfSetToDefault(
+                    TracingEntry.PAY_METHOD_ID,
+                    transactionInfo.payMethodId,
+                    reactorContext
+            );
         }
 
         context = putInReactorContextIfSetToDefault(
