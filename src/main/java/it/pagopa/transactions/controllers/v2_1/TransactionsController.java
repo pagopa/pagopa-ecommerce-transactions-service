@@ -97,6 +97,9 @@ public class TransactionsController implements V21Api {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
+                                        xClientId.getValue(),
+                                        null,
+                                        null,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
                                         exchange.getRequest().getURI().getPath()

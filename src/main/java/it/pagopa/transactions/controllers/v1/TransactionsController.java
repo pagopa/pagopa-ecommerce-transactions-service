@@ -99,6 +99,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
+                                        xClientId.getValue(),
+                                        null,
+                                        null,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
                                         exchange.getRequest().getURI().getPath()
@@ -121,6 +124,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
+                                        null,
+                                        null,
+                                        null,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
                                         exchange.getRequest().getURI().getPath()
@@ -156,6 +162,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
+                                        null,
+                                        null,
+                                        null,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
                                         exchange.getRequest().getURI().getPath()
@@ -227,6 +236,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         domainTransactionId,
+                                        null,
+                                        null,
+                                        null,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
                                         exchange.getRequest().getURI().getPath()
@@ -286,6 +298,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
+                                        null,
+                                        null,
+                                        null,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
                                         exchange.getRequest().getURI().getPath()
@@ -355,6 +370,9 @@ public class TransactionsController implements TransactionsApi {
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
+                                        null,
+                                        null,
+                                        null,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethodValue(),
                                         exchange.getRequest().getURI().getPath()

@@ -21,7 +21,10 @@ public class TransactionTracingUtils {
         TRANSACTION_ID("transactionId", "{transactionId-not-found}"),
         RPT_IDS("rptIds", "{rptId-not-found}"),
         CORRELATION_ID("correlationId", "{correlation-id-not-found}"),
-        API_ID("apiId", "{api-id-not-found}");
+        API_ID("apiId", "{api-id-not-found}"),
+        CLIENT_ID("clientId", "{client-id-not-found}"),
+        PSP_ID("pspId", "{psp-id-not-found}"),
+        PAY_METHOD_ID("payMethodId", "{pay-method-id-not-found}");
 
         private final String key;
 
@@ -49,6 +52,9 @@ public class TransactionTracingUtils {
      */
     public record TransactionInfo(
             TransactionId transactionId,
+            String clientId,
+            String payMethodId,
+            String pspId,
             Set<RptId> rptIds,
             String requestMethod,
             String requestUriPath
@@ -77,6 +83,18 @@ public class TransactionTracingUtils {
             context = putInReactorContextIfSetToDefault(TracingEntry.RPT_IDS, stringifiedRptIdList, context);
         }
 
+        if (transactionInfo.clientId != null && !transactionInfo.clientId.isEmpty()) {
+            putInReactorContextIfSetToDefault(TracingEntry.CLIENT_ID, transactionInfo.clientId, reactorContext);
+        }
+
+        if (transactionInfo.pspId != null && !transactionInfo.pspId.isEmpty()) {
+            putInReactorContextIfSetToDefault(TracingEntry.PSP_ID, transactionInfo.pspId, reactorContext);
+        }
+
+        if (transactionInfo.payMethodId != null && !transactionInfo.payMethodId.isEmpty()) {
+            putInReactorContextIfSetToDefault(TracingEntry.PAY_METHOD_ID, transactionInfo.payMethodId, reactorContext);
+        }
+
         context = putInReactorContextIfSetToDefault(
                 TracingEntry.API_ID,
                 String.join("-", "API-ID", transactionInfo.requestMethod, transactionInfo.requestUriPath),
@@ -88,7 +106,7 @@ public class TransactionTracingUtils {
 
     /**
      * Put value into context if the actual context value is not present or set to
-     * it's default value
+     * its default value
      *
      * @param tracingEntry - the context entry to be value
      * @param valueToSet   - the value to set
