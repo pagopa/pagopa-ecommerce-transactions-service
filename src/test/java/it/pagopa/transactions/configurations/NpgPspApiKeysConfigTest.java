@@ -143,6 +143,10 @@ class NpgPspApiKeysConfigTest {
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
                         pspToHandle
                 ),
+                npgPspApiKeysConfig.npgSatispayApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.GOOGLEPAY),
+                        pspToHandle
+                ),
                 expectedDefaultApiKey
         );
         Either<NpgApiKeyConfigurationException, String> apiKey = npgApiKeyHandler
@@ -189,6 +193,10 @@ class NpgPspApiKeysConfigTest {
                 ),
                 npgPspApiKeysConfig.npgSatispayApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
+                        pspToHandle
+                ),
+                npgPspApiKeysConfig.npgSatispayApiKeys(
+                        pspConfigurationJson.formatted(NpgClient.PaymentMethod.GOOGLEPAY),
                         pspToHandle
                 ),
                 "defaultApiKey"
