@@ -84,15 +84,15 @@ public class TransactionTracingUtils {
         }
 
         if (transactionInfo.clientId != null && !transactionInfo.clientId.isEmpty()) {
-            putInReactorContextIfSetToDefault(TracingEntry.CLIENT_ID, transactionInfo.clientId, reactorContext);
+            context = putInReactorContextIfSetToDefault(TracingEntry.CLIENT_ID, transactionInfo.clientId, reactorContext);
         }
 
         if (transactionInfo.pspId != null && !transactionInfo.pspId.isEmpty()) {
-            putInReactorContextIfSetToDefault(TracingEntry.PSP_ID, transactionInfo.pspId, reactorContext);
+            context = putInReactorContextIfSetToDefault(TracingEntry.PSP_ID, transactionInfo.pspId, reactorContext);
         }
 
         if (transactionInfo.payMethodId != null && !transactionInfo.payMethodId.isEmpty()) {
-            putInReactorContextIfSetToDefault(TracingEntry.PAY_METHOD_ID, transactionInfo.payMethodId, reactorContext);
+            context = putInReactorContextIfSetToDefault(TracingEntry.PAY_METHOD_ID, transactionInfo.payMethodId, reactorContext);
         }
 
         context = putInReactorContextIfSetToDefault(
