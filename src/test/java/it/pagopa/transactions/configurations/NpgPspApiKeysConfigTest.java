@@ -105,8 +105,8 @@ class NpgPspApiKeysConfigTest {
     @ParameterizedTest
     @MethodSource("npgApiKeyHandlerTestMethodSource")
     void shouldBuildNpgApiKeyHandlerSuccessfully(
-                                                 NpgClient.PaymentMethod paymentMethod,
-                                                 String pspId
+            NpgClient.PaymentMethod paymentMethod,
+            String pspId
     ) {
         // pre-requisites
         String pspConfigurationJson = """
@@ -195,7 +195,7 @@ class NpgPspApiKeysConfigTest {
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.SATISPAY),
                         pspToHandle
                 ),
-                npgPspApiKeysConfig.npgSatispayApiKeys(
+                npgPspApiKeysConfig.npgGooglePayApiKeys(
                         pspConfigurationJson.formatted(NpgClient.PaymentMethod.GOOGLEPAY),
                         pspToHandle
                 ),
