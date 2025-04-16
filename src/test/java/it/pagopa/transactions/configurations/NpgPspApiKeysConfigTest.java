@@ -105,8 +105,8 @@ class NpgPspApiKeysConfigTest {
     @ParameterizedTest
     @MethodSource("npgApiKeyHandlerTestMethodSource")
     void shouldBuildNpgApiKeyHandlerSuccessfully(
-            NpgClient.PaymentMethod paymentMethod,
-            String pspId
+                                                 NpgClient.PaymentMethod paymentMethod,
+                                                 String pspId
     ) {
         // pre-requisites
         String pspConfigurationJson = """
