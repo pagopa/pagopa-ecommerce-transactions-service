@@ -37,7 +37,8 @@ public class AuthorizationRequestProjectionHandler
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
                     transactionDocument.setPaymentGateway(data.paymentGatewayId());
-
+                    transactionDocument.setPaymentTypeCode(data.paymentTypeCode());
+                    transactionDocument.setPspId(data.pspId());
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
