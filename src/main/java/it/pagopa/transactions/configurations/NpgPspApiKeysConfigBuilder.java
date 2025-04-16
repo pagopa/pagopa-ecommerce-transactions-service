@@ -156,6 +156,28 @@ public class NpgPspApiKeysConfigBuilder {
         );
     }
 
+    /**
+     * Return a map where valued with each psp id - api keys entries
+     *
+     * @param apiKeys - the secret api keys configuration json
+     * @return the parsed map
+     */
+    @Bean
+    public it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig npgGooglePayApiKeys(
+                                                                                     @Value(
+                                                                                         "${npg.authorization.googlepay.keys}"
+                                                                                     ) String apiKeys,
+                                                                                     @Value(
+                                                                                         "${npg.authorization.googlepay.pspList}"
+                                                                                     ) Set<String> pspToHandle
+    ) {
+        return parseApiKeysMap(
+                apiKeys,
+                pspToHandle,
+                NpgClient.PaymentMethod.GOOGLEPAY
+        );
+    }
+
     @Bean
     public NpgApiKeyConfiguration npgApiKeyConfiguration(
                                                          NpgPspApiKeysConfig npgCardsApiKeys,
@@ -164,6 +186,7 @@ public class NpgPspApiKeysConfigBuilder {
                                                          NpgPspApiKeysConfig npgPaypalApiKeys,
                                                          NpgPspApiKeysConfig npgApplePayApiKeys,
                                                          NpgPspApiKeysConfig npgSatispayApiKeys,
+                                                         NpgPspApiKeysConfig npgGooglePayApiKeys,
                                                          @Value("${npg.client.apiKey}") String defaultApiKey
     ) {
         return new NpgApiKeyConfiguration.Builder()
@@ -174,6 +197,7 @@ public class NpgPspApiKeysConfigBuilder {
                 .withMethodPspMapping(NpgClient.PaymentMethod.PAYPAL, npgPaypalApiKeys)
                 .withMethodPspMapping(NpgClient.PaymentMethod.APPLEPAY, npgApplePayApiKeys)
                 .withMethodPspMapping(NpgClient.PaymentMethod.SATISPAY, npgSatispayApiKeys)
+                .withMethodPspMapping(NpgClient.PaymentMethod.GOOGLEPAY, npgGooglePayApiKeys)
                 .build();
     }
 
