@@ -14,7 +14,10 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -40,30 +43,25 @@ import java.util.function.Predicate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class NodeForPspClientTest {
 
-    private final WebClient nodoWebClient = Mockito.mock(WebClient.class);
+    @InjectMocks
+    private NodeForPspClient client;
 
-    private final RequestBodyUriSpec requestBodyUriSpec = Mockito.mock(RequestBodyUriSpec.class);
+    @Mock
+    private WebClient nodoWebClient;
 
-    private final RequestHeadersSpec requestHeadersSpec = Mockito.mock(RequestHeadersSpec.class);
+    @Mock
+    private RequestBodyUriSpec requestBodyUriSpec;
 
-    private final ResponseSpec responseSpec = Mockito.mock(ResponseSpec.class);
+    @Mock
+    private RequestHeadersSpec requestHeadersSpec;
 
-    private final String nodoPerPmApiKey = "nodoPerPmApiKey";
-
-    private final String nodoPerPspApiKey = "nodoPerPspApiKey";
-
-    private final NodeForPspClient client = new NodeForPspClient(
-            nodoWebClient,
-            "http://localhost",
-            "ecommerceClientId",
-            "http://localhost",
-            nodoPerPspApiKey,
-            nodoPerPmApiKey
-    );
+    @Mock
+    private ResponseSpec responseSpec;
 
     private static MockWebServer mockWebServer;
 
@@ -126,8 +124,6 @@ class NodeForPspClientTest {
         assertThat(testResponse.getFiscalCodePA()).isEqualTo(fiscalCode);
         assertThat(testResponse.getTotalAmount()).isEqualTo(amount);
         assertThat(testResponse.getTransferList()).isEqualTo(ctTransferListPSPV2);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "text/xml");
-        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", nodoPerPspApiKey);
     }
 
     @Test
@@ -180,8 +176,6 @@ class NodeForPspClientTest {
          */
         assertThat(testResponse.getFault().getFaultCode()).isEqualTo(faultError);
         assertThat(testResponse.getFault().getFaultString()).isEqualTo(faultError);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "text/xml");
-        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", nodoPerPspApiKey);
     }
 
     @Test
@@ -216,13 +210,10 @@ class NodeForPspClientTest {
         StepVerifier
                 .create(client.activatePaymentNoticeV2(jaxbElementRequest))
                 .expectError(ResponseStatusException.class);
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "text/xml");
-        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", nodoPerPspApiKey);
     }
 
     @Test
     void shouldReturnOKClosePaymentResponse() {
-
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(List.of("paymentToken"))
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
@@ -241,7 +232,6 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -252,13 +242,10 @@ class NodeForPspClientTest {
 
         /* test */
         assertThat(clientResponse.getOutcome()).isEqualTo(closePaymentResponse.getOutcome());
-        verify(requestBodyUriSpec, times(1)).header("Content-Type", "application/json");
-        verify(requestBodyUriSpec, times(1)).header("ocp-apim-subscription-key", nodoPerPmApiKey);
     }
 
     @Test
     void shouldReturnOKClosePaymentResponseAdditionalInfo() {
-
         AdditionalPaymentInformationsDto additionalPaymentInformationsDto = new AdditionalPaymentInformationsDto()
                 .outcomePaymentGateway(AdditionalPaymentInformationsDto.OutcomePaymentGatewayEnum.OK)
                 .totalAmount(new BigDecimal((101)).toString())
@@ -286,8 +273,6 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
-        ;
         when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -302,7 +287,6 @@ class NodeForPspClientTest {
 
     @Test
     void shouldReturnKOClosePaymentResponse() {
-
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(List.of("paymentToken"))
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
@@ -321,8 +305,6 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
-        ;
         when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -337,7 +319,6 @@ class NodeForPspClientTest {
 
     @Test
     void shouldMapClosePaymentErrorToBadGatewayException() {
-
         ClosePaymentRequestV2Dto closePaymentRequest = new ClosePaymentRequestV2Dto()
                 .paymentTokens(List.of("paymentToken"))
                 .outcome(ClosePaymentRequestV2Dto.OutcomeEnum.OK)
@@ -356,7 +337,6 @@ class NodeForPspClientTest {
         /* preconditions */
         when(nodoWebClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.header(any(), eq(MediaType.APPLICATION_JSON_VALUE))).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.header(any(), any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(any(Function.class))).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(), eq(ClosePaymentRequestV2Dto.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
@@ -421,9 +401,7 @@ class NodeForPspClientTest {
                 ),
                 "/",
                 ecommerceClientId,
-                nodoPerPmUri,
-                "key",
-                "key"
+                nodoPerPmUri
         );
         StepVerifier
                 .create(nodeForPspClient.closePaymentV2(closePaymentRequest))
@@ -465,9 +443,7 @@ class NodeForPspClientTest {
                 ),
                 "/",
                 ecommerceClientId,
-                nodoPerPmUri,
-                "key",
-                "key"
+                nodoPerPmUri
         );
         StepVerifier
                 .create(nodeForPspClient.closePaymentV2(closePaymentRequest))
@@ -510,9 +486,7 @@ class NodeForPspClientTest {
                 ),
                 "/",
                 ecommerceClientId,
-                nodoPerPmUri,
-                "key",
-                "key"
+                nodoPerPmUri
         );
         StepVerifier
                 .create(nodeForPspClient.closePaymentV2(closePaymentRequest))
