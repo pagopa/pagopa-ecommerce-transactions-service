@@ -684,7 +684,9 @@ class TransactionServiceTests {
                 ZonedDateTime.now().toString(),
                 transactionDocument.getIdCart(),
                 transactionDocument.getRrn(),
-                transactionDocument.getUserId()
+                transactionDocument.getUserId(),
+                transactionDocument.getPaymentTypeCode(),
+                transactionDocument.getPspId()
         );
 
         /* preconditions */

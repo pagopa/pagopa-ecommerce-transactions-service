@@ -47,7 +47,9 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
                 "rrn",
-                TransactionTestUtils.USER_ID
+                TransactionTestUtils.USER_ID,
+                null,
+                null
         );
 
         expectedDocument.setPaymentGateway(null);
@@ -129,7 +131,9 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
                 "rrn",
-                TransactionTestUtils.USER_ID
+                TransactionTestUtils.USER_ID,
+                null,
+                null
         );
         String authorizationErrorCode = "authorization error code";
 
@@ -209,7 +213,9 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getCreationDate().toString(),
                 transaction.getTransactionActivatedData().getIdCart(),
                 "rrn",
-                TransactionTestUtils.USER_ID
+                TransactionTestUtils.USER_ID,
+                null,
+                null
         );
 
         expectedDocument.setPaymentGateway(null);
