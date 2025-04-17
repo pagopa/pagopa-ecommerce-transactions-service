@@ -22,7 +22,6 @@ import it.pagopa.transactions.commands.data.*;
 import it.pagopa.transactions.commands.handlers.v1.*;
 import it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.projections.handlers.v1.*;
 import it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -72,31 +71,15 @@ public class TransactionsService {
 
     private final it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2;
 
-    private final it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1;
-
     private final it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2;
-
-    private final it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1;
 
     private final it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2;
 
-    private final it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1;
-
-    private final it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1;
-
     private final it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
-
-    private final it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1;
-
-    private final it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1;
 
     private final it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2;
 
-    private final it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1;
-
     private final it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2;
-
-    private final it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1;
 
     private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2;
 
@@ -153,44 +136,19 @@ public class TransactionsService {
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2,
-
-            @Qualifier(
-                AuthorizationRequestProjectionHandler.QUALIFIER_NAME
-            ) AuthorizationRequestProjectionHandler authorizationProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2,
             @Qualifier(
-                AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
-            ) AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1,
-            @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2,
-            @Qualifier(
-                RefundRequestProjectionHandler.QUALIFIER_NAME
-            ) RefundRequestProjectionHandler refundRequestProjectionHandlerV1,
-            @Qualifier(
-                ClosureSendProjectionHandler.QUALIFIER_NAME
-            ) ClosureSendProjectionHandler closureSendProjectionHandlerV1,
             ClosureRequestedProjectionHandler closureRequestedProjectionHandler,
-            @Qualifier(
-                ClosureErrorProjectionHandler.QUALIFIER_NAME
-            ) ClosureErrorProjectionHandler closureErrorProjectionHandlerV1,
-            @Qualifier(
-                CancellationRequestProjectionHandler.QUALIFIER_NAME
-            ) CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2,
             @Qualifier(
-                TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
-            ) TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1,
-            @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2,
-            @Qualifier(
-                TransactionsActivationProjectionHandler.QUALIFIER_NAME
-            ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
@@ -218,19 +176,11 @@ public class TransactionsService {
         this.transactionRequestUserReceiptHandlerV2 = transactionRequestUserReceiptHandlerV2;
         this.transactionCancelHandlerV1 = transactionCancelHandlerV1;
         this.transactionCancelHandlerV2 = transactionCancelHandlerV2;
-        this.authorizationProjectionHandlerV1 = authorizationProjectionHandlerV1;
         this.authorizationProjectionHandlerV2 = authorizationProjectionHandlerV2;
-        this.authorizationUpdateProjectionHandlerV1 = authorizationUpdateProjectionHandlerV1;
         this.authorizationUpdateProjectionHandlerV2 = authorizationUpdateProjectionHandlerV2;
-        this.refundRequestProjectionHandlerV1 = refundRequestProjectionHandlerV1;
-        this.closureSendProjectionHandlerV1 = closureSendProjectionHandlerV1;
         this.closureRequestedProjectionHandler = closureRequestedProjectionHandler;
-        this.closureErrorProjectionHandlerV1 = closureErrorProjectionHandlerV1;
-        this.cancellationRequestProjectionHandlerV1 = cancellationRequestProjectionHandlerV1;
         this.cancellationRequestProjectionHandlerV2 = cancellationRequestProjectionHandlerV2;
-        this.transactionUserReceiptProjectionHandlerV1 = transactionUserReceiptProjectionHandlerV1;
         this.transactionUserReceiptProjectionHandlerV2 = transactionUserReceiptProjectionHandlerV2;
-        this.transactionsActivationProjectionHandlerV1 = transactionsActivationProjectionHandlerV1;
         this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;
         this.transactionsViewRepository = transactionsViewRepository;
         this.ecommercePaymentMethodsClient = ecommercePaymentMethodsClient;

@@ -75,29 +75,21 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.services.v2_1.TransactionsService.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class,
             TransactionsEventStoreRepository.class,
             UUIDUtils.class
@@ -176,36 +168,19 @@ class TransactionServiceTests {
     private it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler;
 
     @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1;
-
-    @MockBean
     private it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1;
 
     @MockBean
     private it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2;
 
     @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1;
-    @MockBean
     private it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1;
 
     @MockBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
 
     @MockBean
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1;
 
     @MockBean
     private it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2;
