@@ -48,26 +48,16 @@ import java.util.*;
 public class TransactionsService {
 
     public static final String QUALIFIER_NAME = "TransactionsServiceV1";
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandlerV1;
 
     private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2;
 
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler requestAuthHandlerV1;
     private final it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2;
-
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1;
 
     private final it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2;
 
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler transactionSendClosureHandlerV1;
-
     private final it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler;
 
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV1;
-
     private final it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV2;
-
-    private final it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1;
 
     private final it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2;
 
@@ -107,32 +97,16 @@ public class TransactionsService {
     @Autowired
     public TransactionsService(
             @Qualifier(
-                TransactionActivateHandler.QUALIFIER_NAME
-            ) TransactionActivateHandler transactionActivateHandlerV1,
-            @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2,
-            TransactionRequestAuthorizationHandler requestAuthHandlerV1,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2,
-            @Qualifier(
-                TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
-            ) TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2,
-            @Qualifier(
-                TransactionSendClosureHandler.QUALIFIER_NAME
-            ) TransactionSendClosureHandler transactionSendClosureHandlerV1,
             TransactionSendClosureRequestHandler transactionSendClosureRequestHandler,
-            @Qualifier(
-                TransactionRequestUserReceiptHandler.QUALIFIER_NAME
-            ) TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV2,
-            @Qualifier(
-                TransactionUserCancelHandler.QUALIFIER_NAME
-            ) TransactionUserCancelHandler transactionCancelHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2,
