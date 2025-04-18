@@ -97,16 +97,32 @@ public class TransactionsService {
     @Autowired
     public TransactionsService(
             @Qualifier(
+                TransactionActivateHandler.QUALIFIER_NAME
+            ) TransactionActivateHandler transactionActivateHandlerV1,
+            @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2,
+            TransactionRequestAuthorizationHandler requestAuthHandlerV1,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthHandlerV2,
+            @Qualifier(
+                TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
+            ) TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2,
+            @Qualifier(
+                TransactionSendClosureHandler.QUALIFIER_NAME
+            ) TransactionSendClosureHandler transactionSendClosureHandlerV1,
             TransactionSendClosureRequestHandler transactionSendClosureRequestHandler,
+            @Qualifier(
+                TransactionRequestUserReceiptHandler.QUALIFIER_NAME
+            ) TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV2,
+            @Qualifier(
+                TransactionUserCancelHandler.QUALIFIER_NAME
+            ) TransactionUserCancelHandler transactionCancelHandlerV1,
             @Qualifier(
                 it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.QUALIFIER_NAME
             ) it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2,

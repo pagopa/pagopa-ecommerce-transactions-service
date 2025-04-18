@@ -18,6 +18,7 @@ import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -63,6 +64,9 @@ import static org.mockito.ArgumentMatchers.any;
 class CircuitBreakerTest {
     @Autowired
     private TransactionsService transactionsService;
+
+    @MockBean
+    private TransactionActivateHandler transactionActivateHandlerV1;
 
     @MockBean
     private TransactionsViewRepository transactionsViewRepository;
