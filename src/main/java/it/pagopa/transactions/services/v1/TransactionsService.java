@@ -83,7 +83,6 @@ public class TransactionsService {
     private final TransactionsEventStoreRepository<Object> eventsRepository;
 
     private final Integer paymentTokenValidity;
-    private final EventVersion eventVersion;
 
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
@@ -130,7 +129,6 @@ public class TransactionsService {
             TransactionsUtils transactionsUtils,
             TransactionsEventStoreRepository<Object> eventsRepository,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
-            @Value("${ecommerce.event.version}") EventVersion eventVersion,
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             ConfidentialMailUtils confidentialMailUtils,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils
@@ -154,7 +152,6 @@ public class TransactionsService {
         this.transactionsUtils = transactionsUtils;
         this.eventsRepository = eventsRepository;
         this.paymentTokenValidity = paymentTokenValidity;
-        this.eventVersion = eventVersion;
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.confidentialMailUtils = confidentialMailUtils;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
@@ -203,30 +200,27 @@ public class TransactionsService {
                 transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
                 clientId
         );
-        return switch (eventVersion) {
-            case V2 -> transactionActivateHandlerV2.handle(transactionActivateCommand)
-                    .doOnNext(
-                            args -> log.info(
-                                    "Transaction initialized for rptIds: {}",
-                                    transactionActivateCommand.getRptIds().stream().map(RptId::value).toList()
-                            )
-                    )
-                    .flatMap(
-                            es -> {
-                                final Mono<BaseTransactionEvent<?>> transactionActivatedEvent = es
-                                        .getT1();
-                                final String authToken = es.getT2();
-                                return transactionActivatedEvent
-                                        .flatMap(
-                                                t -> projectActivatedEventV2(
-                                                        (it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent) t,
-                                                        authToken
-                                                )
-                                        );
-                            }
-                    );
-
-        };
+        return transactionActivateHandlerV2.handle(transactionActivateCommand)
+                .doOnNext(
+                        args -> log.info(
+                                "Transaction initialized for rptIds: {}",
+                                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList()
+                        )
+                )
+                .flatMap(
+                        es -> {
+                            final Mono<BaseTransactionEvent<?>> transactionActivatedEvent = es
+                                    .getT1();
+                            final String authToken = es.getT2();
+                            return transactionActivatedEvent
+                                    .flatMap(
+                                            t -> projectActivatedEventV2(
+                                                    (it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent) t,
+                                                    authToken
+                                            )
+                                    );
+                        }
+                );
     }
 
     @CircuitBreaker(name = "ecommerce-db")

@@ -4,9 +4,6 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
@@ -14,7 +11,6 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGate
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
@@ -31,7 +27,6 @@ import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.configurations.AzureStorageConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -160,19 +155,11 @@ class TransactionServiceTest {
             transactionSendClosureRequestHandler,
             transactionUpdateStatusHandlerV2,
             transactionCancelHandlerV2,
-            authorizationProjectionHandlerV1,
             authorizationProjectionHandlerV2,
-            authorizationUpdateProjectionHandlerV1,
             authorizationUpdateProjectionHandlerV2,
-            refundRequestProjectionHandlerV1,
-            closureSendProjectionHandlerV1,
             closureRequestedProjectionHandler,
-            closureErrorProjectionHandlerV1,
-            cancellationRequestProjectionHandlerV1,
             cancellationRequestProjectionHandlerV2,
-            transactionUserReceiptProjectionHandlerV1,
             transactionUserReceiptProjectionHandlerV2,
-            transactionsActivationProjectionHandlerV1,
             transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
@@ -181,7 +168,6 @@ class TransactionServiceTest {
             transactionsUtils,
             transactionsEventStoreRepository,
             10,
-            EventVersion.V1,
             paymentRequestInfoRedisTemplateWrapper,
             confidentialMailUtils,
             updateTransactionStatusTracerUtils
@@ -207,7 +193,6 @@ class TransactionServiceTest {
             transactionUserReceiptProjectionHandlerV1,
             transactionUserReceiptProjectionHandlerV2,
             transactionsActivationProjectionHandlerV1,
-            transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
             walletClient,
@@ -220,101 +205,6 @@ class TransactionServiceTest {
             confidentialMailUtils,
             updateTransactionStatusTracerUtils
     );
-
-    @Test
-    void shouldHandleNewTransactionTransactionActivatedV1Event() {
-        ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-        UUID TEST_SESSION_TOKEN = UUID.randomUUID();
-        UUID TEST_CPP = UUID.randomUUID();
-        UUID TRANSACTION_ID = UUID.randomUUID();
-
-        NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
-                .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(100));
-
-        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
-        transactionActivatedData
-                .setPaymentNotices(
-                        List.of(
-                                new PaymentNotice(
-                                        TransactionTestUtils.PAYMENT_TOKEN,
-                                        null,
-                                        "dest",
-                                        0,
-                                        TEST_CPP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
-                                        false,
-                                        null,
-                                        null
-                                )
-                        )
-                );
-
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                new TransactionId(TRANSACTION_ID).value(),
-                transactionActivatedData
-        );
-
-        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = Tuples
-                .of(
-                        Mono.just(transactionActivatedEvent),
-                        TEST_SESSION_TOKEN.toString()
-                );
-
-        TransactionActivated transactionActivated = new TransactionActivated(
-                new TransactionId(TRANSACTION_ID),
-                Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
-                                new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
-                                new RptId(TransactionTestUtils.RPT_ID),
-                                new TransactionAmount(0),
-                                new TransactionDescription("desc"),
-                                new PaymentContextCode(TEST_CPP.toString()),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
-                                false,
-                                new CompanyName(null),
-                                null
-                        )
-                ),
-                TransactionTestUtils.EMAIL,
-                "faultCode",
-                "faultCodeString",
-                Transaction.ClientId.CHECKOUT,
-                "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
-        );
-
-        /*
-         * Preconditions
-         */
-        Mockito.when(transactionActivateHandlerV1.handle(any()))
-                .thenReturn(Mono.just(response));
-        Mockito.when(transactionsActivationProjectionHandlerV1.handle(transactionActivatedEvent))
-                .thenReturn(Mono.just(transactionActivated));
-        Mockito.when(transactionsUtils.convertEnumerationV1(any()))
-                .thenCallRealMethod();
-        StepVerifier
-                .create(
-                        transactionsServiceV1.newTransaction(
-                                transactionRequestDto,
-                                clientIdDto,
-                                new TransactionId(transactionActivatedEvent.getTransactionId())
-                        )
-                )
-                .expectNextMatches(
-                        res -> res.getPayments().get(0).getRptId()
-                                .equals(transactionRequestDto.getPaymentNotices().get(0).getRptId())
-                                && res.getIdCart().equals("idCart")
-                                && res.getStatus().equals(TransactionStatusDto.ACTIVATED)
-                                && res.getClientId()
-                                        .equals(NewTransactionResponseDto.ClientIdEnum.valueOf(clientIdDto.getValue()))
-                                && !res.getTransactionId().isEmpty()
-                                && !res.getAuthToken().isEmpty()
-                )
-                .verifyComplete();
-
-    }
 
     @Test
     void shouldHandleNewTransactionTransactionActivatedV2Event() {
