@@ -154,17 +154,11 @@ class TransactionServiceTest {
             .mock(UpdateTransactionStatusTracerUtils.class);
 
     private final TransactionsService transactionsServiceV1 = new TransactionsService(
-            transactionActivateHandlerV1,
             transactionActivateHandlerV2,
-            transactionRequestAuthorizationHandlerV1,
             transactionRequestAuthorizationHandlerV2,
-            transactionUpdateAuthorizationHandlerV1,
             transactionUpdateAuthorizationHandlerV2,
-            transactionSendClosureHandlerV1,
             transactionSendClosureRequestHandler,
-            transactionUpdateStatusHandlerV1,
             transactionUpdateStatusHandlerV2,
-            transactionCancelHandlerV1,
             transactionCancelHandlerV2,
             authorizationProjectionHandlerV1,
             authorizationProjectionHandlerV2,
@@ -194,17 +188,11 @@ class TransactionServiceTest {
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
-            transactionActivateHandlerV1,
             transactionActivateHandlerV2,
-            transactionRequestAuthorizationHandlerV1,
             transactionRequestAuthorizationHandlerV2,
-            transactionUpdateAuthorizationHandlerV1,
             transactionUpdateAuthorizationHandlerV2,
-            transactionSendClosureHandlerV1,
             transactionSendClosureRequestHandler,
-            transactionUpdateStatusHandlerV1,
             transactionUpdateStatusHandlerV2,
-            transactionCancelHandlerV1,
             transactionCancelHandlerV2,
             authorizationProjectionHandlerV1,
             authorizationProjectionHandlerV2,
