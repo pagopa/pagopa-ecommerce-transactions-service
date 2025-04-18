@@ -56,7 +56,6 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -322,7 +321,7 @@ class TransactionServiceTests {
         }));
         StepVerifier
                 .create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
-                .expectErrorMatches(error -> error instanceof NotImplementedException)
+                .expectErrorMatches(NotImplementedException.class::isInstance)
                 .verify();
     }
 
@@ -534,9 +533,7 @@ class TransactionServiceTests {
                 .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest);
         assertThrows(
                 TransactionNotFoundException.class,
-                () -> {
-                    requestAuthorizationResponseDtoMono.block();
-                }
+                requestAuthorizationResponseDtoMono::block
         );
     }
 
@@ -719,7 +716,7 @@ class TransactionServiceTests {
                         transactionsServiceV1
                                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest)
                 )
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
 
@@ -765,7 +762,7 @@ class TransactionServiceTests {
                 .status(TransactionStatusDto.NOTIFIED_OK);
 
         /* preconditions */
-        Mockito.when(repository.findById(transactionId.value().toString()))
+        Mockito.when(repository.findById(transactionId.value()))
                 .thenReturn(Mono.just(transactionDocument));
 
         Mockito.when(transactionUpdateStatusHandlerV2.handle(any()))
@@ -776,7 +773,7 @@ class TransactionServiceTests {
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
-                .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
+                .addUserReceipt(transactionId.value(), addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
     }
@@ -825,7 +822,7 @@ class TransactionServiceTests {
                 .status(TransactionStatusDto.NOTIFIED_KO);
 
         /* preconditions */
-        Mockito.when(repository.findById(transactionId.value().toString()))
+        Mockito.when(repository.findById(transactionId.value()))
                 .thenReturn(Mono.just(transactionDocument));
 
         Mockito.when(transactionUpdateStatusHandlerV2.handle(any()))
@@ -864,7 +861,7 @@ class TransactionServiceTests {
 
         /* test */
         StepVerifier.create(transactionsServiceV1.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
 
@@ -946,7 +943,7 @@ class TransactionServiceTests {
                                         authorizationRequest
                                 )
                 )
-                .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
+                .expectErrorMatches(PaymentNoticeAllCCPMismatchException.class::isInstance)
                 .verify();
     }
 

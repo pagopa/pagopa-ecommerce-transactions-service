@@ -2,11 +2,6 @@ package it.pagopa.transactions.services.v1;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
-import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
@@ -16,18 +11,12 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
-import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
-import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
-import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
-import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -52,8 +41,6 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -341,9 +328,7 @@ class TransactionServiceTests {
                 .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest);
         assertThrows(
                 TransactionNotFoundException.class,
-                () -> {
-                    requestAuthorizationResponseDtoMono.block();
-                }
+                requestAuthorizationResponseDtoMono::block
         );
         // verify that cache delete is never called
         verify(paymentRequestInfoRedisTemplateWrapper, times(0)).deleteById(any());
@@ -371,7 +356,7 @@ class TransactionServiceTests {
 
         /* test */
         StepVerifier.create(transactionsServiceV1.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
 
