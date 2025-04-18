@@ -10,7 +10,6 @@ import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
