@@ -189,8 +189,6 @@ class TransactionServiceTests {
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 
-    private static final String NPG_URL_IFRAME = "http://iframe";
-
     @Test
     void getTransactionReturnsTransactionDataOriginProvided() {
 

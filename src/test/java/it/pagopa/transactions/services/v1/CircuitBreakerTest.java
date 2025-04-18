@@ -3,15 +3,9 @@ package it.pagopa.transactions.services.v1;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
-import it.pagopa.ecommerce.commons.documents.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.domain.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
@@ -47,7 +41,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -137,10 +130,6 @@ class CircuitBreakerTest {
                 }
 
                 );
-    }
-
-    private static Stream<Arguments> getIgnoredExceptionForNewTransactionRetry() {
-        return getIgnoredExceptionsForRetry("newTransaction");
     }
 
     private static Stream<Arguments> getIgnoredExceptionForGetTransactionInfoRetry() {
@@ -338,11 +327,5 @@ class CircuitBreakerTest {
         );
         assertEquals(expectedFailedCallsWithRetryAttempt, retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt());
 
-    }
-
-    private static CtFaultBean faultBeanWithCode(String faultCode) {
-        CtFaultBean fault = new CtFaultBean();
-        fault.setFaultCode(faultCode);
-        return fault;
     }
 }

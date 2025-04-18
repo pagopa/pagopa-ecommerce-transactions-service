@@ -860,31 +860,6 @@ public class TransactionsService {
                 );
     }
 
-    private TransactionInfoDto buildTransactionInfoDtoV1(
-                                                         it.pagopa.ecommerce.commons.documents.v1.Transaction transactionDocument
-    ) {
-        return new TransactionInfoDto()
-                .transactionId(
-                        transactionDocument
-                                .getTransactionId()
-                )
-                .payments(
-                        transactionDocument
-                                .getPaymentNotices()
-                                .stream()
-                                .map(
-                                        paymentNotice -> new PaymentInfoDto()
-                                                .amount(paymentNotice.getAmount())
-                                                .reason(paymentNotice.getDescription())
-                                                .paymentToken(paymentNotice.getPaymentToken())
-                                                .rptId(paymentNotice.getRptId())
-                                )
-                                .toList()
-                )
-                .status(transactionsUtils.convertEnumerationV1(transactionDocument.getStatus()));
-
-    }
-
     private TransactionInfoDto buildTransactionInfoDtoV2(
                                                          it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument
     ) {
@@ -908,24 +883,6 @@ public class TransactionsService {
                 )
                 .status(transactionsUtils.convertEnumerationV1(transactionDocument.getStatus()));
 
-    }
-
-    private TransactionInfoDto buildTransactionInfoDtoV1(
-                                                         it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction baseTransaction
-    ) {
-        return new TransactionInfoDto()
-                .transactionId(baseTransaction.getTransactionId().value())
-                .payments(
-                        baseTransaction.getPaymentNotices()
-                                .stream().map(
-                                        paymentNotice -> new PaymentInfoDto()
-                                                .amount(paymentNotice.transactionAmount().value())
-                                                .reason(paymentNotice.transactionDescription().value())
-                                                .paymentToken(paymentNotice.paymentToken().value())
-                                                .rptId(paymentNotice.rptId().value())
-                                ).toList()
-                )
-                .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV2(
