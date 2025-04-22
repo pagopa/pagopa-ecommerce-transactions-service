@@ -56,7 +56,6 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -73,31 +72,17 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.services.v1.TransactionsService.class,
             it.pagopa.transactions.services.v2.TransactionsService.class,
             it.pagopa.transactions.services.v2_1.TransactionsService.class,
-            it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.AuthorizationRequestProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler.class,
-            it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class,
-            it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler.class,
-            it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.class,
-            it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.class,
-            it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class,
-            it.pagopa.transactions.projections.handlers.v1.TransactionsActivationProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class,
             TransactionsEventStoreRepository.class,
             UUIDUtils.class
@@ -140,72 +125,37 @@ class TransactionServiceTests {
     private QueueAsyncClient queueAsyncClientClosureRetryV2;
 
     @MockBean
-    private it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler transactionActivateHandler;
-
-    @MockBean
     private it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2;
-
-    @MockBean
-    private it.pagopa.transactions.commands.handlers.v1.TransactionUserCancelHandler transactionCancelHandlerV1;
 
     @MockBean
     private it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler transactionCancelHandlerV2;
 
     @MockBean
-    private it.pagopa.transactions.commands.handlers.v1.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV1;
-
-    @MockBean
     private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler transactionRequestAuthorizationHandlerV2;
-
-    @MockBean
-    private it.pagopa.transactions.commands.handlers.v1.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV1;
 
     @MockBean
     private it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2;
 
     @MockBean
-    private it.pagopa.transactions.commands.handlers.v1.TransactionRequestUserReceiptHandler transactionUpdateStatusHandlerV1;
-
-    @MockBean
     private it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler transactionUpdateStatusHandlerV2;
-
-    @MockBean
-    private it.pagopa.transactions.commands.handlers.v1.TransactionSendClosureHandler transactionSendClosureHandlerV1;
 
     @MockBean
     private it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler transactionSendClosureRequestHandler;
 
     @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV1;
-
-    @MockBean
     private it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV1;
 
     @MockBean
     private it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2;
 
     @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.RefundRequestProjectionHandler refundRequestProjectionHandlerV1;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.ClosureSendProjectionHandler closureSendProjectionHandlerV1;
-    @MockBean
     private it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.ClosureErrorProjectionHandler closureErrorProjectionHandlerV1;
 
     @MockBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
 
     @MockBean
     private TransactionsActivationProjectionHandler transactionsActivationProjectionHandler;
-
-    @MockBean
-    private it.pagopa.transactions.projections.handlers.v1.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV1;
 
     @MockBean
     private it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2;
@@ -371,7 +321,7 @@ class TransactionServiceTests {
         }));
         StepVerifier
                 .create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
-                .expectErrorMatches(error -> error instanceof NotImplementedException)
+                .expectErrorMatches(NotImplementedException.class::isInstance)
                 .verify();
     }
 
@@ -583,9 +533,7 @@ class TransactionServiceTests {
                 .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest);
         assertThrows(
                 TransactionNotFoundException.class,
-                () -> {
-                    requestAuthorizationResponseDtoMono.block();
-                }
+                requestAuthorizationResponseDtoMono::block
         );
     }
 
@@ -768,7 +716,7 @@ class TransactionServiceTests {
                         transactionsServiceV1
                                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest)
                 )
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
 
@@ -814,7 +762,7 @@ class TransactionServiceTests {
                 .status(TransactionStatusDto.NOTIFIED_OK);
 
         /* preconditions */
-        Mockito.when(repository.findById(transactionId.value().toString()))
+        Mockito.when(repository.findById(transactionId.value()))
                 .thenReturn(Mono.just(transactionDocument));
 
         Mockito.when(transactionUpdateStatusHandlerV2.handle(any()))
@@ -825,7 +773,7 @@ class TransactionServiceTests {
         when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
-                .addUserReceipt(transactionId.value().toString(), addUserReceiptRequest).block();
+                .addUserReceipt(transactionId.value(), addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
     }
@@ -874,7 +822,7 @@ class TransactionServiceTests {
                 .status(TransactionStatusDto.NOTIFIED_KO);
 
         /* preconditions */
-        Mockito.when(repository.findById(transactionId.value().toString()))
+        Mockito.when(repository.findById(transactionId.value()))
                 .thenReturn(Mono.just(transactionDocument));
 
         Mockito.when(transactionUpdateStatusHandlerV2.handle(any()))
@@ -913,7 +861,7 @@ class TransactionServiceTests {
 
         /* test */
         StepVerifier.create(transactionsServiceV1.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
 
@@ -995,7 +943,7 @@ class TransactionServiceTests {
                                         authorizationRequest
                                 )
                 )
-                .expectErrorMatches(exception -> exception instanceof PaymentNoticeAllCCPMismatchException)
+                .expectErrorMatches(PaymentNoticeAllCCPMismatchException.class::isInstance)
                 .verify();
     }
 
