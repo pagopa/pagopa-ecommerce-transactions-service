@@ -76,13 +76,9 @@ public class TransactionsService {
 
     private final WalletClient walletClient;
 
-    private final UUIDUtils uuidUtils;
-
     private final TransactionsUtils transactionsUtils;
 
     private final TransactionsEventStoreRepository<Object> eventsRepository;
-
-    private final Integer paymentTokenValidity;
 
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
@@ -148,10 +144,8 @@ public class TransactionsService {
         this.transactionsViewRepository = transactionsViewRepository;
         this.ecommercePaymentMethodsClient = ecommercePaymentMethodsClient;
         this.walletClient = walletClient;
-        this.uuidUtils = uuidUtils;
         this.transactionsUtils = transactionsUtils;
         this.eventsRepository = eventsRepository;
-        this.paymentTokenValidity = paymentTokenValidity;
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.confidentialMailUtils = confidentialMailUtils;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
