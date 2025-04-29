@@ -739,13 +739,10 @@ components:
             - status
     TransactionOutcomeInfo:
       type: object
-      description: Transaction outocome info returned when querying for an existing transaction outcome status
+      description: Transaction outcome info returned when querying for an existing transaction outcome status
       properties:
-        transactionId:
-          description: the transaction unique identifier
-          type: string
         outcome:
-          type: number
+          type: string
           enum:
             - 0
             - 1
@@ -769,15 +766,8 @@ components:
             - 117
             - 121
           description: "`0` - Success `1` - Generic error `2` - Authorization error `3` - Invalid data `4` - Timeout `5` - Unsupported circuit `6` - Missing data `7` - Invalid card: expired card etc `8` - Canceled by the user `9` - Double transaction `10` - Excessive amount `11` - Order not present `12` - Invalid method `13` - Retriable KO `14` - Invalid session `17` - Taken in charge `25` - PSP Error `99` - Backend Error `116` - Balance not available `117` - CVV Error `121` - Limit exceeded"
-        isFinalStatus:
-          description: a flag that mark a status as final for a transaction
-          type: boolean
         totalAmount:
           $ref: '#/components/schemas/AmountEuroCents'
-      required:
-        - transactionId
-        - outcome
-        - isFinalStatus
     AmountEuroCents:
       description: Amount for payments, in euro cents
       type: integer
