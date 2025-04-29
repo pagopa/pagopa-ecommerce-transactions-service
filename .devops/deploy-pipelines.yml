@@ -244,7 +244,7 @@ stages:
 
   - stage: "Get_Release_Version"
     displayName: "Get the app version to deploy"
-      dependsOn: Build_release_candidate
+    dependsOn: Build_release_candidate
     condition: in(dependencies.Build_release_candidate.result, 'Succeeded', 'Skipped')
     jobs:
       - job: "get_version"
