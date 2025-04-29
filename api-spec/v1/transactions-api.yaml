@@ -307,6 +307,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+  /transactions/{transactionId}/outcomes:
+    get:
+      tags:
+        - transactions
+      operationId: transactionOutcomes
+      summary: Get transaction outcome
+      description: Return outcome information for the input specific transaction resource
+      parameters:
+        - in: header
+          name: x-user-id
+          required: false
+          description: User id (valued for authenticated payments) owner of the transaction
+          schema:
+            $ref: '#/components/schemas/UserId'
+        - in: path
+          name: transactionId
+          schema:
+            type: string
+          required: true
+          description: Transaction ID
+      responses:
+        '200':
+          description: Transaction authorization request successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionOutcomeInfo"
+        '400':
+          description: Invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        '502':
+          description: Bad gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
 components:
   schemas:
     Lang:
@@ -382,15 +433,15 @@ components:
           minItems: 1
           maxItems: 5
           example:
-            -  rptId: "77777777777302012387654312384"
-               amount: 100
-            -  rptId: "77777777777302012387654312385"
-               amount: 200
+            - rptId: "77777777777302012387654312384"
+              amount: 100
+            - rptId: "77777777777302012387654312385"
+              amount: 200
         email:
           description: Email string format
           type: string
           pattern: (?:[a-zA-Z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+\/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
-          example : mario.rossi@gmail.it
+          example: mario.rossi@gmail.it
         idCart:
           description: Cart identifier provided by creditor institution
           type: string
@@ -474,7 +525,7 @@ components:
           description: PSP id
         language:
           type: string
-          enum: [IT, EN, FR, DE, SL]
+          enum: [ IT, EN, FR, DE, SL ]
           description: Requested language
         isAllCCP:
           type: boolean
@@ -686,6 +737,47 @@ components:
               description: payment gateway authorization status
           required:
             - status
+    TransactionOutcomeInfo:
+      type: object
+      description: Transaction outocome info returned when querying for an existing transaction outcome status
+      properties:
+        transactionId:
+          description: the transaction unique identifier
+          type: string
+        outcome:
+          type: number
+          enum:
+            - 0
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 8
+            - 9
+            - 10
+            - 11
+            - 12
+            - 13
+            - 14
+            - 17
+            - 25
+            - 99
+            - 116
+            - 117
+            - 121
+          description: "`0` - Success `1` - Generic error `2` - Authorization error `3` - Invalid data `4` - Timeout `5` - Unsupported circuit `6` - Missing data `7` - Invalid card: expired card etc `8` - Canceled by the user `9` - Double transaction `10` - Excessive amount `11` - Order not present `12` - Invalid method `13` - Retriable KO `14` - Invalid session `17` - Taken in charge `25` - PSP Error `99` - Backend Error `116` - Balance not available `117` - CVV Error `121` - Limit exceeded"
+        isFinalStatus:
+          description: a flag that mark a status as final for a transaction
+          type: boolean
+        totalAmount:
+          $ref: '#/components/schemas/AmountEuroCents'
+      required:
+        - transactionId
+        - outcome
+        - isFinalStatus
     AmountEuroCents:
       description: Amount for payments, in euro cents
       type: integer
