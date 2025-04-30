@@ -742,7 +742,7 @@ components:
       description: Transaction outcome info returned when querying for an existing transaction outcome status
       properties:
         outcome:
-          type: string
+          type: number
           enum:
             - 0
             - 1

@@ -255,7 +255,7 @@ public class TransactionsService {
                                 .fold(_voidNull -> new TransactionOutcomeInfoDto(),
                                         outcomeEnum -> new TransactionOutcomeInfoDto()
                                         .outcome(outcomeEnum)
-                                        .totalAmount(outcomeEnum == TransactionOutcomeInfoDto.OutcomeEnum._0 ? transaction.getPaymentNotices().stream().mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() + Optional.ofNullable(transaction.getFeeTotal()).orElse(0) : null));
+                                        .totalAmount(outcomeEnum == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0 ? transaction.getPaymentNotices().stream().mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() + Optional.ofNullable(transaction.getFeeTotal()).orElse(0) : null));
                 default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
             };
     }
@@ -270,22 +270,22 @@ public class TransactionsService {
     ) {
         switch (status) {
             case NOTIFIED_OK -> {
-                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum._0);
+                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0);
             }
             case NOTIFICATION_REQUESTED, NOTIFICATION_ERROR -> {
                 return sendPaymentResultOutcome != null
                         && sendPaymentResultOutcome.equals(TransactionUserReceiptData.Outcome.OK)
-                                ? Either.right(TransactionOutcomeInfoDto.OutcomeEnum._0)
-                                : Either.right(TransactionOutcomeInfoDto.OutcomeEnum._25);
+                                ? Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
+                                : Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
             }
             case NOTIFIED_KO, REFUNDED -> {
-                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum._25);
+                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
             }
             case EXPIRED_NOT_AUTHORIZED -> {
-                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum._4);
+                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_4);
             }
             case CANCELED, CANCELLATION_EXPIRED -> {
-                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum._8);
+                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8);
             }
             case CLOSURE_ERROR, AUTHORIZATION_COMPLETED -> {
                 return Either.right(
@@ -294,7 +294,7 @@ public class TransactionsService {
                                 gatewayAuthorizationStatus,
                                 authorizationCode,
                                 authorizationErrorCode,
-                                TransactionOutcomeInfoDto.OutcomeEnum._1
+                                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1
                         )
                 );
             }
@@ -305,7 +305,7 @@ public class TransactionsService {
                                 gatewayAuthorizationStatus,
                                 authorizationCode,
                                 authorizationErrorCode,
-                                TransactionOutcomeInfoDto.OutcomeEnum._17
+                                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17
                         )
                 );
             }
@@ -316,19 +316,19 @@ public class TransactionsService {
                                 gatewayAuthorizationStatus,
                                 authorizationCode,
                                 authorizationErrorCode,
-                                TransactionOutcomeInfoDto.OutcomeEnum._25
+                                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25
                         )
                 );
             }
             case CLOSED -> {
                 return sendPaymentResultOutcome != null
                         && sendPaymentResultOutcome.equals(TransactionUserReceiptData.Outcome.NOT_RECEIVED)
-                                ? Either.right(TransactionOutcomeInfoDto.OutcomeEnum._17)
-                                : Either.right(TransactionOutcomeInfoDto.OutcomeEnum._1);
+                                ? Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
+                                : Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1);
             }
             case EXPIRED -> {
                 if (gatewayAuthorizationStatus == null)
-                    return Either.right(TransactionOutcomeInfoDto.OutcomeEnum._17);
+                    return Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17);
                 else if (gatewayAuthorizationStatus.equals(EXECUTED.getValue())) {
                     return Either.right(
                             evaluateOutcomeStatus(
@@ -336,23 +336,23 @@ public class TransactionsService {
                                     gatewayAuthorizationStatus,
                                     authorizationCode,
                                     authorizationErrorCode,
-                                    TransactionOutcomeInfoDto.OutcomeEnum._1
+                                    TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1
                             )
                     );
                 } else {
                     return switch (sendPaymentResultOutcome) {
-                        case OK -> Either.right(TransactionOutcomeInfoDto.OutcomeEnum._0);
-                        case KO -> Either.right(TransactionOutcomeInfoDto.OutcomeEnum._25);
-                        case NOT_RECEIVED -> Either.right(TransactionOutcomeInfoDto.OutcomeEnum._17);
-                        case null -> Either.right(TransactionOutcomeInfoDto.OutcomeEnum._1);
+                        case OK -> Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0);
+                        case KO -> Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+                        case NOT_RECEIVED -> Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17);
+                        case null -> Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1);
                     };
                 }
             }
             case AUTHORIZATION_REQUESTED -> {
-                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum._17);
+                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17);
             }
             case REFUND_ERROR, REFUND_REQUESTED -> {
-                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum._1);
+                return Either.right(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1);
             }
             default -> {
                 return Either.left(null);
@@ -364,18 +364,18 @@ public class TransactionsService {
         if (paymentGateway.equals("NPG")) {
             return switch (gatewayAuthorizationStatus) {
                 case "EXECUTED" ->
-                        Optional.ofNullable(expectedOutcome).orElse(TransactionOutcomeInfoDto.OutcomeEnum._25);
-                case "CANCELED" -> TransactionOutcomeInfoDto.OutcomeEnum._8;
+                        Optional.ofNullable(expectedOutcome).orElse(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+                case "CANCELED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8;
                 case "DENIED_BY_RISK", "THREEDS_VALIDATED", "THREEDS_FAILED" ->
-                        TransactionOutcomeInfoDto.OutcomeEnum._2;
+                        TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2;
                 case "AUTHORIZED", "PENDING", "VOIDED", "REFUNDED", "FAILED" ->
-                        TransactionOutcomeInfoDto.OutcomeEnum._25;
+                        TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 case "DECLINED" ->
-                        Optional.ofNullable(npgErrorCodeToOutcomeMapping.get(authorizationErrorCode)).orElse(TransactionOutcomeInfoDto.OutcomeEnum._25);
-                case null, default -> TransactionOutcomeInfoDto.OutcomeEnum._1;
+                        Optional.ofNullable(npgErrorCodeToOutcomeMapping.get(authorizationErrorCode)).orElse(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+                case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
             };
         }
-        return TransactionOutcomeInfoDto.OutcomeEnum._1;
+        return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
     }
 
     private TransactionInfoDto buildTransactionInfoDtoFromView(BaseTransactionView baseTransactionView) {

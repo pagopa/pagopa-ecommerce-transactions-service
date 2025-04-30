@@ -322,45 +322,45 @@ public class TransactionsUtils {
                 nodeErrorToV2TransactionsResponseEntityMapping
         );
 
-        npgErrorCodeToOutcomeMapping.put("100", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("101", TransactionOutcomeInfoDto.OutcomeEnum._7); // INVALID_CARD
-        npgErrorCodeToOutcomeMapping.put("102", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("104", TransactionOutcomeInfoDto.OutcomeEnum._3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("106", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("109", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("110", TransactionOutcomeInfoDto.OutcomeEnum._3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("111", TransactionOutcomeInfoDto.OutcomeEnum._7); // INVALID_CARD
-        npgErrorCodeToOutcomeMapping.put("115", TransactionOutcomeInfoDto.OutcomeEnum._25); // PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("116", TransactionOutcomeInfoDto.OutcomeEnum._116); // BALANCE_LIMIT
-        npgErrorCodeToOutcomeMapping.put("117", TransactionOutcomeInfoDto.OutcomeEnum._117); // CVV_ERROR
-        npgErrorCodeToOutcomeMapping.put("118", TransactionOutcomeInfoDto.OutcomeEnum._3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("119", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("120", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("121", TransactionOutcomeInfoDto.OutcomeEnum._121); // LIMIT_EXCEEDED
-        npgErrorCodeToOutcomeMapping.put("122", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("123", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("124", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("125", TransactionOutcomeInfoDto.OutcomeEnum._3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("126", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("129", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("200", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("202", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("204", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("208", TransactionOutcomeInfoDto.OutcomeEnum._3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("209", TransactionOutcomeInfoDto.OutcomeEnum._3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("210", TransactionOutcomeInfoDto.OutcomeEnum._3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("413", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("888", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("902", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("903", TransactionOutcomeInfoDto.OutcomeEnum._2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("904", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("906", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("907", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("908", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("909", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("911", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("913", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("999", TransactionOutcomeInfoDto.OutcomeEnum._25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("100", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("101", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_7); // INVALID_CARD
+        npgErrorCodeToOutcomeMapping.put("102", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("104", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
+        npgErrorCodeToOutcomeMapping.put("106", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("109", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("110", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
+        npgErrorCodeToOutcomeMapping.put("111", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_7); // INVALID_CARD
+        npgErrorCodeToOutcomeMapping.put("115", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25); // PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("116", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_116); // BALANCE_LIMIT
+        npgErrorCodeToOutcomeMapping.put("117", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_117); // CVV_ERROR
+        npgErrorCodeToOutcomeMapping.put("118", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
+        npgErrorCodeToOutcomeMapping.put("119", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("120", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("121", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_121); // LIMIT_EXCEEDED
+        npgErrorCodeToOutcomeMapping.put("122", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("123", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("124", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("125", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
+        npgErrorCodeToOutcomeMapping.put("126", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("129", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("200", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("202", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("204", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("208", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
+        npgErrorCodeToOutcomeMapping.put("209", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
+        npgErrorCodeToOutcomeMapping.put("210", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
+        npgErrorCodeToOutcomeMapping.put("413", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("888", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("902", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("903", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
+        npgErrorCodeToOutcomeMapping.put("904", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("906", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("907", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("908", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("909", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("911", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("913", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+        npgErrorCodeToOutcomeMapping.put("999", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
 
     }
 
