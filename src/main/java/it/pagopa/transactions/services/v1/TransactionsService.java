@@ -304,7 +304,6 @@ public class TransactionsService {
                 return evaluateOutcomeStatus(
                         paymentGateway,
                         gatewayAuthorizationStatus,
-                        authorizationCode,
                         authorizationErrorCode,
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1
                 );
@@ -313,7 +312,6 @@ public class TransactionsService {
                 return evaluateOutcomeStatus(
                         paymentGateway,
                         gatewayAuthorizationStatus,
-                        authorizationCode,
                         authorizationErrorCode,
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17
                 );
@@ -322,7 +320,6 @@ public class TransactionsService {
                 return evaluateOutcomeStatus(
                         paymentGateway,
                         gatewayAuthorizationStatus,
-                        authorizationCode,
                         authorizationErrorCode,
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25
 
@@ -341,7 +338,6 @@ public class TransactionsService {
                     return evaluateOutcomeStatus(
                             paymentGateway,
                             gatewayAuthorizationStatus,
-                            authorizationCode,
                             authorizationErrorCode,
                             TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1
 
@@ -367,11 +363,10 @@ public class TransactionsService {
         }
     }
 
-    private TransactionOutcomeInfoDto.OutcomeEnum evaluateOutcomeStatus(String paymentGateway, String gatewayAuthorizationStatus, String authorizationCode, String authorizationErrorCode, TransactionOutcomeInfoDto.OutcomeEnum expectedOutcome) {
+    private TransactionOutcomeInfoDto.OutcomeEnum evaluateOutcomeStatus(String paymentGateway, String gatewayAuthorizationStatus, String authorizationErrorCode, TransactionOutcomeInfoDto.OutcomeEnum expectedOutcome) {
         if (paymentGateway.equals("NPG")) {
             return switch (gatewayAuthorizationStatus) {
-                case "EXECUTED" ->
-                        Optional.ofNullable(expectedOutcome).orElse(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+                case "EXECUTED" -> expectedOutcome;
                 case "CANCELED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8;
                 case "DENIED_BY_RISK", "THREEDS_VALIDATED", "THREEDS_FAILED" ->
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2;

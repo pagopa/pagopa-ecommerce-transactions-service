@@ -1383,7 +1383,6 @@ class TransactionServiceTests {
                 Set.of(OutcomeNpgGatewayDto.OperationResultEnum.values())
         );
         npgGatewayOutcomeSet.remove(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED);
-        // npgGatewayOutcomeSet.add(null);
 
         return map.entrySet().stream().flatMap(
                 sendPaymentResultOutcome_OutcomeInfo -> npgGatewayOutcomeSet.stream()
@@ -1422,7 +1421,9 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
                         ZonedDateTime.now()
                 );
-        transaction.setGatewayAuthorizationStatus(gatewayAuthorizationStatus.getValue());
+        transaction.setGatewayAuthorizationStatus(
+                gatewayAuthorizationStatus != null ? gatewayAuthorizationStatus.getValue() : null
+        );
         transaction.setSendPaymentResultOutcome(sendPaymentResultOutcome);
         transaction.setPaymentGateway("NPG");
         transaction.setUserId(null);
