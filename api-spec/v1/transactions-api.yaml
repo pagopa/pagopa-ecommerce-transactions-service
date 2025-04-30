@@ -772,6 +772,7 @@ components:
           type: boolean
           description: "A flag that describe the outcome as final or not. If true, the outcome will not change in the future ad the client polling can stop."
       required:
+        - outcome
         - isFinalStatus
     AmountEuroCents:
       description: Amount for payments, in euro cents
