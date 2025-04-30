@@ -1575,7 +1575,8 @@ class TransactionsControllerTest {
 
     @Test
     void shouldGetTransactionOutcomeInfoWithInfoEmptyOK() {
-        TransactionOutcomeInfoDto response = new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0).isFinalStatus(true);
+        TransactionOutcomeInfoDto response = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0).isFinalStatus(true);
 
         String transactionId = new TransactionId(UUID.randomUUID()).value();
 
