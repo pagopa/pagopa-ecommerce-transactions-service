@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedAuthorization;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.generated.transactions.server.model.TransactionOutcomeInfoDto;
@@ -53,6 +54,10 @@ public class TransactionsUtils {
     public static Map<String, ResponseEntity<?>> nodeErrorToV2_1TransactionsResponseEntityMapping = new HashMap<>();
 
     public static Map<String, TransactionOutcomeInfoDto.OutcomeEnum> npgErrorCodeToOutcomeMapping = new HashMap<>();
+
+    public static Set<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto> maybeFinalStatus;
+
+    public static Set<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto> finalStatus;
 
     @Autowired
     public TransactionsUtils(
@@ -361,6 +366,27 @@ public class TransactionsUtils {
         npgErrorCodeToOutcomeMapping.put("911", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
         npgErrorCodeToOutcomeMapping.put("913", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
         npgErrorCodeToOutcomeMapping.put("999", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
+
+        finalStatus = Set.of(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_REQUESTED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_ERROR,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_REQUESTED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_ERROR,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUNDED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CANCELED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CANCELLATION_EXPIRED
+
+        );
+
+        maybeFinalStatus = Set.of(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                TransactionStatusDto.CLOSURE_ERROR
+        );
 
     }
 
