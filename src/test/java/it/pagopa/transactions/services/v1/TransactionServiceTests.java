@@ -1397,16 +1397,46 @@ class TransactionServiceTests {
                                         gatewayAuthorizationStatus,
                                         sendPaymentResultOutcome,
                                         new TransactionOutcomeInfoDto().outcome(outcomeEnum).totalAmount(100)
+                                                .isFinalStatus(true)
                                 );
                             }
                             return Arguments.of(
                                     gatewayAuthorizationStatus,
                                     sendPaymentResultOutcome,
-                                    new TransactionOutcomeInfoDto().outcome(outcomeEnum)
+                                    new TransactionOutcomeInfoDto().outcome(outcomeEnum).isFinalStatus(true)
                             );
                         })
         );
 
+    }
+
+    @ParameterizedTest
+    @MethodSource("getTransactionStatusForFinalOutcomesForExpiredState")
+    void getTransactionOutcomeReturnsOutcomesForExpiredStateAndNotExecutedNPGOutcome(
+                                                                                     OutcomeNpgGatewayDto.OperationResultEnum gatewayAuthorizationStatus,
+                                                                                     it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
+                                                                                     TransactionOutcomeInfoDto expected
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
+                        ZonedDateTime.now()
+                );
+        transaction.setGatewayAuthorizationStatus(gatewayAuthorizationStatus.getValue());
+        transaction.setSendPaymentResultOutcome(sendPaymentResultOutcome);
+        transaction.setPaymentGateway("NPG");
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
     }
 
     @Test
