@@ -366,10 +366,10 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @Override
-    public Mono<ResponseEntity<TransactionOutcomeInfoDto>> transactionOutcomes(
-                                                                               String transactionId,
-                                                                               UUID xUserId,
-                                                                               ServerWebExchange exchange
+    public Mono<ResponseEntity<TransactionOutcomeInfoDto>> getTransactionOutcomes(
+                                                                                  String transactionId,
+                                                                                  UUID xUserId,
+                                                                                  ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionOutcome(transactionId, xUserId)
                 .doOnNext(t -> log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId))

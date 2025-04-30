@@ -253,9 +253,9 @@ public class TransactionsService {
                 case Transaction transaction ->
                         evaluateOutcome(transaction.getStatus(), transaction.getSendPaymentResultOutcome(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus(), transaction.getAuthorizationCode(), transaction.getAuthorizationErrorCode())
                                 .fold(_voidNull -> new TransactionOutcomeInfoDto(),
-                                        outcomeEnum ->  new TransactionOutcomeInfoDto()
+                                        outcomeEnum -> new TransactionOutcomeInfoDto()
                                         .outcome(outcomeEnum)
-                                        .totalAmount(transaction.getPaymentNotices().stream().mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() + Optional.ofNullable(transaction.getFeeTotal()).orElse(0)));
+                                        .totalAmount(outcomeEnum == TransactionOutcomeInfoDto.OutcomeEnum._0 ? transaction.getPaymentNotices().stream().mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() + Optional.ofNullable(transaction.getFeeTotal()).orElse(0) : null));
                 default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
             };
     }

@@ -20,6 +20,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.*;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -40,9 +41,10 @@ import reactor.test.StepVerifier;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
+import static it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -451,6 +453,895 @@ class TransactionServiceTests {
         StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
                 .expectError(TransactionNotFoundException.class).verify();
 
+    }
+
+    private static Stream<Arguments> getTransactionStatusForFinalOutcomeWithoutPaymentGatewayLogic() {
+        return Stream.of(
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                        new TransactionOutcomeInfoDto()
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._0)
+                                .totalAmount(100)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUNDED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED_NOT_AUTHORIZED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._4)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CANCELED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._8)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CANCELLATION_EXPIRED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._8)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._17)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_ERROR,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_REQUESTED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getTransactionStatusForFinalOutcomeWithoutPaymentGatewayLogic")
+    void getTransactionOutcomeReturnsOutcomesForStatusesWithoutAnyOtherCondition(
+                                                                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status,
+                                                                                 TransactionOutcomeInfoDto expected
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        status,
+                        ZonedDateTime.now()
+                );
+
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    private static Stream<Arguments> getTransactionStatusForFinalOutcomesForSendPaymentResultConditionedLogic() {
+        return Stream.of(
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_REQUESTED,
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_REQUESTED,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.KO,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_REQUESTED,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_REQUESTED,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._0)
+                                .totalAmount(100)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_ERROR,
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_ERROR,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.KO,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_ERROR,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_ERROR,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._0)
+                                .totalAmount(100)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.KO,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._17)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getTransactionStatusForFinalOutcomesForSendPaymentResultConditionedLogic")
+    void getTransactionOutcomeReturnsOutcomesForSendPaymentResultConditionedLogic(
+                                                                                  it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status,
+                                                                                  it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcomeEnum,
+                                                                                  TransactionOutcomeInfoDto expected
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        status,
+                        ZonedDateTime.now()
+                );
+        transaction.setUserId(null);
+        transaction.setSendPaymentResultOutcome(sendPaymentResultOutcomeEnum);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    private static Stream<Arguments> getTransactionStatusForFinalOutcomesForGatewayOutcomeConditionedLogic() {
+        return Stream.of(
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "REDIRECT",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        EXECUTED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        CANCELED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._8)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        DENIED_BY_RISK.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        THREEDS_VALIDATED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        THREEDS_FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        AUTHORIZED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        PENDING.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        VOIDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        REFUNDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        DECLINED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "REDIRECT",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        EXECUTED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        CANCELED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._8)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        DENIED_BY_RISK.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        THREEDS_VALIDATED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        THREEDS_FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        AUTHORIZED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        PENDING.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        VOIDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        REFUNDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        DECLINED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "REDIRECT",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        EXECUTED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._17)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        CANCELED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._8)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        DENIED_BY_RISK.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        THREEDS_VALIDATED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        THREEDS_FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        AUTHORIZED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        PENDING.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        VOIDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        REFUNDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "NPG",
+                        DECLINED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "REDIRECT",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._1)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        EXECUTED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        CANCELED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._8)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        DENIED_BY_RISK.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        THREEDS_VALIDATED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        THREEDS_FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        AUTHORIZED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        PENDING.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        VOIDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        REFUNDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "NPG",
+                        DECLINED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                )
+
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getTransactionStatusForFinalOutcomesForGatewayOutcomeConditionedLogic")
+    void getTransactionOutcomeReturnsOutcomesForGatewayOutcomeConditionedLogic(
+                                                                               it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status,
+                                                                               String paymentGateway,
+                                                                               String gatewayAuthorizationStatus,
+                                                                               TransactionOutcomeInfoDto expected
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        status,
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway(paymentGateway);
+        transaction.setGatewayAuthorizationStatus(gatewayAuthorizationStatus);
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    private static Stream<Arguments> getTransactionStatusForFinalOutcomesForGatewayOutcomeConditionedLogicForDeniedStateAndSpecificErrorCode() {
+        return Arrays.stream(
+                new it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto[] {
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED
+                }
+        )
+                .flatMap(
+                        s -> Stream.of(
+                                Arguments.of(
+                                        s,
+                                        "100",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "101",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._7)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "102",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "104",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._3)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "106",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "109",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "110",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._3)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "111",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._7)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "115",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "116",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._116)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "117",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._117)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "118",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._3)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "119",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "120",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "121",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._121)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "122",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "123",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "124",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "125",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._3)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "126",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "129",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "200",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "202",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "204",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "208",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._3)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "209",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._3)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "210",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._3)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "413",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "888",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "902",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "903",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._2)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "904",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "906",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "907",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "908",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "909",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "911",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "913",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                ),
+                                Arguments.of(
+                                        s,
+                                        "999",
+                                        new TransactionOutcomeInfoDto()
+                                                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._25)
+                                )
+                        )
+                );
+    }
+
+    @ParameterizedTest
+    @MethodSource(
+        "getTransactionStatusForFinalOutcomesForGatewayOutcomeConditionedLogicForDeniedStateAndSpecificErrorCode"
+    )
+    void getTransactionOutcomeReturnsOutcomesForGatewayOutcomeConditionedLogicForDeniedStateAndSpecificErrorCode(
+                                                                                                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status,
+                                                                                                                 String errorCode,
+                                                                                                                 TransactionOutcomeInfoDto expected
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        status,
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus(DECLINED.getValue());
+        transaction.setAuthorizationErrorCode(errorCode);
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    private static Stream<Arguments> getTransactionStatusForFinalOutcomesForExpiredState() {
+
+        Map<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome, TransactionOutcomeInfoDto.OutcomeEnum> map = new HashMap<>();
+        map.put(
+                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
+                TransactionOutcomeInfoDto.OutcomeEnum._0
+        );
+        map.put(
+                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.KO,
+                TransactionOutcomeInfoDto.OutcomeEnum._25
+        );
+        map.put(
+                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED,
+                TransactionOutcomeInfoDto.OutcomeEnum._17
+        );
+        map.put(null, TransactionOutcomeInfoDto.OutcomeEnum._1);
+        Set<OutcomeNpgGatewayDto.OperationResultEnum> npgGatewayOutcomeSet = new HashSet<>(
+                Set.of(OutcomeNpgGatewayDto.OperationResultEnum.values())
+        );
+        npgGatewayOutcomeSet.remove(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED);
+        // npgGatewayOutcomeSet.add(null);
+
+        return map.entrySet().stream().flatMap(
+                sendPaymentResultOutcome_OutcomeInfo -> npgGatewayOutcomeSet.stream()
+                        .map(gatewayAuthorizationStatus -> {
+                            it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome = sendPaymentResultOutcome_OutcomeInfo
+                                    .getKey();
+                            TransactionOutcomeInfoDto.OutcomeEnum outcomeEnum = sendPaymentResultOutcome_OutcomeInfo
+                                    .getValue();
+                            if (sendPaymentResultOutcome == it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK) {
+                                return Arguments.of(
+                                        gatewayAuthorizationStatus,
+                                        sendPaymentResultOutcome,
+                                        new TransactionOutcomeInfoDto().outcome(outcomeEnum).totalAmount(100)
+                                );
+                            }
+                            return Arguments.of(
+                                    gatewayAuthorizationStatus,
+                                    sendPaymentResultOutcome,
+                                    new TransactionOutcomeInfoDto().outcome(outcomeEnum)
+                            );
+                        })
+        );
+
+    }
+
+    @Test
+    void getTransactionOutcomeReturnsOutcomesForExpiredStateAndExecutedNPGOutcome() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
+                        ZonedDateTime.now()
+                );
+        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
+
+        transaction.setPaymentGateway("NPG");
+        transaction.setUserId(null);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._1);
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void getTransactionOutcomeReturnsOutcomesForExpiredStateAndExecutedNPGOutcomeButNoNPGGateway() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
+                        ZonedDateTime.now()
+                );
+        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
+
+        transaction.setPaymentGateway("REDIRECT");
+        transaction.setUserId(null);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum._1);
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
     }
 
 }

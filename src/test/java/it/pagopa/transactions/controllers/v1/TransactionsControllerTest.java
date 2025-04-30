@@ -1572,6 +1572,35 @@ class TransactionsControllerTest {
                 );
     }
 
+    @Test
+    void shouldGetTransactionOutcomeInfoWithInfoEmptyOK() {
+        TransactionOutcomeInfoDto response = new TransactionOutcomeInfoDto();
+
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+
+        Mockito.lenient().when(transactionsService.getTransactionOutcome(eq(transactionId), any()))
+                .thenReturn(Mono.just(response));
+
+        Mockito.when(mockExchange.getRequest())
+                .thenReturn(mockRequest);
+
+        Mockito.when(mockExchange.getRequest().getMethodValue())
+                .thenReturn("GET");
+
+        Mockito.when(mockExchange.getRequest().getURI())
+                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId, "outcomes")));
+
+        ResponseEntity<TransactionOutcomeInfoDto> responseEntity = transactionsController
+                .getTransactionOutcomes(transactionId, null, mockExchange).block();
+
+        // Verify mock
+        verify(transactionsService, Mockito.times(1)).getTransactionOutcome(transactionId, null);
+
+        // Verify status code and response
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(response, responseEntity.getBody());
+    }
+
     private static CtFaultBean faultBeanWithCode(String faultCode) {
         CtFaultBean fault = new CtFaultBean();
         fault.setFaultCode(faultCode);
