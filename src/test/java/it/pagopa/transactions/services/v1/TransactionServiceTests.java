@@ -2,6 +2,7 @@ package it.pagopa.transactions.services.v1;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v1.*;
+import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
@@ -20,7 +21,6 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.*;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -35,6 +35,7 @@ import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataR
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -1456,6 +1457,136 @@ class TransactionServiceTests {
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+    }
+
+    @Test
+    void checkOutcomeHasFinalStatusFlagWithClosureErrorData4xx() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED, // non final
+                                                                                                           // status
+                        ZonedDateTime.now()
+                );
+        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
+        transaction.setPaymentGateway("NPG");
+        transaction.setUserId(null);
+        ClosureErrorData closureErrorData = new ClosureErrorData();
+        closureErrorData.setErrorDescription("errorDescription");
+        closureErrorData.setErrorType(ClosureErrorData.ErrorType.KO_RESPONSE_RECEIVED);
+        closureErrorData.setHttpErrorCode(HttpStatus.BAD_REQUEST); // 4xx
+        transaction.setClosureErrorData(closureErrorData);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(true);
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void checkOutcomeHasFinalStatusFlagWithClosureErrorData5xx() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED, // non final
+                                                                                                           // status
+                        ZonedDateTime.now()
+                );
+        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
+        transaction.setPaymentGateway("NPG");
+        transaction.setUserId(null);
+        ClosureErrorData closureErrorData = new ClosureErrorData();
+        closureErrorData.setErrorDescription("errorDescription");
+        closureErrorData.setErrorType(ClosureErrorData.ErrorType.KO_RESPONSE_RECEIVED);
+        closureErrorData.setHttpErrorCode(HttpStatus.BAD_GATEWAY); // 4xx
+        transaction.setClosureErrorData(closureErrorData);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(false);
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    static Stream<Arguments> getAllFinalStatuses() {
+        return TransactionsUtils.finalStatus.stream().map(Arguments::of);
+    }
+
+    static Stream<Arguments> getAllMaybeFinalStatuses() {
+        return TransactionsUtils.maybeFinalStatus.stream().map(Arguments::of);
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllFinalStatuses")
+    void checkOutcomeHasFinalStatusFlagWithFinalStatus(
+                                                       it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto statusDto
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        statusDto, // non final status
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("NPG");
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertTrue(
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getIsFinalStatus()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllMaybeFinalStatuses")
+    void checkOutcomeHasFinalStatusFlagTrueWithMaybeFinalStatusAndExecutedNPG(
+                                                                              it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto statusDto
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        statusDto, // non final status
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertFalse(
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getIsFinalStatus()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllMaybeFinalStatuses")
+    void checkOutcomeHasFinalStatusFlagFalseWithMaybeFinalStatusAndExecutedNPG(
+                                                                               it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto statusDto
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        statusDto, // non final status
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus("test");
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertTrue(
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getIsFinalStatus()
+        );
     }
 
 }

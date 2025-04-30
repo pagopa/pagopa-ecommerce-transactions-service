@@ -385,7 +385,7 @@ public class TransactionsUtils {
         maybeFinalStatus = Set.of(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
-                TransactionStatusDto.CLOSURE_ERROR
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR
         );
 
     }

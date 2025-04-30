@@ -288,8 +288,8 @@ public class TransactionsService {
             }
             case NOTIFICATION_REQUESTED, NOTIFICATION_ERROR -> {
                 return TransactionUserReceiptData.Outcome.OK.equals(sendPaymentResultOutcome)
-                                ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0
-                                : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
+                        ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0
+                        : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
             }
             case NOTIFIED_KO, REFUNDED -> {
                 return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
