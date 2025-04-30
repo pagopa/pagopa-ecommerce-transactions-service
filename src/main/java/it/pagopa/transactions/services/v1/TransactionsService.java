@@ -287,8 +287,7 @@ public class TransactionsService {
                 return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0;
             }
             case NOTIFICATION_REQUESTED, NOTIFICATION_ERROR -> {
-                return sendPaymentResultOutcome != null
-                        && sendPaymentResultOutcome.equals(TransactionUserReceiptData.Outcome.OK)
+                return TransactionUserReceiptData.Outcome.OK.equals(sendPaymentResultOutcome)
                                 ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0
                                 : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
             }
