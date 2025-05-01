@@ -251,7 +251,7 @@ public class TransactionsService {
     private TransactionOutcomeInfoDto buildTransactionOutcomeInfoDtoFromView(BaseTransactionView baseTransactionView) {
             switch (baseTransactionView) {
                 case Transaction transaction -> {
-                    TransactionOutcomeInfoDto.OutcomeEnum outcome = evaluateOutcome(transaction.getStatus(), transaction.getSendPaymentResultOutcome(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus(), transaction.getAuthorizationCode(), transaction.getAuthorizationErrorCode());
+                    TransactionOutcomeInfoDto.OutcomeEnum outcome = evaluateOutcome(transaction.getStatus(), transaction.getSendPaymentResultOutcome(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus(), transaction.getAuthorizationErrorCode());
                                 return new TransactionOutcomeInfoDto()
                                 .outcome(outcome)
                                 .totalAmount(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0 ? transaction.getPaymentNotices().stream().mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() + Optional.ofNullable(transaction.getFeeTotal()).orElse(0) : null)
@@ -279,7 +279,6 @@ public class TransactionsService {
                                                                   TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
                                                                   String paymentGateway,
                                                                   String gatewayAuthorizationStatus,
-                                                                  String authorizationCode,
                                                                   String authorizationErrorCode
     ) {
         switch (status) {
