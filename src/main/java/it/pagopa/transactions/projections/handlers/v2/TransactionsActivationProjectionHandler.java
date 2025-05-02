@@ -1,6 +1,7 @@
 package it.pagopa.transactions.projections.handlers.v2;
 
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;

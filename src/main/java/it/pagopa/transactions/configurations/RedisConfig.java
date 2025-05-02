@@ -1,8 +1,8 @@
 package it.pagopa.transactions.configurations;
 
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.RedisTemplateWrapperBuilder;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.RedisTemplateWrapperBuilder;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.transactions.repositories.TransactionCacheInfo;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;

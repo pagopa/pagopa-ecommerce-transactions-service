@@ -5,8 +5,8 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.Email;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.Email;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
@@ -504,11 +504,17 @@ public class TransactionsUtils {
 
     public Confidential<Email> getEmail(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
-            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getEmail();
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> convertEmailFromV1ToV2(t.getEmail());
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getEmail();
             default ->
                     throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
+    }
+
+    private Confidential<Email> convertEmailFromV1ToV2(
+                                                       Confidential<it.pagopa.ecommerce.commons.domain.v1.Email> emailV1
+    ) {
+        return new Confidential<>(emailV1.opaqueData());
     }
 
     public Optional<String> getPspId(BaseTransaction transaction) {

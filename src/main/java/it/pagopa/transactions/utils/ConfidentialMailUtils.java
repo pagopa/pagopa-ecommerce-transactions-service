@@ -1,7 +1,7 @@
 package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.Email;
+import it.pagopa.ecommerce.commons.domain.v2.Email;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

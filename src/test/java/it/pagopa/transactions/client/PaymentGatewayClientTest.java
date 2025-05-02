@@ -6,8 +6,8 @@ import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v2.*;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
@@ -19,7 +19,7 @@ import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
@@ -65,7 +65,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
+import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.USER_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -189,9 +189,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -247,9 +249,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -326,9 +330,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -417,9 +423,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -497,9 +505,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -583,9 +593,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -761,9 +773,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -878,9 +892,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -984,9 +1000,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -1091,9 +1109,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -1282,9 +1302,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -1449,9 +1471,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -1588,7 +1612,7 @@ class PaymentGatewayClientTest {
         String sessionId = "sessionId";
         String correlationId = UUID.randomUUID().toString();
         UUID userId = UUID.randomUUID();
-        Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO;
+        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO;
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
@@ -1609,7 +1633,9 @@ class PaymentGatewayClientTest {
                 null,
                 clientId,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         ApmAuthRequestDetailsDto apmDetails = new ApmAuthRequestDetailsDto();
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1877,7 +1903,7 @@ class PaymentGatewayClientTest {
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = new it.pagopa.ecommerce.commons.domain.v2.TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -2020,7 +2046,7 @@ class PaymentGatewayClientTest {
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = new it.pagopa.ecommerce.commons.domain.v2.TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -2038,7 +2064,7 @@ class PaymentGatewayClientTest {
                                 new CompanyName("companyName"),
                                 null
                         ),
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111112"),
                                 new TransactionAmount(200),
@@ -2488,9 +2514,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());

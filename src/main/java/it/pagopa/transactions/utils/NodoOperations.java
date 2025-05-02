@@ -2,10 +2,10 @@ package it.pagopa.transactions.utils;
 
 import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.PaymentTransferInfo;
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentTransferInfo;
+import it.pagopa.ecommerce.commons.domain.v2.RptId;
+import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.model.*;

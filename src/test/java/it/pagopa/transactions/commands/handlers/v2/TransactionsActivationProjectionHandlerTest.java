@@ -5,7 +5,8 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
@@ -86,7 +87,7 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
