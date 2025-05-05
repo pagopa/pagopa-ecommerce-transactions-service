@@ -365,6 +365,28 @@ public class TransactionsController implements TransactionsApi {
                 .thenReturn(ResponseEntity.accepted().build());
     }
 
+    @Override
+    public Mono<ResponseEntity<TransactionOutcomeInfoDto>> getTransactionOutcomes(
+                                                                                  String transactionId,
+                                                                                  UUID xUserId,
+                                                                                  ServerWebExchange exchange
+    ) {
+        return transactionsService.getTransactionOutcome(transactionId, xUserId)
+                .doOnNext(t -> log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId))
+                .map(ResponseEntity::ok)
+                .contextWrite(
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        new TransactionId(transactionId),
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
+                                ),
+                                context
+                        )
+                );
+    }
+
     @ExceptionHandler(TransactionNotFoundException.class)
     ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
         return new ResponseEntity<>(
