@@ -7,12 +7,13 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGate
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.Email;
 import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
+import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
-import it.pagopa.generated.transactions.server.model.TransactionOutcomeInfoDto;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -37,27 +38,21 @@ public class TransactionsUtils {
 
     private final String warmUpNoticeCodePrefix;
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMapV1 = new EnumMap<>(
-            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    private static final Map<TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMapV1 = new EnumMap<>(
+            TransactionStatusDto.class
     );
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto> transactionStatusLookupMapV2 = new EnumMap<>(
-            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    private static final Map<TransactionStatusDto, it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto> transactionStatusLookupMapV2 = new EnumMap<>(
+            TransactionStatusDto.class
     );
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto> transactionStatusLookupMapV2_1 = new EnumMap<>(
-            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    private static final Map<TransactionStatusDto, it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto> transactionStatusLookupMapV2_1 = new EnumMap<>(
+            TransactionStatusDto.class
     );
 
     public static Map<String, ResponseEntity<?>> nodeErrorToV2TransactionsResponseEntityMapping = new HashMap<>();
 
     public static Map<String, ResponseEntity<?>> nodeErrorToV2_1TransactionsResponseEntityMapping = new HashMap<>();
-
-    public static Map<String, TransactionOutcomeInfoDto.OutcomeEnum> npgErrorCodeToOutcomeMapping = new HashMap<>();
-
-    public static Set<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto> maybeFinalStatus;
-
-    public static Set<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto> finalStatus;
 
     @Autowired
     public TransactionsUtils(
@@ -70,7 +65,7 @@ public class TransactionsUtils {
 
     static {
         Set<String> commonsStatuses = Set
-                .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
+                .of(TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
@@ -129,7 +124,7 @@ public class TransactionsUtils {
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
             );
         }
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+        for (TransactionStatusDto enumValue : TransactionStatusDto
                 .values()) {
             /*
              * @formatter:off
@@ -144,7 +139,7 @@ public class TransactionsUtils {
             );
         }
 
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+        for (TransactionStatusDto enumValue : TransactionStatusDto
                 .values()) {
             /*
              * @formatter:off
@@ -160,7 +155,7 @@ public class TransactionsUtils {
             );
         }
 
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+        for (TransactionStatusDto enumValue : TransactionStatusDto
                 .values()) {
             /*
              * @formatter:off
@@ -327,75 +322,14 @@ public class TransactionsUtils {
                 nodeErrorToV2TransactionsResponseEntityMapping
         );
 
-        npgErrorCodeToOutcomeMapping.put("100", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("101", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_7); // INVALID_CARD
-        npgErrorCodeToOutcomeMapping.put("102", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("104", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("106", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("109", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("110", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("111", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_7); // INVALID_CARD
-        npgErrorCodeToOutcomeMapping.put("115", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25); // PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("116", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_116); // BALANCE_LIMIT
-        npgErrorCodeToOutcomeMapping.put("117", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_117); // CVV_ERROR
-        npgErrorCodeToOutcomeMapping.put("118", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("119", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("120", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("121", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_121); // LIMIT_EXCEEDED
-        npgErrorCodeToOutcomeMapping.put("122", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("123", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("124", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("125", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("126", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("129", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("200", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("202", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("204", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("208", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("209", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("210", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_3); // INVALID_DATA
-        npgErrorCodeToOutcomeMapping.put("413", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("888", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("902", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("903", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2); // AUTH_ERROR
-        npgErrorCodeToOutcomeMapping.put("904", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("906", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("907", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("908", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("909", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("911", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("913", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-        npgErrorCodeToOutcomeMapping.put("999", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);// PSP_ERROR
-
-        finalStatus = Set.of(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_REQUESTED,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_ERROR,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_REQUESTED,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_ERROR,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUNDED,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CANCELED,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CANCELLATION_EXPIRED
-
-        );
-
-        maybeFinalStatus = Set.of(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR
-        );
-
     }
 
     public Mono<BaseTransaction> reduceEventsV1(TransactionId transactionId) {
         return reduceEvent(
                 transactionId,
-                new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction(),
-                it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent,
-                it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction.class
+                new EmptyTransaction(),
+                Transaction::applyEvent,
+                BaseTransaction.class
         );
     }
 
@@ -434,19 +368,19 @@ public class TransactionsUtils {
     }
 
     public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumerationV1(
-                                                                                                   it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+                                                                                                   TransactionStatusDto status
     ) {
         return transactionStatusLookupMapV1.get(status);
     }
 
     public it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto convertEnumerationV2(
-                                                                                                      it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+                                                                                                      TransactionStatusDto status
     ) {
         return transactionStatusLookupMapV2.get(status);
     }
 
     public it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto convertEnumerationV2_1(
-                                                                                                          it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+                                                                                                          TransactionStatusDto status
     ) {
         return transactionStatusLookupMapV2_1.get(status);
     }
@@ -520,7 +454,7 @@ public class TransactionsUtils {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.stream()
                 .mapToInt(
-                        it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                        PaymentNotice::getAmount
                 ).sum();
     }
 
@@ -545,7 +479,7 @@ public class TransactionsUtils {
         return paymentNotices.stream().map(PaymentNotice::getRptId).toList();
     }
 
-    public List<it.pagopa.ecommerce.commons.documents.PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
+    public List<PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getPaymentNotices();

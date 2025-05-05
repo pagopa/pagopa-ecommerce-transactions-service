@@ -49,10 +49,7 @@ import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
@@ -137,6 +134,25 @@ class TransactionServiceTest {
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
             .mock(UpdateTransactionStatusTracerUtils.class);
 
+    private final Map<String, String> npgAuthorizationErrorCodeMapping = new HashMap<>();
+
+    private final Set<String> ecommerceFinalStates = Set.of(
+            "NOTIFIED_OK",
+            "NOTIFIED_KO",
+            "NOTIFICATION_ERROR",
+            "NOTIFICATION_REQUESTED",
+            "EXPIRED",
+            "REFUNDED",
+            "CANCELED",
+            "UNAUTHORIZED",
+            "REFUND_ERROR",
+            "REFUND_REQUESTED",
+            "CANCELLATION_EXPIRED"
+    );
+
+    private final Set<String> ecommercePossibleFinalStates = Set
+            .of("AUTHORIZATION_COMPLETED", "CLOSURE_REQUESTED", "CLOSURE_ERROR");
+
     private final TransactionsService transactionsServiceV1 = new TransactionsService(
             transactionActivateHandlerV2,
             transactionRequestAuthorizationHandlerV2,
@@ -159,7 +175,10 @@ class TransactionServiceTest {
             10,
             paymentRequestInfoRedisTemplateWrapper,
             confidentialMailUtils,
-            updateTransactionStatusTracerUtils
+            updateTransactionStatusTracerUtils,
+            npgAuthorizationErrorCodeMapping,
+            ecommerceFinalStates,
+            ecommercePossibleFinalStates
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
@@ -184,7 +203,10 @@ class TransactionServiceTest {
             10,
             paymentRequestInfoRedisTemplateWrapper,
             confidentialMailUtils,
-            updateTransactionStatusTracerUtils
+            updateTransactionStatusTracerUtils,
+            npgAuthorizationErrorCodeMapping,
+            ecommerceFinalStates,
+            ecommercePossibleFinalStates
     );
 
     @Test

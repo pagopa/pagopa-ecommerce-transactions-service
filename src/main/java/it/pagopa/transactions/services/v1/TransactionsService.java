@@ -41,11 +41,12 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.*;
-import static it.pagopa.transactions.utils.TransactionsUtils.*;
 
 @Service(TransactionsService.QUALIFIER_NAME)
 @Slf4j
@@ -93,6 +94,10 @@ public class TransactionsService {
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
+    private final Map<String, TransactionOutcomeInfoDto.OutcomeEnum> npgAuthorizationErrorCodeMapping;
+    private final Set<TransactionStatusDto> ecommerceFinalStates;
+    private final Set<TransactionStatusDto> ecommercePossibleFinalState;
+
     @Autowired
     public TransactionsService(
             @Qualifier(
@@ -134,7 +139,10 @@ public class TransactionsService {
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             ConfidentialMailUtils confidentialMailUtils,
-            UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils
+            UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
+            @Value("#{${npg.authorizationErrorCodeMapping}}") Map<String, String> npgAuthorizationErrorCodeMapping,
+            @Value("${ecommerce.finalStates}") Set<String> ecommerceFinalStates,
+            @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.requestAuthHandlerV2 = requestAuthHandlerV2;
@@ -156,6 +164,17 @@ public class TransactionsService {
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
         this.confidentialMailUtils = confidentialMailUtils;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
+        this.npgAuthorizationErrorCodeMapping = npgAuthorizationErrorCodeMapping.entrySet().stream().collect(
+                Collectors.toMap(
+                        Map.Entry::getKey,
+                        outcome -> TransactionOutcomeInfoDto.OutcomeEnum
+                                .fromValue(BigDecimal.valueOf(Long.parseLong(outcome.getValue())))
+                )
+        );
+        this.ecommerceFinalStates = ecommerceFinalStates.stream().map(TransactionStatusDto::valueOf)
+                .collect(Collectors.toSet());
+        this.ecommercePossibleFinalState = ecommercePossibleFinalStates.stream().map(TransactionStatusDto::valueOf)
+                .collect(Collectors.toSet());
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -266,11 +285,11 @@ public class TransactionsService {
                                         ClosureErrorData closureErrorData,
                                         Optional<String> gatewayAuthorizationStatus
     ) {
-        return finalStatus.contains(status) ||
+        return ecommerceFinalStates.contains(status) ||
                 (closureErrorData != null && closureErrorData.getHttpErrorCode() != null
                         && closureErrorData.getHttpErrorCode().is4xxClientError())
                 ||
-                (maybeFinalStatus.contains(status)
+                (ecommercePossibleFinalState.contains(status)
                         && !gatewayAuthorizationStatus.orElse("").equals(EXECUTED.getValue()));
     }
 
@@ -372,7 +391,7 @@ public class TransactionsService {
                 case "AUTHORIZED", "PENDING", "VOIDED", "REFUNDED", "FAILED" ->
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 case "DECLINED" ->
-                        Optional.ofNullable(npgErrorCodeToOutcomeMapping.get(authorizationErrorCode)).orElse(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+                        Optional.ofNullable(npgAuthorizationErrorCodeMapping.get(authorizationErrorCode)).orElse(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
                 case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
             };
         }

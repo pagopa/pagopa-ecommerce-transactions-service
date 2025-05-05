@@ -1551,11 +1551,25 @@ class TransactionServiceTests {
     }
 
     static Stream<Arguments> getAllFinalStatuses() {
-        return TransactionsUtils.finalStatus.stream().map(Arguments::of);
+        Set<String> finalStates = Set.of(
+                "NOTIFIED_OK",
+                "NOTIFIED_KO",
+                "NOTIFICATION_ERROR",
+                "NOTIFICATION_REQUESTED",
+                "EXPIRED",
+                "REFUNDED",
+                "CANCELED",
+                "UNAUTHORIZED",
+                "REFUND_ERROR",
+                "REFUND_REQUESTED",
+                "CANCELLATION_EXPIRED"
+        );
+        return finalStates.stream().map(Arguments::of);
     }
 
     static Stream<Arguments> getAllMaybeFinalStatuses() {
-        return TransactionsUtils.maybeFinalStatus.stream().map(Arguments::of);
+        Set<String> possibleFinalStates = Set.of("AUTHORIZATION_COMPLETED", "CLOSURE_REQUESTED", "CLOSURE_ERROR");
+        return possibleFinalStates.stream().map(Arguments::of);
     }
 
     @ParameterizedTest
