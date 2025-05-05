@@ -12,7 +12,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: CHK-4119-add-outcome-api
+      ref: main
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
