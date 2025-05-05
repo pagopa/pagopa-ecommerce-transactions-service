@@ -1385,11 +1385,11 @@ class TransactionServiceTests {
         npgGatewayOutcomeSet.remove(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED);
 
         return map.entrySet().stream().flatMap(
-                sendPaymentResultOutcome_OutcomeInfo -> npgGatewayOutcomeSet.stream()
+                sendPaymentResultOutcomeMapOutcomeInfo -> npgGatewayOutcomeSet.stream()
                         .map(gatewayAuthorizationStatus -> {
-                            it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome = sendPaymentResultOutcome_OutcomeInfo
+                            it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome = sendPaymentResultOutcomeMapOutcomeInfo
                                     .getKey();
-                            TransactionOutcomeInfoDto.OutcomeEnum outcomeEnum = sendPaymentResultOutcome_OutcomeInfo
+                            TransactionOutcomeInfoDto.OutcomeEnum outcomeEnum = sendPaymentResultOutcomeMapOutcomeInfo
                                     .getValue();
                             if (sendPaymentResultOutcome == it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK) {
                                 return Arguments.of(

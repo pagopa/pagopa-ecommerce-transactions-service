@@ -264,7 +264,7 @@ class TransactionsControllerTest {
                 transactionsController
                         .requestTransactionUserCancellation(transactionId, null, mockExchange)
         )
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
 
