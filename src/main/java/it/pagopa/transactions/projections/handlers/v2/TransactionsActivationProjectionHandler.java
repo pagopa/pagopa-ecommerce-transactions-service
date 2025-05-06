@@ -16,7 +16,7 @@ public class TransactionsActivationProjectionHandler
         implements
         ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent, Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionActivated>> {
 
-    public static final String QUALIFIER_NAME = "TransactionsActivationProjectionHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionsActivationProjectionHandlerV2";
     @Autowired
     private TransactionsViewRepository viewEventStoreRepository;
 

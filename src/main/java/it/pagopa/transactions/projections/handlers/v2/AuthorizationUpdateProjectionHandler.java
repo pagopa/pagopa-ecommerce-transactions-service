@@ -30,7 +30,7 @@ import static it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdate
 public class AuthorizationUpdateProjectionHandler
         implements ProjectionHandler<TransactionAuthorizationCompletedEvent, Mono<TransactionActivated>> {
 
-    public static final String QUALIFIER_NAME = "AuthorizationUpdateProjectionHandlerV2";
+    public static final String QUALIFIER_NAME = "authorizationUpdateProjectionHandlerV2";
     private final TransactionsViewRepository transactionsViewRepository;
 
     private final Integer paymentTokenValidity;

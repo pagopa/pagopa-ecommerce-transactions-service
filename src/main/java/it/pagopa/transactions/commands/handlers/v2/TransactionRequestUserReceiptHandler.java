@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TransactionRequestUserReceiptHandler extends TransactionRequestUserReceiptHandlerCommon {
 
-    public static final String QUALIFIER_NAME = "TransactionRequestUserReceiptHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionRequestUserReceiptHandlerV2";
 
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository;
 
