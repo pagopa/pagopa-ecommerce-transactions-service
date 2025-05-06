@@ -39,6 +39,7 @@ public class AuthorizationRequestProjectionHandler
                     transactionDocument.setPaymentGateway(data.paymentGatewayId());
                     transactionDocument.setPaymentTypeCode(data.paymentTypeCode());
                     transactionDocument.setPspId(data.pspId());
+                    transactionDocument.setFeeTotal(data.fee());
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
