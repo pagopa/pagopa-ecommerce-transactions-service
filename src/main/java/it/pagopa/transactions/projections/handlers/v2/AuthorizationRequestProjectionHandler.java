@@ -19,7 +19,7 @@ public class AuthorizationRequestProjectionHandler
         implements
         ProjectionHandler<AuthorizationRequestData, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
-    public static final String QUALIFIER_NAME = "AuthorizationRequestProjectionHandlerV2";
+    public static final String QUALIFIER_NAME = "authorizationRequestProjectionHandlerV2";
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
@@ -39,6 +39,7 @@ public class AuthorizationRequestProjectionHandler
                     transactionDocument.setPaymentGateway(data.paymentGatewayId());
                     transactionDocument.setPaymentTypeCode(data.paymentTypeCode());
                     transactionDocument.setPspId(data.pspId());
+                    transactionDocument.setFeeTotal(data.fee());
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }

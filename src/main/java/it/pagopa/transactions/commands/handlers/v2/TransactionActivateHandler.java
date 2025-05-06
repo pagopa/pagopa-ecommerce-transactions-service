@@ -48,7 +48,7 @@ import java.util.UUID;
 @Component(TransactionActivateHandler.QUALIFIER_NAME)
 public class TransactionActivateHandler extends TransactionActivateHandlerCommon {
 
-    public static final String QUALIFIER_NAME = "TransactionActivateHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionActivateHandlerV2";
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository;
     private final NodoOperations nodoOperations;

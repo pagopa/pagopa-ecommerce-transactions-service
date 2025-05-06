@@ -36,11 +36,13 @@ class AuthorizationRequestProjectionHandlerTest {
                 ZonedDateTime.now()
         );
 
+        Integer fee = 50;
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 new TransactionId(initialDocument.getTransactionId()),
                 null,
                 initialDocument.getEmail(),
-                0,
+                fee,
                 null,
                 TransactionTestUtils.PSP_ID,
                 TransactionTestUtils.PAYMENT_TYPE_CODE,
@@ -63,7 +65,7 @@ class AuthorizationRequestProjectionHandlerTest {
         Transaction expectedDocument = new Transaction(
                 initialDocument.getTransactionId(),
                 initialDocument.getPaymentNotices(),
-                initialDocument.getFeeTotal(),
+                fee,
                 initialDocument.getEmail(),
                 TransactionStatusDto.AUTHORIZATION_REQUESTED,
                 initialDocument.getClientId(),

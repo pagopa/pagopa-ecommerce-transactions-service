@@ -768,6 +768,10 @@ components:
           description: "`0` - Success `1` - Generic error `2` - Authorization error `3` - Invalid data `4` - Timeout `5` - Unsupported circuit `6` - Missing data `7` - Invalid card: expired card etc `8` - Canceled by the user `9` - Double transaction `10` - Excessive amount `11` - Order not present `12` - Invalid method `13` - Retriable KO `14` - Invalid session `17` - Taken in charge `25` - PSP Error `99` - Backend Error `116` - Balance not available `117` - CVV Error `121` - Limit exceeded"
         totalAmount:
           $ref: '#/components/schemas/AmountEuroCents'
+          description: "The total amount paid for the transaction in eurocents. Fees are not included"
+        fees:
+          $ref: '#/components/schemas/AmountEuroCents'
+          description: "The total fees paid for the transaction in eurocents"
         isFinalStatus:
           type: boolean
           description: "A flag that describe the outcome as final or not. If true, the outcome will not change in the future and the client can interrupt polling"

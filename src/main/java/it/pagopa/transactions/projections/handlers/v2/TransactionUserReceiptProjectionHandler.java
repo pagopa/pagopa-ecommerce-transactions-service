@@ -15,7 +15,7 @@ public class TransactionUserReceiptProjectionHandler
         implements
         ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
-    public static final String QUALIFIER_NAME = "TransactionUserReceiptProjectionHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionUserReceiptProjectionHandlerV2";
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 
