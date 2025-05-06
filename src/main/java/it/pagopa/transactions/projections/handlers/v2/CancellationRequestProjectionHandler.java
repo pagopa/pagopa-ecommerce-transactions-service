@@ -15,7 +15,7 @@ public class CancellationRequestProjectionHandler
         implements
         ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
-    public static final String QUALIFIER_NAME = "CancellationRequestProjectionHandlerV2";
+    public static final String QUALIFIER_NAME = "cancellationRequestProjectionHandlerV2";
     @Autowired
     private TransactionsViewRepository transactionsViewRepository;
 

@@ -28,7 +28,7 @@ import java.util.Map;
 @Slf4j
 public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuthorizationHandlerCommon {
 
-    public static final String QUALIFIER_NAME = "TransactionUpdateAuthorizationHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionUpdateAuthorizationHandlerV2";
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
     private final Map<String, URI> npgPaymentCircuitLogoMap;

@@ -1,6 +1,8 @@
 package it.pagopa.transactions.services.v1;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.*;
 import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -460,63 +462,130 @@ class TransactionServiceTests {
         return Stream.of(
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                        null,
                         new TransactionOutcomeInfoDto()
                                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
                                 .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
                                 .totalAmount(100)
+                                .fees(50)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUNDED,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED_NOT_AUTHORIZED,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_4)
                                 .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CANCELED,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CANCELLATION_EXPIRED,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_REQUESTED,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
                                 .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_ERROR,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_REQUESTED,
+                        50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
                                 .isFinalStatus(true)
                 )
         );
     }
 
+    @Test
+    void getTransactionOutcomeReturnsOutcomesForStatusesNotifiedOKAndRightTotalAmount() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
+                        ZonedDateTime.now()
+                );
+
+        transaction.setUserId(null);
+
+        transaction.setFeeTotal(50);
+
+        PaymentNotice p1 = new PaymentNotice(
+                "paymentToken",
+                "77777777777111111111111111111",
+                "description",
+                100,
+                "paymentContextCode",
+                List.of(new PaymentTransferInformation("transferPAFiscalCode", false, 100, "transferCategory")),
+                false,
+                "companyName",
+                "222222222222"
+        );
+        PaymentNotice p2 = new PaymentNotice(
+                "paymentToken",
+                "77777777777111111111111111112",
+                "description",
+                200,
+                "paymentContextCode2",
+                List.of(new PaymentTransferInformation("transferPAFiscalCode", false, 100, "transferCategory")),
+                false,
+                "companyName",
+                "222222222222"
+        );
+
+        transaction.setPaymentNotices(List.of(p1, p2));
+
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
+                .totalAmount(300)
+                .fees(50)
+                .isFinalStatus(true);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
     @ParameterizedTest
     @MethodSource("getTransactionStatusForFinalOutcomeWithoutPaymentGatewayLogic")
     void getTransactionOutcomeReturnsOutcomesForStatusesWithoutAnyOtherCondition(
                                                                                  it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status,
+                                                                                 Integer fees,
                                                                                  TransactionOutcomeInfoDto expected
     ) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -526,6 +595,7 @@ class TransactionServiceTests {
                 );
 
         transaction.setUserId(null);
+        transaction.setFeeTotal(fees);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         assertEquals(
@@ -565,6 +635,7 @@ class TransactionServiceTests {
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
                                 .isFinalStatus(true)
                                 .totalAmount(100)
+                                .fees(50)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFICATION_ERROR,
@@ -590,6 +661,7 @@ class TransactionServiceTests {
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
                                 .isFinalStatus(true)
                                 .totalAmount(100)
+                                .fees(50)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
@@ -631,6 +703,7 @@ class TransactionServiceTests {
                         ZonedDateTime.now()
                 );
         transaction.setUserId(null);
+        transaction.setFeeTotal(50);
         transaction.setSendPaymentResultOutcome(sendPaymentResultOutcomeEnum);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
@@ -1395,7 +1468,7 @@ class TransactionServiceTests {
                                 return Arguments.of(
                                         gatewayAuthorizationStatus,
                                         sendPaymentResultOutcome,
-                                        new TransactionOutcomeInfoDto().outcome(outcomeEnum).totalAmount(100)
+                                        new TransactionOutcomeInfoDto().outcome(outcomeEnum).totalAmount(100).fees(50)
                                                 .isFinalStatus(true)
                                 );
                             }
@@ -1426,6 +1499,7 @@ class TransactionServiceTests {
         );
         transaction.setSendPaymentResultOutcome(sendPaymentResultOutcome);
         transaction.setPaymentGateway("NPG");
+        transaction.setFeeTotal(50);
         transaction.setUserId(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
