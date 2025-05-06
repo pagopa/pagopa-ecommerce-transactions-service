@@ -136,6 +136,10 @@ class CircuitBreakerTest {
         return getIgnoredExceptionsForRetry("getTransactionInfo");
     }
 
+    private static Stream<Arguments> getIgnoredExceptionForGetTransactionOutcomeRetry() {
+        return getIgnoredExceptionsForRetry("getTransactionOutcome");
+    }
+
     private static Stream<Arguments> getIgnoredExceptionForRequestTransactionAuthorizationRetry() {
         return getIgnoredExceptionsForRetry("requestTransactionAuthorization");
     }
@@ -172,6 +176,35 @@ class CircuitBreakerTest {
         StepVerifier
                 .create(
                         transactionsService.getTransactionInfo("transactionId", null)
+                )
+                .expectError(thrownException.getClass())
+                .verify();
+        assertEquals(
+                expectedFailedCallsWithoutRetryAttempt,
+                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getIgnoredExceptionForGetTransactionOutcomeRetry")
+    @Order(0)
+    void shouldNotPerformRetryForExcludedException_getTransactionOutcomeInfoRetry(
+                                                                                  Exception thrownException,
+                                                                                  String retryInstanceName
+    ) {
+        Retry retry = retryRegistry.retry(retryInstanceName);
+        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
+                + 1;
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(transactionsViewRepository.findById(any(String.class)))
+                .thenReturn(Mono.error(thrownException));
+
+        StepVerifier
+                .create(
+                        transactionsService.getTransactionOutcome("transactionId", null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();
