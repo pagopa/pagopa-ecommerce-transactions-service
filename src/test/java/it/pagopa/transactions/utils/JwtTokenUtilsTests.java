@@ -2,8 +2,8 @@ package it.pagopa.transactions.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.transactions.configurations.SecretsConfigurations;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +30,7 @@ class JwtTokenUtilsTests {
         String generatedToken = jwtTokenUtils.generateToken(
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                new it.pagopa.ecommerce.commons.domain.Claims(transactionId, orderId, null, null)
+                new it.pagopa.ecommerce.commons.domain.v2.Claims(transactionId, orderId, null, null)
         ).fold(error -> error.toString(), value -> value);
         assertNotNull(generatedToken);
         Claims claims = assertDoesNotThrow(
@@ -55,7 +55,7 @@ class JwtTokenUtilsTests {
         String generatedToken = jwtTokenUtils.generateToken(
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                new it.pagopa.ecommerce.commons.domain.Claims(transactionId, null, null, null)
+                new it.pagopa.ecommerce.commons.domain.v2.Claims(transactionId, null, null, null)
         ).fold(error -> error.toString(), value -> value);
         assertNotNull(generatedToken);
         Claims claims = assertDoesNotThrow(
@@ -82,7 +82,7 @@ class JwtTokenUtilsTests {
         String generatedToken = jwtTokenUtils.generateToken(
                 jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                new it.pagopa.ecommerce.commons.domain.Claims(transactionId, orderId, null, userId)
+                new it.pagopa.ecommerce.commons.domain.v2.Claims(transactionId, orderId, null, userId)
         ).fold(error -> error.toString(), value -> value);
         assertNotNull(generatedToken);
         Claims claims = assertDoesNotThrow(

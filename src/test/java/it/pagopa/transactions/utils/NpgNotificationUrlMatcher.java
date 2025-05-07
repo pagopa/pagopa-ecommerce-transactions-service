@@ -5,7 +5,7 @@ import org.mockito.ArgumentMatcher;
 
 import java.net.URI;
 
-import static it.pagopa.ecommerce.commons.utils.JwtTokenUtils.*;
+import static it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils.*;
 import static it.pagopa.transactions.utils.UrlUtils.getParametersAsMap;
 import static it.pagopa.transactions.utils.UrlUtils.urlsEqualsWithRandomParam;
 

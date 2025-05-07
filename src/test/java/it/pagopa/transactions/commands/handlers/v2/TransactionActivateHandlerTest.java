@@ -10,17 +10,17 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
@@ -156,7 +156,7 @@ class TransactionActivateHandlerTest {
                         requestDto.getOrderId(),
                         CORRELATION_ID,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),
@@ -309,7 +309,7 @@ class TransactionActivateHandlerTest {
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),
@@ -447,7 +447,7 @@ class TransactionActivateHandlerTest {
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),
@@ -564,7 +564,7 @@ class TransactionActivateHandlerTest {
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),
@@ -657,7 +657,7 @@ class TransactionActivateHandlerTest {
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),
@@ -733,7 +733,7 @@ class TransactionActivateHandlerTest {
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),
@@ -850,7 +850,7 @@ class TransactionActivateHandlerTest {
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),
@@ -967,7 +967,7 @@ class TransactionActivateHandlerTest {
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),
@@ -1078,7 +1078,7 @@ class TransactionActivateHandlerTest {
                         null,
                         null,
                         requestDto.getPaymentNotices().stream().map(
-                                el -> new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                         null,
                                         new RptId(el.getRptId()),
                                         new TransactionAmount(el.getAmount()),

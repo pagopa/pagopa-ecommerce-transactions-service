@@ -1,7 +1,7 @@
 package it.pagopa.transactions.mdcutilities;
 
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.RptId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import reactor.util.context.Context;
 
 import java.util.Set;
