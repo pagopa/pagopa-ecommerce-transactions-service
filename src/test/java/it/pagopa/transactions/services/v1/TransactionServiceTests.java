@@ -45,6 +45,7 @@ import reactor.test.StepVerifier;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.*;
@@ -1705,6 +1706,47 @@ class TransactionServiceTests {
         assertTrue(
                 Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
                         .getIsFinalStatus()
+        );
+    }
+
+    static Stream<Arguments> getAllClosureErrorDataCaseOutcome18() {
+
+        Set<ClosureErrorData> closureErrorDataSet = new HashSet<>();
+
+        ClosureErrorData closureErrorDataNodeDidNotReceiveRptYet = new ClosureErrorData();
+        closureErrorDataNodeDidNotReceiveRptYet.setHttpErrorCode(HttpStatus.UNPROCESSABLE_ENTITY);
+        closureErrorDataNodeDidNotReceiveRptYet.setErrorDescription("Node did not receive RPT yet");
+        closureErrorDataSet.add(closureErrorDataNodeDidNotReceiveRptYet);
+
+        ClosureErrorData closureErrorDataBadReqeust = new ClosureErrorData();
+        closureErrorDataBadReqeust.setHttpErrorCode(HttpStatus.BAD_REQUEST);
+        closureErrorDataSet.add(closureErrorDataBadReqeust);
+
+        ClosureErrorData closureErrorDataNotFound = new ClosureErrorData();
+        closureErrorDataNotFound.setHttpErrorCode(HttpStatus.NOT_FOUND);
+        closureErrorDataSet.add(closureErrorDataNotFound);
+
+        return closureErrorDataSet.stream().map(Arguments::of);
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllClosureErrorDataCaseOutcome18")
+    void checkOutcomeWithClosureErrorData(ClosureErrorData closureErrorData) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus("test");
+        transaction.setUserId(null);
+        transaction.setClosureErrorData(closureErrorData);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18,
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getOutcome()
         );
     }
 
