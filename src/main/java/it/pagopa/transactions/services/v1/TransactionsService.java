@@ -394,17 +394,15 @@ public class TransactionsService {
     }
 
     private TransactionOutcomeInfoDto.OutcomeEnum evaluateClosePaymentResultError(ClosureErrorData closureErrorData) {
-
         HttpStatus status = closureErrorData.getHttpErrorCode();
-        String errorDescritption = closureErrorData.getErrorDescription();
+        String errorDescription = closureErrorData.getErrorDescription();
         return switch (status) {
-            case UNPROCESSABLE_ENTITY -> "Node did not receive RPT yet".equals(errorDescritption)
+            case UNPROCESSABLE_ENTITY -> "Node did not receive RPT yet".equals(errorDescription)
                     ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18
                     : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
 
             case BAD_REQUEST, NOT_FOUND -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
-
-            default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+            case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
 
         };
     }
@@ -412,7 +410,7 @@ public class TransactionsService {
     private TransactionOutcomeInfoDto.OutcomeEnum evaluateOutcomeStatus(String paymentGateway, String gatewayAuthorizationStatus, String authorizationErrorCode, TransactionOutcomeInfoDto.OutcomeEnum expectedOutcome) {
         if (paymentGateway.equals("NPG")) {
             return switch (gatewayAuthorizationStatus) {
-                case "EXECUTED" -> expectedOutcome;
+                case "EXECUTED" -> expectedOutcome != null ? expectedOutcome : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 case "CANCELED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8;
                 case "DENIED_BY_RISK", "THREEDS_VALIDATED", "THREEDS_FAILED" ->
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2;

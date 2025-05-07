@@ -1582,6 +1582,36 @@ class TransactionServiceTests {
         closureErrorData.setHttpErrorCode(HttpStatus.BAD_REQUEST); // 4xx
         transaction.setClosureErrorData(closureErrorData);
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18).isFinalStatus(true);
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void checkOutcomeHasFinalStatusFlagWithClosureErrorData4xxAndOutcome1BecauseDataIsNotComplete() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED, // non final
+                        // status
+                        ZonedDateTime.now()
+                );
+        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
+        transaction.setPaymentGateway("NPG");
+        transaction.setUserId(null);
+        ClosureErrorData closureErrorData = new ClosureErrorData();
+        closureErrorData.setErrorDescription("errorDescription");
+        closureErrorData.setErrorType(ClosureErrorData.ErrorType.KO_RESPONSE_RECEIVED);
+        closureErrorData.setHttpErrorCode(HttpStatus.UNPROCESSABLE_ENTITY); // 4xx
+        transaction.setClosureErrorData(closureErrorData);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         assertEquals(
@@ -1731,20 +1761,59 @@ class TransactionServiceTests {
 
     @ParameterizedTest
     @MethodSource("getAllClosureErrorDataCaseOutcome18")
-    void checkOutcomeWithClosureErrorData(ClosureErrorData closureErrorData) {
+    void checkOutcomeWithClosureErrorDataOutcome18(ClosureErrorData closureErrorData) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                         ZonedDateTime.now()
                 );
         transaction.setPaymentGateway("NPG");
-        transaction.setGatewayAuthorizationStatus("test");
+        transaction.setGatewayAuthorizationStatus("EXECUTED");
         transaction.setUserId(null);
         transaction.setClosureErrorData(closureErrorData);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         assertEquals(
                 TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18,
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getOutcome()
+        );
+    }
+
+    static Stream<Arguments> getAllClosureErrorDataCaseOutcome1() {
+
+        Set<ClosureErrorData> closureErrorDataSet = new HashSet<>();
+
+        ClosureErrorData closureErrorDataUnprocessableEntity = new ClosureErrorData();
+        closureErrorDataUnprocessableEntity.setHttpErrorCode(HttpStatus.UNPROCESSABLE_ENTITY);
+        closureErrorDataSet.add(closureErrorDataUnprocessableEntity);
+
+        ClosureErrorData closureErrorDataBadGateway = new ClosureErrorData();
+        closureErrorDataBadGateway.setHttpErrorCode(HttpStatus.BAD_GATEWAY);
+        closureErrorDataSet.add(closureErrorDataBadGateway);
+
+        ClosureErrorData closureErrorDataNotData = new ClosureErrorData();
+        closureErrorDataSet.add(closureErrorDataNotData);
+
+        return closureErrorDataSet.stream().map(Arguments::of);
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllClosureErrorDataCaseOutcome1")
+    void checkOutcomeWithClosureErrorDataOutcome1(ClosureErrorData closureErrorData) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus("EXECUTED");
+        transaction.setUserId(null);
+        transaction.setClosureErrorData(closureErrorData);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1,
                 Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
                         .getOutcome()
         );
