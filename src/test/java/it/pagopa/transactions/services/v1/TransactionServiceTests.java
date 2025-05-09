@@ -1438,56 +1438,43 @@ class TransactionServiceTests {
 
     private static Stream<Arguments> getTransactionStatusForFinalOutcomesForExpiredState() {
 
-        Map<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome, TransactionOutcomeInfoDto.OutcomeEnum> map = new HashMap<>();
-        map.put(
+        Set<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome> sendPaymentResultOutcomeSet = Set.of(
                 it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
-                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0
-        );
-        map.put(
                 it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.KO,
-                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25
-        );
-        map.put(
-                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED,
-                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17
-        );
-        map.put(null, TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1);
-        Set<OutcomeNpgGatewayDto.OperationResultEnum> npgGatewayOutcomeSet = new HashSet<>(
-                Set.of(OutcomeNpgGatewayDto.OperationResultEnum.values())
-        );
-        npgGatewayOutcomeSet.remove(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED);
-
-        return map.entrySet().stream().flatMap(
-                sendPaymentResultOutcomeMapOutcomeInfo -> npgGatewayOutcomeSet.stream()
-                        .map(gatewayAuthorizationStatus -> {
-                            it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome = sendPaymentResultOutcomeMapOutcomeInfo
-                                    .getKey();
-                            TransactionOutcomeInfoDto.OutcomeEnum outcomeEnum = sendPaymentResultOutcomeMapOutcomeInfo
-                                    .getValue();
-                            if (sendPaymentResultOutcome == it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK) {
-                                return Arguments.of(
-                                        gatewayAuthorizationStatus,
-                                        sendPaymentResultOutcome,
-                                        new TransactionOutcomeInfoDto().outcome(outcomeEnum).totalAmount(100).fees(50)
-                                                .isFinalStatus(true)
-                                );
-                            }
-                            return Arguments.of(
-                                    gatewayAuthorizationStatus,
-                                    sendPaymentResultOutcome,
-                                    new TransactionOutcomeInfoDto().outcome(outcomeEnum).isFinalStatus(true)
-                            );
-                        })
+                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED
         );
 
+        Map<String, TransactionOutcomeInfoDto.OutcomeEnum> mapNpgGatewayAuthorizationStatusOutcome = new HashMap<>();
+        mapNpgGatewayAuthorizationStatusOutcome.put("CANCELED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8);
+        mapNpgGatewayAuthorizationStatusOutcome.put("DENIED_BY_RISK", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2);
+        mapNpgGatewayAuthorizationStatusOutcome.put("THREEDS_VALIDATED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2);
+        mapNpgGatewayAuthorizationStatusOutcome.put("THREEDS_FAILED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2);
+        mapNpgGatewayAuthorizationStatusOutcome.put("AUTHORIZED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+        mapNpgGatewayAuthorizationStatusOutcome.put("PENDING", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+        mapNpgGatewayAuthorizationStatusOutcome.put("VOIDED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+        mapNpgGatewayAuthorizationStatusOutcome.put("REFUNDED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+        mapNpgGatewayAuthorizationStatusOutcome.put("FAILED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+
+        Map<String, TransactionOutcomeInfoDto.OutcomeEnum> mapRedirectGatewayAuthorizationStatusOutcome = new HashMap<>();
+        mapRedirectGatewayAuthorizationStatusOutcome.put("KO", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2);
+        mapRedirectGatewayAuthorizationStatusOutcome.put("CANCELED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8);
+        mapRedirectGatewayAuthorizationStatusOutcome.put("ERROR", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+        mapRedirectGatewayAuthorizationStatusOutcome.put("EXPIRED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
+
+        Map<String,Map<String, TransactionOutcomeInfoDto.OutcomeEnum>> paymentGatewayOutcomeMap = new HashMap<>();
+        paymentGatewayOutcomeMap.put("NPG", mapNpgGatewayAuthorizationStatusOutcome);
+        paymentGatewayOutcomeMap.put("REDIRECT", mapRedirectGatewayAuthorizationStatusOutcome);
+
+        return sendPaymentResultOutcomeSet.stream().flatMap(sendPaymentResultOutcome -> paymentGatewayOutcomeMap.keySet().stream().flatMap(pgKey -> paymentGatewayOutcomeMap.get(pgKey).entrySet().stream().map(e -> Arguments.of(sendPaymentResultOutcome, pgKey, e.getKey(),e.getValue()))));
     }
 
     @ParameterizedTest
     @MethodSource("getTransactionStatusForFinalOutcomesForExpiredState")
     void getTransactionOutcomeReturnsOutcomesForExpiredStateAndNotExecutedNPGOutcome(
-                                                                                     OutcomeNpgGatewayDto.OperationResultEnum gatewayAuthorizationStatus,
-                                                                                     it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
-                                                                                     TransactionOutcomeInfoDto expected
+            it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
+            String paymentGateway,
+                                                                                     String paymentGatewayAuthorizationStatus,
+                                                                                     TransactionOutcomeInfoDto.OutcomeEnum expectedOutcome
     ) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
@@ -1495,13 +1482,13 @@ class TransactionServiceTests {
                         ZonedDateTime.now()
                 );
         transaction.setGatewayAuthorizationStatus(
-                gatewayAuthorizationStatus != null ? gatewayAuthorizationStatus.getValue() : null
+                paymentGatewayAuthorizationStatus
         );
         transaction.setSendPaymentResultOutcome(sendPaymentResultOutcome);
-        transaction.setPaymentGateway("NPG");
+        transaction.setPaymentGateway(paymentGateway);
         transaction.setFeeTotal(50);
         transaction.setUserId(null);
-
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto().outcome(expectedOutcome).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         assertEquals(
                 expected,
