@@ -724,14 +724,14 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                         "REDIRECT",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                         "NPG",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -815,14 +815,14 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
                         "REDIRECT",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
                         "NPG",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -906,14 +906,14 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
                         "REDIRECT",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
                         "NPG",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -997,14 +997,14 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
                         "REDIRECT",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
                         "NPG",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -1538,7 +1538,7 @@ class TransactionServiceTests {
         transaction.setPaymentGateway("REDIRECT");
         transaction.setUserId(null);
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
-                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(true);
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         assertEquals(
                 expected,

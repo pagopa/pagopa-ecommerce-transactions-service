@@ -416,7 +416,7 @@ public class TransactionsService {
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 case "DECLINED" ->
                         Optional.ofNullable(npgAuthorizationErrorCodeMapping.get(authorizationErrorCode)).orElse(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
-                case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+                case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
             };
             case "REDIRECT" -> switch (gatewayAuthorizationStatus.orElse("")) {
                 case "KO" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2;
