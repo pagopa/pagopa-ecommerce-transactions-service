@@ -366,7 +366,7 @@ public class TransactionsService {
                             : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
                 }
                 case EXPIRED -> {
-                    if (gatewayAuthorizationStatus == null)
+                    if (paymentGateway == null || gatewayAuthorizationStatus.isEmpty())
                         return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
                     else if (!wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus)) {
                         return evaluateUnauthorizedStatus(paymentGateway, gatewayAuthorizationStatus, authorizationErrorCode);
