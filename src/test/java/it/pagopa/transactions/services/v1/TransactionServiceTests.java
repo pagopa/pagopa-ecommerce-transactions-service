@@ -2132,6 +2132,31 @@ class TransactionServiceTests {
                 .verifyComplete();
     }
 
+    @Test
+    void checkOutcomeWithClosureErrorDataButNOGateway() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED, // non final
+                        // status
+                        ZonedDateTime.now()
+                );
+        transaction.setUserId(null);
+        ClosureErrorData closureErrorData = new ClosureErrorData();
+        transaction.setClosureErrorData(closureErrorData);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(false);
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
     @ParameterizedTest
     @MethodSource("getAllGatewaysAndAuthorizationStatus")
     void checkOutcomeHasFinalStatusFlagWithClosureErrorData4xxAndOutcome1BecauseDataIsNotComplete(
