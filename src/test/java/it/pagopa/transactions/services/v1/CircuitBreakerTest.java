@@ -6,8 +6,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
-import it.pagopa.ecommerce.commons.domain.PaymentToken;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
@@ -136,6 +136,10 @@ class CircuitBreakerTest {
         return getIgnoredExceptionsForRetry("getTransactionInfo");
     }
 
+    private static Stream<Arguments> getIgnoredExceptionForGetTransactionOutcomeRetry() {
+        return getIgnoredExceptionsForRetry("getTransactionOutcome");
+    }
+
     private static Stream<Arguments> getIgnoredExceptionForRequestTransactionAuthorizationRetry() {
         return getIgnoredExceptionsForRetry("requestTransactionAuthorization");
     }
@@ -172,6 +176,35 @@ class CircuitBreakerTest {
         StepVerifier
                 .create(
                         transactionsService.getTransactionInfo("transactionId", null)
+                )
+                .expectError(thrownException.getClass())
+                .verify();
+        assertEquals(
+                expectedFailedCallsWithoutRetryAttempt,
+                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getIgnoredExceptionForGetTransactionOutcomeRetry")
+    @Order(0)
+    void shouldNotPerformRetryForExcludedException_getTransactionOutcomeInfoRetry(
+                                                                                  Exception thrownException,
+                                                                                  String retryInstanceName
+    ) {
+        Retry retry = retryRegistry.retry(retryInstanceName);
+        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
+                + 1;
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(transactionsViewRepository.findById(any(String.class)))
+                .thenReturn(Mono.error(thrownException));
+
+        StepVerifier
+                .create(
+                        transactionsService.getTransactionOutcome("transactionId", null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();

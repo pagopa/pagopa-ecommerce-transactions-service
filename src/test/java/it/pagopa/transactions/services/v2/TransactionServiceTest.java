@@ -5,8 +5,9 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.*;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
@@ -111,7 +112,7 @@ class TransactionServiceTest {
         TransactionActivated transactionActivated = new TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
                                 new RptId(TransactionTestUtils.RPT_ID),
                                 new TransactionAmount(0),
@@ -212,7 +213,7 @@ class TransactionServiceTest {
         TransactionActivated transactionActivated = new TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
                                 new RptId(TransactionTestUtils.RPT_ID),
                                 new TransactionAmount(0),
@@ -313,7 +314,7 @@ class TransactionServiceTest {
         TransactionActivated transactionActivated = new TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
                                 new RptId(TransactionTestUtils.RPT_ID),
                                 new TransactionAmount(0),

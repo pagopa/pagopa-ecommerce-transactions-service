@@ -3,7 +3,7 @@ package it.pagopa.transactions.controllers.v1;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
@@ -363,6 +363,28 @@ public class TransactionsController implements TransactionsApi {
                         )
                 )
                 .thenReturn(ResponseEntity.accepted().build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<TransactionOutcomeInfoDto>> getTransactionOutcomes(
+                                                                                  String transactionId,
+                                                                                  UUID xUserId,
+                                                                                  ServerWebExchange exchange
+    ) {
+        return transactionsService.getTransactionOutcome(transactionId, xUserId)
+                .doOnNext(t -> log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId))
+                .map(ResponseEntity::ok)
+                .contextWrite(
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        new TransactionId(transactionId),
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
+                                ),
+                                context
+                        )
+                );
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)

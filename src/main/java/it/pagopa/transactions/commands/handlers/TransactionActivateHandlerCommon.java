@@ -2,7 +2,7 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;

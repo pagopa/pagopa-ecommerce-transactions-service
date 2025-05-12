@@ -1,6 +1,6 @@
 package it.pagopa.transactions.exceptions;
 
-import it.pagopa.ecommerce.commons.domain.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

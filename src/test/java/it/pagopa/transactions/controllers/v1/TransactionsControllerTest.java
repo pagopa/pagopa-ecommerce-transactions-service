@@ -5,12 +5,12 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.PaymentToken;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.Claims;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -21,6 +21,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -79,6 +80,7 @@ class TransactionsControllerTest {
     private TransactionsService transactionsService;
 
     @MockBean
+    @Qualifier("jwtTokenUtilsV2")
     private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
@@ -263,7 +265,7 @@ class TransactionsControllerTest {
                 transactionsController
                         .requestTransactionUserCancellation(transactionId, null, mockExchange)
         )
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
 
@@ -1570,6 +1572,37 @@ class TransactionsControllerTest {
                             );
                         }
                 );
+    }
+
+    @Test
+    void shouldGetTransactionOutcomeInfoWithInfoEmptyOK() {
+        TransactionOutcomeInfoDto response = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0).isFinalStatus(true);
+
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+
+        Mockito.lenient().when(transactionsService.getTransactionOutcome(eq(transactionId), any()))
+                .thenReturn(Mono.just(response));
+
+        Mockito.when(mockExchange.getRequest())
+                .thenReturn(mockRequest);
+
+        Mockito.when(mockExchange.getRequest().getMethodValue())
+                .thenReturn("GET");
+
+        Mockito.when(mockExchange.getRequest().getURI())
+                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId, "outcomes")));
+
+        ResponseEntity<TransactionOutcomeInfoDto> responseEntity = transactionsController
+                .getTransactionOutcomes(transactionId, null, mockExchange).block();
+
+        // Verify mock
+        verify(transactionsService, Mockito.times(1)).getTransactionOutcome(transactionId, null);
+
+        // Verify status code and response
+        Assertions.assertNotNull(responseEntity);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(response, responseEntity.getBody());
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {

@@ -1,6 +1,6 @@
 package it.pagopa.transactions.commands;
 
-import it.pagopa.ecommerce.commons.domain.RptId;
+import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 
 import java.util.List;

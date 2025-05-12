@@ -10,15 +10,15 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatew
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
 import it.pagopa.transactions.client.NodeForPspClient;
@@ -49,13 +49,9 @@ import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -137,6 +133,25 @@ class TransactionServiceTest {
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
             .mock(UpdateTransactionStatusTracerUtils.class);
 
+    private final Map<String, String> npgAuthorizationErrorCodeMapping = new HashMap<>();
+
+    private final Set<String> ecommerceFinalStates = Set.of(
+            "NOTIFIED_OK",
+            "NOTIFIED_KO",
+            "NOTIFICATION_ERROR",
+            "NOTIFICATION_REQUESTED",
+            "EXPIRED",
+            "REFUNDED",
+            "CANCELED",
+            "UNAUTHORIZED",
+            "REFUND_ERROR",
+            "REFUND_REQUESTED",
+            "CANCELLATION_EXPIRED"
+    );
+
+    private final Set<String> ecommercePossibleFinalStates = Set
+            .of("AUTHORIZATION_COMPLETED", "CLOSURE_REQUESTED", "CLOSURE_ERROR");
+
     private final TransactionsService transactionsServiceV1 = new TransactionsService(
             transactionActivateHandlerV2,
             transactionRequestAuthorizationHandlerV2,
@@ -159,7 +174,10 @@ class TransactionServiceTest {
             10,
             paymentRequestInfoRedisTemplateWrapper,
             confidentialMailUtils,
-            updateTransactionStatusTracerUtils
+            updateTransactionStatusTracerUtils,
+            npgAuthorizationErrorCodeMapping,
+            ecommerceFinalStates,
+            ecommercePossibleFinalStates
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
@@ -184,7 +202,10 @@ class TransactionServiceTest {
             10,
             paymentRequestInfoRedisTemplateWrapper,
             confidentialMailUtils,
-            updateTransactionStatusTracerUtils
+            updateTransactionStatusTracerUtils,
+            npgAuthorizationErrorCodeMapping,
+            ecommerceFinalStates,
+            ecommercePossibleFinalStates
     );
 
     @Test
@@ -231,7 +252,7 @@ class TransactionServiceTest {
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transactionActivated = new it.pagopa.ecommerce.commons.domain.v2.TransactionActivated(
                 new TransactionId(TRANSACTION_ID),
                 Arrays.asList(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken(TransactionTestUtils.PAYMENT_TOKEN),
                                 new RptId(TransactionTestUtils.RPT_ID),
                                 new TransactionAmount(0),

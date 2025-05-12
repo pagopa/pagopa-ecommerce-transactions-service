@@ -5,7 +5,7 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationComplete
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
@@ -28,7 +28,7 @@ import java.util.Map;
 @Slf4j
 public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuthorizationHandlerCommon {
 
-    public static final String QUALIFIER_NAME = "TransactionUpdateAuthorizationHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionUpdateAuthorizationHandlerV2";
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
     private final Map<String, URI> npgPaymentCircuitLogoMap;

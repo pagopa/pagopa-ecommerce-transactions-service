@@ -8,15 +8,15 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.Claims;
+import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v2.RptId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.PaymentRequestInfoRedisTemplateWrapper;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -48,7 +48,7 @@ import java.util.UUID;
 @Component(TransactionActivateHandler.QUALIFIER_NAME)
 public class TransactionActivateHandler extends TransactionActivateHandlerCommon {
 
-    public static final String QUALIFIER_NAME = "TransactionActivateHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionActivateHandlerV2";
     private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository;
     private final NodoOperations nodoOperations;
@@ -94,7 +94,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     ) {
         final TransactionId transactionId = command.getTransactionId();
         final NewTransactionRequestData newTransactionRequestDto = command.getData();
-        final List<it.pagopa.ecommerce.commons.domain.PaymentNotice> paymentNotices = newTransactionRequestDto
+        final List<it.pagopa.ecommerce.commons.domain.v2.PaymentNotice> paymentNotices = newTransactionRequestDto
                 .paymentNoticeList();
         final boolean multiplePaymentNotices = paymentNotices.size() > 1;
         log.info(
@@ -116,7 +116,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 )
                         ).flatMap(
                                 paymentRequest -> {
-                                    final it.pagopa.ecommerce.commons.domain.PaymentNotice paymentNotice = paymentRequest
+                                    final it.pagopa.ecommerce.commons.domain.v2.PaymentNotice paymentNotice = paymentRequest
                                             .getT1();
                                     final Optional<PaymentRequestInfo> maybePaymentRequestInfo = paymentRequest
                                             .getT2();
@@ -176,7 +176,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                      * @formatter:on
                                      */
 
-                                    final it.pagopa.ecommerce.commons.domain.PaymentNotice paymentNotice = cacheResult
+                                    final it.pagopa.ecommerce.commons.domain.v2.PaymentNotice paymentNotice = cacheResult
                                             .getT1();
                                     final PaymentRequestInfo partialPaymentRequestInfo = cacheResult.getT2();
                                     final IdempotencyKey idempotencyKey = partialPaymentRequestInfo.idempotencyKey();
