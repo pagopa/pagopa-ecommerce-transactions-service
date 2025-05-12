@@ -581,6 +581,26 @@ class TransactionServiceTests {
                 .verifyComplete();
     }
 
+    /**
+     * Test cases and expected outcomes are
+     * <p>
+     * Transaction status: ACTIVATED expected outcome: 1 final status: false <br/>
+     * Transaction status: NOTIFIED_OK expected outcome: 0 final status: true <br/>
+     * Transaction status: NOTIFIED_OK expected outcome: 0 final status: true <br/>
+     * Transaction status: REFUNDED expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED_NOT_AUTHORIZED expected outcome: 4 final status:
+     * false <br/>
+     * Transaction status: CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: CANCELLATION_EXPIRED expected outcome: 8 final status:
+     * true <br/>
+     * Transaction status: AUTHORIZATION_REQUESTED expected outcome: 17 final
+     * status: false <br/>
+     * Transaction status: REFUND_ERROR expected outcome: 1 final status: true <br/>
+     * Transaction status: REFUND_REQUESTED expected outcome: 1 final status: true
+     * <br/>
+     * </p>
+     */
+
     @ParameterizedTest
     @MethodSource("getTransactionStatusForFinalOutcomeWithoutPaymentGatewayLogic")
     void getTransactionOutcomeReturnsOutcomesForStatusesWithoutAnyOtherCondition(
@@ -690,6 +710,36 @@ class TransactionServiceTests {
         );
     }
 
+    /**
+     * Test cases and expected outcomes are
+     * <p>
+     * Transaction status: NOTIFICATION_REQUESTED sendPaymentResult null expected
+     * outcome: 25 final status: true <br/>
+     * Transaction status: NOTIFICATION_REQUESTED sendPaymentResult KO expected
+     * outcome: 25 final status: true <br/>
+     * Transaction status: NOTIFICATION_REQUESTED sendPaymentResult NOT_RECEIVED
+     * expected outcome: 25 final status: true <br/>
+     * Transaction status: NOTIFICATION_REQUESTED sendPaymentResult OK expected
+     * outcome: 0 final status: true <br/>
+     * Transaction status: NOTIFICATION_ERROR sendPaymentResult null expected
+     * outcome: 25 final status: true <br/>
+     * Transaction status: NOTIFICATION_ERROR sendPaymentResult KO expected outcome:
+     * 25 final status: true <br/>
+     * Transaction status: NOTIFICATION_ERROR sendPaymentResult NOT_RECEIVED
+     * expected outcome: 25 final status: true <br/>
+     * Transaction status: NOTIFICATION_ERROR sendPaymentResult OK expected outcome:
+     * 0 final status: true <br/>
+     * Transaction status: CLOSED sendPaymentResult null expected outcome: 1 final
+     * status: false <br/>
+     * Transaction status: CLOSED sendPaymentResult KO expected outcome: 1 final
+     * status: false <br/>
+     * Transaction status: CLOSED sendPaymentResult NOT_RECEIVED expected outcome:
+     * 17 final status: false <br/>
+     * Transaction status: CLOSED sendPaymentResult OK expected outcome: 1 final
+     * status: false
+     * </p>
+     */
+
     @ParameterizedTest
     @MethodSource("getTransactionStatusForFinalOutcomesForSendPaymentResultConditionedLogic")
     void getTransactionOutcomeReturnsOutcomesForSendPaymentResultConditionedLogic(
@@ -729,85 +779,36 @@ class TransactionServiceTests {
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        EXECUTED.getValue(),
+                        "REDIRECT",
+                        "OK",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
                                 .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        CANCELED.getValue(),
+                        "REDIRECT",
+                        "KO",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "REDIRECT",
+                        "CANCELED",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        DENIED_BY_RISK.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        THREEDS_VALIDATED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        THREEDS_FAILED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        AUTHORIZED.getValue(),
+                        "REDIRECT",
+                        "ERROR",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        PENDING.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        VOIDED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        REFUNDED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        FAILED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
-                        "NPG",
-                        DECLINED.getValue(),
+                        "REDIRECT",
+                        "EXPIRED",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
@@ -820,85 +821,36 @@ class TransactionServiceTests {
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        EXECUTED.getValue(),
+                        "REDIRECT",
+                        "OK",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
                                 .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        CANCELED.getValue(),
+                        "REDIRECT",
+                        "KO",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "REDIRECT",
+                        "CANCELED",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        DENIED_BY_RISK.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        THREEDS_VALIDATED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        THREEDS_FAILED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        AUTHORIZED.getValue(),
+                        "REDIRECT",
+                        "ERROR",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        PENDING.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        VOIDED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        REFUNDED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        FAILED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                        "NPG",
-                        DECLINED.getValue(),
+                        "REDIRECT",
+                        "EXPIRED",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
@@ -906,6 +858,251 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
                         "REDIRECT",
                         null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "REDIRECT",
+                        "OK",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
+                                .isFinalStatus(false)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "REDIRECT",
+                        "KO",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "REDIRECT",
+                        "CANCELED",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "REDIRECT",
+                        "ERROR",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "REDIRECT",
+                        "EXPIRED",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "REDIRECT",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "REDIRECT",
+                        "OK",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "REDIRECT",
+                        "KO",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "REDIRECT",
+                        "CANCELED",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "REDIRECT",
+                        "EXPIRED",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "REDIRECT",
+                        "ERROR",
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        EXECUTED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                                .isFinalStatus(false)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        CANCELED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        DENIED_BY_RISK.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        THREEDS_VALIDATED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        THREEDS_FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        AUTHORIZED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        PENDING.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        VOIDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        REFUNDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "NPG",
+                        DECLINED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        EXECUTED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                                .isFinalStatus(false)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        CANCELED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        DENIED_BY_RISK.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        THREEDS_VALIDATED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        THREEDS_FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        AUTHORIZED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        PENDING.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        VOIDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        REFUNDED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        FAILED.getValue(),
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "NPG",
+                        DECLINED.getValue(),
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
@@ -990,13 +1187,6 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
                         "NPG",
                         DECLINED.getValue(),
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
-                ),
-                Arguments.of(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
-                        "REDIRECT",
-                        null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
                                 .isFinalStatus(true)
                 ),
@@ -1087,6 +1277,165 @@ class TransactionServiceTests {
 
         );
     }
+
+    /**
+     * Test cases and expected outcomes are
+     * <p>
+     * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
+     * null expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
+     * OK expected outcome: 1 final status: false <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
+     * KO expected outcome: 2 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
+     * CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
+     * ERROR expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
+     * EXPIRED expected outcome: 25 final status: true <br/>
+     * <p>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
+     * authorizationStatus null expected outcome: 25 final status: true <br/>
+     * Transactio status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
+     * authorizationStatu OK expected outcome: 1 final status: false <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
+     * authorizationStatus KO expected outcome: 2 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
+     * authorizationStatus CANCELE expected outcome: 8 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
+     * authorizationStatus ERROR expected outcome: 25 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
+     * authorizationStatus EXPIRED expected outcome: 25 final status: true <br/>
+     * <p>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
+     * authorizationStatus null expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
+     * authorizationStatus OK expected outcome: 17 final status: false <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
+     * authorizationStatus KO expected outcome: 2 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
+     * authorizationStatus CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
+     * authorizationStatus ERROR expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
+     * authorizationStatus EXPIRED expected outcome: 25 final status: true <br/>
+     * <p>
+     * Transaction status: UNAUTHORIZED paymentGateway REDIRECT authorizationStatus
+     * null expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway REDIRECT authorizationStatus
+     * OK expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway REDIRECT authorizationStatus
+     * KO expected outcome: 2 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway REDIRECT authorizationStatus
+     * CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway REDIRECT authorizationStatus
+     * EXPIRED expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway REDIRECT authorizationStatus
+     * ERROR expected outcome: 25 final status: true <br/>
+     * <p>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus null
+     * expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * EXECUTED expected outcome: 1 final status: false <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * DENIED_BY_RISK expected outcome: 2 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * THREEDS_VALIDATED expected outcome: 2 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * THREEDS_FAILED expected outcome: 2 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * AUTHORIZED expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * VOIDED expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * REFUNDED expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * FAILED expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway NPG authorizationStatus
+     * DECLINED expected outcome: 25 final status: true <br/>
+     * <p>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus null expected outcome: 25 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus EXECUTED expected outcome: 1 final status: false <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus DENIED_BY_RISK expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus THREEDS_VALIDATED expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus THREEDS_FAILED expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus AUTHORIZED expected outcome: 25 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus VOIDED expected outcome: 25 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus REFUNDED expected outcome: 25 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus FAILED expected outcome: 25 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway NPG
+     * authorizationStatus DECLINED expected outcome: 25 final status: true <br/>
+     * <p>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * null expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * EXECUTED expected outcome: 17 final status: false <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * DENIED_BY_RISK expected outcome: 2 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * THREEDS_VALIDATED expected outcome: 2 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * THREEDS_VALIDATED expected outcome: 2 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * AUTHORIZED expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * VOIDED expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * REFUNDED expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * FAILED expected outcome: 25 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway NPG authorizationStatus
+     * DECLINED expected outcome: 25 final status: true <br/>
+     * <p>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus null
+     * expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * EXECUTED expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * DENIED_BY_RISK expected outcome: 2 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * THREEDS_VALIDATED expected outcome: 2 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * THREEDS_FAILED expected outcome: 2 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * AUTHORIZED expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * VOIDED expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * REFUNDED expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * FAILED expected outcome: 25 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway NPG authorizationStatus
+     * DECLINED expected outcome: 25 final status: true <br/>
+     */
 
     @ParameterizedTest
     @MethodSource("getTransactionStatusForFinalOutcomesForGatewayOutcomeConditionedLogic")
@@ -1438,16 +1787,18 @@ class TransactionServiceTests {
 
     private static Stream<Arguments> getTransactionStatusForFinalOutcomesForExpiredState() {
 
-        Set<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome> sendPaymentResultOutcomeSet = Set.of(
-                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
-                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.KO,
-                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED
-        );
+        Set<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome> sendPaymentResultOutcomeSet = Set
+                .of(
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.KO,
+                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED
+                );
 
         Map<String, TransactionOutcomeInfoDto.OutcomeEnum> mapNpgGatewayAuthorizationStatusOutcome = new HashMap<>();
         mapNpgGatewayAuthorizationStatusOutcome.put("CANCELED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8);
         mapNpgGatewayAuthorizationStatusOutcome.put("DENIED_BY_RISK", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2);
-        mapNpgGatewayAuthorizationStatusOutcome.put("THREEDS_VALIDATED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2);
+        mapNpgGatewayAuthorizationStatusOutcome
+                .put("THREEDS_VALIDATED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2);
         mapNpgGatewayAuthorizationStatusOutcome.put("THREEDS_FAILED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2);
         mapNpgGatewayAuthorizationStatusOutcome.put("AUTHORIZED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
         mapNpgGatewayAuthorizationStatusOutcome.put("PENDING", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
@@ -1461,18 +1812,137 @@ class TransactionServiceTests {
         mapRedirectGatewayAuthorizationStatusOutcome.put("ERROR", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
         mapRedirectGatewayAuthorizationStatusOutcome.put("EXPIRED", TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
 
-        Map<String,Map<String, TransactionOutcomeInfoDto.OutcomeEnum>> paymentGatewayOutcomeMap = new HashMap<>();
+        Map<String, Map<String, TransactionOutcomeInfoDto.OutcomeEnum>> paymentGatewayOutcomeMap = new HashMap<>();
         paymentGatewayOutcomeMap.put("NPG", mapNpgGatewayAuthorizationStatusOutcome);
         paymentGatewayOutcomeMap.put("REDIRECT", mapRedirectGatewayAuthorizationStatusOutcome);
 
-        return sendPaymentResultOutcomeSet.stream().flatMap(sendPaymentResultOutcome -> paymentGatewayOutcomeMap.keySet().stream().flatMap(pgKey -> paymentGatewayOutcomeMap.get(pgKey).entrySet().stream().map(e -> Arguments.of(sendPaymentResultOutcome, pgKey, e.getKey(),e.getValue()))));
+        return sendPaymentResultOutcomeSet.stream()
+                .flatMap(
+                        sendPaymentResultOutcome -> paymentGatewayOutcomeMap.keySet().stream()
+                                .flatMap(
+                                        pgKey -> paymentGatewayOutcomeMap.get(pgKey).entrySet().stream().map(
+                                                e -> Arguments
+                                                        .of(sendPaymentResultOutcome, pgKey, e.getKey(), e.getValue())
+                                        )
+                                )
+                );
     }
 
+    /**
+     * test cases and expected outcome
+     * <p>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus THREEDS_VALIDATED expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus THREEDS_FAILED expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus REFUNDED expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus FAILED expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus DENIED_BY_RISK expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway NPG
+     * authorizationStatus PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway
+     * REDIRECT authorizationStatus KO expected outcome: 2 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway
+     * REDIRECT authorizationStatus CANCELED expected outcome: 8 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway
+     * REDIRECT authorizationStatus EXPIRED expected outcome: 25 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: KO paymentGateway
+     * REDIRECT authorizationStatus ERROR expected outcome: 25 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus THREEDS_VALIDATED expected outcome: 2
+     * final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus THREEDS_FAILED expected outcome: 2
+     * final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus REFUNDED expected outcome: 25 final
+     * status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus FAILED expected outcome: 25 final
+     * status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus DENIED_BY_RISK expected outcome: 2
+     * final status: true <br/>
+     * Transaction status EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus CANCELED expected outcome: 8 final
+     * status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus PENDING expected outcome: 25 final
+     * status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus AUTHORIZED expected outcome: 25 final
+     * status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway NPG authorizationStatus VOIDED expected outcome: 25 final
+     * status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway REDIRECT authorizationStatus KO expected outcome: 2 final
+     * status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway REDIRECT authorizationStatus CANCELED expected outcome: 8
+     * final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway REDIRECT authorizationStatus EXPIRED expected outcome: 25
+     * final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: NOT_RECEIVED
+     * paymentGateway REDIRECT authorizationStatus ERROR expected outcome: 25 final
+     * status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus THREEDS_VALIDATED expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus THREEDS_VALIDATED expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus REFUNDED expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus FAILED expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus DENIED_BY_RISK expected outcome: 2 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus CANCELED expected outcome: 8 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus PENDING expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus AUTHORIZED expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway NPG
+     * authorizationStatus VOIDED expected outcome: 25 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway
+     * REDIRECT authorizationStatus KO expected outcome: 2 final status: true <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway
+     * REDIRECT authorizationStatus CANCELED expected outcome: 8 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway
+     * REDIRECT authorizationStatus EXPIRED expected outcome: 25 final status: true
+     * <br/>
+     * Transaction status: EXPIRED sendPaymentResultOutcome: OK paymentGateway
+     * REDIRECT authorizationStatus ERROR expected outcome: 25 final status: true
+     * <br/>
+     * </p>
+     */
     @ParameterizedTest
     @MethodSource("getTransactionStatusForFinalOutcomesForExpiredState")
     void getTransactionOutcomeReturnsOutcomesForExpiredStateAndNotExecutedNPGOutcome(
-            it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
-            String paymentGateway,
+                                                                                     it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
+                                                                                     String paymentGateway,
                                                                                      String paymentGatewayAuthorizationStatus,
                                                                                      TransactionOutcomeInfoDto.OutcomeEnum expectedOutcome
     ) {
@@ -1488,7 +1958,9 @@ class TransactionServiceTests {
         transaction.setPaymentGateway(paymentGateway);
         transaction.setFeeTotal(50);
         transaction.setUserId(null);
-        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto().outcome(expectedOutcome).isFinalStatus(true);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto().outcome(expectedOutcome)
+                .isFinalStatus(true);
+
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         assertEquals(
                 expected,
