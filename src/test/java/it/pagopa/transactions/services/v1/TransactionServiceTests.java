@@ -1754,6 +1754,9 @@ class TransactionServiceTests {
                 );
     }
 
+    /**
+     * NPG Cases only
+     */
     @ParameterizedTest
     @MethodSource(
         "getTransactionStatusForFinalOutcomesForGatewayOutcomeConditionedLogicForDeniedStateAndSpecificErrorCode"
@@ -1981,7 +1984,6 @@ class TransactionServiceTests {
                         ZonedDateTime.now()
                 );
         transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
-
         transaction.setPaymentGateway("NPG");
         transaction.setUserId(null);
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
@@ -2006,7 +2008,6 @@ class TransactionServiceTests {
                         ZonedDateTime.now()
                 );
         transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
-
         transaction.setPaymentGateway("REDIRECT");
         transaction.setUserId(null);
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
@@ -2024,15 +2025,74 @@ class TransactionServiceTests {
     }
 
     @Test
-    void checkOutcomeHasFinalStatusFlagWithClosureErrorData4xx() {
+    void getTransactionOutcomeReturnsOutcomesForExpiredStateAndOkREDIRECTOutcome() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
+                        ZonedDateTime.now()
+                );
+        transaction.setGatewayAuthorizationStatus("OK");
+        transaction.setPaymentGateway("REDIRECT");
+        transaction.setUserId(null);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(true);
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @Test
+    void getTransactionOutcomeReturnsOutcomesForExpiredStateAndEOkREDIRECTOutcomeButNoREDIRECTGateway() {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
+                        ZonedDateTime.now()
+                );
+        transaction.setGatewayAuthorizationStatus("OK");
+        transaction.setPaymentGateway("NPG");
+        transaction.setUserId(null);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25).isFinalStatus(true);
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    static Stream<Arguments> getAllGatewaysAndAuthorizationStatus() {
+        Map<String, String> gatewaysAndOkAuth = new HashMap<>();
+        gatewaysAndOkAuth.put("NPG", EXECUTED.getValue());
+        gatewaysAndOkAuth.put("REDIRECT", "OK");
+        return gatewaysAndOkAuth.entrySet().stream().map(e -> Arguments.of(e.getKey(), e.getValue()));
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllGatewaysAndAuthorizationStatus")
+    void checkOutcomeHasFinalStatusFlagWithClosureErrorData4xx(
+                                                               String gateway,
+                                                               String gatewayAuthorizationStatus
+    ) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED, // non final
                                                                                                            // status
                         ZonedDateTime.now()
                 );
-        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
-        transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus(gatewayAuthorizationStatus);
+        transaction.setPaymentGateway(gateway);
         transaction.setUserId(null);
         ClosureErrorData closureErrorData = new ClosureErrorData();
         closureErrorData.setErrorDescription("errorDescription");
@@ -2053,16 +2113,21 @@ class TransactionServiceTests {
                 .verifyComplete();
     }
 
-    @Test
-    void checkOutcomeHasFinalStatusFlagWithClosureErrorData4xxAndOutcome1BecauseDataIsNotComplete() {
+    @ParameterizedTest
+    @MethodSource("getAllGatewaysAndAuthorizationStatus")
+    void checkOutcomeHasFinalStatusFlagWithClosureErrorData4xxAndOutcome1BecauseDataIsNotComplete(
+                                                                                                  String gateway,
+                                                                                                  String gatewayAuthorizationStatus
+    ) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED, // non final
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED, // non
+                                                                                                                         // final
                         // status
                         ZonedDateTime.now()
                 );
-        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
-        transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus(gatewayAuthorizationStatus);
+        transaction.setPaymentGateway(gateway);
         transaction.setUserId(null);
         ClosureErrorData closureErrorData = new ClosureErrorData();
         closureErrorData.setErrorDescription("errorDescription");
@@ -2083,16 +2148,21 @@ class TransactionServiceTests {
                 .verifyComplete();
     }
 
-    @Test
-    void checkOutcomeHasFinalStatusFlagWithClosureErrorData5xx() {
+    @ParameterizedTest
+    @MethodSource("getAllGatewaysAndAuthorizationStatus")
+    void checkOutcomeHasFinalStatusFlagWithClosureErrorData5xx(
+                                                               String gateway,
+                                                               String gatewayAuthorizationStatus
+    ) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
-                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED, // non final
-                                                                                                           // status
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED, // non
+                                                                                                                         // final
+                        // status
                         ZonedDateTime.now()
                 );
-        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
-        transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus(gatewayAuthorizationStatus);
+        transaction.setPaymentGateway(gateway);
         transaction.setUserId(null);
         ClosureErrorData closureErrorData = new ClosureErrorData();
         closureErrorData.setErrorDescription("errorDescription");
@@ -2178,8 +2248,29 @@ class TransactionServiceTests {
 
     @ParameterizedTest
     @MethodSource("getAllMaybeFinalStatuses")
-    void checkOutcomeHasFinalStatusFlagFalseWithMaybeFinalStatusAndExecutedNPG(
-                                                                               it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto statusDto
+    void checkOutcomeHasFinalStatusFlagTrueWithMaybeFinalStatusAndOKREDIRECT(
+                                                                             it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto statusDto
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        statusDto, // non final status
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("REDIRECT");
+        transaction.setGatewayAuthorizationStatus("OK");
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertFalse(
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getIsFinalStatus()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllMaybeFinalStatuses")
+    void checkOutcomeHasFinalStatusFlagFalseWithMaybeFinalStatusAndNPGNotExecuted(
+                                                                                  it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto statusDto
     ) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
@@ -2187,6 +2278,27 @@ class TransactionServiceTests {
                         ZonedDateTime.now()
                 );
         transaction.setPaymentGateway("NPG");
+        transaction.setGatewayAuthorizationStatus("test");
+        transaction.setUserId(null);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertTrue(
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getIsFinalStatus()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllMaybeFinalStatuses")
+    void checkOutcomeHasFinalStatusFlagFalseWithMaybeFinalStatusAndREDIRECTNotOK(
+                                                                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto statusDto
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        statusDto, // non final status
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("REDIRECT");
         transaction.setGatewayAuthorizationStatus("test");
         transaction.setUserId(null);
 
@@ -2219,7 +2331,7 @@ class TransactionServiceTests {
 
     @ParameterizedTest
     @MethodSource("getAllClosureErrorDataCaseOutcome18")
-    void checkOutcomeWithClosureErrorDataOutcome18(ClosureErrorData closureErrorData) {
+    void checkOutcomeWithClosureErrorDataForNPGOutcome18(ClosureErrorData closureErrorData) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
@@ -2227,6 +2339,27 @@ class TransactionServiceTests {
                 );
         transaction.setPaymentGateway("NPG");
         transaction.setGatewayAuthorizationStatus("EXECUTED");
+        transaction.setUserId(null);
+        transaction.setClosureErrorData(closureErrorData);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18,
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getOutcome()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllClosureErrorDataCaseOutcome18")
+    void checkOutcomeWithClosureErrorDataForRedirectOutcome18(ClosureErrorData closureErrorData) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("REDIRECT");
+        transaction.setGatewayAuthorizationStatus("OK");
         transaction.setUserId(null);
         transaction.setClosureErrorData(closureErrorData);
 
@@ -2258,7 +2391,7 @@ class TransactionServiceTests {
 
     @ParameterizedTest
     @MethodSource("getAllClosureErrorDataCaseOutcome1")
-    void checkOutcomeWithClosureErrorDataOutcome1(ClosureErrorData closureErrorData) {
+    void checkOutcomeWithClosureErrorDataForNPGAndOutcome1(ClosureErrorData closureErrorData) {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
@@ -2266,6 +2399,27 @@ class TransactionServiceTests {
                 );
         transaction.setPaymentGateway("NPG");
         transaction.setGatewayAuthorizationStatus("EXECUTED");
+        transaction.setUserId(null);
+        transaction.setClosureErrorData(closureErrorData);
+
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1,
+                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                        .getOutcome()
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getAllClosureErrorDataCaseOutcome1")
+    void checkOutcomeWithClosureErrorDataForREDIRECTAndOutcome1(ClosureErrorData closureErrorData) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        ZonedDateTime.now()
+                );
+        transaction.setPaymentGateway("REDIRECT");
+        transaction.setGatewayAuthorizationStatus("OK");
         transaction.setUserId(null);
         transaction.setClosureErrorData(closureErrorData);
 
