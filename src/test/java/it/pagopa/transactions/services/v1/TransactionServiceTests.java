@@ -527,6 +527,25 @@ class TransactionServiceTests {
     }
 
     @Test
+    void getTransactionOutcomeThrowsExceptionForV1Transactions() {
+        final it.pagopa.ecommerce.commons.documents.v1.Transaction transaction = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
+                        ZonedDateTime.now()
+                );
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertThrows(
+                IllegalStateException.class,
+                () -> transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectError(IllegalStateException.class)
+                .verify();
+    }
+
+    @Test
     void getTransactionOutcomeReturnsOutcomesForStatusesNotifiedOKAndRightTotalAmount() {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(
@@ -2429,6 +2448,97 @@ class TransactionServiceTests {
                 Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
                         .getOutcome()
         );
+    }
+
+    private static Stream<Arguments> getTransactionStatusForFinalOutcomesForExpiredStateAndGatewayAuthorized() {
+
+        Map<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome, TransactionOutcomeInfoDto.OutcomeEnum> sendPaymentResultOOutcomeMap = new HashMap<>();
+        sendPaymentResultOOutcomeMap.put(
+                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
+                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0
+        );
+        sendPaymentResultOOutcomeMap.put(
+                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.KO,
+                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25
+        );
+        sendPaymentResultOOutcomeMap.put(
+                it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.NOT_RECEIVED,
+                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17
+        );
+        sendPaymentResultOOutcomeMap.put(null, TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1);
+        return sendPaymentResultOOutcomeMap.entrySet().stream().map(
+                e -> Arguments.of(e.getKey(), e.getValue())
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("getTransactionStatusForFinalOutcomesForExpiredStateAndGatewayAuthorized")
+    void getTransactionOutcomeForEXPIREDStateAuthorizedByGatewayRedirectAndSendPaymentResultEvaluation(
+                                                                                                       it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
+                                                                                                       TransactionOutcomeInfoDto.OutcomeEnum outcome
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
+                        ZonedDateTime.now()
+                );
+        transaction.setFeeTotal(50);
+        transaction.setGatewayAuthorizationStatus("OK");
+        transaction.setPaymentGateway("REDIRECT");
+        transaction.setUserId(null);
+        transaction.setSendPaymentResultOutcome(sendPaymentResultOutcome);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(outcome).isFinalStatus(true);
+        if (it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK
+                .equals(sendPaymentResultOutcome)) {
+            expected.setFees(50);
+            expected.setTotalAmount(100);
+        }
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
+    }
+
+    @ParameterizedTest
+    @MethodSource("getTransactionStatusForFinalOutcomesForExpiredStateAndGatewayAuthorized")
+    void getTransactionOutcomeForEXPIREDStateAuthorizedByGatewayNPGAndSendPaymentResultEvaluation(
+                                                                                                  it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
+                                                                                                  TransactionOutcomeInfoDto.OutcomeEnum outcome
+    ) {
+        final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.EXPIRED,
+                        ZonedDateTime.now()
+                );
+        transaction.setFeeTotal(50);
+        transaction.setGatewayAuthorizationStatus(EXECUTED.getValue());
+        transaction.setPaymentGateway("NPG");
+        transaction.setUserId(null);
+        transaction.setSendPaymentResultOutcome(sendPaymentResultOutcome);
+        TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
+                .outcome(outcome).isFinalStatus(true);
+        if (it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK
+                .equals(sendPaymentResultOutcome)) {
+            expected.setFees(50);
+            expected.setTotalAmount(100);
+        }
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        assertEquals(
+                expected,
+                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectNext(expected)
+                .verifyComplete();
     }
 
 }
