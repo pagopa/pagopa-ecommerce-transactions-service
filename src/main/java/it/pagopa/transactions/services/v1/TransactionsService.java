@@ -313,9 +313,9 @@ public class TransactionsService {
                                                                   ClosureErrorData closureErrorData
     ) {
         if (closureErrorData != null) {
-            return !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
-                    evaluateUnauthorizedStatus(paymentGateway, gatewayAuthorizationStatus, authorizationErrorCode) :
-                    evaluateClosePaymentResultError(closureErrorData);
+            return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                    evaluateClosePaymentResultError(closureErrorData): //Authorized
+                    evaluateUnauthorizedStatus(paymentGateway, gatewayAuthorizationStatus, authorizationErrorCode); //Not authorized
         } else {
             switch (status) {
                 case NOTIFIED_OK -> {
@@ -336,28 +336,28 @@ public class TransactionsService {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8;
                 }
                 case CLOSURE_ERROR, AUTHORIZATION_COMPLETED -> {
-                    return !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                    return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1: //Authorized
                             evaluateUnauthorizedStatus(
                                     paymentGateway,
                                     gatewayAuthorizationStatus,
-                                    authorizationErrorCode) :
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+                                    authorizationErrorCode); //Not authorized
                 }
                 case CLOSURE_REQUESTED -> {
-                    return !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                    return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17:
                             evaluateUnauthorizedStatus(
                                     paymentGateway,
                                     gatewayAuthorizationStatus,
-                                    authorizationErrorCode) :
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
+                                    authorizationErrorCode);
                 }
                 case UNAUTHORIZED -> {
-                    return !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                    return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25:
                             evaluateUnauthorizedStatus(
                                     paymentGateway,
                                     gatewayAuthorizationStatus,
-                                    authorizationErrorCode) :
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
+                                    authorizationErrorCode);
                 }
                 case CLOSED -> {
                     return sendPaymentResultOutcome != null
