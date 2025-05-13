@@ -791,6 +791,20 @@ class TransactionServiceTests {
         return Stream.of(
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        null,
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
+                        "OTHER_PAYMENT_GATEWAY",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                         "REDIRECT",
                         null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
@@ -833,6 +847,20 @@ class TransactionServiceTests {
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        null,
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                        "OTHER_PAYMENT_GATEWAY",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
                         "REDIRECT",
                         null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
@@ -871,6 +899,20 @@ class TransactionServiceTests {
                         "REDIRECT",
                         "EXPIRED",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        null,
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                        "OTHER_PAYMENT_GATEWAY",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -927,6 +969,20 @@ class TransactionServiceTests {
                         "REDIRECT",
                         "OK",
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        null,
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                                .isFinalStatus(true)
+                ),
+                Arguments.of(
+                        it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
+                        "OTHER_PAYMENT_GATEWAY",
+                        null,
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -1300,6 +1356,10 @@ class TransactionServiceTests {
     /**
      * Test cases and expected outcomes are
      * <p>
+     * Transaction status: CLOSURE_ERROR paymentGateway null authorizationStatus
+     * null expected outcome: 1 final status: true <br/>
+     * Transaction status: CLOSURE_ERROR paymentGateway OTHER authorizationStatus
+     * null expected outcome: 1 final status: true <br/>
      * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
      * null expected outcome: 25 final status: true <br/>
      * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
@@ -1313,6 +1373,10 @@ class TransactionServiceTests {
      * Transaction status: CLOSURE_ERROR paymentGateway REDIRECT authorizationStatus
      * EXPIRED expected outcome: 25 final status: true <br/>
      * <p>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway null
+     * authorizationStatus null expected outcome: 1 final status: true <br/>
+     * Transaction status: AUTHORIZATION_COMPLETED paymentGateway OTHER
+     * authorizationStatus null expected outcome: 1 final status: true <br/>
      * Transaction status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
      * authorizationStatus null expected outcome: 25 final status: true <br/>
      * Transactio status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
@@ -1326,6 +1390,10 @@ class TransactionServiceTests {
      * Transaction status: AUTHORIZATION_COMPLETED paymentGateway REDIRECT
      * authorizationStatus EXPIRED expected outcome: 25 final status: true <br/>
      * <p>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway null authorizationStatus
+     * null expected outcome: 1 final status: true <br/>
+     * Transaction status: CLOSURE_REQUESTED paymentGateway OTHER
+     * authorizationStatus null expected outcome: 1 final status: true <br/>
      * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
      * authorizationStatus null expected outcome: 25 final status: true <br/>
      * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
@@ -1339,6 +1407,10 @@ class TransactionServiceTests {
      * Transaction status: CLOSURE_REQUESTED paymentGateway REDIRECT
      * authorizationStatus EXPIRED expected outcome: 25 final status: true <br/>
      * <p>
+     * Transaction status: UNAUTHORIZED paymentGateway null authorizationStatus null
+     * expected outcome: 1 final status: true <br/>
+     * Transaction status: UNAUTHORIZED paymentGateway OTHER authorizationStatus
+     * null expected outcome: 1 final status: true <br/>
      * Transaction status: UNAUTHORIZED paymentGateway REDIRECT authorizationStatus
      * null expected outcome: 25 final status: true <br/>
      * Transaction status: UNAUTHORIZED paymentGateway REDIRECT authorizationStatus
