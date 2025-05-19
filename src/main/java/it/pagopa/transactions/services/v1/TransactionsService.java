@@ -276,7 +276,7 @@ public class TransactionsService {
                                 .outcome(outcome)
                                 .totalAmount(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0  ? transaction.getPaymentNotices().stream().mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() : null)
                                 .fees(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0  ?  + Optional.ofNullable(transaction.getFeeTotal()).orElse(0) : null)
-                                .isFinalStatus(evaluateFinalStatus(transaction.getStatus(), transaction.getClosureErrorData(), Optional.ofNullable(transaction.getGatewayAuthorizationStatus())));
+                                .isFinalStatus(evaluateFinalStatus(transaction.getStatus(), transaction.getClosureErrorData(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus()));
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
             }
@@ -285,14 +285,23 @@ public class TransactionsService {
     private Boolean evaluateFinalStatus(
                                         TransactionStatusDto status,
                                         ClosureErrorData closureErrorData,
-                                        Optional<String> gatewayAuthorizationStatus
+                                        String paymentGateway,
+                                        String gatewayAuthorizationStatus
     ) {
         return ecommerceFinalStates.contains(status) ||
                 (closureErrorData != null && closureErrorData.getHttpErrorCode() != null
                         && closureErrorData.getHttpErrorCode().is4xxClientError())
                 ||
                 (ecommercePossibleFinalState.contains(status)
-                        && !gatewayAuthorizationStatus.orElse("").equals(EXECUTED.getValue()));
+                        && !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus));
+    }
+
+    private boolean wasAuthorizedByGateway(String gateway, String gatewayAuthorizationStatus) {
+        return switch (gateway) {
+            case "NPG" -> EXECUTED.getValue().equals(gatewayAuthorizationStatus);
+            case "REDIRECT" -> "OK".equals(gatewayAuthorizationStatus);
+            case null, default -> false;
+        };
     }
 
     private TransactionOutcomeInfoDto.OutcomeEnum evaluateOutcome(
@@ -304,13 +313,10 @@ public class TransactionsService {
                                                                   ClosureErrorData closureErrorData
     ) {
         if (closureErrorData != null) {
-            return evaluateOutcomeStatus(
-                    paymentGateway,
-                    gatewayAuthorizationStatus,
-                    authorizationErrorCode,
-                    evaluateClosePaymentResultError(closureErrorData)
-            );
-        } else
+            return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                    evaluateClosePaymentResultError(closureErrorData): //Authorized
+                    evaluateUnauthorizedStatus(paymentGateway, gatewayAuthorizationStatus, authorizationErrorCode); //Not authorized
+        } else {
             switch (status) {
                 case NOTIFIED_OK -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0;
@@ -330,47 +336,40 @@ public class TransactionsService {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8;
                 }
                 case CLOSURE_ERROR, AUTHORIZATION_COMPLETED -> {
-                    return evaluateOutcomeStatus(
-                            paymentGateway,
-                            gatewayAuthorizationStatus,
-                            authorizationErrorCode,
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1
-                    );
+                    return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1: //Authorized
+                            evaluateUnauthorizedStatus(
+                                    paymentGateway,
+                                    gatewayAuthorizationStatus,
+                                    authorizationErrorCode); //Not authorized
                 }
                 case CLOSURE_REQUESTED -> {
-                    return evaluateOutcomeStatus(
-                            paymentGateway,
-                            gatewayAuthorizationStatus,
-                            authorizationErrorCode,
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17
-                    );
+                    return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17:
+                            evaluateUnauthorizedStatus(
+                                    paymentGateway,
+                                    gatewayAuthorizationStatus,
+                                    authorizationErrorCode);
                 }
                 case UNAUTHORIZED -> {
-                    return evaluateOutcomeStatus(
-                            paymentGateway,
-                            gatewayAuthorizationStatus,
-                            authorizationErrorCode,
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25
-
-                    );
+                    return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25:
+                            evaluateUnauthorizedStatus(
+                                    paymentGateway,
+                                    gatewayAuthorizationStatus,
+                                    authorizationErrorCode);
                 }
                 case CLOSED -> {
                     return sendPaymentResultOutcome != null
                             && sendPaymentResultOutcome.equals(TransactionUserReceiptData.Outcome.NOT_RECEIVED)
-                                    ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17
-                                    : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+                            ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17
+                            : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
                 }
                 case EXPIRED -> {
-                    if (gatewayAuthorizationStatus == null)
+                    if (paymentGateway == null || gatewayAuthorizationStatus == null)
                         return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
-                    else if (gatewayAuthorizationStatus.equals(EXECUTED.getValue())) {
-                        return evaluateOutcomeStatus(
-                                paymentGateway,
-                                gatewayAuthorizationStatus,
-                                authorizationErrorCode,
-                                TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1
-
-                        );
+                    else if (!wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus)) {
+                        return evaluateUnauthorizedStatus(paymentGateway, gatewayAuthorizationStatus, authorizationErrorCode);
                     } else {
                         return switch (sendPaymentResultOutcome) {
                             case OK -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0;
@@ -386,10 +385,11 @@ public class TransactionsService {
                 case REFUND_ERROR, REFUND_REQUESTED -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
                 }
-                default -> {
+                case null, default -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
                 }
             }
+        }
     }
 
     private TransactionOutcomeInfoDto.OutcomeEnum evaluateClosePaymentResultError(ClosureErrorData closureErrorData) {
@@ -406,10 +406,9 @@ public class TransactionsService {
         };
     }
 
-    private TransactionOutcomeInfoDto.OutcomeEnum evaluateOutcomeStatus(String paymentGateway, String gatewayAuthorizationStatus, String authorizationErrorCode, TransactionOutcomeInfoDto.OutcomeEnum expectedOutcome) {
-        if (paymentGateway.equals("NPG")) {
-            return switch (gatewayAuthorizationStatus) {
-                case "EXECUTED" -> expectedOutcome != null ? expectedOutcome : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
+    private TransactionOutcomeInfoDto.OutcomeEnum evaluateUnauthorizedStatus(String paymentGateway, String gatewayAuthorizationStatus, String authorizationErrorCode) {
+        return switch (paymentGateway) {
+            case "NPG" -> switch (gatewayAuthorizationStatus) {
                 case "CANCELED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8;
                 case "DENIED_BY_RISK", "THREEDS_VALIDATED", "THREEDS_FAILED" ->
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2;
@@ -417,10 +416,16 @@ public class TransactionsService {
                         TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 case "DECLINED" ->
                         Optional.ofNullable(npgAuthorizationErrorCodeMapping.get(authorizationErrorCode)).orElse(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25);
-                case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+                case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
             };
-        }
-        return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+            case "REDIRECT" -> switch (gatewayAuthorizationStatus) {
+                case "KO" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_2;
+                case "CANCELED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_8;
+                case "ERROR", "EXPIRED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
+                case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
+            };
+            case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+        };
     }
 
     private TransactionInfoDto buildTransactionInfoDtoFromView(BaseTransactionView baseTransactionView) {
