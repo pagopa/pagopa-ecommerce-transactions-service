@@ -38,6 +38,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import reactor.util.context.Context;
 
 @RestController("TransactionsControllerV1")
 @Slf4j
@@ -140,29 +141,51 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId))
-                .flatMap(
-                        requestAuthorizationRequest -> transactionsService
-                                .requestTransactionAuthorization(
-                                        transactionId,
-                                        xUserId,
-                                        xPgsId,
-                                        lang,
-                                        requestAuthorizationRequest
-                                )
-                )
+                .doOnNext(request -> logTransactionRequest(transactionId))
+                .flatMap(request -> authorizeTransaction(transactionId, xUserId, xPgsId, lang, request))
                 .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .contextWrite(context -> addTransactionContext(context, transactionId, exchange));
+    }
+
+    private void logTransactionRequest(String transactionId) {
+        log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId);
+    }
+
+    private Mono<RequestAuthorizationResponseDto> authorizeTransaction(
+                                                                       String transactionId,
+                                                                       UUID xUserId,
+                                                                       String xPgsId,
+                                                                       String lang,
+                                                                       RequestAuthorizationRequestDto request
+    ) {
+        return transactionsService.requestTransactionAuthorization(
+                transactionId,
+                xUserId,
+                xPgsId,
+                lang,
+                request
+        );
+    }
+
+    private Context addTransactionContext(
+                                          Context context,
+                                          String transactionId,
+                                          ServerWebExchange exchange
+    ) {
+        TransactionTracingUtils.TransactionInfo transactionInfo = createTransactionInfo(transactionId, exchange);
+        return TransactionTracingUtils.setTransactionInfoIntoReactorContext(transactionInfo, context);
+    }
+
+    private TransactionTracingUtils.TransactionInfo createTransactionInfo(
+                                                                          String transactionId,
+                                                                          ServerWebExchange exchange
+    ) {
+        return new TransactionTracingUtils.TransactionInfo(
+                new TransactionId(transactionId),
+                new HashSet<>(),
+                exchange.getRequest().getMethodValue(),
+                exchange.getRequest().getURI().getPath()
+        );
     }
 
     @Override
