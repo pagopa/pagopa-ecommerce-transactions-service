@@ -648,69 +648,14 @@ public class TransactionsService {
         log.info("Authorization psp validation for transactionId: {}", transaction.getTransactionId());
 
         String clientId = transactionsUtils.getClientId(transaction);
-        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = transactionsUtils
-                .getPaymentNotices(transaction);
 
         return retrieveInformationFromAuthorizationRequest(requestAuthorizationRequestDto, clientId)
                 .flatMap(
-                        paymentSessionData -> ecommercePaymentMethodsClient
-                                .calculateFee(
-                                        requestAuthorizationRequestDto.getPaymentInstrumentId(),
-                                        transaction.getTransactionId(),
-                                        new CalculateFeeRequestDto()
-                                                .touchpoint(
-                                                        transactionsUtils.getEffectiveClientId(transaction)
-                                                )
-                                                .bin(
-                                                        paymentSessionData.cardBin()
-                                                )
-                                                .idPspList(
-                                                        List.of(
-                                                                requestAuthorizationRequestDto
-                                                                        .getPspId()
-                                                        )
-                                                )
-                                                .paymentNotices(
-                                                        paymentNotices
-                                                                .stream()
-                                                                .map(
-                                                                        p -> new PaymentNoticeDto()
-                                                                                .paymentAmount(
-                                                                                        p.getAmount().longValue()
-                                                                                )
-                                                                                .primaryCreditorInstitution(
-                                                                                        p.getRptId().substring(0, 11)
-                                                                                )
-                                                                                .transferList(
-                                                                                        p.getTransferList()
-                                                                                                .stream()
-                                                                                                .map(
-                                                                                                        t -> new TransferListItemDto()
-                                                                                                                .creditorInstitution(
-                                                                                                                        t.getPaFiscalCode()
-                                                                                                                )
-                                                                                                                .digitalStamp(
-                                                                                                                        t.getDigitalStamp()
-                                                                                                                )
-                                                                                                                .transferCategory(
-                                                                                                                        t.getTransferCategory()
-                                                                                                                )
-                                                                                                ).toList()
-                                                                                )
-                                                                )
-                                                                .toList()
-                                                )
-                                                .isAllCCP(
-                                                        transactionsUtils.isAllCcp(transaction, 0)
-                                                ),
-                                        Integer.MAX_VALUE
-                                )
-                                .map(
-                                        calculateFeeResponseDto -> Tuples.of(
-                                                calculateFeeResponseDto,
-                                                paymentSessionData
-                                        )
-                                )
+                        paymentSessionData -> calculateTransactionFee(
+                                transaction,
+                                requestAuthorizationRequestDto,
+                                paymentSessionData
+                        )
                 )
                 .map(data -> createAuthSessionData(requestAuthorizationRequestDto, data))
                 .filter(authSessionData -> authSessionData.bundle().isPresent())
@@ -721,6 +666,71 @@ public class TransactionsService {
                         )
                 )
                 .map(authSessionData -> Tuples.of(transaction, authSessionData));
+    }
+
+    private Mono<Tuple2<CalculateFeeResponseDto, PaymentSessionData>> calculateTransactionFee(
+                                                                                              BaseTransactionView transaction,
+                                                                                              RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                                                                                              PaymentSessionData paymentSessionData
+    ) {
+
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = transactionsUtils
+                .getPaymentNotices(transaction);
+
+        return ecommercePaymentMethodsClient
+                .calculateFee(
+                        requestAuthorizationRequestDto.getPaymentInstrumentId(),
+                        transaction.getTransactionId(),
+                        createCalculateFeeRequest(
+                                transaction,
+                                requestAuthorizationRequestDto,
+                                paymentSessionData,
+                                paymentNotices
+                        ),
+                        Integer.MAX_VALUE
+                )
+                .map(calculateFeeResponseDto -> Tuples.of(calculateFeeResponseDto, paymentSessionData));
+    }
+
+    private CalculateFeeRequestDto createCalculateFeeRequest(
+                                                             BaseTransactionView transaction,
+                                                             RequestAuthorizationRequestDto requestAuthRequestDto,
+                                                             PaymentSessionData paymentSessionData,
+                                                             List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices
+    ) {
+        return new CalculateFeeRequestDto()
+                .touchpoint(transactionsUtils.getEffectiveClientId(transaction))
+                .bin(paymentSessionData.cardBin())
+                .idPspList(List.of(requestAuthRequestDto.getPspId()))
+                .paymentNotices(
+                        paymentNotices.stream().map(
+                                p -> new PaymentNoticeDto()
+                                        .paymentAmount(
+                                                p.getAmount().longValue()
+                                        )
+                                        .primaryCreditorInstitution(
+                                                p.getRptId().substring(0, 11)
+                                        )
+                                        .transferList(
+                                                p.getTransferList()
+                                                        .stream()
+                                                        .map(
+                                                                t -> new TransferListItemDto()
+                                                                        .creditorInstitution(
+                                                                                t.getPaFiscalCode()
+                                                                        )
+                                                                        .digitalStamp(
+                                                                                t.getDigitalStamp()
+                                                                        )
+                                                                        .transferCategory(
+                                                                                t.getTransferCategory()
+                                                                        )
+                                                        ).toList()
+                                        )
+                        )
+                                .toList()
+                )
+                .isAllCCP(transactionsUtils.isAllCcp(transaction, 0));
     }
 
     private AuthorizationRequestSessionData createAuthSessionData(
