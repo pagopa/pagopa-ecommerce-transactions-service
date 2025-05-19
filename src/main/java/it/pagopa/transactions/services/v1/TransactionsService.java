@@ -744,12 +744,9 @@ public class TransactionsService {
                 )
                 .filter(authSessionData -> authSessionData.bundle().isPresent())
                 .switchIfEmpty(
-                        Mono.error(
-                                new UnsatisfiablePspRequestException(
-                                        new PaymentToken(transaction.getTransactionId()),
-                                        requestAuthorizationRequestDto.getLanguage(),
-                                        requestAuthorizationRequestDto.getFee()
-                                )
+                        createUnsatisfiablePspRequestError(
+                                transaction.getTransactionId(),
+                                requestAuthorizationRequestDto
                         )
                 )
                 .map(
@@ -759,6 +756,19 @@ public class TransactionsService {
                         )
 
                 );
+    }
+
+    private <T> Mono<T> createUnsatisfiablePspRequestError(
+                                                           String transactionId,
+                                                           RequestAuthorizationRequestDto requestAuthRequestDto
+    ) {
+        return Mono.error(
+                new UnsatisfiablePspRequestException(
+                        new PaymentToken(transactionId),
+                        requestAuthRequestDto.getLanguage(),
+                        requestAuthRequestDto.getFee()
+                )
+        );
     }
 
     private Mono<BaseTransactionView> validateTransactionDetails(
