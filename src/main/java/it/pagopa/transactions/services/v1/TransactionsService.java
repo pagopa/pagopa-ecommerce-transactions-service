@@ -724,7 +724,7 @@ public class TransactionsService {
     }
 
     private AuthorizationRequestSessionData createAuthSessionData(
-                                                                  RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                                                                  RequestAuthorizationRequestDto requestAuthRequestDto,
                                                                   Tuple2<CalculateFeeResponseDto, PaymentSessionData> data
     ) {
 
@@ -734,27 +734,29 @@ public class TransactionsService {
         return new AuthorizationRequestSessionData(
                 calculateFeeResponse.getPaymentMethodName(),
                 calculateFeeResponse.getPaymentMethodDescription(),
-                calculateFeeResponse.getBundles().stream()
-                        .filter(
-                                psp -> requestAuthorizationRequestDto
-                                        .getPspId()
-                                        .equals(
-                                                psp.getIdPsp()
-                                        )
-                                        && Long.valueOf(
-                                                requestAuthorizationRequestDto
-                                                        .getFee()
-                                        )
-                                                .equals(
-                                                        psp.getTaxPayerFee()
-                                                )
-                        ).findFirst(),
+                findMatchingBundle(calculateFeeResponse, requestAuthRequestDto),
                 paymentSessionData.brand(),
                 Optional.ofNullable(paymentSessionData.sessionId()),
                 Optional.ofNullable(paymentSessionData.contractId()),
                 calculateFeeResponse.getAsset(),
                 calculateFeeResponse.getBrandAssets()
         );
+    }
+
+    private Optional<BundleDto> findMatchingBundle(
+                                                   CalculateFeeResponseDto calculateFeeResponse,
+                                                   RequestAuthorizationRequestDto requestAuthRequestDto
+    ) {
+        return calculateFeeResponse.getBundles().stream()
+                .filter(psp -> isMatchingPspAndFee(psp, requestAuthRequestDto)).findFirst();
+    }
+
+    private boolean isMatchingPspAndFee(
+                                        BundleDto psp,
+                                        RequestAuthorizationRequestDto requestAuthRequestDto
+    ) {
+        return requestAuthRequestDto.getPspId().equals(psp.getIdPsp())
+                && Long.valueOf(requestAuthRequestDto.getFee()).equals(psp.getTaxPayerFee());
     }
 
     private <T> Mono<T> createUnsatisfiablePspRequestError(
