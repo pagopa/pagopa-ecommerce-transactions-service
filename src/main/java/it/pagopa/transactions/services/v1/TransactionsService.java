@@ -712,36 +712,7 @@ public class TransactionsService {
                                         )
                                 )
                 )
-                .map(
-                        data -> {
-                            CalculateFeeResponseDto calculateFeeResponse = data.getT1();
-                            PaymentSessionData paymentSessionData = data.getT2();
-                            return new AuthorizationRequestSessionData(
-                                    calculateFeeResponse.getPaymentMethodName(),
-                                    calculateFeeResponse.getPaymentMethodDescription(),
-                                    calculateFeeResponse.getBundles().stream()
-                                            .filter(
-                                                    psp -> requestAuthorizationRequestDto
-                                                            .getPspId()
-                                                            .equals(
-                                                                    psp.getIdPsp()
-                                                            )
-                                                            && Long.valueOf(
-                                                                    requestAuthorizationRequestDto
-                                                                            .getFee()
-                                                            )
-                                                                    .equals(
-                                                                            psp.getTaxPayerFee()
-                                                                    )
-                                            ).findFirst(),
-                                    paymentSessionData.brand(),
-                                    Optional.ofNullable(paymentSessionData.sessionId()),
-                                    Optional.ofNullable(paymentSessionData.contractId()),
-                                    calculateFeeResponse.getAsset(),
-                                    calculateFeeResponse.getBrandAssets()
-                            );
-                        }
-                )
+                .map(data -> createAuthSessionData(requestAuthorizationRequestDto, data))
                 .filter(authSessionData -> authSessionData.bundle().isPresent())
                 .switchIfEmpty(
                         createUnsatisfiablePspRequestError(
@@ -749,13 +720,41 @@ public class TransactionsService {
                                 requestAuthorizationRequestDto
                         )
                 )
-                .map(
-                        authSessionData -> Tuples.of(
-                                transaction,
-                                authSessionData
-                        )
+                .map(authSessionData -> Tuples.of(transaction, authSessionData));
+    }
 
-                );
+    private AuthorizationRequestSessionData createAuthSessionData(
+                                                                  RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                                                                  Tuple2<CalculateFeeResponseDto, PaymentSessionData> data
+    ) {
+
+        CalculateFeeResponseDto calculateFeeResponse = data.getT1();
+        PaymentSessionData paymentSessionData = data.getT2();
+
+        return new AuthorizationRequestSessionData(
+                calculateFeeResponse.getPaymentMethodName(),
+                calculateFeeResponse.getPaymentMethodDescription(),
+                calculateFeeResponse.getBundles().stream()
+                        .filter(
+                                psp -> requestAuthorizationRequestDto
+                                        .getPspId()
+                                        .equals(
+                                                psp.getIdPsp()
+                                        )
+                                        && Long.valueOf(
+                                                requestAuthorizationRequestDto
+                                                        .getFee()
+                                        )
+                                                .equals(
+                                                        psp.getTaxPayerFee()
+                                                )
+                        ).findFirst(),
+                paymentSessionData.brand(),
+                Optional.ofNullable(paymentSessionData.sessionId()),
+                Optional.ofNullable(paymentSessionData.contractId()),
+                calculateFeeResponse.getAsset(),
+                calculateFeeResponse.getBrandAssets()
+        );
     }
 
     private <T> Mono<T> createUnsatisfiablePspRequestError(
