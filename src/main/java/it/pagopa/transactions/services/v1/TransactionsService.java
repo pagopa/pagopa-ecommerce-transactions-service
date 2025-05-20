@@ -5,6 +5,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
+import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.*;
@@ -552,98 +553,138 @@ public class TransactionsService {
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(transaction -> validateTransactionDetails(transaction, requestAuthorizationRequestDto))
                 .flatMap(transaction -> processAuthRequest(transaction, requestAuthorizationRequestDto))
-                .flatMap(args -> {
-                            BaseTransactionView transactionDocument = args
-                                    .getT1();
-                            AuthorizationRequestSessionData authorizationRequestSessionData = args.getT2();
-                            String paymentMethodName = authorizationRequestSessionData.paymentMethodName();
-                            String paymentMethodDescription = authorizationRequestSessionData.paymentMethodDescription();
-                            BundleDto bundle = authorizationRequestSessionData.bundle().orElseThrow();
-                            Optional<String> sessionId = authorizationRequestSessionData.npgSessionId();
-                            String brand = authorizationRequestSessionData.brand();
-                            Optional<String> contractId = authorizationRequestSessionData.npgContractId();
-                            String asset = authorizationRequestSessionData.asset();
-                            Map<String, String> brandAssets = authorizationRequestSessionData.brandAssets();
-                            log.info(
-                                    "Requesting authorization for transactionId: {}",
-                                    transactionDocument.getTransactionId()
-                            );
+                .flatMap(args -> executeAuthPipeline(args, lang, requestAuthorizationRequestDto, paymentGatewayId));
+    }
 
-                            AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                                    new TransactionId(
-                                            transactionDocument.getTransactionId()
-                                    ),
-                                    transactionsUtils.getPaymentNotices(transactionDocument).stream().map(
-                                            paymentNotice -> new PaymentNotice(
-                                                    new PaymentToken(paymentNotice.getPaymentToken()),
-                                                    new RptId(paymentNotice.getRptId()),
-                                                    new TransactionAmount(paymentNotice.getAmount()),
-                                                    new TransactionDescription(paymentNotice.getDescription()),
-                                                    new PaymentContextCode(
-                                                            paymentNotice.getPaymentContextCode()
-                                                    ),
-                                                    paymentNotice.getTransferList().stream()
-                                                            .map(
-                                                                    transfer -> new PaymentTransferInfo(
-                                                                            transfer.getPaFiscalCode(),
-                                                                            transfer.getDigitalStamp(),
-                                                                            transfer.getTransferAmount(),
-                                                                            transfer.getTransferCategory()
-                                                                    )
-                                                            ).toList(),
-                                                    paymentNotice.isAllCCP(),
-                                                    new CompanyName(paymentNotice.getCompanyName()),
-                                                    paymentNotice.getCreditorReferenceId()
-                                            )
-                                    ).toList(),
-                                    transactionsUtils.getEmail(transactionDocument),
-                                    requestAuthorizationRequestDto.getFee(),
-                                    requestAuthorizationRequestDto.getPaymentInstrumentId(),
-                                    requestAuthorizationRequestDto.getPspId(),
-                                    bundle.getPaymentMethod(),
-                                    bundle.getIdBrokerPsp(),
-                                    bundle.getIdChannel(),
-                                    paymentMethodName,
-                                    paymentMethodDescription,
-                                    bundle.getPspBusinessName(),
-                                    bundle.getOnUs(),
-                                    paymentGatewayId,
-                                    sessionId,
-                                    contractId,
-                                    brand,
-                                    requestAuthorizationRequestDto.getDetails(),
-                                    asset,
-                                    Optional.ofNullable(brandAssets),
-                                    bundle.getIdBundle()
-                            );
+    private Mono<RequestAuthorizationResponseDto> executeAuthPipeline(
+            Tuple2<BaseTransactionView, AuthorizationRequestSessionData> args,
+            String lang,
+            RequestAuthorizationRequestDto requestAuthRequestDto,
+            String paymentGatewayId
+    ) {
+        BaseTransactionView transactionDocument = args.getT1();
+        AuthorizationRequestSessionData authorizationRequestSessionData = args.getT2();
 
-                            TransactionRequestAuthorizationCommand transactionRequestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                                    transactionsUtils.getRptIds(transactionDocument).stream().map(RptId::new).toList(),
-                                    lang,
-                                    authorizationData
-                            );
-                            Mono<RequestAuthorizationResponseDto> authPipeline = switch (transactionDocument) {
-                                case Transaction ignored -> requestAuthHandlerV2
-                                        .handle(transactionRequestAuthorizationCommand).doOnNext(
-                                                res -> log.info(
-                                                        "Requested authorization for transaction: {}",
-                                                        transactionDocument.getTransactionId()
-                                                )
-                                        )
-                                        .flatMap(
-                                                res -> authorizationProjectionHandlerV2
-                                                        .handle(authorizationData)
-                                                        .thenReturn(res)
-                                        );
-                                default ->
-                                        throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass()));
-                            };
-                            return authPipeline.doOnSuccess(response -> transactionsUtils.getPaymentNotices(transactionDocument).forEach(paymentNotice -> {
-                                log.info("Invalidate cache for RptId : {}", paymentNotice.getRptId());
-                                paymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.getRptId());
-                            }));
-                        }
-                );
+        log.info("Requesting authorization for transactionId: {}", transactionDocument.getTransactionId());
+
+        AuthorizationRequestData authData = createAuthRequestData(
+                transactionDocument, authorizationRequestSessionData, requestAuthRequestDto, paymentGatewayId);
+
+        TransactionRequestAuthorizationCommand transactionRequestAuthCommand = new TransactionRequestAuthorizationCommand(
+                transactionsUtils.getRptIds(transactionDocument).stream().map(RptId::new).toList(),
+                lang,
+                authData
+        );
+
+        return executeHandlerBasedOnTransactionType(transactionDocument, transactionRequestAuthCommand, authData)
+                .doOnSuccess(response -> invalidatePaymentRequestCache(transactionDocument));
+    }
+
+    private AuthorizationRequestData createAuthRequestData(
+            BaseTransactionView transactionDocument,
+            AuthorizationRequestSessionData authSessionData,
+            RequestAuthorizationRequestDto requestAuthRequestDto,
+            String paymentGatewayId) {
+
+        BundleDto bundle = authSessionData.bundle().orElseThrow();
+        String paymentMethodName = authSessionData.paymentMethodName();
+        String paymentMethodDescription = authSessionData.paymentMethodDescription();
+        Optional<String> sessionId = authSessionData.npgSessionId();
+        String brand = authSessionData.brand();
+        Optional<String> contractId = authSessionData.npgContractId();
+        String asset = authSessionData.asset();
+        Map<String, String> brandAssets = authSessionData.brandAssets();
+
+        return new AuthorizationRequestData(
+                new TransactionId(transactionDocument.getTransactionId()),
+                mapTransactionDocToV2PaymentNoticeList(transactionDocument),
+                transactionsUtils.getEmail(transactionDocument),
+                requestAuthRequestDto.getFee(),
+                requestAuthRequestDto.getPaymentInstrumentId(),
+                requestAuthRequestDto.getPspId(),
+                bundle.getPaymentMethod(),
+                bundle.getIdBrokerPsp(),
+                bundle.getIdChannel(),
+                paymentMethodName,
+                paymentMethodDescription,
+                bundle.getPspBusinessName(),
+                bundle.getOnUs(),
+                paymentGatewayId,
+                sessionId,
+                contractId,
+                brand,
+                requestAuthRequestDto.getDetails(),
+                asset,
+                Optional.ofNullable(brandAssets),
+                bundle.getIdBundle()
+        );
+    }
+
+    private Mono<RequestAuthorizationResponseDto> executeHandlerBasedOnTransactionType(
+            BaseTransactionView transactionDocument,
+            TransactionRequestAuthorizationCommand transactionRequestAuthCommand,
+            AuthorizationRequestData authData) {
+
+        if (transactionDocument instanceof Transaction) {
+            return requestAuthHandlerV2
+                    .handle(transactionRequestAuthCommand)
+                    .doOnNext(res -> logAuthRequested(transactionDocument.getTransactionId()))
+                    .flatMap(res -> authorizationProjectionHandlerV2
+                            .handle(authData)
+                            .thenReturn(res));
+        } else {
+            return Mono.error(new NotImplementedException(
+                    "Handling for transaction document: [%s] not implemented yet".formatted(transactionDocument.getClass())
+            ));
+        }
+    }
+
+    private void logAuthRequested(String transactionId) {
+        log.info("Requested authorization for transaction: {}", transactionId);
+    }
+
+    private void invalidatePaymentRequestCache(BaseTransactionView transactionDocument) {
+        transactionsUtils.getPaymentNotices(transactionDocument).forEach(this::invalidateRptIdCache);
+    }
+
+    private void invalidateRptIdCache(it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice) {
+        log.info("Invalidate cache for RptId : {}", paymentNotice.getRptId());
+        paymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.getRptId());
+    }
+
+    private List<PaymentNotice> mapTransactionDocToV2PaymentNoticeList(BaseTransactionView transactionDocument) {
+        return transactionsUtils.getPaymentNotices(transactionDocument).stream()
+                .map(this::mapV1PaymentNoticeToV2)
+                .toList();
+    }
+
+    private PaymentNotice mapV1PaymentNoticeToV2(it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice) {
+        return new PaymentNotice(
+                new PaymentToken(paymentNotice.getPaymentToken()),
+                new RptId(paymentNotice.getRptId()),
+                new TransactionAmount(paymentNotice.getAmount()),
+                new TransactionDescription(paymentNotice.getDescription()),
+                new PaymentContextCode(paymentNotice.getPaymentContextCode()),
+                mapV1PaymentTransferInfoListToV2(paymentNotice.getTransferList()),
+                paymentNotice.isAllCCP(),
+                new CompanyName(paymentNotice.getCompanyName()),
+                paymentNotice.getCreditorReferenceId()
+        );
+    }
+
+    private List<PaymentTransferInfo> mapV1PaymentTransferInfoListToV2(List<PaymentTransferInformation> transferList) {
+        return transferList.stream()
+                .map(this::mapV1PaymentTransferInfoToV2)
+                .toList();
+    }
+
+    private PaymentTransferInfo mapV1PaymentTransferInfoToV2(PaymentTransferInformation transferInfoV1) {
+        return new PaymentTransferInfo(
+                transferInfoV1.getPaFiscalCode(),
+                transferInfoV1.getDigitalStamp(),
+                transferInfoV1.getTransferAmount(),
+                transferInfoV1.getTransferCategory()
+        );
     }
 
     private Mono<Tuple2<BaseTransactionView, AuthorizationRequestSessionData>> processAuthRequest(
@@ -707,35 +748,36 @@ public class TransactionsService {
                 .touchpoint(transactionsUtils.getEffectiveClientId(transaction))
                 .bin(paymentSessionData.cardBin())
                 .idPspList(List.of(requestAuthRequestDto.getPspId()))
-                .paymentNotices(
-                        paymentNotices.stream().map(
-                                p -> new PaymentNoticeDto()
-                                        .paymentAmount(
-                                                p.getAmount().longValue()
-                                        )
-                                        .primaryCreditorInstitution(
-                                                p.getRptId().substring(0, 11)
-                                        )
-                                        .transferList(
-                                                p.getTransferList()
-                                                        .stream()
-                                                        .map(
-                                                                t -> new TransferListItemDto()
-                                                                        .creditorInstitution(
-                                                                                t.getPaFiscalCode()
-                                                                        )
-                                                                        .digitalStamp(
-                                                                                t.getDigitalStamp()
-                                                                        )
-                                                                        .transferCategory(
-                                                                                t.getTransferCategory()
-                                                                        )
-                                                        ).toList()
-                                        )
-                        )
-                                .toList()
-                )
+                .paymentNotices(mapV1PaymentNoticesToV2(paymentNotices))
                 .isAllCCP(transactionsUtils.isAllCcp(transaction, 0));
+    }
+
+    private List<PaymentNoticeDto> mapV1PaymentNoticesToV2(List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices) {
+        return paymentNotices
+                .stream()
+                .map(this::convertPaymentNoticeToDto)
+                .toList();
+    }
+
+    private PaymentNoticeDto convertPaymentNoticeToDto(it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice) {
+        return new PaymentNoticeDto()
+                .paymentAmount(paymentNotice.getAmount().longValue())
+                .primaryCreditorInstitution(paymentNotice.getRptId().substring(0, 11))
+                .transferList(mapV1TransferInfoListToV2TransferListItemDtoList(paymentNotice.getTransferList()));
+    }
+
+    private List<TransferListItemDto> mapV1TransferInfoListToV2TransferListItemDtoList(List<PaymentTransferInformation> transferList) {
+        return transferList
+                .stream()
+                .map(this::mapV1TransferInfoToV2TransferListItemDto)
+                .toList();
+    }
+
+    private TransferListItemDto mapV1TransferInfoToV2TransferListItemDto(PaymentTransferInformation transferInfo) {
+        return new TransferListItemDto()
+                .creditorInstitution(transferInfo.getPaFiscalCode())
+                .digitalStamp(transferInfo.getDigitalStamp())
+                .transferCategory(transferInfo.getTransferCategory());
     }
 
     private AuthorizationRequestSessionData createAuthSessionData(
