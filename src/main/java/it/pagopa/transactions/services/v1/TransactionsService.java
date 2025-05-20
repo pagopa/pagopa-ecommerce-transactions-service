@@ -548,13 +548,13 @@ public class TransactionsService {
                                                                                  UUID xUserId,
                                                                                  String paymentGatewayId,
                                                                                  String lang,
-                                                                                 RequestAuthorizationRequestDto requestAuthorizationRequestDto
+                                                                                 RequestAuthorizationRequestDto authRequest
     ) {
         return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .flatMap(transaction -> validateTransactionDetails(transaction, requestAuthorizationRequestDto))
-                .flatMap(transaction -> processAuthRequest(transaction, requestAuthorizationRequestDto))
-                .flatMap(args -> executeAuthPipeline(args, lang, requestAuthorizationRequestDto, paymentGatewayId));
+                .flatMap(transaction -> validateTransactionDetails(transaction, authRequest))
+                .flatMap(transaction -> processAuthRequest(transaction, authRequest))
+                .flatMap(args -> executeAuthPipeline(args, lang, authRequest, paymentGatewayId));
     }
 
     /**
@@ -1041,47 +1041,47 @@ public class TransactionsService {
      * Checks if there's a mismatch between the transaction amount and the requested
      * amount
      *
-     * @param requestAuthorizationRequestDto The authorization request
-     * @param transaction                    The transaction to check
+     * @param authRequest The authorization request
+     * @param transaction The transaction to check
      * @return true if there's a mismatch, false otherwise
      */
     private boolean hasAmountMismatch(
-                                      RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                                      RequestAuthorizationRequestDto authRequest,
                                       BaseTransactionView transaction
     ) {
         return !transactionsUtils.getTransactionTotalAmount(transaction)
-                .equals(requestAuthorizationRequestDto.getAmount());
+                .equals(authRequest.getAmount());
     }
 
     /**
      * Checks if there's a mismatch in the allCCP flag between the transaction and
      * the request
      *
-     * @param requestAuthorizationRequestDto The authorization request
-     * @param transaction                    The transaction to check
+     * @param authRequest The authorization request
+     * @param transaction The transaction to check
      * @return true if there's a mismatch, false otherwise
      */
     private boolean hasAllCCPMismatch(
-                                      RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                                      RequestAuthorizationRequestDto authRequest,
                                       BaseTransactionView transaction
     ) {
-        return !transactionsUtils.isAllCcp(transaction, 0).equals(requestAuthorizationRequestDto.getIsAllCCP());
+        return !transactionsUtils.isAllCcp(transaction, 0).equals(authRequest.getIsAllCCP());
     }
 
     /**
      * Creates an error for amount mismatch
      *
-     * @param requestAuthorizationRequestDto The authorization request
-     * @param transaction                    The transaction
+     * @param authRequest The authorization request
+     * @param transaction The transaction
      * @return A Mono error with appropriate exception
      */
     private <T> Mono<T> createAmountMismatchError(
-                                                  RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                                                  RequestAuthorizationRequestDto authRequest,
                                                   BaseTransactionView transaction
     ) {
         return Mono.error(
                 new TransactionAmountMismatchException(
-                        requestAuthorizationRequestDto.getAmount(),
+                        authRequest.getAmount(),
                         transactionsUtils.getTransactionTotalAmount(transaction)
                 )
         );
@@ -1090,18 +1090,18 @@ public class TransactionsService {
     /**
      * Creates an error for allCCP mismatch
      *
-     * @param requestAuthorizationRequestDto The authorization request
-     * @param transaction                    The transaction
+     * @param authRequest The authorization request
+     * @param transaction The transaction
      * @return A Mono error with appropriate exception
      */
     private <T> Mono<T> createAllCCPMismatchError(
-                                                  RequestAuthorizationRequestDto requestAuthorizationRequestDto,
+                                                  RequestAuthorizationRequestDto authRequest,
                                                   BaseTransactionView transaction
     ) {
         return Mono.error(
                 new PaymentNoticeAllCCPMismatchException(
                         transactionsUtils.getRptId(transaction, 0),
-                        requestAuthorizationRequestDto.getIsAllCCP(),
+                        authRequest.getIsAllCCP(),
                         transactionsUtils.isAllCcp(transaction, 0)
                 )
         );
