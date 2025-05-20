@@ -17,6 +17,7 @@ import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -141,16 +142,37 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnNext(request -> logTransactionRequest(transactionId))
+                .doOnNext(logTransactionRequestFor(transactionId))
                 .flatMap(request -> authorizeTransaction(transactionId, xUserId, xPgsId, lang, request))
                 .map(ResponseEntity::ok)
                 .contextWrite(context -> addTransactionContext(context, transactionId, exchange));
+    }
+
+    /**
+     * Creates a consumer that logs a transaction request for a specific transaction
+     * ID.
+     *
+     * @param transactionId The ID of the transaction being requested
+     * @return A consumer that logs the transaction request
+     */
+    private Consumer<RequestAuthorizationRequestDto> logTransactionRequestFor(String transactionId) {
+        return request -> logTransactionRequest(transactionId);
     }
 
     private void logTransactionRequest(String transactionId) {
         log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId);
     }
 
+    /**
+     * Creates a function that authorizes a transaction with the specified
+     * parameters.
+     *
+     * @param transactionId The ID of the transaction to authorize
+     * @param xUserId       The user ID for the authorization
+     * @param xPgsId        The payment gateway ID
+     * @param lang          The language code
+     * @return A function that processes the authorization request
+     */
     private Mono<RequestAuthorizationResponseDto> authorizeTransaction(
                                                                        String transactionId,
                                                                        UUID xUserId,
@@ -167,6 +189,13 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
+    /**
+     * Creates a function that adds transaction context to a reactor context.
+     *
+     * @param transactionId The ID of the transaction
+     * @param exchange      The server web exchange
+     * @return A function that adds transaction context
+     */
     private Context addTransactionContext(
                                           Context context,
                                           String transactionId,
