@@ -161,8 +161,8 @@ class TransactionsControllerTest {
             Mockito.when(mockExchange.getRequest())
                     .thenReturn(mockRequest);
 
-            Mockito.when(mockExchange.getRequest().getMethodValue())
-                    .thenReturn("POST");
+            Mockito.when(mockExchange.getRequest().getMethod())
+                    .thenReturn(HttpMethod.POST);
 
             Mockito.when(mockExchange.getRequest().getURI())
                     .thenReturn(URI.create("https://localhost/transactions"));
@@ -199,8 +199,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("GET");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.GET);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
@@ -226,8 +226,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("DELETE");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.DELETE);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
@@ -253,8 +253,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("DELETE");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.DELETE);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
@@ -496,8 +496,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("POST");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.POST);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1266,8 +1266,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("POST");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.POST);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1347,8 +1347,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("POST");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.POST);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1445,8 +1445,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("POST");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.POST);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1587,8 +1587,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("GET");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.GET);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId, "outcomes")));

@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -520,7 +521,7 @@ public class PaymentGatewayClient {
                                                     NodeForwarderClientException.class,
                                                     exception -> {
                                                         String pspId = authorizationData.pspId();
-                                                        Optional<HttpStatus> responseHttpStatus = Optional
+                                                        Optional<HttpStatusCode> responseHttpStatus = Optional
                                                                 .ofNullable(exception.getCause())
                                                                 .filter(WebClientResponseException.class::isInstance)
                                                                 .map(
@@ -536,7 +537,8 @@ public class PaymentGatewayClient {
                                                                 exception
                                                         );
                                                         if (responseHttpStatus.isPresent()) {
-                                                            HttpStatus httpStatus = responseHttpStatus.get();
+                                                            HttpStatus httpStatus = HttpStatus
+                                                                    .valueOf(responseHttpStatus.get().value());
                                                             if (httpStatus.is4xxClientError()) {
                                                                 return new AlreadyProcessedException(
                                                                         authorizationData.transactionId()
