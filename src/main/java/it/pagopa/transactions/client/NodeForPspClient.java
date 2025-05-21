@@ -15,13 +15,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
-import javax.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBElement;
 
 @Component
 @Slf4j
@@ -67,7 +68,7 @@ public class NodeForPspClient {
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
                 .retrieve()
                 .onStatus(
-                        HttpStatus::isError,
+                        HttpStatusCode::isError,
                         clientResponse -> clientResponse.bodyToMono(String.class)
                                 .flatMap(
                                         errorResponseBody -> Mono.error(
@@ -91,7 +92,10 @@ public class NodeForPspClient {
                         ResponseStatusException.class,
                         error -> {
                             log.error("ActivatePaymentNoticeV2 ResponseStatus Error:", error);
-                            return new BadGatewayException(error.getReason(), error.getStatus());
+                            return new BadGatewayException(
+                                    error.getReason(),
+                                    HttpStatus.valueOf(error.getStatusCode().value())
+                            );
                         }
                 )
                 .doOnError(Exception.class, error -> log.error("ActivatePaymentNoticeV2 Generic Error:", error));
@@ -114,7 +118,7 @@ public class NodeForPspClient {
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
                 .retrieve()
                 .onStatus(
-                        HttpStatus::isError,
+                        HttpStatusCode::isError,
                         clientResponse -> clientResponse
                                 .bodyToMono(String.class)
                                 .switchIfEmpty(Mono.just("N/A"))
@@ -151,11 +155,14 @@ public class NodeForPspClient {
 
                                 return new BadGatewayException(
                                         objectMapper.readValue(error.getReason(), ErrorDto.class).getDescription(),
-                                        error.getStatus()
+                                        HttpStatus.valueOf(error.getStatusCode().value())
                                 );
                             } catch (JsonProcessingException e) {
 
-                                return new BadGatewayException(error.getReason(), error.getStatus());
+                                return new BadGatewayException(
+                                        error.getReason(),
+                                        HttpStatus.valueOf(error.getStatusCode().value())
+                                );
                             }
 
                         }

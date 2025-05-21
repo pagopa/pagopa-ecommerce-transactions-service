@@ -30,7 +30,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import javax.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBElement;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -350,7 +350,7 @@ class NodeForPspClientTest {
         StepVerifier.create(client.closePaymentV2(closePaymentRequest))
                 .expectErrorMatches(
                         e -> e instanceof BadGatewayException badGatewayException
-                                && badGatewayException.getHttpStatus().equals(exception.getStatus())
+                                && badGatewayException.getHttpStatus().equals(exception.getStatusCode())
                                 && badGatewayException.getDetail().equals(exception.getReason())
                 )
                 .verify();

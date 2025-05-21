@@ -32,6 +32,7 @@ import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataR
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -139,8 +140,8 @@ class TransactionsControllerTest {
             Mockito.when(mockExchange.getRequest())
                     .thenReturn(mockRequest);
 
-            Mockito.when(mockExchange.getRequest().getMethodValue())
-                    .thenReturn("POST");
+            Mockito.when(mockExchange.getRequest().getMethod())
+                    .thenReturn(HttpMethod.POST);
 
             Mockito.when(mockExchange.getRequest().getURI())
                     .thenReturn(
@@ -679,7 +680,7 @@ class TransactionsControllerTest {
                     assertEquals(400, p.getStatus());
                     assertTrue(
                             p.getDetail().contains(
-                                    "Missing request header 'x-correlation-id' for method parameter of type UUID"
+                                    "Required header 'x-correlation-id' is not present."
                             )
                     );
                 });
