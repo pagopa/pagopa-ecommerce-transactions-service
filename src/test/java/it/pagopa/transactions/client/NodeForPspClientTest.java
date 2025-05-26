@@ -86,7 +86,7 @@ class NodeForPspClientTest {
         String paymentNotice = "302000100000009424";
         String paymentToken = UUID.randomUUID().toString();
         CtTransferListPSPV2 ctTransferListPSPV2 = objectFactory.createCtTransferListPSPV2();
-
+        String transactionId = UUID.randomUUID().toString();
         ActivatePaymentNoticeV2Request request = objectFactory.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
@@ -115,7 +115,8 @@ class NodeForPspClientTest {
          * test
          */
         ActivatePaymentNoticeV2Response testResponse = client
-                .activatePaymentNoticeV2(objectFactory.createActivatePaymentNoticeV2Request(request)).block();
+                .activatePaymentNoticeV2(objectFactory.createActivatePaymentNoticeV2Request(request), transactionId)
+                .block();
 
         /**
          * asserts
@@ -137,7 +138,7 @@ class NodeForPspClientTest {
         String fiscalCode = "77777777777";
         String paymentNotice = "30200010000000999";
         String faultError = "PAA_PAGAMENTO_DUPLICATO";
-
+        String transactionId = UUID.randomUUID().toString();
         ActivatePaymentNoticeV2Request request = objectFactory.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
@@ -169,7 +170,7 @@ class NodeForPspClientTest {
          * test
          */
         ActivatePaymentNoticeV2Response testResponse = client
-                .activatePaymentNoticeV2(jaxbElementRequest).block();
+                .activatePaymentNoticeV2(jaxbElementRequest, transactionId).block();
 
         /**
          * asserts
@@ -185,7 +186,7 @@ class NodeForPspClientTest {
         BigDecimal amount = BigDecimal.valueOf(1200);
         String fiscalCode = "77777777777";
         String paymentNotice = "30200010000000999";
-
+        String transactionId = UUID.randomUUID().toString();
         ActivatePaymentNoticeV2Request request = objectFactory.createActivatePaymentNoticeV2Request();
         CtQrCode qrCode = new CtQrCode();
         qrCode.setFiscalCode(fiscalCode);
@@ -208,7 +209,7 @@ class NodeForPspClientTest {
                 .thenReturn(Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR)));
 
         StepVerifier
-                .create(client.activatePaymentNoticeV2(jaxbElementRequest))
+                .create(client.activatePaymentNoticeV2(jaxbElementRequest, transactionId))
                 .expectError(ResponseStatusException.class);
     }
 

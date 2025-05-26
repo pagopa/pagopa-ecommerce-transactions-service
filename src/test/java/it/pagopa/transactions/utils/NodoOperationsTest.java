@@ -116,7 +116,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -140,7 +140,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -226,7 +226,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -250,7 +250,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -327,7 +327,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -351,7 +351,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -407,7 +407,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -431,7 +431,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -498,7 +498,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -522,7 +522,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -578,7 +578,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -602,7 +602,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -671,7 +671,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -695,7 +695,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -772,7 +772,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -796,7 +796,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -873,7 +873,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -897,7 +897,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -974,7 +974,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -998,7 +998,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -1075,7 +1075,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1099,7 +1099,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -1176,7 +1176,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1200,7 +1200,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -1273,7 +1273,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1297,7 +1297,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -1370,7 +1370,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1394,7 +1394,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -1458,7 +1458,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1482,7 +1482,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -1518,7 +1518,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.KO);
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(Mockito.any()))
                 .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
@@ -1572,7 +1572,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(Mockito.any()))
                 .thenReturn(objectFactoryUtil.createActivatePaymentNoticeV2Request(activatePaymentReq));
@@ -1647,7 +1647,7 @@ class NodoOperationsTest {
         activatePaymentRes.setTransferList(objectFactoryUtil.createCtTransferListPSPV2());
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1672,7 +1672,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -1773,7 +1773,7 @@ class NodoOperationsTest {
         activatePaymentRes.setOutcome(StOutcome.OK);
         activatePaymentRes.setTransferList(ctTransferListPSPV2);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1797,7 +1797,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assertEquals(rptId, response.id());
         assertEquals(paymentToken, response.paymentToken());
@@ -1863,7 +1863,7 @@ class NodoOperationsTest {
         activatePaymentRes.setFault(ctFaultBean);
         activatePaymentRes.setOutcome(StOutcome.KO);
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1889,7 +1889,7 @@ class NodoOperationsTest {
                 .verify();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
         Mockito.verify(openTelemetryUtils, Mockito.times(1)).addErrorSpanWithAttributes(
                 SpanLabelOpenTelemetry.NODO_ACTIVATION_ERROR_SPAN_NAME.formatted(nodoFaultCode),
                 Attributes
@@ -1931,7 +1931,7 @@ class NodoOperationsTest {
         activatePaymentRes.setTransferList(objectFactoryUtil.createCtTransferListPSPV2());
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -1999,7 +1999,7 @@ class NodoOperationsTest {
         activatePaymentRes.setMetadata(metadata);
 
         /* preconditions */
-        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any()))
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), transactionId))
                 .thenReturn(Mono.just(activatePaymentRes));
         Mockito.when(
                 objectFactoryNodeForPsp
@@ -2024,7 +2024,7 @@ class NodoOperationsTest {
                 .block();
 
         /* asserts */
-        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any());
+        Mockito.verify(nodeForPspClient, Mockito.times(1)).activatePaymentNoticeV2(Mockito.any(), transactionId);
 
         assert response != null;
         assert response.transferList() != null;
