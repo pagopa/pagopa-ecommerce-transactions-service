@@ -4,9 +4,11 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
@@ -44,6 +46,7 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -65,8 +68,8 @@ class TransactionsControllerTest {
     private TransactionsService transactionsService;
 
     @MockBean
-    @Qualifier("jwtTokenUtilsV2")
-    private JwtTokenUtils jwtTokenUtils;
+    @Qualifier("jwtIssuerClient")
+    private JwtIssuerClient jwtIssuerClient;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -99,6 +102,9 @@ class TransactionsControllerTest {
     @Test
     void shouldGetOk() {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+        HashMap<String, String> map = new HashMap();
+        map.put("transactionId", transactionId.value());
+        map.put("orderId", "orderId");
         try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
             uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
             String RPTID = "77777777777302016723749670035";
@@ -117,12 +123,12 @@ class TransactionsControllerTest {
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
             Mockito.when(
-                    jwtTokenUtils.generateToken(
-                            any(SecretKey.class),
+                    jwtIssuerClient.createJWTToken(
+                            any(String.class),
                             anyInt(),
-                            eq(new Claims(transactionId, "orderId", null, userId))
+                            eq(map)
                     )
-            ).thenReturn(Either.right(""));
+            ).thenReturn(Mono.just(new CreateTokenResponseDto().token("")));
             Mockito.lenient()
                     .when(
                             transactionsService
@@ -230,8 +236,15 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+        HashMap<String, String> map = new HashMap<>();
+        Mockito.when(
+                jwtIssuerClient.createJWTToken(
+                        any(String.class),
+                        anyInt(),
+                        eq(map)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("")));
+
         webTestClient.post()
                 .uri("/v2.1/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -622,8 +635,14 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnBadRequestForNullMail() {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+        Mockito.when(
+                jwtIssuerClient.createJWTToken(
+                        any(String.class),
+                        anyInt(),
+                        anyMap()
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("")));
+
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()

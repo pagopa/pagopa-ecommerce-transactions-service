@@ -52,14 +52,12 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository;
     private final NodoOperations nodoOperations;
     private final QueueAsyncClient transactionActivatedQueueAsyncClientV2;
-    private final JwtIssuerClient jwtIssuerClient;
 
     @Autowired
     public TransactionActivateHandler(
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
-            JwtTokenUtils jwtTokenUtils,
             @Qualifier(
                 "transactionActivatedQueueAsyncClientV2"
             ) QueueAsyncClient transactionActivatedQueueAsyncClientV2,
@@ -75,7 +73,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     ) {
         super(
                 paymentTokenTimeout,
-                jwtTokenUtils,
+                jwtIssuerClient,
                 confidentialMailUtils,
                 transientQueuesTTLSeconds,
                 nodoParallelRequests,
@@ -88,7 +86,6 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.transactionActivatedQueueAsyncClientV2 = transactionActivatedQueueAsyncClientV2;
-        this.jwtIssuerClient = jwtIssuerClient;
     }
 
     public Mono<Tuple2<Mono<BaseTransactionEvent<?>>, String>> handle(

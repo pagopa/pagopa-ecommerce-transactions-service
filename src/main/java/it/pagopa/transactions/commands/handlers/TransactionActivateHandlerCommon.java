@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers;
 
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
@@ -19,7 +20,7 @@ public abstract class TransactionActivateHandlerCommon
 
     public static final int TRANSFER_LIST_MAX_SIZE = 5;
     protected final Integer paymentTokenTimeout;
-    protected final JwtTokenUtils jwtTokenUtils;
+    protected final JwtIssuerClient jwtIssuerClient;
     protected final ConfidentialMailUtils confidentialMailUtils;
 
     protected final int transientQueuesTTLSeconds;
@@ -34,7 +35,7 @@ public abstract class TransactionActivateHandlerCommon
     protected TransactionActivateHandlerCommon(
 
             Integer paymentTokenTimeout,
-            JwtTokenUtils jwtTokenUtils,
+            JwtIssuerClient jwtIssuerClient,
             ConfidentialMailUtils confidentialMailUtils,
             int transientQueuesTTLSeconds,
             int nodoParallelRequests,
@@ -45,7 +46,7 @@ public abstract class TransactionActivateHandlerCommon
     ) {
 
         this.paymentTokenTimeout = paymentTokenTimeout;
-        this.jwtTokenUtils = jwtTokenUtils;
+        this.jwtIssuerClient = jwtIssuerClient;
         this.confidentialMailUtils = confidentialMailUtils;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.nodoParallelRequests = nodoParallelRequests;

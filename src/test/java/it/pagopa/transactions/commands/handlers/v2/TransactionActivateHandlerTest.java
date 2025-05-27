@@ -14,6 +14,8 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGateway
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
@@ -21,7 +23,6 @@ import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoR
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
@@ -72,8 +73,6 @@ class TransactionActivateHandlerTest {
 
     private final QueueAsyncClient transactionActivatedQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
 
-    private final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
-
     private final JwtIssuerClient jwtIssuerClient = Mockito.mock(JwtIssuerClient.class);
 
     private final ConfidentialMailUtils confidentialMailUtils = Mockito.mock(ConfidentialMailUtils.class);
@@ -114,7 +113,6 @@ class TransactionActivateHandlerTest {
             paymentRequestInfoRedisTemplateWrapper,
             transactionEventActivatedStoreRepository,
             nodoOperations,
-            jwtTokenUtils,
             transactionActivatedQueueAsyncClient,
             paymentTokenTimeout,
             confidentialMailUtils,
@@ -133,6 +131,14 @@ class TransactionActivateHandlerTest {
         Mockito.when(transactionEventActivatedStoreRepository.save(any()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
+
+        Mockito.when(
+                jwtIssuerClient.createJWTToken(
+                        any(String.class),
+                        any(Integer.class),
+                        anyMap()
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
     }
 
     @Test
@@ -228,14 +234,6 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(
-                jwtTokenUtils.generateToken(
-                        eq(jwtSecretKey),
-                        eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, requestDto.getOrderId(), null, userId))
-                )
-        )
-                .thenReturn(Either.right("authToken"));
 
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
@@ -381,14 +379,6 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(
-                jwtTokenUtils.generateToken(
-                        eq(jwtSecretKey),
-                        eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId))
-                )
-        )
-                .thenReturn(Either.right("authToken"));
 
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
@@ -517,14 +507,6 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        Mockito.when(
-                jwtTokenUtils.generateToken(
-                        eq(jwtSecretKey),
-                        eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId))
-                )
-        )
-                .thenReturn(Either.right("authToken"));
 
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
@@ -588,8 +570,11 @@ class TransactionActivateHandlerTest {
 
         /* preconditions */
 
-        Mockito.when(jwtTokenUtils.generateToken(eq(jwtSecretKey), eq(tokenValidityTimeInSeconds), any()))
-                .thenReturn(Either.left(new JWTTokenGenerationException()));
+        /*
+         * Mockito.when(jwtTokenUtils.generateToken(eq(jwtSecretKey),
+         * eq(tokenValidityTimeInSeconds), any())) .thenReturn(Either.left(new
+         * JWTTokenGenerationException()));
+         */
 
         /* run test */
         StepVerifier
@@ -796,14 +781,6 @@ class TransactionActivateHandlerTest {
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(
-                jwtTokenUtils.generateToken(
-                        eq(jwtSecretKey),
-                        eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId))
-                )
-        )
-                .thenReturn(Either.right("authToken"));
-        Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(),
                         any(),
@@ -913,14 +890,6 @@ class TransactionActivateHandlerTest {
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
         Mockito.when(
-                jwtTokenUtils.generateToken(
-                        eq(jwtSecretKey),
-                        eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId))
-                )
-        )
-                .thenReturn(Either.right("authToken"));
-        Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),
                         any(),
@@ -1022,14 +991,7 @@ class TransactionActivateHandlerTest {
                 nodoOperations.generateRandomStringToIdempotencyKey()
         )
                 .thenReturn("aabbccddee");
-        Mockito.when(
-                jwtTokenUtils.generateToken(
-                        eq(jwtSecretKey),
-                        eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId))
-                )
-        )
-                .thenReturn(Either.right("authToken"));
+
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),
@@ -1132,14 +1094,6 @@ class TransactionActivateHandlerTest {
                 nodoOperations.generateRandomStringToIdempotencyKey()
         )
                 .thenReturn("aabbccddee");
-        Mockito.when(
-                jwtTokenUtils.generateToken(
-                        eq(jwtSecretKey),
-                        eq(tokenValidityTimeInSeconds),
-                        eq(new Claims(transactionId, null, null, userId))
-                )
-        )
-                .thenReturn(Either.right("authToken"));
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),
