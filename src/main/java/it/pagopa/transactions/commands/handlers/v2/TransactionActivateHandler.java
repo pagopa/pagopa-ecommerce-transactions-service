@@ -219,7 +219,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .sequential()
                         .collectList()
                         .flatMap(
-                                paymentRequestInfos -> jwtTokenUtils
+                                paymentRequestInfos ->
+                                        /*jwtTokenUtils
                                         .generateToken(
                                                 ecommerceSigningKey,
                                                 jwtEcommerceValidityTimeInSeconds,
@@ -229,7 +230,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                         null,
                                                         command.getUserId()
                                                 )
-                                        )
+                                        ) */
                                         .fold(
                                                 Mono::error,
                                                 generatedToken -> Mono.just(
