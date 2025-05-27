@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -73,6 +74,8 @@ class TransactionActivateHandlerTest {
 
     private final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
 
+    private final JwtIssuerClient jwtIssuerClient = Mockito.mock(JwtIssuerClient.class);
+
     private final ConfidentialMailUtils confidentialMailUtils = Mockito.mock(ConfidentialMailUtils.class);
 
     private final int paymentTokenTimeout = 120;
@@ -120,7 +123,8 @@ class TransactionActivateHandlerTest {
             tracingUtils,
             openTelemetryUtils,
             jwtSecretKey,
-            tokenValidityTimeInSeconds
+            tokenValidityTimeInSeconds,
+            jwtIssuerClient
     );
 
     @BeforeEach

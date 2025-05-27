@@ -225,31 +225,19 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .sequential()
                         .collectList()
                         .flatMap(
-                                paymentRequestInfos ->
-                                        jwtIssuerClient.createJWTToken(
-                                                "ecommerce",
-                                                        jwtEcommerceValidityTimeInSeconds,
-                                                        privateClaims
-                                                ).
-                                                doOnError(Mono::error)
-                                                .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
-                                        /*jwtTokenUtils
-                                        .generateToken(
-                                                ecommerceSigningKey,
-                                                jwtEcommerceValidityTimeInSeconds,
-                                                new Claims(
-                                                        transactionId,
-                                                        command.getData().orderId(),
-                                                        null,
-                                                        command.getUserId()
-                                                )
-                                        )
-                                        .fold(
-                                                Mono::error,
-                                                generatedToken -> Mono.just(
-                                                        Tuples.of(generatedToken, paymentRequestInfos)
-                                                )
-                                        )*/
+                                paymentRequestInfos -> jwtIssuerClient.createJWTToken(
+                                        "ecommerce",
+                                        jwtEcommerceValidityTimeInSeconds,
+                                        privateClaims
+                                ).doOnError(Mono::error)
+                                        .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
+                                /*
+                                 * jwtTokenUtils .generateToken( ecommerceSigningKey,
+                                 * jwtEcommerceValidityTimeInSeconds, new Claims( transactionId,
+                                 * command.getData().orderId(), null, command.getUserId() ) ) .fold(
+                                 * Mono::error, generatedToken -> Mono.just( Tuples.of(generatedToken,
+                                 * paymentRequestInfos) ) )
+                                 */
                         ).flatMap(
                                 args -> {
                                     String authToken = args.getT1();
