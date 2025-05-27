@@ -1,6 +1,7 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
 import io.opentelemetry.api.common.Attributes;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -21,6 +22,7 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
+import it.pagopa.transactions.configurations.JWTIssuerWebClientConfig;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NodoOperations;
@@ -39,10 +41,7 @@ import reactor.util.function.Tuples;
 import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Component(TransactionActivateHandler.QUALIFIER_NAME)
@@ -53,6 +52,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository;
     private final NodoOperations nodoOperations;
     private final QueueAsyncClient transactionActivatedQueueAsyncClientV2;
+    private final JwtIssuerClient jwtIssuerClient;
 
     @Autowired
     public TransactionActivateHandler(
@@ -70,7 +70,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
             @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
-            @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds
+            @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
+            JwtIssuerClient jwtIssuerClient
     ) {
         super(
                 paymentTokenTimeout,
@@ -87,6 +88,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.transactionActivatedQueueAsyncClientV2 = transactionActivatedQueueAsyncClientV2;
+        this.jwtIssuerClient = jwtIssuerClient;
     }
 
     public Mono<Tuple2<Mono<BaseTransactionEvent<?>>, String>> handle(
@@ -103,6 +105,10 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 multiplePaymentNotices,
                 Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
         );
+        HashMap<String, String> privateClaims = new HashMap<>();
+        privateClaims.put("transactionId", transactionId.value());
+        privateClaims.put("orderId", command.getData().orderId());
+        Optional.ofNullable(command.getUserId()).map(uuid -> privateClaims.put("userId", uuid.toString()));
         return Mono.defer(
                 () -> Flux.fromIterable(paymentNotices)
                         .parallel(nodoParallelRequests)
@@ -220,6 +226,13 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .collectList()
                         .flatMap(
                                 paymentRequestInfos ->
+                                        jwtIssuerClient.createJWTToken(
+                                                "ecommerce",
+                                                        jwtEcommerceValidityTimeInSeconds,
+                                                        privateClaims
+                                                ).
+                                                doOnError(Mono::error)
+                                                .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
                                         /*jwtTokenUtils
                                         .generateToken(
                                                 ecommerceSigningKey,
@@ -230,13 +243,13 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                         null,
                                                         command.getUserId()
                                                 )
-                                        ) */
+                                        )
                                         .fold(
                                                 Mono::error,
                                                 generatedToken -> Mono.just(
                                                         Tuples.of(generatedToken, paymentRequestInfos)
                                                 )
-                                        )
+                                        )*/
                         ).flatMap(
                                 args -> {
                                     String authToken = args.getT1();
