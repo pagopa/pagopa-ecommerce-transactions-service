@@ -9,7 +9,6 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
@@ -17,12 +16,10 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
-import it.pagopa.transactions.configurations.JWTIssuerWebClientConfig;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NodoOperations;
@@ -228,13 +225,6 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         privateClaims
                                 ).doOnError(Mono::error)
                                         .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
-                                /*
-                                 * jwtTokenUtils .generateToken( ecommerceSigningKey,
-                                 * jwtEcommerceValidityTimeInSeconds, new Claims( transactionId,
-                                 * command.getData().orderId(), null, command.getUserId() ) ) .fold(
-                                 * Mono::error, generatedToken -> Mono.just( Tuples.of(generatedToken,
-                                 * paymentRequestInfos) ) )
-                                 */
                         ).flatMap(
                                 args -> {
                                     String authToken = args.getT1();
