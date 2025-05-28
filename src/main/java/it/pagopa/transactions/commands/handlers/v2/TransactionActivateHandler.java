@@ -17,6 +17,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -100,10 +101,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 multiplePaymentNotices,
                 Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
         );
-        HashMap<String, String> privateClaims = new HashMap<>();
-        privateClaims.put("transactionId", transactionId.value());
-        privateClaims.put("orderId", command.getData().orderId());
-        Optional.ofNullable(command.getUserId()).map(uuid -> privateClaims.put("userId", uuid.toString()));
+        HashMap<String, String> jwtTokenClaimsMap = new HashMap<>();
+        jwtTokenClaimsMap.put(JwtTokenUtils.TRANSACTION_ID_CLAIM, transactionId.value());
+        jwtTokenClaimsMap.put(JwtTokenUtils.ORDER_ID_CLAIM, command.getData().orderId());
+        Optional.ofNullable(command.getUserId())
+                .map(uuid -> jwtTokenClaimsMap.put(JwtTokenUtils.USER_ID_CLAIM, uuid.toString()));
         return Mono.defer(
                 () -> Flux.fromIterable(paymentNotices)
                         .parallel(nodoParallelRequests)
@@ -227,7 +229,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 ).duration(
                                                         jwtEcommerceValidityTimeInSeconds
                                                 ).privateClaims(
-                                                        privateClaims
+                                                        jwtTokenClaimsMap
                                                 )
                                         ).doOnError(Mono::error)
                                         .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
