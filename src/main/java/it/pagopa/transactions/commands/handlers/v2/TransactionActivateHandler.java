@@ -1,7 +1,6 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
 import io.opentelemetry.api.common.Attributes;
-import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -12,11 +11,13 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGateway
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
@@ -66,11 +67,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             OpenTelemetryUtils openTelemetryUtils,
             @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
-            JwtIssuerClient jwtIssuerClient
+            JwtTokenIssuerClient jwtTokenIssuerClient
     ) {
         super(
                 paymentTokenTimeout,
-                jwtIssuerClient,
+                jwtTokenIssuerClient,
                 confidentialMailUtils,
                 transientQueuesTTLSeconds,
                 nodoParallelRequests,
@@ -219,11 +220,16 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .sequential()
                         .collectList()
                         .flatMap(
-                                paymentRequestInfos -> jwtIssuerClient.createJWTToken(
-                                        "ecommerce",
-                                        jwtEcommerceValidityTimeInSeconds,
-                                        privateClaims
-                                ).doOnError(Mono::error)
+                                paymentRequestInfos -> jwtTokenIssuerClient
+                                        .createJWTToken(
+                                                new CreateTokenRequestDto().audience(
+                                                        "ecommerce"
+                                                ).duration(
+                                                        jwtEcommerceValidityTimeInSeconds
+                                                ).privateClaims(
+                                                        privateClaims
+                                                )
+                                        ).doOnError(Mono::error)
                                         .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
                         ).flatMap(
                                 args -> {

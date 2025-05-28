@@ -1,7 +1,5 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
-import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -28,6 +26,7 @@ import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.configurations.SecretsConfigurations;
@@ -73,7 +72,7 @@ class TransactionActivateHandlerTest {
 
     private final QueueAsyncClient transactionActivatedQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
 
-    private final JwtIssuerClient jwtIssuerClient = Mockito.mock(JwtIssuerClient.class);
+    private final JwtTokenIssuerClient jwtTokenIssuerClient = Mockito.mock(JwtTokenIssuerClient.class);
 
     private final ConfidentialMailUtils confidentialMailUtils = Mockito.mock(ConfidentialMailUtils.class);
 
@@ -122,7 +121,7 @@ class TransactionActivateHandlerTest {
             openTelemetryUtils,
             jwtSecretKey,
             tokenValidityTimeInSeconds,
-            jwtIssuerClient
+            jwtTokenIssuerClient
     );
 
     @BeforeEach
@@ -133,10 +132,8 @@ class TransactionActivateHandlerTest {
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
 
         Mockito.when(
-                jwtIssuerClient.createJWTToken(
-                        any(String.class),
-                        any(Integer.class),
-                        anyMap()
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
     }
