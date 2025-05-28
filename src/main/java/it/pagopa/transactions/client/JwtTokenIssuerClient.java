@@ -20,7 +20,7 @@ public class JwtTokenIssuerClient {
     private final JwtIssuerApi jwtIssuerWebClient;
 
     @Autowired
-    public JwtTokenIssuerClient(@Qualifier("jstIssuerWebClient") JwtIssuerApi jwtIssuerWebClient) {
+    public JwtTokenIssuerClient(@Qualifier("jwtIssuerWebClient") JwtIssuerApi jwtIssuerWebClient) {
         this.jwtIssuerWebClient = jwtIssuerWebClient;
     }
 
