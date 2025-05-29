@@ -22,6 +22,7 @@ import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
@@ -37,11 +38,13 @@ import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NodoOperations;
 import it.pagopa.transactions.utils.Queues;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
@@ -51,9 +54,7 @@ import reactor.util.function.Tuple2;
 import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -254,6 +255,12 @@ class TransactionActivateHandlerTest {
                 )
         );
         Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithException(any(), any());
+        CreateTokenRequestDto createTokenRequestDto = getCreateTokenRequestDto(
+                JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                JwtTokenUtils.ORDER_ID_CLAIM,
+                JwtTokenUtils.USER_ID_CLAIM
+        );
+        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
 
@@ -282,6 +289,25 @@ class TransactionActivateHandlerTest {
         assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
 
+    }
+
+    private @NotNull CreateTokenRequestDto getCreateTokenRequestDto(String... claims) {
+        Map<String, String> claimsMap = new HashMap<>();
+        List<String> claimsListToAdd = Arrays.asList(claims);
+
+        claimsListToAdd.forEach(c -> {
+            if (c.equals(JwtTokenUtils.TRANSACTION_ID_CLAIM))
+                claimsMap.put(c, TRANSACTION_ID);
+            if (c.equals(JwtTokenUtils.ORDER_ID_CLAIM))
+                claimsMap.put(c, ORDER_ID);
+            if (c.equals(JwtTokenUtils.USER_ID_CLAIM))
+                claimsMap.put(c, userId.toString());
+        });
+        CreateTokenRequestDto createTokenRequestDto = new CreateTokenRequestDto();
+        createTokenRequestDto.audience("ecommerce");
+        createTokenRequestDto.duration(tokenValidityTimeInSeconds);
+        createTokenRequestDto.privateClaims(claimsMap);
+        return createTokenRequestDto;
     }
 
     @Test
@@ -399,6 +425,11 @@ class TransactionActivateHandlerTest {
                 )
         );
         Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithException(any(), any());
+        CreateTokenRequestDto createTokenRequestDto = getCreateTokenRequestDto(
+                JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                JwtTokenUtils.USER_ID_CLAIM
+        );
+        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
 

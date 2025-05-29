@@ -103,7 +103,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         );
         HashMap<String, String> jwtTokenClaimsMap = new HashMap<>();
         jwtTokenClaimsMap.put(JwtTokenUtils.TRANSACTION_ID_CLAIM, transactionId.value());
-        jwtTokenClaimsMap.put(JwtTokenUtils.ORDER_ID_CLAIM, command.getData().orderId());
+        Optional.ofNullable(command.getData().orderId())
+                .map(orderId -> jwtTokenClaimsMap.put(JwtTokenUtils.ORDER_ID_CLAIM, orderId));
         Optional.ofNullable(command.getUserId())
                 .map(uuid -> jwtTokenClaimsMap.put(JwtTokenUtils.USER_ID_CLAIM, uuid.toString()));
         return Mono.defer(
