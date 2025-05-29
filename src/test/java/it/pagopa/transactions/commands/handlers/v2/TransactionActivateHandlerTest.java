@@ -30,23 +30,22 @@ import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
+import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.NodoOperations;
-import it.pagopa.transactions.utils.Queues;
-import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
+import it.pagopa.transactions.utils.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
@@ -131,12 +130,6 @@ class TransactionActivateHandlerTest {
         Mockito.when(transactionEventActivatedStoreRepository.save(any()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
-
-        Mockito.when(
-                jwtTokenIssuerClient.createJWTToken(
-                        any(CreateTokenRequestDto.class)
-                )
-        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
     }
 
     @Test
@@ -219,6 +212,11 @@ class TransactionActivateHandlerTest {
         transactionActivatedEvent.setData(transactionActivatedData);
 
         /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
 
@@ -389,6 +387,11 @@ class TransactionActivateHandlerTest {
         transactionActivatedEvent.setData(transactionActivatedData);
 
         /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
 
@@ -524,6 +527,11 @@ class TransactionActivateHandlerTest {
         transactionActivatedEvent.setData(transactionActivatedData);
 
         /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoCached));
 
@@ -566,10 +574,11 @@ class TransactionActivateHandlerTest {
         TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
-        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
-        requestDto.setEmail("jhon.doe@email.com");
         paymentNoticeInfoDto.setAmount(1200);
+        requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
+        requestDto.setEmail("jhon.doe@email.com");
+
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -596,18 +605,52 @@ class TransactionActivateHandlerTest {
                 userId
         );
 
+        final var nodoActivateResponse = new PaymentRequestInfo(
+                rptId,
+                paymentNoticeInfoDto.getRptId().substring(0, 11),
+                "paName",
+                "description",
+                paymentNoticeInfoDto.getAmount(),
+                dueDate,
+                "paymentToken",
+                ZonedDateTime.now().toString(),
+                new IdempotencyKey("00000000000", "abcdeFGHIL"),
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNoticeInfoDto.getAmount(), null)),
+                false,
+                "creditorReferenceId"
+        );
+
         /* preconditions */
 
-        /*
-         * Mockito.when(jwtTokenUtils.generateToken(eq(jwtSecretKey),
-         * eq(tokenValidityTimeInSeconds), any())) .thenReturn(Either.left(new
-         * JWTTokenGenerationException()));
-         */
+        /* preconditions */
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
+        )
+                .thenReturn(Mono.just(nodoActivateResponse));
+        Mockito.when(nodoOperations.getEcommerceFiscalCode()).thenReturn("00000000000");
+        Mockito.when(nodoOperations.generateRandomStringToIdempotencyKey()).thenReturn("abcdeFGHIJ");
+
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(
+                Mono.error(
+                        new WebClientResponseException(
+                                HttpStatus.BAD_REQUEST.value(),
+                                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                                null,
+                                null,
+                                null
+                        )
+                )
+        );
 
         /* run test */
         StepVerifier
                 .create(handler.handle(command))
-                .expectErrorMatches(exception -> exception instanceof JWTTokenGenerationException);
+                .expectErrorMatches(exception -> exception instanceof WebClientResponseException)
+                .verify();
 
     }
 
@@ -722,6 +765,7 @@ class TransactionActivateHandlerTest {
         InvalidNodoResponseException exception = assertThrows(InvalidNodoResponseException.class, response::block);
         assertEquals("Invalid payment token received", exception.getErrorDescription());
 
+        Mockito.verify(jwtTokenIssuerClient, Mockito.times(0)).createJWTToken(any());
     }
 
     @Test
@@ -799,6 +843,11 @@ class TransactionActivateHandlerTest {
         );
 
         /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoBeforeActivation));
 
@@ -908,6 +957,11 @@ class TransactionActivateHandlerTest {
         );
 
         /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.of(paymentRequestInfoBeforeActivation));
 
@@ -933,6 +987,13 @@ class TransactionActivateHandlerTest {
         /* asserts */
         TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
+
+        CreateTokenRequestDto createTokenRequestDto = getCreateTokenRequestDto(
+                JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                JwtTokenUtils.USER_ID_CLAIM
+        );
+        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
+
         assertNotNull(event.getTransactionId());
         assertNotNull(event.getEventCode());
         assertNotNull(event.getCreationDate());
@@ -1002,6 +1063,11 @@ class TransactionActivateHandlerTest {
         );
 
         /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.empty());
 
@@ -1106,6 +1172,11 @@ class TransactionActivateHandlerTest {
         );
 
         /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Optional.empty());
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
