@@ -5,11 +5,15 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.exceptions.JwtIssuerClientException;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationOutput;
@@ -30,10 +34,7 @@ import javax.crypto.SecretKey;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -50,7 +51,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
-    private final JwtTokenUtils jwtTokenUtils;
+    private final JwtTokenIssuerClient jwtTokenIssuerClient;
 
     private final SecretKey ecommerceSigningKey;
 
@@ -62,7 +63,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             String checkoutNpgGdiUrl,
             String checkoutOutcomeUrl,
             TransactionTemplateWrapper transactionTemplateWrapper,
-            JwtTokenUtils jwtTokenUtils,
+            JwtTokenIssuerClient jwtTokenIssuerClient,
             SecretKey ecommerceSigningKey,
             int jwtWebviewValidityTimeInSeconds
     ) {
@@ -71,7 +72,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.checkoutNpgGdiUrl = checkoutNpgGdiUrl;
         this.checkoutOutcomeUrl = checkoutOutcomeUrl;
         this.transactionTemplateWrapper = transactionTemplateWrapper;
-        this.jwtTokenUtils = jwtTokenUtils;
+        this.jwtTokenIssuerClient = jwtTokenIssuerClient;
         this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
     }
@@ -500,16 +501,41 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                               String orderId,
                                               UUID userId
     ) {
-        return jwtTokenUtils
-                .generateToken(
-                        ecommerceSigningKey,
-                        jwtWebviewValidityTimeInSeconds,
-                        new Claims(
-                                transactionId,
-                                orderId,
-                                paymentInstrumentId,
-                                userId
+        return Mono.just(
+                Optional
+                        .ofNullable(userId)
+                        .map(user -> Map.of(JwtTokenUtils.USER_ID_CLAIM, user.toString()))
+                        .orElse(new HashMap<>())
+        ).map(
+                map -> {
+                    map.putAll(
+                            Map.of(
+                                    JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                                    transactionId.value(),
+                                    JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                                    paymentInstrumentId,
+                                    JwtTokenUtils.ORDER_ID_CLAIM,
+                                    orderId
+                            )
+                    );
+                    return map;
+                }
+        ).flatMap(
+                claimsMap -> jwtTokenIssuerClient.createJWTToken(
+                        new CreateTokenRequestDto()
+                                .duration(jwtWebviewValidityTimeInSeconds)
+                                .audience("webview")
+                                .privateClaims(claimsMap)
+                )
+        ).doOnError(
+                c -> Mono.error(
+                        new JwtIssuerClientException(
+                                "Error while generating jwt token for webview",
+                                c
                         )
-                ).fold(Mono::error, Mono::just);
+                )
+        )
+                .map(CreateTokenResponseDto::getToken);
+
     }
 }

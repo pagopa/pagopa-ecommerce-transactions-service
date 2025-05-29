@@ -6,13 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
-import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyConfigurationException;
-import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
-import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
+import it.pagopa.ecommerce.commons.exceptions.*;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
@@ -433,6 +431,48 @@ public class PaymentGatewayClient {
                 );
     }
 
+    private Mono<String> generateJwtToken(
+                                          TransactionId transactionId,
+                                          String paymentInstrumentId,
+                                          UUID userId,
+                                          Integer validityTime,
+                                          String audience
+    ) {
+        return Mono.just(
+                Optional
+                        .ofNullable(userId)
+                        .map(user -> Map.of(JwtTokenUtils.USER_ID_CLAIM, user.toString()))
+                        .orElse(new HashMap<>())
+        ).map(
+                map -> {
+                    map.putAll(
+                            Map.of(
+                                    JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                                    transactionId.value(),
+                                    JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                                    paymentInstrumentId
+                            )
+                    );
+                    return map;
+                }
+        ).flatMap(
+                claimsMap -> jwtTokenIssuerClient.createJWTToken(
+                        new CreateTokenRequestDto()
+                                .duration(validityTime)
+                                .audience(audience)
+                                .privateClaims(claimsMap)
+                )
+        ).doOnError(
+                c -> Mono.error(
+                        new JwtIssuerClientException(
+                                "Error while generating jwt token for webview",
+                                c
+                        )
+                )
+        )
+                .map(CreateTokenResponseDto::getToken);
+    }
+
     /**
      * Perform authorization request with PSP retrieving redirection URL
      *
@@ -445,18 +485,14 @@ public class PaymentGatewayClient {
                                                                         RedirectUrlRequestDto.TouchpointEnum touchpoint,
                                                                         UUID userId
     ) {
-        return new JwtTokenUtils()
-                .generateToken(
-                        ecommerceSigningKey,
-                        jwtEcommerceValidityTimeInSeconds,
-                        new Claims(
-                                authorizationData.transactionId(),
-                                null,
-                                authorizationData.paymentInstrumentId(),
-                                userId
-                        )
-                ).fold(
-                        Mono::error,
+        return generateJwtToken(
+                authorizationData.transactionId(),
+                authorizationData.paymentInstrumentId(),
+                userId,
+                jwtEcommerceValidityTimeInSeconds,
+                "ecommerce"
+        )
+                .flatMap(
                         outcomeJwtToken -> {
 
                             String paymentTypeCode = authorizationData.paymentTypeCode();

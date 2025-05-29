@@ -25,6 +25,7 @@ import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationOutput;
@@ -91,7 +92,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${authorization.event.visibilityTimeoutSeconds}") Integer authRequestEventVisibilityTimeoutSeconds,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
-            JwtTokenUtils jwtTokenUtils,
+            JwtTokenIssuerClient jwtTokenIssuerClient,
             @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
@@ -103,7 +104,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 checkoutNpgGdiUrl,
                 checkoutOutcomeUrl,
                 transactionTemplateWrapper,
-                jwtTokenUtils,
+                jwtTokenIssuerClient,
                 ecommerceWebViewSigningKey,
                 jwtWebviewValidityTimeInSeconds
         );

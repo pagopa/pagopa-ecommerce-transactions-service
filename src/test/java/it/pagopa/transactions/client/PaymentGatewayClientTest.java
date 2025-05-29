@@ -108,6 +108,9 @@ class PaymentGatewayClientTest {
     @Mock
     NpgClient npgClient;
 
+    @Mock
+    JwtTokenIssuerClient jwtTokenIssuerClient;
+
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
     @Spy
@@ -163,7 +166,8 @@ class PaymentGatewayClientTest {
                 configurationKeysConfig,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                redirectPaymentTypeCodeDescription
+                redirectPaymentTypeCodeDescription,
+                jwtTokenIssuerClient
         );
 
         Hooks.onOperatorDebug();
@@ -2467,7 +2471,8 @@ class PaymentGatewayClientTest {
                 new RedirectKeysConfiguration(redirectUrlMapping, codeListTypeMapping),
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                redirectPaymentTypeCodeDescription
+                redirectPaymentTypeCodeDescription,
+                jwtTokenIssuerClient
         );
         /* test */
         StepVerifier.create(
@@ -2670,7 +2675,8 @@ class PaymentGatewayClientTest {
                 new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                redirectPaymentTypeCodeDescription
+                redirectPaymentTypeCodeDescription,
+                jwtTokenIssuerClient
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -2762,7 +2768,8 @@ class PaymentGatewayClientTest {
                 new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                redirectPaymentTypeCodeDescription
+                redirectPaymentTypeCodeDescription,
+                jwtTokenIssuerClient
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -2901,7 +2908,8 @@ class PaymentGatewayClientTest {
                 configurationKeysConfig,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                Map.of()
+                Map.of(),
+                jwtTokenIssuerClient
         );
         Hooks.onOperatorDebug();
         /* test */
