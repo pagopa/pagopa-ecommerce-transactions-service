@@ -256,7 +256,7 @@ class TransactionActivateHandlerTest {
                 JwtTokenUtils.ORDER_ID_CLAIM,
                 JwtTokenUtils.USER_ID_CLAIM
         );
-        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
+        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(createTokenRequestDto);
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
 
@@ -430,7 +430,7 @@ class TransactionActivateHandlerTest {
                 JwtTokenUtils.TRANSACTION_ID_CLAIM,
                 JwtTokenUtils.USER_ID_CLAIM
         );
-        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
+        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(createTokenRequestDto);
         assertNotNull(paymentRequestInfoCached.id());
         TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
 
@@ -647,7 +647,7 @@ class TransactionActivateHandlerTest {
         /* run test */
         StepVerifier
                 .create(handler.handle(command))
-                .expectErrorMatches(exception -> exception instanceof WebClientResponseException)
+                .expectErrorMatches(WebClientResponseException.class::isInstance)
                 .verify();
 
     }
@@ -990,7 +990,7 @@ class TransactionActivateHandlerTest {
                 JwtTokenUtils.TRANSACTION_ID_CLAIM,
                 JwtTokenUtils.USER_ID_CLAIM
         );
-        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
+        Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(createTokenRequestDto);
 
         assertNotNull(event.getTransactionId());
         assertNotNull(event.getEventCode());
