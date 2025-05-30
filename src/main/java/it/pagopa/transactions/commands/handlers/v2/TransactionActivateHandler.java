@@ -242,31 +242,29 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         );
     }
 
+    private Map<String, String> createClaimsMap(
+                                                TransactionId transactionId,
+                                                String orderId,
+                                                UUID userId
+    ) {
+        Map<String, String> claimsMap = new HashMap<>();
+        claimsMap.put(JwtTokenUtils.TRANSACTION_ID_CLAIM, transactionId.value());
+        if (orderId != null) {
+            claimsMap.put(JwtTokenUtils.ORDER_ID_CLAIM, orderId);
+        }
+        if (userId != null) {
+            claimsMap.put(JwtTokenUtils.USER_ID_CLAIM, userId.toString());
+        }
+        return claimsMap;
+    }
+
     private Mono<CreateTokenResponseDto> generateTransactionJwtToken(
                                                                      TransactionActivateCommand command,
                                                                      TransactionId transactionId
     ) {
 
-        return Mono.just(new HashMap<String, String>(1) {
-            {
-                put(
-                        JwtTokenUtils.TRANSACTION_ID_CLAIM,
-                        transactionId.value()
-                );
-            }
-        })
-                .map(m -> {
-                    if (command.getUserId() != null) {
-                        m.put(JwtTokenUtils.USER_ID_CLAIM, command.getUserId().toString());
-                    }
-                    return m;
-                })
-                .map(m -> {
-                    if (command.getData().orderId() != null) {
-                        m.put(JwtTokenUtils.ORDER_ID_CLAIM, command.getData().orderId());
-                    }
-                    return m;
-                }).flatMap(
+        return Mono.just(createClaimsMap(transactionId, command.getData().orderId(), command.getUserId()))
+                .flatMap(
                         claimsMap -> jwtTokenIssuerClient.createJWTToken(
                                 new CreateTokenRequestDto()
                                         .duration(jwtEcommerceValidityTimeInSeconds)

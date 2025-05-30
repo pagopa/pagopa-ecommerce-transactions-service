@@ -24,19 +24,6 @@ public class JwtTokenIssuerClient {
         this.jwtIssuerWebClient = jwtIssuerWebClient;
     }
 
-    public Mono<JWKSResponseDto> getKeys() {
-        return jwtIssuerWebClient.getTokenPublicKeys().doOnError(
-                WebClientResponseException.class,
-                JwtTokenIssuerClient::logWebClientException
-        )
-                .onErrorMap(
-                        err -> new BadGatewayException(
-                                "Error while invoke method for retrieve keys",
-                                HttpStatus.BAD_GATEWAY
-                        )
-                );
-    }
-
     public Mono<CreateTokenResponseDto> createJWTToken(CreateTokenRequestDto createTokenRequestDto) {
         return jwtIssuerWebClient.createJwtToken(createTokenRequestDto).doOnError(
                 WebClientResponseException.class,
