@@ -12,6 +12,8 @@ import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
@@ -74,6 +76,8 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 class PaymentGatewayClientTest {
+
+    public static final String MOCK_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw";
 
     private PaymentGatewayClient client;
 
@@ -649,6 +653,7 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         Mockito.when(npgApiKeyHandler.getDefaultApiKey()).thenReturn(npgDefaultApiKey);
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
@@ -809,6 +814,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* preconditions */
         HttpStatus npgErrorStatus = HttpStatus.valueOf(npgHttpErrorCode);
         Mockito.when(
@@ -928,6 +935,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
@@ -1036,6 +1045,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
@@ -1145,6 +1156,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
@@ -1364,6 +1377,7 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any())).thenReturn(Either.right("pspKey1"));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
@@ -1572,6 +1586,7 @@ class PaymentGatewayClientTest {
                         any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
 
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any()))
                 .thenReturn(Either.left(new NpgApiKeyMissingPspRequestedException("pspId2", Set.of())));
@@ -1691,6 +1706,7 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any())).thenReturn(Either.right("pspKey1"));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
@@ -1990,6 +2006,8 @@ class PaymentGatewayClientTest {
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.just(
                         new NodeForwarderClient.NodeForwarderResponse<>(
@@ -2150,6 +2168,8 @@ class PaymentGatewayClientTest {
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.just(
                         new NodeForwarderClient.NodeForwarderResponse<>(
@@ -2374,6 +2394,7 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
 
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
@@ -2474,6 +2495,7 @@ class PaymentGatewayClientTest {
                 redirectPaymentTypeCodeDescription,
                 jwtTokenIssuerClient
         );
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
         /* test */
         StepVerifier.create(
                 redirectClient.requestRedirectUrlAuthorization(
@@ -2709,6 +2731,7 @@ class PaymentGatewayClientTest {
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.just(
                         new NodeForwarderClient.NodeForwarderResponse<>(
@@ -2799,6 +2822,9 @@ class PaymentGatewayClientTest {
         );
 
         Hooks.onOperatorDebug();
+
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* test */
         StepVerifier.create(
                 redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint, UUID.fromString(USER_ID))
@@ -2893,6 +2919,7 @@ class PaymentGatewayClientTest {
                         )
                 )
         );
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class))).willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
         PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 objectMapper,
                 mockUuidUtils,

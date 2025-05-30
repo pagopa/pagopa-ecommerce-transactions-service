@@ -438,23 +438,22 @@ public class PaymentGatewayClient {
                                           Integer validityTime,
                                           String audience
     ) {
+
         return Mono.just(
-                Optional
-                        .ofNullable(userId)
-                        .map(user -> Map.of(JwtTokenUtils.USER_ID_CLAIM, user.toString()))
-                        .orElse(new HashMap<>())
-        ).map(
-                map -> {
-                    map.putAll(
-                            Map.of(
-                                    JwtTokenUtils.TRANSACTION_ID_CLAIM,
-                                    transactionId.value(),
-                                    JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
-                                    paymentInstrumentId
-                            )
-                    );
-                    return map;
-                }
+                userId == null ? Map.of(
+                        JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                        transactionId.value(),
+                        JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                        paymentInstrumentId
+                )
+                        : Map.of(
+                                JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                                transactionId.value(),
+                                JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                                paymentInstrumentId,
+                                JwtTokenUtils.USER_ID_CLAIM,
+                                userId.toString()
+                        )
         ).flatMap(
                 claimsMap -> jwtTokenIssuerClient.createJWTToken(
                         new CreateTokenRequestDto()
