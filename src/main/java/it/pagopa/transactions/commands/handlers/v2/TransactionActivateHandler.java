@@ -11,7 +11,9 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGateway
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.exceptions.JwtIssuerClientException;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
@@ -38,6 +40,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import javax.crypto.SecretKey;
+import java.io.Serializable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -101,12 +104,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 multiplePaymentNotices,
                 Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
         );
-        HashMap<String, String> jwtTokenClaimsMap = new HashMap<>();
-        jwtTokenClaimsMap.put(JwtTokenUtils.TRANSACTION_ID_CLAIM, transactionId.value());
-        Optional.ofNullable(command.getData().orderId())
-                .map(orderId -> jwtTokenClaimsMap.put(JwtTokenUtils.ORDER_ID_CLAIM, orderId));
-        Optional.ofNullable(command.getUserId())
-                .map(uuid -> jwtTokenClaimsMap.put(JwtTokenUtils.USER_ID_CLAIM, uuid.toString()));
+
         return Mono.defer(
                 () -> Flux.fromIterable(paymentNotices)
                         .parallel(nodoParallelRequests)
@@ -223,16 +221,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .sequential()
                         .collectList()
                         .flatMap(
-                                paymentRequestInfos -> jwtTokenIssuerClient
-                                        .createJWTToken(
-                                                new CreateTokenRequestDto().audience(
-                                                        "ecommerce"
-                                                ).duration(
-                                                        jwtEcommerceValidityTimeInSeconds
-                                                ).privateClaims(
-                                                        jwtTokenClaimsMap
-                                                )
-                                        ).doOnError(Mono::error)
+                                paymentRequestInfos -> generateTransactionJwtToken(command, transactionId)
                                         .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
                         ).flatMap(
                                 args -> {
@@ -251,6 +240,47 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 }
                         )
         );
+    }
+
+    private Mono<CreateTokenResponseDto> generateTransactionJwtToken(
+                                                                     TransactionActivateCommand command,
+                                                                     TransactionId transactionId
+    ) {
+
+        return Mono.just(new HashMap<String, String>(1) {
+            {
+                put(
+                        JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                        transactionId.value()
+                );
+            }
+        })
+                .map(m -> {
+                    if (command.getUserId() != null) {
+                        m.put(JwtTokenUtils.USER_ID_CLAIM, command.getUserId().toString());
+                    }
+                    return m;
+                })
+                .map(m -> {
+                    if (command.getData().orderId() != null) {
+                        m.put(JwtTokenUtils.ORDER_ID_CLAIM, command.getData().orderId());
+                    }
+                    return m;
+                }).flatMap(
+                        claimsMap -> jwtTokenIssuerClient.createJWTToken(
+                                new CreateTokenRequestDto()
+                                        .duration(jwtEcommerceValidityTimeInSeconds)
+                                        .audience("ecommerce")
+                                        .privateClaims(claimsMap)
+                        )
+                ).doOnError(
+                        c -> Mono.error(
+                                new JwtIssuerClientException(
+                                        "Error while generating jwt token for ecommerce",
+                                        c
+                                )
+                        )
+                );
     }
 
     private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {

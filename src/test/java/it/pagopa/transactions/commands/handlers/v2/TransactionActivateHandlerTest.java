@@ -11,7 +11,6 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatew
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
-import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -30,7 +29,6 @@ import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
-import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.projections.TransactionsProjection;
