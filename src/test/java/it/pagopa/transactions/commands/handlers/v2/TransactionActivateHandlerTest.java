@@ -21,7 +21,7 @@ import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
@@ -252,9 +252,9 @@ class TransactionActivateHandlerTest {
         );
         Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithException(any(), any());
         CreateTokenRequestDto createTokenRequestDto = getCreateTokenRequestDto(
-                JwtTokenUtils.TRANSACTION_ID_CLAIM,
-                JwtTokenUtils.ORDER_ID_CLAIM,
-                JwtTokenUtils.USER_ID_CLAIM
+                JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                JwtIssuerClient.ORDER_ID_CLAIM,
+                JwtIssuerClient.USER_ID_CLAIM
         );
         Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
         assertNotNull(paymentRequestInfoCached.id());
@@ -292,15 +292,15 @@ class TransactionActivateHandlerTest {
         List<String> claimsListToAdd = Arrays.asList(claims);
 
         claimsListToAdd.forEach(c -> {
-            if (c.equals(JwtTokenUtils.TRANSACTION_ID_CLAIM))
+            if (c.equals(JwtIssuerClient.TRANSACTION_ID_CLAIM))
                 claimsMap.put(c, TRANSACTION_ID);
-            if (c.equals(JwtTokenUtils.ORDER_ID_CLAIM))
+            if (c.equals(JwtIssuerClient.ORDER_ID_CLAIM))
                 claimsMap.put(c, ORDER_ID);
-            if (c.equals(JwtTokenUtils.USER_ID_CLAIM))
+            if (c.equals(JwtIssuerClient.USER_ID_CLAIM))
                 claimsMap.put(c, userId.toString());
         });
         CreateTokenRequestDto createTokenRequestDto = new CreateTokenRequestDto();
-        createTokenRequestDto.audience("ecommerce");
+        createTokenRequestDto.audience(JwtIssuerClient.ECOMMERCE_AUDIENCE);
         createTokenRequestDto.duration(tokenValidityTimeInSeconds);
         createTokenRequestDto.privateClaims(claimsMap);
         return createTokenRequestDto;
@@ -427,8 +427,8 @@ class TransactionActivateHandlerTest {
         );
         Mockito.verify(openTelemetryUtils, Mockito.times(0)).addErrorSpanWithException(any(), any());
         CreateTokenRequestDto createTokenRequestDto = getCreateTokenRequestDto(
-                JwtTokenUtils.TRANSACTION_ID_CLAIM,
-                JwtTokenUtils.USER_ID_CLAIM
+                JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                JwtIssuerClient.USER_ID_CLAIM
         );
         Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
         assertNotNull(paymentRequestInfoCached.id());
@@ -987,8 +987,8 @@ class TransactionActivateHandlerTest {
         Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
 
         CreateTokenRequestDto createTokenRequestDto = getCreateTokenRequestDto(
-                JwtTokenUtils.TRANSACTION_ID_CLAIM,
-                JwtTokenUtils.USER_ID_CLAIM
+                JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                JwtIssuerClient.USER_ID_CLAIM
         );
         Mockito.verify(jwtTokenIssuerClient, Mockito.times(1)).createJWTToken(eq(createTokenRequestDto));
 

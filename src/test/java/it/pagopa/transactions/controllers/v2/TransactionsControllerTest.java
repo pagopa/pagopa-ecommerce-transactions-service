@@ -7,7 +7,6 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -74,10 +73,6 @@ class TransactionsControllerTest {
     @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
 
-    @MockBean
-    @Qualifier("jwtTokenUtilsV2")
-    private JwtTokenUtils jwtTokenUtils;
-
     @Autowired
     private WebTestClient webTestClient;
 
@@ -130,13 +125,6 @@ class TransactionsControllerTest {
             paymentInfoDto.setRptId(RPTID);
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
-            Mockito.when(
-                    jwtTokenUtils.generateToken(
-                            any(SecretKey.class),
-                            anyInt(),
-                            eq(new Claims(transactionId, "orderId", null, userId))
-                    )
-            ).thenReturn(Either.right(""));
             Mockito.lenient()
                     .when(
                             transactionsService
@@ -244,8 +232,6 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
         webTestClient.post()
                 .uri("/v2/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -652,8 +638,7 @@ class TransactionsControllerTest {
             }
     )
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -678,8 +663,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnBadRequestForInvalidMail() {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()

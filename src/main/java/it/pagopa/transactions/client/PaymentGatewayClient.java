@@ -6,9 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
-import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.*;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
@@ -16,7 +14,7 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRespons
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
@@ -441,17 +439,17 @@ public class PaymentGatewayClient {
 
         return Mono.just(
                 userId == null ? Map.of(
-                        JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                        JwtIssuerClient.TRANSACTION_ID_CLAIM,
                         transactionId.value(),
-                        JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                        JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
                         paymentInstrumentId
                 )
                         : Map.of(
-                                JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                                JwtIssuerClient.TRANSACTION_ID_CLAIM,
                                 transactionId.value(),
-                                JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                                JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
                                 paymentInstrumentId,
-                                JwtTokenUtils.USER_ID_CLAIM,
+                                JwtIssuerClient.USER_ID_CLAIM,
                                 userId.toString()
                         )
         ).flatMap(
@@ -489,7 +487,7 @@ public class PaymentGatewayClient {
                 authorizationData.paymentInstrumentId(),
                 userId,
                 jwtEcommerceValidityTimeInSeconds,
-                "ecommerce"
+                JwtIssuerClient.ECOMMERCE_AUDIENCE
         )
                 .flatMap(
                         outcomeJwtToken -> {
@@ -641,19 +639,26 @@ public class PaymentGatewayClient {
         return uniqueIdUtils.generateUniqueId()
                 .map(orderId -> {
                     Map<String, String> claimsMap = new HashMap<>();
-                    claimsMap.put(JwtTokenUtils.ORDER_ID_CLAIM, orderId);
-                    claimsMap.put(JwtTokenUtils.TRANSACTION_ID_CLAIM, authorizationRequestData.transactionId().value());
+                    claimsMap.put(JwtIssuerClient.ORDER_ID_CLAIM, orderId);
+                    claimsMap.put(
+                            JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                            authorizationRequestData.transactionId().value()
+                    );
                     claimsMap
-                            .put(JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM, authorizationRequestData.paymentInstrumentId());
+                            .put(
+                                    JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
+                                    authorizationRequestData.paymentInstrumentId()
+                            );
                     if (userId != null) {
-                        claimsMap.put(JwtTokenUtils.USER_ID_CLAIM, userId.toString());
+                        claimsMap.put(JwtIssuerClient.USER_ID_CLAIM, userId.toString());
                     }
                     return claimsMap;
                 })
                 .flatMap(
                         claims -> jwtTokenIssuerClient
                                 .createJWTToken(
-                                        new CreateTokenRequestDto().privateClaims(claims).audience("npg")
+                                        new CreateTokenRequestDto().privateClaims(claims)
+                                                .audience(JwtIssuerClient.NPG_AUDIENCE)
                                                 .duration(npgJwtKeyValidityTime)
                                 ).doOnError(Mono::error)
                                 .map(response -> Tuples.of(claims, response))
@@ -662,11 +667,12 @@ public class PaymentGatewayClient {
                         response -> jwtTokenIssuerClient
                                 .createJWTToken(
                                         new CreateTokenRequestDto().privateClaims(response.getT1())
-                                                .audience("ecommerce").duration(jwtEcommerceValidityTimeInSeconds)
+                                                .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
+                                                .duration(jwtEcommerceValidityTimeInSeconds)
                                 )
                                 .doOnError(Mono::error).map(
                                         res -> new NpgBuildData(
-                                                response.getT1().get(JwtTokenUtils.ORDER_ID_CLAIM),
+                                                response.getT1().get(JwtIssuerClient.ORDER_ID_CLAIM),
                                                 response.getT2().getToken(),
                                                 res.getToken()
                                         )

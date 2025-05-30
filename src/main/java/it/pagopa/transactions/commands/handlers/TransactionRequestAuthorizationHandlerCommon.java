@@ -10,7 +10,7 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequest
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
@@ -503,28 +503,28 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     ) {
         return Mono.just(
                 userId == null ? Map.of(
-                        JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                        JwtIssuerClient.TRANSACTION_ID_CLAIM,
                         transactionId.value(),
-                        JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                        JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
                         paymentInstrumentId,
-                        JwtTokenUtils.ORDER_ID_CLAIM,
+                        JwtIssuerClient.ORDER_ID_CLAIM,
                         orderId
                 )
                         : Map.of(
-                                JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                                JwtIssuerClient.TRANSACTION_ID_CLAIM,
                                 transactionId.value(),
-                                JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                                JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
                                 paymentInstrumentId,
-                                JwtTokenUtils.ORDER_ID_CLAIM,
+                                JwtIssuerClient.ORDER_ID_CLAIM,
                                 orderId,
-                                JwtTokenUtils.USER_ID_CLAIM,
+                                JwtIssuerClient.USER_ID_CLAIM,
                                 userId.toString()
                         )
         ).flatMap(
                 claimsMap -> jwtTokenIssuerClient.createJWTToken(
                         new CreateTokenRequestDto()
                                 .duration(jwtWebviewValidityTimeInSeconds)
-                                .audience("webview")
+                                .audience(JwtIssuerClient.WEBVIEW_AUDIENCE)
                                 .privateClaims(claimsMap)
                 )
         ).doOnError(

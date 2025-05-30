@@ -19,7 +19,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -248,12 +248,12 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 UUID userId
     ) {
         Map<String, String> claimsMap = new HashMap<>();
-        claimsMap.put(JwtTokenUtils.TRANSACTION_ID_CLAIM, transactionId.value());
+        claimsMap.put(JwtIssuerClient.TRANSACTION_ID_CLAIM, transactionId.value());
         if (orderId != null) {
-            claimsMap.put(JwtTokenUtils.ORDER_ID_CLAIM, orderId);
+            claimsMap.put(JwtIssuerClient.ORDER_ID_CLAIM, orderId);
         }
         if (userId != null) {
-            claimsMap.put(JwtTokenUtils.USER_ID_CLAIM, userId.toString());
+            claimsMap.put(JwtIssuerClient.USER_ID_CLAIM, userId.toString());
         }
         return claimsMap;
     }
@@ -268,7 +268,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         claimsMap -> jwtTokenIssuerClient.createJWTToken(
                                 new CreateTokenRequestDto()
                                         .duration(jwtEcommerceValidityTimeInSeconds)
-                                        .audience("ecommerce")
+                                        .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
                                         .privateClaims(claimsMap)
                         )
                 ).doOnError(
