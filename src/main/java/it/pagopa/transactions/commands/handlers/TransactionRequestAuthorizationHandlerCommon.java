@@ -502,24 +502,24 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                               UUID userId
     ) {
         return Mono.just(
-                Optional
-                        .ofNullable(userId)
-                        .map(user -> Map.of(JwtTokenUtils.USER_ID_CLAIM, user.toString()))
-                        .orElse(new HashMap<>())
-        ).map(
-                map -> {
-                    map.putAll(
-                            Map.of(
-                                    JwtTokenUtils.TRANSACTION_ID_CLAIM,
-                                    transactionId.value(),
-                                    JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
-                                    paymentInstrumentId,
-                                    JwtTokenUtils.ORDER_ID_CLAIM,
-                                    orderId
-                            )
-                    );
-                    return map;
-                }
+                userId == null ? Map.of(
+                        JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                        transactionId.value(),
+                        JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                        paymentInstrumentId,
+                        JwtTokenUtils.ORDER_ID_CLAIM,
+                        orderId
+                )
+                        : Map.of(
+                                JwtTokenUtils.TRANSACTION_ID_CLAIM,
+                                transactionId.value(),
+                                JwtTokenUtils.PAYMENT_METHOD_ID_CLAIM,
+                                paymentInstrumentId,
+                                JwtTokenUtils.ORDER_ID_CLAIM,
+                                orderId,
+                                JwtTokenUtils.USER_ID_CLAIM,
+                                userId.toString()
+                        )
         ).flatMap(
                 claimsMap -> jwtTokenIssuerClient.createJWTToken(
                         new CreateTokenRequestDto()

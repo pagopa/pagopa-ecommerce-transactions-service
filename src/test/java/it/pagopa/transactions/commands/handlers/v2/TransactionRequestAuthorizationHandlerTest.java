@@ -2270,7 +2270,6 @@ class TransactionRequestAuthorizationHandlerTest {
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
-
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
