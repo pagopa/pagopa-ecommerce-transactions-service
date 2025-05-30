@@ -12,7 +12,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: main
+      ref: CHK-4189-add-jwt-issuer-mock
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
