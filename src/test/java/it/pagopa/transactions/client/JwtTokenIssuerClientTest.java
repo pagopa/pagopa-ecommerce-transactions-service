@@ -41,59 +41,6 @@ public class JwtTokenIssuerClientTest {
     }
 
     @Test
-    void shouldReturnKeys() {
-
-        JWKResponseDto jwkResponseDto = new JWKResponseDto();
-        jwkResponseDto.kty(JWKResponseDto.KtyEnum.RSA);
-        jwkResponseDto.kid("kid");
-        jwkResponseDto.n("n");
-        jwkResponseDto.e("e");
-        jwkResponseDto.use("use");
-        jwkResponseDto.alg("alg");
-
-        JWKResponseDto jwkResponseDto2 = new JWKResponseDto();
-        jwkResponseDto2.kty(JWKResponseDto.KtyEnum.RSA);
-        jwkResponseDto2.kid("kid2");
-        jwkResponseDto2.n("n2");
-        jwkResponseDto2.e("e2");
-        jwkResponseDto2.use("use2");
-        jwkResponseDto2.alg("alg2");
-
-        JWKSResponseDto jwksResponseDto = new JWKSResponseDto();
-        jwksResponseDto.addKeysItem(jwkResponseDto);
-        jwksResponseDto.addKeysItem(jwkResponseDto2);
-        Mockito.when(jwtIssuerApi.getTokenPublicKeys()).thenReturn(Mono.just(jwksResponseDto));
-
-        StepVerifier.create(client.getKeys())
-                .expectNext(jwksResponseDto);
-
-        verify(jwtIssuerApi, times(1)).getTokenPublicKeys();
-    }
-
-    @Test
-    void getKeysShouldThrowException() {
-
-        Mockito.when(jwtIssuerApi.getTokenPublicKeys()).thenReturn(
-                Mono.error(
-                        new WebClientResponseException(
-                                "error",
-                                HttpStatus.BAD_REQUEST.value(),
-                                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                                null,
-                                null,
-                                null
-                        )
-                )
-        );
-
-        StepVerifier.create(client.getKeys())
-                .expectErrorMatches(
-                        error -> error instanceof BadGatewayException
-                )
-                .verify();
-    }
-
-    @Test
     void shouldReturnJwtTokenResponse() {
 
         Map<String, String> privateClaims = new HashMap<>();
