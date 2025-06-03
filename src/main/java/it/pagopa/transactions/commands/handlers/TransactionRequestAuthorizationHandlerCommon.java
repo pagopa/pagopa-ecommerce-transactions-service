@@ -524,7 +524,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 claimsMap -> jwtTokenIssuerClient.createJWTToken(
                         new CreateTokenRequestDto()
                                 .duration(jwtWebviewValidityTimeInSeconds)
-                                .audience(JwtIssuerClient.ECOMMERCE_WEBVIEW_AUDIENCE)
+                                .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
                                 .privateClaims(claimsMap)
                 )
         ).doOnError(
