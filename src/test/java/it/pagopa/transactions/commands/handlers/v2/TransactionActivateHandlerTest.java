@@ -29,7 +29,6 @@ import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
-import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -48,7 +47,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 
-import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -96,11 +94,7 @@ class TransactionActivateHandlerTest {
 
     private static final UUID CORRELATION_ID = UUID.randomUUID();
 
-    private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
-
     private static final int tokenValidityTimeInSeconds = 900;
-
-    private final SecretKey jwtSecretKey = new SecretsConfigurations().ecommerceSigningKey(STRONG_KEY);
 
     private final UUID userId = UUID.randomUUID();
 
@@ -117,7 +111,6 @@ class TransactionActivateHandlerTest {
             nodoParallelRequests,
             tracingUtils,
             openTelemetryUtils,
-            jwtSecretKey,
             tokenValidityTimeInSeconds,
             jwtTokenIssuerClient
     );

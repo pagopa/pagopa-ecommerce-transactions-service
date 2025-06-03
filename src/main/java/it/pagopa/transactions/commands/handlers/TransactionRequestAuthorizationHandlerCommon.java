@@ -53,8 +53,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final JwtTokenIssuerClient jwtTokenIssuerClient;
 
-    private final SecretKey ecommerceSigningKey;
-
     private final int jwtWebviewValidityTimeInSeconds;
 
     protected TransactionRequestAuthorizationHandlerCommon(
@@ -64,7 +62,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             String checkoutOutcomeUrl,
             TransactionTemplateWrapper transactionTemplateWrapper,
             JwtTokenIssuerClient jwtTokenIssuerClient,
-            SecretKey ecommerceSigningKey,
             int jwtWebviewValidityTimeInSeconds
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
@@ -73,7 +70,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.checkoutOutcomeUrl = checkoutOutcomeUrl;
         this.transactionTemplateWrapper = transactionTemplateWrapper;
         this.jwtTokenIssuerClient = jwtTokenIssuerClient;
-        this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
     }
 

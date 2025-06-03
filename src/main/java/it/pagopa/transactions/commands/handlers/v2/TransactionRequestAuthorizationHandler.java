@@ -93,7 +93,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
             JwtTokenIssuerClient jwtTokenIssuerClient,
-            @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
             ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper
@@ -105,7 +104,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 checkoutOutcomeUrl,
                 transactionTemplateWrapper,
                 jwtTokenIssuerClient,
-                ecommerceWebViewSigningKey,
                 jwtWebviewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;

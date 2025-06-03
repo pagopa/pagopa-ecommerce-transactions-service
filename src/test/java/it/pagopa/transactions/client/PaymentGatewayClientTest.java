@@ -27,7 +27,6 @@ import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
-import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
@@ -56,7 +55,6 @@ import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -121,11 +119,7 @@ class PaymentGatewayClientTest {
     @Spy
     ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
-
     private static final int TOKEN_VALIDITY_TIME_SECONDS = 900;
-
-    private final SecretKey jwtSecretKey = new SecretsConfigurations().npgNotificationSigningKey(STRONG_KEY);
 
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderClient = Mockito
             .mock(NodeForwarderClient.class);
@@ -163,9 +157,7 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 configurationKeysConfig,
@@ -2507,9 +2499,7 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, codeListTypeMapping),
@@ -2713,9 +2703,7 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
@@ -2808,9 +2796,7 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
@@ -2955,9 +2941,7 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 configurationKeysConfig,

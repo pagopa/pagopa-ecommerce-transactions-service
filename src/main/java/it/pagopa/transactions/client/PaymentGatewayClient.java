@@ -33,26 +33,21 @@ import it.pagopa.transactions.utils.NpgBuildData;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static it.pagopa.ecommerce.commons.documents.v2.Transaction.*;
 
@@ -62,18 +57,12 @@ public class PaymentGatewayClient {
 
     private final ObjectMapper objectMapper;
 
-    private final UUIDUtils uuidUtils;
-
-    private final ConfidentialMailUtils confidentialMailUtils;
-
     private final NpgClient npgClient;
 
     private final NpgSessionUrlConfig npgSessionUrlConfig;
 
     private final UniqueIdUtils uniqueIdUtils;
-    private final SecretKey npgNotificationSigningKey;
     private final int npgJwtKeyValidityTime;
-    private final SecretKey ecommerceSigningKey;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
     private final RedirectKeysConfiguration redirectKeysConfig;
@@ -95,9 +84,7 @@ public class PaymentGatewayClient {
             NpgClient npgClient,
             NpgSessionUrlConfig npgSessionUrlConfig,
             UniqueIdUtils uniqueIdUtils,
-            @Qualifier("npgNotificationSigningKey") SecretKey npgNotificationSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
-            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
             RedirectKeysConfiguration redirectKeysConfig,
@@ -111,16 +98,12 @@ public class PaymentGatewayClient {
             JwtTokenIssuerClient jwtTokenIssuerClient
     ) {
         this.objectMapper = objectMapper;
-        this.uuidUtils = uuidUtils;
-        this.confidentialMailUtils = confidentialMailUtils;
         this.npgClient = npgClient;
         this.npgSessionUrlConfig = npgSessionUrlConfig;
         this.uniqueIdUtils = uniqueIdUtils;
-        this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
         this.redirectKeysConfig = redirectKeysConfig;
-        this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;

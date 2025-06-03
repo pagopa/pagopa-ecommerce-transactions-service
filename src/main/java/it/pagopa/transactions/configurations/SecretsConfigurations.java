@@ -16,21 +16,6 @@ import javax.crypto.SecretKey;
 @Configuration
 public class SecretsConfigurations {
 
-    @Bean("ecommerceSigningKey")
-    public SecretKey ecommerceSigningKey(@Value("${jwt.ecommerce.secretKey}") String jwtSecret) {
-        return jwtSigningKey(jwtSecret);
-    }
-
-    @Bean("ecommerceWebViewSigningKey")
-    public SecretKey ecommerceWebViewSigningKey(@Value("${jwt.ecommerceWebView.secretKey}") String jwtSecret) {
-        return jwtSigningKey(jwtSecret);
-    }
-
-    @Bean("npgNotificationSigningKey")
-    public SecretKey npgNotificationSigningKey(@Value("${npg.notification.jwt.secret}") String jwtSecret) {
-        return jwtSigningKey(jwtSecret);
-    }
-
     private SecretKey jwtSigningKey(String jwtSecret) {
         try {
             return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));

@@ -39,7 +39,6 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -68,7 +67,6 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
-            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             JwtTokenIssuerClient jwtTokenIssuerClient
     ) {
@@ -80,7 +78,6 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 nodoParallelRequests,
                 tracingUtils,
                 openTelemetryUtils,
-                ecommerceSigningKey,
                 jwtEcommerceValidityTimeInSeconds
         );
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;

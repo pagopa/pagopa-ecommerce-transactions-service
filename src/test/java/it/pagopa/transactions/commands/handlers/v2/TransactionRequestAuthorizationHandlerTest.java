@@ -140,7 +140,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 tracingUtils,
                 openTelemetryUtils,
                 jwtTokenIssuerClient,
-                ECOMMERCE_JWT_SIGNING_KEY,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 updateTransactionStatusTracerUtils,
                 exclusiveLockDocumentWrapper
