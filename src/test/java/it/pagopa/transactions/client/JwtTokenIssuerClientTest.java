@@ -3,8 +3,6 @@ package it.pagopa.transactions.client;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.api.JwtIssuerApi;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
-import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.JWKResponseDto;
-import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.JWKSResponseDto;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +25,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
-public class JwtTokenIssuerClientTest {
+class JwtTokenIssuerClientTest {
 
     private JwtTokenIssuerClient client;
 
@@ -35,7 +33,7 @@ public class JwtTokenIssuerClientTest {
     JwtIssuerApi jwtIssuerApi;
 
     @BeforeEach
-    public void init() {
+    void init() {
         client = new JwtTokenIssuerClient(jwtIssuerApi);
         Hooks.onOperatorDebug();
     }
@@ -49,7 +47,7 @@ public class JwtTokenIssuerClientTest {
         CreateTokenRequestDto createTokenRequestDto = new CreateTokenRequestDto().audience("audience").duration(1000)
                 .privateClaims(privateClaims);
         CreateTokenResponseDto createTokenResponseDto = new CreateTokenResponseDto().token("token");
-        Mockito.when(jwtIssuerApi.createJwtToken(eq(createTokenRequestDto)))
+        Mockito.when(jwtIssuerApi.createJwtToken(createTokenRequestDto))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
         StepVerifier.create(client.createJWTToken(createTokenRequestDto))
@@ -77,7 +75,7 @@ public class JwtTokenIssuerClientTest {
 
         StepVerifier.create(client.createJWTToken(any()))
                 .expectErrorMatches(
-                        error -> error instanceof BadGatewayException
+                        BadGatewayException.class::isInstance
                 )
                 .verify();
     }

@@ -3,9 +3,7 @@ package it.pagopa.transactions.controllers.v2_1;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
-import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
@@ -44,7 +42,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import javax.crypto.SecretKey;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
