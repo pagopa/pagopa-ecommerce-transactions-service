@@ -704,4 +704,91 @@ class TransactionsControllerTest {
         fault.setFaultCode(faultCode);
         return fault;
     }
+
+    @Test
+    void shouldCreateNewTransactionWithHugeAmount() {
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+        Integer hugeAmount = 999999999;
+        try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
+            uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
+            String RPTID = "77777777777302016723749670035";
+            UUID userId = UUID.randomUUID();
+            ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
+            NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
+            newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
+            newTransactionRequestDto.setEmailToken(UUID.randomUUID().toString());
+            newTransactionRequestDto.orderId("orderId");
+            NewTransactionResponseDto response = new NewTransactionResponseDto();
+            PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
+            paymentInfoDto.setAmount(hugeAmount);
+            paymentInfoDto.setReason("Reason");
+            paymentInfoDto.setPaymentToken("payment_token");
+            paymentInfoDto.setRptId(RPTID);
+            response.addPaymentsItem(paymentInfoDto);
+            response.setAuthToken("token");
+            Mockito.when(
+                    jwtTokenUtils.generateToken(
+                            any(SecretKey.class),
+                            anyInt(),
+                            eq(new Claims(transactionId, "orderId", null, userId))
+                    )
+            ).thenReturn(Either.right(""));
+            Mockito.lenient()
+                    .when(
+                            transactionsService
+                                    .newTransaction(
+                                            newTransactionRequestDto,
+                                            clientIdDto,
+                                            UUID.randomUUID(),
+                                            transactionId,
+                                            userId
+                                    )
+                    )
+                    .thenReturn(Mono.just(response));
+
+            Mockito.when(mockExchange.getRequest())
+                    .thenReturn(mockRequest);
+
+            Mockito.when(mockExchange.getRequest().getMethodValue())
+                    .thenReturn("POST");
+
+            Mockito.when(mockExchange.getRequest().getURI())
+                    .thenReturn(
+                            URI.create(
+                                    String.join(
+                                            "/",
+                                            "https://localhost/transactions",
+                                            transactionId.value()
+                                    )
+                            )
+                    );
+
+            ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
+                    .newTransaction(
+                            clientIdDto,
+                            UUID.randomUUID(),
+                            Mono.just(newTransactionRequestDto),
+                            UUID.randomUUID(),
+                            mockExchange
+                    )
+                    .block();
+
+            // Verify mock
+            Mockito.verify(transactionsService, Mockito.times(1))
+                    .newTransaction(
+                            newTransactionRequestDto,
+                            clientIdDto,
+                            UUID.randomUUID(),
+                            transactionId,
+                            UUID.randomUUID()
+                    );
+
+            // Verify status code and response
+            assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+            assertEquals(response, responseEntity.getBody());
+            assertEquals(hugeAmount, responseEntity.getBody().getPayments().get(0).getAmount());
+
+        }
+    }
+
 }
