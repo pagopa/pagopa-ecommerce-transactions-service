@@ -92,6 +92,8 @@ stages:
             echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
             sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
           displayName: 'Change transaction branch name ecommerce-local .env'
+        - script: git branch
+          displayName: 'Which branch'
         - script: docker compose up pagopa-ecommerce-transactions-service -d
           displayName: 'Run app with docker-compose'
         - script: |
