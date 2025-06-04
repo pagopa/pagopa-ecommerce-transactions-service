@@ -95,6 +95,9 @@ These are all environment variables needed by the application:
 | NPG_AUTHORIZATION_ERROR_CODE_MAPPING            |      | Map to bind authorization error code received from NPG to the right outcome code. This info is used when NPG authorization status is DECLINED                                   | string  |         |
 | ECOMMERCE_FINAL_STATES                          |      | List of all ecommerce transactions final states                                                                                                                                 | string  |         |
 | ECOMMERCE_POSSIBLE_FINAL_STATES                 |      | List of all ecommerce transactions possible final states that requires more condition check to be sure to declare it as final to the touchpoints                                | string  |         |
+| JWT_ISSUER_URI                                  |      | JWT Issuer URI                                                                                                                                                                  | string  |         |
+| JWT_ISSUER_READ_TIMEOUT                         |      | Timeout for requests towards JWT Issuer                                                                                                                                         | string  |         |
+| JWT_ISSUER_CONNECTION_TIMEOUT                   |      | Timeout for establishing connections towards JWT Issuer                                                                                                                         | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
