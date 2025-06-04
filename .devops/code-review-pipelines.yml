@@ -95,6 +95,10 @@ stages:
         - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik azurite-init pagopa-psp-mock pagopa-jwt-issuer-mock -d
           displayName: 'Run app with docker-compose'
         - script: |
+            echo "Logging container logs..."
+            docker compose logs
+          displayName: 'Log container output'
+        - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
           displayName: 'Health check'
         - script: yarn global add newman
