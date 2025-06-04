@@ -728,12 +728,12 @@ class TransactionsControllerTest {
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
             Mockito.when(
-                    jwtTokenUtils.generateToken(
-                            any(SecretKey.class),
+                    jwtIssuerClient.createJWTToken(
+                            any(),
                             anyInt(),
-                            eq(new Claims(transactionId, "orderId", null, userId))
+                            any()
                     )
-            ).thenReturn(Either.right(""));
+            ).thenReturn(Mono.just(new CreateTokenResponseDto().token("")));
             Mockito.lenient()
                     .when(
                             transactionsService
