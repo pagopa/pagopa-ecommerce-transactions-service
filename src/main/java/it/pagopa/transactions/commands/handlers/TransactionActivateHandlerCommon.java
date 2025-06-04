@@ -10,8 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import javax.crypto.SecretKey;
-
 @Slf4j
 public abstract class TransactionActivateHandlerCommon
         implements
