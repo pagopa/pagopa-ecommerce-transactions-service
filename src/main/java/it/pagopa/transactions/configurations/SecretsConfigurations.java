@@ -15,15 +15,6 @@ import javax.crypto.SecretKey;
 
 @Configuration
 public class SecretsConfigurations {
-
-    private SecretKey jwtSigningKey(String jwtSecret) {
-        try {
-            return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
-        } catch (WeakKeyException | DecodingException e) {
-            throw new IllegalStateException("Invalid configured JWT secret key", e);
-        }
-    }
-
     @Bean
     public TokenApi personalDataVaultApiClient(
                                                @Value(
