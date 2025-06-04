@@ -2,7 +2,7 @@
 
 ## What is this?
 
-This is a PagoPA microservice that handles transactions' lifecycle and workflow.
+This is a PagoPA microservice that handles eCommerce transactions' lifecycle and workflow.
 
 ### Environment variables
 
