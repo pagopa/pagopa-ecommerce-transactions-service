@@ -8,16 +8,19 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.exceptions.JwtIssuerClientException;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
+import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
@@ -36,13 +39,9 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Component(TransactionActivateHandler.QUALIFIER_NAME)
@@ -59,7 +58,6 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
-            JwtTokenUtils jwtTokenUtils,
             @Qualifier(
                 "transactionActivatedQueueAsyncClientV2"
             ) QueueAsyncClient transactionActivatedQueueAsyncClientV2,
@@ -69,18 +67,17 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
-            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
-            @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds
+            @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
+            JwtTokenIssuerClient jwtTokenIssuerClient
     ) {
         super(
                 paymentTokenTimeout,
-                jwtTokenUtils,
+                jwtTokenIssuerClient,
                 confidentialMailUtils,
                 transientQueuesTTLSeconds,
                 nodoParallelRequests,
                 tracingUtils,
                 openTelemetryUtils,
-                ecommerceSigningKey,
                 jwtEcommerceValidityTimeInSeconds
         );
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
@@ -103,6 +100,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 multiplePaymentNotices,
                 Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
         );
+
         return Mono.defer(
                 () -> Flux.fromIterable(paymentNotices)
                         .parallel(nodoParallelRequests)
@@ -219,23 +217,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .sequential()
                         .collectList()
                         .flatMap(
-                                paymentRequestInfos -> jwtTokenUtils
-                                        .generateToken(
-                                                ecommerceSigningKey,
-                                                jwtEcommerceValidityTimeInSeconds,
-                                                new Claims(
-                                                        transactionId,
-                                                        command.getData().orderId(),
-                                                        null,
-                                                        command.getUserId()
-                                                )
-                                        )
-                                        .fold(
-                                                Mono::error,
-                                                generatedToken -> Mono.just(
-                                                        Tuples.of(generatedToken, paymentRequestInfos)
-                                                )
-                                        )
+                                paymentRequestInfos -> generateTransactionJwtToken(command, transactionId)
+                                        .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
                         ).flatMap(
                                 args -> {
                                     String authToken = args.getT1();
@@ -253,6 +236,45 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 }
                         )
         );
+    }
+
+    private Map<String, String> createClaimsMap(
+                                                TransactionId transactionId,
+                                                String orderId,
+                                                UUID userId
+    ) {
+        Map<String, String> claimsMap = new HashMap<>();
+        claimsMap.put(JwtIssuerClient.TRANSACTION_ID_CLAIM, transactionId.value());
+        if (orderId != null) {
+            claimsMap.put(JwtIssuerClient.ORDER_ID_CLAIM, orderId);
+        }
+        if (userId != null) {
+            claimsMap.put(JwtIssuerClient.USER_ID_CLAIM, userId.toString());
+        }
+        return claimsMap;
+    }
+
+    private Mono<CreateTokenResponseDto> generateTransactionJwtToken(
+                                                                     TransactionActivateCommand command,
+                                                                     TransactionId transactionId
+    ) {
+
+        return Mono.just(createClaimsMap(transactionId, command.getData().orderId(), command.getUserId()))
+                .flatMap(
+                        claimsMap -> jwtTokenIssuerClient.createJWTToken(
+                                new CreateTokenRequestDto()
+                                        .duration(jwtEcommerceValidityTimeInSeconds)
+                                        .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
+                                        .privateClaims(claimsMap)
+                        )
+                ).doOnError(
+                        c -> Mono.error(
+                                new JwtIssuerClientException(
+                                        "Error while generating jwt token for ecommerce",
+                                        c
+                                )
+                        )
+                );
     }
 
     private void traceRepeatedActivation(PaymentRequestInfo paymentRequestInfo) {
