@@ -145,7 +145,10 @@ public class NodoOperations {
         // TODO Maybe here more values (all optional) can be passed such as Touchpoint
         // and PaymentMethod
         return nodeForPspClient
-                .activatePaymentNoticeV2(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request))
+                .activatePaymentNoticeV2(
+                        objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request),
+                        transactionId
+                )
                 .flatMap(
                         activatePaymentNoticeV2Response -> {
                             String faultCode = Optional.ofNullable(activatePaymentNoticeV2Response.getFault())

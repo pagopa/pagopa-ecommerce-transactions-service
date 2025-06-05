@@ -52,7 +52,8 @@ public class NodeForPspClient {
     }
 
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
-                                                                         JAXBElement<ActivatePaymentNoticeV2Request> request
+                                                                         JAXBElement<ActivatePaymentNoticeV2Request> request,
+                                                                         String transactionId
     ) {
         log.info(
                 "ActivatePaymentNoticeV2 init for noticeNumber [{}]; idPSP: [{}], IdemPK: [{}]",
@@ -64,6 +65,7 @@ public class NodeForPspClient {
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
                 .header("SOAPAction", "activatePaymentNoticeV2")
+                .header("x-transaction-id", transactionId)
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
                 .retrieve()
                 .onStatus(
