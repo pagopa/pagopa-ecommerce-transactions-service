@@ -1,17 +1,11 @@
 package it.pagopa.transactions.configurations;
 
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.io.DecodingException;
-import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.WeakKeyException;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.generated.pdv.v1.ApiClient;
 import it.pagopa.generated.pdv.v1.api.TokenApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.crypto.SecretKey;
 
 @Configuration
 public class SecretsConfigurations {
