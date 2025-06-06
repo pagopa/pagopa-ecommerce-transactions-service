@@ -3,7 +3,7 @@ package it.pagopa.transactions.client;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.api.JwtIssuerApi;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
-import it.pagopa.transactions.exceptions.JwtIssuerResponseException;
+import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,7 +74,7 @@ class JwtTokenIssuerClientTest {
 
         StepVerifier.create(client.createJWTToken(any()))
                 .expectErrorMatches(
-                        JwtIssuerResponseException.class::isInstance
+                        BadGatewayException.class::isInstance
                 )
                 .verify();
     }

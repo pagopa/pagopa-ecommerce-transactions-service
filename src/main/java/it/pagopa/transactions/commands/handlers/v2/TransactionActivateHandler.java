@@ -19,7 +19,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -39,6 +39,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -67,6 +68,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
             @Value("${nodo.parallelRequests}") int nodoParallelRequests,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
+            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             JwtTokenIssuerClient jwtTokenIssuerClient
     ) {
@@ -78,6 +80,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 nodoParallelRequests,
                 tracingUtils,
                 openTelemetryUtils,
+                ecommerceSigningKey,
                 jwtEcommerceValidityTimeInSeconds
         );
         this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
@@ -244,12 +247,12 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 UUID userId
     ) {
         Map<String, String> claimsMap = new HashMap<>();
-        claimsMap.put(JwtIssuerClient.TRANSACTION_ID_CLAIM, transactionId.value());
+        claimsMap.put(JwtTokenUtils.TRANSACTION_ID_CLAIM, transactionId.value());
         if (orderId != null) {
-            claimsMap.put(JwtIssuerClient.ORDER_ID_CLAIM, orderId);
+            claimsMap.put(JwtTokenUtils.ORDER_ID_CLAIM, orderId);
         }
         if (userId != null) {
-            claimsMap.put(JwtIssuerClient.USER_ID_CLAIM, userId.toString());
+            claimsMap.put(JwtTokenUtils.USER_ID_CLAIM, userId.toString());
         }
         return claimsMap;
     }
@@ -264,7 +267,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         claimsMap -> jwtTokenIssuerClient.createJWTToken(
                                 new CreateTokenRequestDto()
                                         .duration(jwtEcommerceValidityTimeInSeconds)
-                                        .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
+                                        .audience("ecommerce")
                                         .privateClaims(claimsMap)
                         )
                 ).doOnError(
