@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
@@ -11,7 +12,6 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactio
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
-import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
@@ -20,13 +20,13 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
-import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -113,7 +113,7 @@ class TransactionRequestAuthorizationHandlerTest {
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClient = Mockito
             .mock(QueueAsyncClient.class);
 
-    private static final JwtTokenIssuerClient jwtTokenIssuerClient = Mockito.mock(JwtTokenIssuerClient.class);
+    private static final JwtTokenUtils jwtTokenUtils = Mockito.mock(JwtTokenUtils.class);
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
             .mock(UpdateTransactionStatusTracerUtils.class);
@@ -137,7 +137,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 authRequestEventVisibilityTimeoutSeconds,
                 tracingUtils,
                 openTelemetryUtils,
-                jwtTokenIssuerClient,
+                jwtTokenUtils,
+                ECOMMERCE_JWT_SIGNING_KEY,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 updateTransactionStatusTracerUtils,
                 exclusiveLockDocumentWrapper
@@ -525,8 +526,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         )
                 );
 
-        when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
-                .thenReturn(Mono.just(createTokenResponseDto));
+        when(jwtTokenUtils.generateToken(any(), anyInt(), any())).thenReturn(Either.right(MOCK_JWT));
 
         when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
@@ -2242,8 +2242,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         )
                 );
 
-        when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
-                .thenReturn(Mono.just(createTokenResponseDto));
+        when(jwtTokenUtils.generateToken(any(), anyInt(), any())).thenReturn(Either.right(MOCK_JWT));
 
         when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
@@ -2267,6 +2266,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))

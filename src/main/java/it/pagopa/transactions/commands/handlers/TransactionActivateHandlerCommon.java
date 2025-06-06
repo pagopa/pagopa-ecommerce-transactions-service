@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
+import javax.crypto.SecretKey;
+
 @Slf4j
 public abstract class TransactionActivateHandlerCommon
         implements
@@ -26,6 +28,7 @@ public abstract class TransactionActivateHandlerCommon
     protected final TracingUtils tracingUtils;
     protected final OpenTelemetryUtils openTelemetryUtils;
 
+    protected final SecretKey ecommerceSigningKey;
     protected final int jwtEcommerceValidityTimeInSeconds;
 
     protected TransactionActivateHandlerCommon(
@@ -37,6 +40,7 @@ public abstract class TransactionActivateHandlerCommon
             int nodoParallelRequests,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
+            SecretKey ecommerceSigningKey,
             int jwtEcommerceValidityTimeInSeconds
     ) {
 
@@ -47,6 +51,7 @@ public abstract class TransactionActivateHandlerCommon
         this.nodoParallelRequests = nodoParallelRequests;
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
+        this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
     }
 }
