@@ -19,13 +19,12 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
-import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
+import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
-import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationOutput;
@@ -92,7 +91,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${authorization.event.visibilityTimeoutSeconds}") Integer authRequestEventVisibilityTimeoutSeconds,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
-            JwtTokenIssuerClient jwtTokenIssuerClient,
+            JwtTokenUtils jwtTokenUtils,
+            @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
             ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper
@@ -103,7 +103,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 checkoutNpgGdiUrl,
                 checkoutOutcomeUrl,
                 transactionTemplateWrapper,
-                jwtTokenIssuerClient,
+                jwtTokenUtils,
+                ecommerceWebViewSigningKey,
                 jwtWebviewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
