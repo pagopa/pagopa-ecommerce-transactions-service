@@ -493,9 +493,9 @@
             </executions>
             </plugin>
             <plugin>
-                <groupId>com.helger.maven</groupId>
-                <artifactId>jaxb40-maven-plugin</artifactId>
-                <version>0.16.1</version>
+                <groupId>org.jvnet.jaxb</groupId>
+                <artifactId>jaxb-maven-plugin</artifactId>
+                <version>4.0.0</version>
                 <executions>
                     <execution>
                         <id>node-for-psp</id>
@@ -561,7 +561,7 @@
                     <argLine>${argLine} --enable-preview</argLine>
                 </configuration>
             </plugin>
-            <!--<plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-scm-plugin</artifactId>
                 <version>2.0.0-M3</version>
@@ -580,7 +580,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin> -->
+            </plugin>
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
