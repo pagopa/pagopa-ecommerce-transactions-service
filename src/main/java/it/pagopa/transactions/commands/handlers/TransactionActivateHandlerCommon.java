@@ -2,8 +2,8 @@ package it.pagopa.transactions.commands.handlers;
 
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.utils.v2.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
+import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ public abstract class TransactionActivateHandlerCommon
 
     public static final int TRANSFER_LIST_MAX_SIZE = 5;
     protected final Integer paymentTokenTimeout;
-    protected final JwtTokenUtils jwtTokenUtils;
+    protected final JwtTokenIssuerClient jwtTokenIssuerClient;
     protected final ConfidentialMailUtils confidentialMailUtils;
 
     protected final int transientQueuesTTLSeconds;
@@ -34,7 +34,7 @@ public abstract class TransactionActivateHandlerCommon
     protected TransactionActivateHandlerCommon(
 
             Integer paymentTokenTimeout,
-            JwtTokenUtils jwtTokenUtils,
+            JwtTokenIssuerClient jwtTokenIssuerClient,
             ConfidentialMailUtils confidentialMailUtils,
             int transientQueuesTTLSeconds,
             int nodoParallelRequests,
@@ -45,7 +45,7 @@ public abstract class TransactionActivateHandlerCommon
     ) {
 
         this.paymentTokenTimeout = paymentTokenTimeout;
-        this.jwtTokenUtils = jwtTokenUtils;
+        this.jwtTokenIssuerClient = jwtTokenIssuerClient;
         this.confidentialMailUtils = confidentialMailUtils;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.nodoParallelRequests = nodoParallelRequests;
