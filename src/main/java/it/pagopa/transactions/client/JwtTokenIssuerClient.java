@@ -3,8 +3,7 @@ package it.pagopa.transactions.client;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.api.JwtIssuerApi;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
-import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.JWKSResponseDto;
-import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.JwtIssuerResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,9 +29,9 @@ public class JwtTokenIssuerClient {
                 JwtTokenIssuerClient::logWebClientException
         )
                 .onErrorMap(
-                        err -> new BadGatewayException(
-                                "Error while invoke method for create jwt token",
-                                HttpStatus.BAD_GATEWAY
+                        err -> new JwtIssuerResponseException(
+                                HttpStatus.BAD_GATEWAY,
+                                "Error while invoke method for create jwt token"
                         )
                 );
     }
