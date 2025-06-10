@@ -98,6 +98,8 @@ These are all environment variables needed by the application:
 | JWT_ISSUER_URI                                  |      | JWT Issuer URI                                                                                                                                                                  | string  |         |
 | JWT_ISSUER_READ_TIMEOUT                         |      | Timeout for requests towards JWT Issuer                                                                                                                                         | string  |         |
 | JWT_ISSUER_CONNECTION_TIMEOUT                   |      | Timeout for establishing connections towards JWT Issuer                                                                                                                         | string  |         |
+| NODO_NODEFORPSP_API_KEY                         |      | API Key for NODE FOR PSP WS                                                                                                                                                     | string  |         |
+| NODO_NODEFORECOMMERCE_API_KEY                   |      | API Key for Nodo closePayment API                                                                                                                                               | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
