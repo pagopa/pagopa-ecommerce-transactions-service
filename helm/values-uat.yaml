@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.64.1"
+    tag: "1.65.0"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -190,15 +190,12 @@ microservice-chart:
     REDIS_HOST: redis-ecommerce-hostname
     NOTIFICATIONS_SERVICE_API_KEY: notifications-service-api-key
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
-    JWT_ECOMMERCE_SECRET: sessions-jwt-secret
-    JWT_ECOMMERCE_WEBVIEW_SECRET: ecommerce-io-jwt-signing-key
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     WALLET_API_KEY: wallet-api-key
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
-    JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
     NODE_FORWARDER_API_KEY: node-forwarder-api-key
     REDIRECT_URL_MAPPING: redirect-url-mapping
     NPG_PAYPAL_PSP_KEYS: npg-paypal-psp-keys
