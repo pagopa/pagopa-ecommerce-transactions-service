@@ -6,7 +6,7 @@ import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatew
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -30,7 +30,7 @@ import static it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdate
 public class AuthorizationUpdateProjectionHandler
         implements ProjectionHandler<TransactionAuthorizationCompletedEvent, Mono<TransactionActivated>> {
 
-    public static final String QUALIFIER_NAME = "AuthorizationUpdateProjectionHandlerV2";
+    public static final String QUALIFIER_NAME = "authorizationUpdateProjectionHandlerV2";
     private final TransactionsViewRepository transactionsViewRepository;
 
     private final Integer paymentTokenValidity;

@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.55.0"
+    tag: "1.65.1"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -108,13 +108,15 @@ microservice-chart:
     MONGO_SERVER_SELECTION_TIMEOUT_MS: "2000"
     MONGO_WAITING_QUEUE_MS: "2000"
     MONGO_HEARTBEAT_FREQUENCY_MS: "5000"
+    MONGO_REPLICA_SET_OPTION: "&replicaSet=globaldb"
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.platform.pagopa.it
-    NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
-    NODO_PER_PM_URI: /nodo/nodo-per-pm/v2
+    NODE_FOR_PSP_URI: /nodo-auth/node-for-psp/v1
+    NODO_PER_PM_URI: /nodo-auth/node-for-ecommerce/v2
     NODO_READ_TIMEOUT: "14000"
     NODO_CONNECTION_TIMEOUT: "14000"
+    NODO_CONNECTION_STRING: "{\"idPSP\":\"AGID_01\",\"idChannel\":\"97735020584_09\",\"idBrokerPSP\":\"97735020584\"}"
     NODO_PARALLEL_REQUESTS: "5"
     NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
     NODO_ECOMMERCE_CLIENT_ID: ecomm
@@ -162,6 +164,7 @@ microservice-chart:
     NPG_SATISPAY_PSP_LIST: "SATYLUL1"
     NPG_APPLEPAY_PSP_LIST: "SIGPITM1XXX"
     NPG_GOOGLE_PAY_PSP_LIST: ""
+    NPG_AUTHORIZATION_ERROR_CODE_MAPPING: '{"907":"25","908":"25","909":"25","110":"3","111":"7","210":"3","115":"25","116":"116","413":"2","117":"117","118":"3","119":"2","911":"25","999":"25","913":"25","120":"2","121":"121","100":"2","122":"2","101":"7","123":"2","200":"2","102":"2","124":"2","125":"3","202":"2","104":"3","126":"2","204":"2","106":"2","129":"2","888":"2","109":"25","208":"3","209":"3","902":"2","903":"2","904":"25","906":"25"}'
     AUTH_REQUESTED_EVENT_VISIBILITY_TIMEOUT_SECONDS: "0"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
@@ -180,22 +183,25 @@ microservice-chart:
     CHECKOUT_OUTCOME_URL: "https://checkout.pagopa.it/esito"
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
     EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "2"
+    ECOMMERCE_FINAL_STATES: "NOTIFIED_OK,NOTIFIED_KO,NOTIFICATION_ERROR,NOTIFICATION_REQUESTED,EXPIRED,REFUNDED,CANCELED,UNAUTHORIZED,REFUND_ERROR,REFUND_REQUESTED,CANCELLATION_EXPIRED"
+    ECOMMERCE_POSSIBLE_FINAL_STATES: "AUTHORIZATION_COMPLETED,CLOSURE_REQUESTED,CLOSURE_ERROR"
+    JWT_ISSUER_URI: "https://weuprod.ecommerce.internal.platform.pagopa.it/pagopa-jwt-issuer-service"
+    JWT_ISSUER_READ_TIMEOUT: "10000"
+    JWT_ISSUER_CONNECTION_TIMEOUT: "10000"
   envSecret:
+    NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
+    NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
     REDIS_HOST: redis-ecommerce-hostname
-    NODO_CONNECTION_STRING: nodo-connection-string
     NOTIFICATIONS_SERVICE_API_KEY: notifications-service-api-key
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
-    JWT_ECOMMERCE_SECRET: sessions-jwt-secret
-    JWT_ECOMMERCE_WEBVIEW_SECRET: ecommerce-io-jwt-signing-key
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     WALLET_API_KEY: wallet-api-key
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
-    JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
     NODE_FORWARDER_API_KEY: node-forwarder-api-key
     REDIRECT_URL_MAPPING: redirect-url-mapping
     NPG_PAYPAL_PSP_KEYS: npg-paypal-psp-keys

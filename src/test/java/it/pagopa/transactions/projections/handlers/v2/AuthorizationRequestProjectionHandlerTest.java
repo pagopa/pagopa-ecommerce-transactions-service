@@ -1,7 +1,7 @@
 package it.pagopa.transactions.projections.handlers.v2;
 
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -36,11 +36,13 @@ class AuthorizationRequestProjectionHandlerTest {
                 ZonedDateTime.now()
         );
 
+        Integer fee = 50;
+
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 new TransactionId(initialDocument.getTransactionId()),
                 null,
                 initialDocument.getEmail(),
-                0,
+                fee,
                 null,
                 TransactionTestUtils.PSP_ID,
                 TransactionTestUtils.PAYMENT_TYPE_CODE,
@@ -63,7 +65,7 @@ class AuthorizationRequestProjectionHandlerTest {
         Transaction expectedDocument = new Transaction(
                 initialDocument.getTransactionId(),
                 initialDocument.getPaymentNotices(),
-                initialDocument.getFeeTotal(),
+                fee,
                 initialDocument.getEmail(),
                 TransactionStatusDto.AUTHORIZATION_REQUESTED,
                 initialDocument.getClientId(),

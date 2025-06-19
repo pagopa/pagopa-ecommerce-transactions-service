@@ -3,8 +3,7 @@ package it.pagopa.transactions.controllers.v1;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
@@ -17,6 +16,7 @@ import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -38,6 +38,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import reactor.util.context.Context;
 
 @RestController("TransactionsControllerV1")
 @Slf4j
@@ -140,29 +141,79 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnNext(t -> log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId))
-                .flatMap(
-                        requestAuthorizationRequest -> transactionsService
-                                .requestTransactionAuthorization(
-                                        transactionId,
-                                        xUserId,
-                                        xPgsId,
-                                        lang,
-                                        requestAuthorizationRequest
-                                )
-                )
+                .doOnNext(logTransactionRequestFor(transactionId))
+                .flatMap(request -> authorizeTransaction(transactionId, xUserId, xPgsId, lang, request))
                 .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .contextWrite(context -> addTransactionContext(context, transactionId, exchange));
+    }
+
+    /**
+     * Creates a consumer that logs a transaction request for a specific transaction
+     * ID.
+     *
+     * @param transactionId The ID of the transaction being requested
+     * @return A consumer that logs the transaction request
+     */
+    private Consumer<RequestAuthorizationRequestDto> logTransactionRequestFor(String transactionId) {
+        return request -> logTransactionRequest(transactionId);
+    }
+
+    private void logTransactionRequest(String transactionId) {
+        log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId);
+    }
+
+    /**
+     * Creates a function that authorizes a transaction with the specified
+     * parameters.
+     *
+     * @param transactionId The ID of the transaction to authorize
+     * @param xUserId       The user ID for the authorization
+     * @param xPgsId        The payment gateway ID
+     * @param lang          The language code
+     * @return A function that processes the authorization request
+     */
+    private Mono<RequestAuthorizationResponseDto> authorizeTransaction(
+                                                                       String transactionId,
+                                                                       UUID xUserId,
+                                                                       String xPgsId,
+                                                                       String lang,
+                                                                       RequestAuthorizationRequestDto request
+    ) {
+        return transactionsService.requestTransactionAuthorization(
+                transactionId,
+                xUserId,
+                xPgsId,
+                lang,
+                request
+        );
+    }
+
+    /**
+     * Creates a function that adds transaction context to a reactor context.
+     *
+     * @param transactionId The ID of the transaction
+     * @param exchange      The server web exchange
+     * @return A function that adds transaction context
+     */
+    private Context addTransactionContext(
+                                          Context context,
+                                          String transactionId,
+                                          ServerWebExchange exchange
+    ) {
+        TransactionTracingUtils.TransactionInfo transactionInfo = createTransactionInfo(transactionId, exchange);
+        return TransactionTracingUtils.setTransactionInfoIntoReactorContext(transactionInfo, context);
+    }
+
+    private TransactionTracingUtils.TransactionInfo createTransactionInfo(
+                                                                          String transactionId,
+                                                                          ServerWebExchange exchange
+    ) {
+        return new TransactionTracingUtils.TransactionInfo(
+                new TransactionId(transactionId),
+                new HashSet<>(),
+                exchange.getRequest().getMethodValue(),
+                exchange.getRequest().getURI().getPath()
+        );
     }
 
     @Override
@@ -363,6 +414,28 @@ public class TransactionsController implements TransactionsApi {
                         )
                 )
                 .thenReturn(ResponseEntity.accepted().build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<TransactionOutcomeInfoDto>> getTransactionOutcomes(
+                                                                                  String transactionId,
+                                                                                  UUID xUserId,
+                                                                                  ServerWebExchange exchange
+    ) {
+        return transactionsService.getTransactionOutcome(transactionId, xUserId)
+                .doOnNext(t -> log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId))
+                .map(ResponseEntity::ok)
+                .contextWrite(
+                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                new TransactionTracingUtils.TransactionInfo(
+                                        new TransactionId(transactionId),
+                                        new HashSet<>(),
+                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getURI().getPath()
+                                ),
+                                context
+                        )
+                );
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
@@ -615,10 +688,10 @@ public class TransactionsController implements TransactionsApi {
 
     @ExceptionHandler(
         {
-                JWTTokenGenerationException.class
+                JwtIssuerResponseException.class
         }
     )
-    ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JWTTokenGenerationException exception) {
+    ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JwtIssuerResponseException exception) {
         log.warn(exception.getMessage());
         HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         return new ResponseEntity<>(

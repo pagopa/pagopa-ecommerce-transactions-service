@@ -1,6 +1,7 @@
 package it.pagopa.transactions.projections.handlers.v2;
 
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ public class TransactionsActivationProjectionHandler
         implements
         ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent, Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionActivated>> {
 
-    public static final String QUALIFIER_NAME = "TransactionsActivationProjectionHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionsActivationProjectionHandlerV2";
     @Autowired
     private TransactionsViewRepository viewEventStoreRepository;
 

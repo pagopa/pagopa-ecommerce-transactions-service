@@ -1,11 +1,11 @@
 package it.pagopa.transactions.utils;
 
 import io.jsonwebtoken.*;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import org.mockito.ArgumentMatcher;
 
 import java.net.URI;
 
-import static it.pagopa.ecommerce.commons.utils.JwtTokenUtils.*;
 import static it.pagopa.transactions.utils.UrlUtils.getParametersAsMap;
 import static it.pagopa.transactions.utils.UrlUtils.urlsEqualsWithRandomParam;
 
@@ -40,14 +40,14 @@ public class NpgOutcomeUrlMatcher implements ArgumentMatcher<URI> {
         boolean result;
         if (orderId != null) {
             result = parser.isSigned(jwtToken) &&
-                    untrusted.getBody().get(TRANSACTION_ID_CLAIM).equals(transactionId) &&
-                    untrusted.getBody().get(ORDER_ID_CLAIM).equals(orderId) &&
-                    untrusted.getBody().get(PAYMENT_METHOD_ID_CLAIM).equals(paymentMethodId) &&
+                    untrusted.getBody().get(JwtIssuerClient.TRANSACTION_ID_CLAIM).equals(transactionId) &&
+                    untrusted.getBody().get(JwtIssuerClient.ORDER_ID_CLAIM).equals(orderId) &&
+                    untrusted.getBody().get(JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM).equals(paymentMethodId) &&
                     urlsEqualsWithRandomParam(this.actualUri, expectedUri);
         } else {
             result = parser.isSigned(jwtToken) &&
-                    untrusted.getBody().get(TRANSACTION_ID_CLAIM).equals(transactionId) &&
-                    untrusted.getBody().get(PAYMENT_METHOD_ID_CLAIM).equals(paymentMethodId) &&
+                    untrusted.getBody().get(JwtIssuerClient.TRANSACTION_ID_CLAIM).equals(transactionId) &&
+                    untrusted.getBody().get(JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM).equals(paymentMethodId) &&
                     urlsEqualsWithRandomParam(this.actualUri, expectedUri);
         }
         return result;

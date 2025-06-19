@@ -3,13 +3,17 @@ package it.pagopa.transactions.commands.handlers;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.Claims;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.exceptions.JwtIssuerClientException;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationOutput;
@@ -30,10 +34,7 @@ import javax.crypto.SecretKey;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -50,9 +51,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
-    private final JwtTokenUtils jwtTokenUtils;
-
-    private final SecretKey ecommerceSigningKey;
+    private final JwtTokenIssuerClient jwtTokenIssuerClient;
 
     private final int jwtWebviewValidityTimeInSeconds;
 
@@ -62,8 +61,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             String checkoutNpgGdiUrl,
             String checkoutOutcomeUrl,
             TransactionTemplateWrapper transactionTemplateWrapper,
-            JwtTokenUtils jwtTokenUtils,
-            SecretKey ecommerceSigningKey,
+            JwtTokenIssuerClient jwtTokenIssuerClient,
             int jwtWebviewValidityTimeInSeconds
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
@@ -71,8 +69,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.checkoutNpgGdiUrl = checkoutNpgGdiUrl;
         this.checkoutOutcomeUrl = checkoutOutcomeUrl;
         this.transactionTemplateWrapper = transactionTemplateWrapper;
-        this.jwtTokenUtils = jwtTokenUtils;
-        this.ecommerceSigningKey = ecommerceSigningKey;
+        this.jwtTokenIssuerClient = jwtTokenIssuerClient;
         this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
     }
 
@@ -500,16 +497,41 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                               String orderId,
                                               UUID userId
     ) {
-        return jwtTokenUtils
-                .generateToken(
-                        ecommerceSigningKey,
-                        jwtWebviewValidityTimeInSeconds,
-                        new Claims(
-                                transactionId,
-                                orderId,
+        return Mono.just(
+                userId == null ? Map.of(
+                        JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                        transactionId.value(),
+                        JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
+                        paymentInstrumentId,
+                        JwtIssuerClient.ORDER_ID_CLAIM,
+                        orderId
+                )
+                        : Map.of(
+                                JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                                transactionId.value(),
+                                JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
                                 paymentInstrumentId,
-                                userId
+                                JwtIssuerClient.ORDER_ID_CLAIM,
+                                orderId,
+                                JwtIssuerClient.USER_ID_CLAIM,
+                                userId.toString()
                         )
-                ).fold(Mono::error, Mono::just);
+        ).flatMap(
+                claimsMap -> jwtTokenIssuerClient.createJWTToken(
+                        new CreateTokenRequestDto()
+                                .duration(jwtWebviewValidityTimeInSeconds)
+                                .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
+                                .privateClaims(claimsMap)
+                )
+        ).doOnError(
+                c -> Mono.error(
+                        new JwtIssuerClientException(
+                                "Error while generating jwt token for webview",
+                                c
+                        )
+                )
+        )
+                .map(CreateTokenResponseDto::getToken);
+
     }
 }

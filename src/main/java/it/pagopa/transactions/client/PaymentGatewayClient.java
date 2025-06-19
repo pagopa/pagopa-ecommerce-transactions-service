@@ -6,18 +6,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
-import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyConfigurationException;
-import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
-import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.exceptions.*;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
@@ -36,7 +33,6 @@ import it.pagopa.transactions.utils.NpgBuildData;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
@@ -47,7 +43,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -62,18 +57,12 @@ public class PaymentGatewayClient {
 
     private final ObjectMapper objectMapper;
 
-    private final UUIDUtils uuidUtils;
-
-    private final ConfidentialMailUtils confidentialMailUtils;
-
     private final NpgClient npgClient;
 
     private final NpgSessionUrlConfig npgSessionUrlConfig;
 
     private final UniqueIdUtils uniqueIdUtils;
-    private final SecretKey npgNotificationSigningKey;
     private final int npgJwtKeyValidityTime;
-    private final SecretKey ecommerceSigningKey;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
     private final RedirectKeysConfiguration redirectKeysConfig;
@@ -84,6 +73,8 @@ public class PaymentGatewayClient {
 
     private final Map<String, String> redirectPaymentTypeCodeDescription;
 
+    private final JwtTokenIssuerClient jwtTokenIssuerClient;
+
     @Autowired
     public PaymentGatewayClient(
 
@@ -93,9 +84,7 @@ public class PaymentGatewayClient {
             NpgClient npgClient,
             NpgSessionUrlConfig npgSessionUrlConfig,
             UniqueIdUtils uniqueIdUtils,
-            @Qualifier("npgNotificationSigningKey") SecretKey npgNotificationSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
-            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
             RedirectKeysConfiguration redirectKeysConfig,
@@ -105,23 +94,21 @@ public class PaymentGatewayClient {
             ) Set<String> npgAuthorizationRetryExcludedErrorCodes,
             @Value(
                 "#{${redirect.paymentTypeCodeDescriptionMapping}}"
-            ) Map<String, String> redirectPaymentTypeCodeDescription
+            ) Map<String, String> redirectPaymentTypeCodeDescription,
+            JwtTokenIssuerClient jwtTokenIssuerClient
     ) {
         this.objectMapper = objectMapper;
-        this.uuidUtils = uuidUtils;
-        this.confidentialMailUtils = confidentialMailUtils;
         this.npgClient = npgClient;
         this.npgSessionUrlConfig = npgSessionUrlConfig;
         this.uniqueIdUtils = uniqueIdUtils;
-        this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
         this.redirectKeysConfig = redirectKeysConfig;
-        this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
         this.redirectPaymentTypeCodeDescription = redirectPaymentTypeCodeDescription;
+        this.jwtTokenIssuerClient = jwtTokenIssuerClient;
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -425,6 +412,47 @@ public class PaymentGatewayClient {
                 );
     }
 
+    private Mono<String> generateJwtToken(
+                                          TransactionId transactionId,
+                                          String paymentInstrumentId,
+                                          UUID userId,
+                                          Integer validityTime,
+                                          String audience
+    ) {
+
+        return Mono.just(
+                userId == null ? Map.of(
+                        JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                        transactionId.value(),
+                        JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
+                        paymentInstrumentId
+                )
+                        : Map.of(
+                                JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                                transactionId.value(),
+                                JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
+                                paymentInstrumentId,
+                                JwtIssuerClient.USER_ID_CLAIM,
+                                userId.toString()
+                        )
+        ).flatMap(
+                claimsMap -> jwtTokenIssuerClient.createJWTToken(
+                        new CreateTokenRequestDto()
+                                .duration(validityTime)
+                                .audience(audience)
+                                .privateClaims(claimsMap)
+                )
+        ).doOnError(
+                c -> Mono.error(
+                        new JwtIssuerClientException(
+                                "Error while generating jwt token for webview",
+                                c
+                        )
+                )
+        )
+                .map(CreateTokenResponseDto::getToken);
+    }
+
     /**
      * Perform authorization request with PSP retrieving redirection URL
      *
@@ -437,18 +465,14 @@ public class PaymentGatewayClient {
                                                                         RedirectUrlRequestDto.TouchpointEnum touchpoint,
                                                                         UUID userId
     ) {
-        return new JwtTokenUtils()
-                .generateToken(
-                        ecommerceSigningKey,
-                        jwtEcommerceValidityTimeInSeconds,
-                        new Claims(
-                                authorizationData.transactionId(),
-                                null,
-                                authorizationData.paymentInstrumentId(),
-                                userId
-                        )
-                ).fold(
-                        Mono::error,
+        return generateJwtToken(
+                authorizationData.transactionId(),
+                authorizationData.paymentInstrumentId(),
+                userId,
+                jwtEcommerceValidityTimeInSeconds,
+                JwtIssuerClient.ECOMMERCE_AUDIENCE
+        )
+                .flatMap(
                         outcomeJwtToken -> {
 
                             String paymentTypeCode = authorizationData.paymentTypeCode();
@@ -596,41 +620,46 @@ public class PaymentGatewayClient {
                                                                UUID userId
     ) {
         return uniqueIdUtils.generateUniqueId()
+                .map(orderId -> {
+                    Map<String, String> claimsMap = new HashMap<>();
+                    claimsMap.put(JwtIssuerClient.ORDER_ID_CLAIM, orderId);
+                    claimsMap.put(
+                            JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                            authorizationRequestData.transactionId().value()
+                    );
+                    claimsMap
+                            .put(
+                                    JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
+                                    authorizationRequestData.paymentInstrumentId()
+                            );
+                    if (userId != null) {
+                        claimsMap.put(JwtIssuerClient.USER_ID_CLAIM, userId.toString());
+                    }
+                    return claimsMap;
+                })
                 .flatMap(
-                        orderId -> new JwtTokenUtils()
-                                .generateToken(
-                                        npgNotificationSigningKey,
-                                        npgJwtKeyValidityTime,
-                                        new Claims(
-                                                authorizationRequestData.transactionId(),
-                                                orderId,
-                                                authorizationRequestData.paymentInstrumentId(),
-                                                userId
-                                        )
-                                ).fold(
-                                        Mono::error,
-                                        notificationToken -> new JwtTokenUtils()
-                                                .generateToken(
-                                                        ecommerceSigningKey,
-                                                        jwtEcommerceValidityTimeInSeconds,
-                                                        new Claims(
-                                                                authorizationRequestData.transactionId(),
-                                                                orderId,
-                                                                authorizationRequestData.paymentInstrumentId(),
-                                                                userId
-                                                        )
-                                                ).fold(
-                                                        Mono::error,
-                                                        outcomeToken -> Mono.just(
-                                                                new NpgBuildData(
-                                                                        orderId,
-                                                                        notificationToken,
-                                                                        outcomeToken
-                                                                )
-                                                        )
-                                                )
+                        claims -> jwtTokenIssuerClient
+                                .createJWTToken(
+                                        new CreateTokenRequestDto().privateClaims(claims)
+                                                .audience(JwtIssuerClient.NPG_AUDIENCE)
+                                                .duration(npgJwtKeyValidityTime)
+                                ).doOnError(Mono::error)
+                                .map(response -> Tuples.of(claims, response))
+                )
+                .flatMap(
+                        response -> jwtTokenIssuerClient
+                                .createJWTToken(
+                                        new CreateTokenRequestDto().privateClaims(response.getT1())
+                                                .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
+                                                .duration(jwtEcommerceValidityTimeInSeconds)
                                 )
-
+                                .doOnError(Mono::error).map(
+                                        res -> new NpgBuildData(
+                                                response.getT1().get(JwtIssuerClient.ORDER_ID_CLAIM),
+                                                response.getT2().getToken(),
+                                                res.getToken()
+                                        )
+                                )
                 );
     }
 
