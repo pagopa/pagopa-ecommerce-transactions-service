@@ -4,6 +4,7 @@ import com.azure.cosmos.implementation.InternalServerErrorException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
@@ -14,7 +15,6 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRespons
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
-import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
@@ -50,7 +50,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 
-import static it.pagopa.ecommerce.commons.documents.v2.Transaction.*;
+import static it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId;
 
 @Component
 @Slf4j
@@ -161,7 +161,7 @@ public class PaymentGatewayClient {
                             URI merchantUrl = returnUrlBasePath;
 
                             URI notificationUrl = UriComponentsBuilder
-                                    .fromHttpUrl(npgSessionUrlConfig.notificationUrl())
+                                    .fromUriString(npgSessionUrlConfig.notificationUrl())
                                     .build(
                                             Map.of(
                                                     "orderId",

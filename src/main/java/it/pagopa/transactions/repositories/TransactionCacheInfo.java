@@ -2,7 +2,7 @@ package it.pagopa.transactions.repositories;
 
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -20,7 +20,7 @@ public record TransactionCacheInfo(
      * @formatter:on
      */
     @SuppressWarnings("java:S6207")
-    @PersistenceConstructor
+    @PersistenceCreator
     public TransactionCacheInfo {
         // Do nothing
     }
