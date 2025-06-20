@@ -32,7 +32,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
@@ -101,7 +101,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -123,7 +123,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -211,7 +211,7 @@ public class TransactionsController implements TransactionsApi {
         return new TransactionTracingUtils.TransactionInfo(
                 new TransactionId(transactionId),
                 new HashSet<>(),
-                exchange.getRequest().getMethodValue(),
+                exchange.getRequest().getMethod().name(),
                 exchange.getRequest().getURI().getPath()
         );
     }
@@ -279,7 +279,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         domainTransactionId,
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -338,7 +338,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -407,7 +407,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -430,7 +430,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context

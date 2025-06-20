@@ -26,7 +26,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.UUID;
@@ -97,7 +97,7 @@ public class TransactionsController implements V21Api {
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
