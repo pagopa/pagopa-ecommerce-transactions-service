@@ -7,7 +7,6 @@ import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.v2.*;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
@@ -66,7 +65,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
-import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.USER_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -667,7 +665,7 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
 
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -678,7 +676,7 @@ class PaymentGatewayClientTest {
                 ).toString();
 
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -1192,7 +1190,7 @@ class PaymentGatewayClientTest {
                 .verify();
 
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -1206,7 +1204,7 @@ class PaymentGatewayClientTest {
                 ).toString();
 
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -1398,7 +1396,7 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
 
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -1412,7 +1410,7 @@ class PaymentGatewayClientTest {
                 ).toString();
 
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -1532,7 +1530,7 @@ class PaymentGatewayClientTest {
                 .url("http://localhost/redirectionUrl");
         /* preconditions */
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -1546,7 +1544,7 @@ class PaymentGatewayClientTest {
                 ).toString();
 
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -1730,7 +1728,7 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
 
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -1740,7 +1738,7 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -1846,7 +1844,7 @@ class PaymentGatewayClientTest {
                 .paName(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -1997,7 +1995,7 @@ class PaymentGatewayClientTest {
                 .paName(expectedPaName);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -2161,7 +2159,7 @@ class PaymentGatewayClientTest {
                 .paName(null);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -2285,7 +2283,7 @@ class PaymentGatewayClientTest {
                 .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -2396,7 +2394,7 @@ class PaymentGatewayClientTest {
                 .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
@@ -2907,7 +2905,7 @@ class PaymentGatewayClientTest {
                 .paName(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
                 .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(

@@ -1,7 +1,7 @@
 package it.pagopa.transactions.repositories;
 
 import it.pagopa.ecommerce.commons.annotations.ValueObject;
-import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.lang.NonNull;
 
 @ValueObject
@@ -18,7 +18,7 @@ public record WalletPaymentInfo(
      * @param securityToken npg security token
      * @param orderId       npg orderId
      */
-    @PersistenceConstructor
+    @PersistenceCreator
     public WalletPaymentInfo {
         // Do nothing
     }

@@ -28,14 +28,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
@@ -59,27 +55,27 @@ class TransactionsControllerTest {
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
 
-    @MockBean
+    @MockitoBean
     @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
 
-    @MockBean
+    @MockitoBean
     @Qualifier("jwtIssuerClient")
     private JwtIssuerClient jwtIssuerClient;
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
+    @MockitoBean
     private TransactionsUtils transactionsUtils;
 
-    @MockBean
+    @MockitoBean
     private UUIDUtils uuidUtils;
 
-    @MockBean
+    @MockitoBean
     private UniqueIdUtils uniqueIdUtils;
 
-    @MockBean
+    @MockitoBean
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Mock

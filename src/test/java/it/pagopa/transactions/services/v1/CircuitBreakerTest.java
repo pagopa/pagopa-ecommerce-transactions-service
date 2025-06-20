@@ -11,7 +11,9 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -27,9 +29,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -57,9 +59,9 @@ class CircuitBreakerTest {
     @Autowired
     private TransactionsService transactionsService;
 
-    @MockBean
+    @MockitoBean
     private TransactionsViewRepository transactionsViewRepository;
-    @MockBean
+    @MockitoBean
     private TransactionsUtils transactionsUtils;
 
     @Autowired

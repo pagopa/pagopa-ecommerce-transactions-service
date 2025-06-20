@@ -35,8 +35,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -60,7 +60,7 @@ class CircuitBreakerTest {
     @Autowired
     private TransactionsService transactionsService;
 
-    @MockBean
+    @MockitoBean
     private TransactionActivateHandler transactionActivateHandlerV2;
 
     @Autowired
