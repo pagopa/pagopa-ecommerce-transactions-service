@@ -122,7 +122,8 @@ class PaymentGatewayClientTest {
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderClient = Mockito
             .mock(NodeForwarderClient.class);
 
-    private static final Set<String> redirectPaymentTypeCodes = Set.of("RBPR", "RBPB", "RBPP", "RPIC", "RBPS", "RICO");
+    private static final Set<String> redirectPaymentTypeCodes = Set
+            .of("RBPR", "RBPB", "RBPP", "RPIC", "RBPS", "RICO", "KLRN");
 
     private static final Map<String, String> redirectPaymentTypeCodeDescription = redirectPaymentTypeCodes.stream()
             .collect(
