@@ -27,8 +27,8 @@ import static org.mockito.Mockito.verify;
 
 class ApiKeyFilterTest {
     private static final Set<String> securedPaths = Set.of("/test1", "/test2");
-    private static final String primaryKey = "primaryKey";
-    private static final String secondaryKey = "secondaryKey";
+    private static final String PRIMARY_KEY = "primaryKey";
+    private static final String SECONDARY_KEY = "secondaryKey";
     private final ServerWebExchange exchange = Mockito.mock(ServerWebExchange.class);
     private final WebFilterChain webFilterChain = Mockito.mock(WebFilterChain.class);
     private final ServerHttpRequest serverHttpRequest = Mockito.mock(ServerHttpRequest.class);
@@ -37,15 +37,15 @@ class ApiKeyFilterTest {
     private final ServerHttpResponse serverHttpResponse = Mockito.mock(ServerHttpResponse.class);
     private final ApiKeyFilter apiKeyFilter = new ApiKeyFilter(
             securedPaths,
-            primaryKey,
-            secondaryKey
+            PRIMARY_KEY,
+            SECONDARY_KEY
     );
 
     public static Stream<Arguments> validApiKeysAndPaths() {
         List<Arguments> arguments = new ArrayList<>();
         for (String path : securedPaths) {
-            arguments.add(Arguments.of(primaryKey, path));
-            arguments.add(Arguments.of(secondaryKey, path));
+            arguments.add(Arguments.of(PRIMARY_KEY, path));
+            arguments.add(Arguments.of(SECONDARY_KEY, path));
         }
         return arguments.stream();
     }
