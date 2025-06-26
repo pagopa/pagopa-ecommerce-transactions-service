@@ -4,6 +4,12 @@
 
 This is a PagoPA microservice that handles eCommerce transactions' lifecycle and workflow.
 
+## Requirements
+
+- **Java 21** or higher
+- **Maven 3.6+**
+- **Docker** for containerized deployment
+
 ### Environment variables
 
 These are all environment variables needed by the application:
