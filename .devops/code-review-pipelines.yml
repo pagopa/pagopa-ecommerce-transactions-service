@@ -12,7 +12,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: main
+      ref: CHK-4218-upgrade-java-transaction-serv
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
@@ -51,7 +51,7 @@ stages:
             mavenPomFile: 'pom.xml'
             mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
             javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '17'
+            jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
@@ -63,7 +63,7 @@ stages:
             mavenPomFile: 'pom.xml'
             mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
             javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '17'
+            jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             testResultsFiles: '**/surefire-reports/TEST-*.xml'

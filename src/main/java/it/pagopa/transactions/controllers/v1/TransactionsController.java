@@ -709,31 +709,31 @@ public class TransactionsController implements TransactionsApi {
     ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
 
         return switch (exception.getFaultCode()) {
-            case String s && Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new PartyConfigurationFaultPaymentProblemJsonDto()
                                     .title("EC error")
                                     .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
                                     .faultCodeDetail(PartyConfigurationFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s && Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new ValidationFaultPaymentProblemJsonDto()
                                     .title("Validation Fault")
                                     .faultCodeCategory(FaultCategoryDto.PAYMENT_UNKNOWN)
                                     .faultCodeDetail(ValidationFaultDto.fromValue(s)), HttpStatus.NOT_FOUND);
-            case String s && Arrays.stream(GatewayFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(GatewayFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new GatewayFaultPaymentProblemJsonDto()
                                     .title("Payment unavailable")
                                     .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
                                     .faultCodeDetail(GatewayFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s && Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new PartyTimeoutFaultPaymentProblemJsonDto()
                                     .title("Gateway Timeout")
                                     .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
                                     .faultCodeDetail(PartyTimeoutFaultDto.fromValue(s)), HttpStatus.GATEWAY_TIMEOUT);
-            case String s && Arrays.stream(PaymentStatusFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(PaymentStatusFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new PaymentStatusFaultPaymentProblemJsonDto()
                                     .title("Payment Status Fault")
