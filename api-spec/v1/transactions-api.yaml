@@ -16,6 +16,8 @@ externalDocs:
   description: Design review
 servers:
   - url: https://api.platform.pagopa.it/transactions-service
+security:
+  - ApiKeyAuth: [ ]
 paths:
   /transactions:
     post:
@@ -1220,3 +1222,9 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/AddUserReceiptRequest"
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: api key authentication
