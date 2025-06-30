@@ -24,6 +24,7 @@ microservice-chart:
       TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue-b
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
+    envSecret: {}
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "2.0.2"
