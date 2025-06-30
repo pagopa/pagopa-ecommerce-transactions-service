@@ -74,6 +74,7 @@ stages:
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),
         or(
           eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+          eq(variables['Build.SourceBranch'], 'refs/heads/test-soak-java21-blue'),
           startsWith(variables['Build.SourceBranch'], 'refs/tags')
         )
        )
