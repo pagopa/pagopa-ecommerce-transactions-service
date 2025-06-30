@@ -564,7 +564,7 @@
                     <connectionUrl>scm:git:https://github.com/pagopa/pagopa-ecommerce-commons.git</connectionUrl>
                     <scmVersionType>tag</scmVersionType>
                     <scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
-                    <goals>install -DskipTests</goals>
+                    <goals>install -DskipTests -Dmaven.site.skip=true</goals>
                 </configuration>
                 <executions>
                     <execution>

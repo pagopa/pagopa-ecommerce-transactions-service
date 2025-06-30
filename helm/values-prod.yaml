@@ -210,6 +210,7 @@ microservice-chart:
     NPG_SATISPAY_PSP_KEYS: npg-satispay-psp-keys
     NPG_APPLEPAY_PSP_KEYS: npg-apple-pay-psp-keys
     NPG_GOOGLE_PAY_PSP_KEYS: npg-google-pay-psp-keys
+    JWT_ISSUER_API_KEY: ecommerce-jwt-issuer-service-active-api-key
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
