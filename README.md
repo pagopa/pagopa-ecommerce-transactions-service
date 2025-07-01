@@ -99,6 +99,9 @@ These are all environment variables needed by the application:
 | JWT_ISSUER_API_KEY                              |      | Jwt issuer service API key                                                                                                                                                      | string  |         |
 | NODO_NODEFORPSP_API_KEY                         |      | API Key for NODE FOR PSP WS                                                                                                                                                     | string  |         |
 | NODO_NODEFORECOMMERCE_API_KEY                   |      | API Key for Nodo closePayment API                                                                                                                                               | string  |         |
+| SECURITY_API_KEYS_SECURED_PATHS                 |      | Comma-separated list of secured API paths                                                                                                                                       | string  |         |
+| SECURITY_API_KEYS_PRIMARY                       |      | Secured api primary key                                                                                                                                                         | string  |         |
+| SECURITY_API_KEYS_SECONDARY                     |      | Secured api secondary key                                                                                                                                                       | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
