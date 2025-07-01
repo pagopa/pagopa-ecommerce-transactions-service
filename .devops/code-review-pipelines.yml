@@ -117,5 +117,6 @@ stages:
               docker logs $container
               echo "===== End of logs for $name ====="
             done
+          condition: always()
           displayName: 'Print Docker container logs'
 
