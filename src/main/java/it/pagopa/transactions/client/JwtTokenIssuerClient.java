@@ -37,7 +37,7 @@ public class JwtTokenIssuerClient {
     }
 
     private static void logWebClientException(WebClientResponseException e) {
-        log.info(
+        log.error(
                 "Got bad response from jwt-issuer-service [HTTP {}]: {}",
                 e.getStatusCode(),
                 e.getResponseBodyAsString()

@@ -43,9 +43,12 @@ public class JWTIssuerWebClientConfig {
 
         WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)
-        ).defaultHeader("x-api-key", jwtIssuerApiKey).baseUrl(jwtIssuerWebClientUri).build();
+        ).baseUrl(jwtIssuerWebClientUri).build();
 
-        return new JwtIssuerApi(new ApiClient(webClient).setBasePath(jwtIssuerWebClientUri));
+        ApiClient apiClient = new ApiClient(webClient).setBasePath(jwtIssuerWebClientUri)
+                .addDefaultHeader("x-api-key", jwtIssuerApiKey);
+
+        return new JwtIssuerApi(apiClient);
     }
 
     @Bean
