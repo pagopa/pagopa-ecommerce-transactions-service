@@ -12,7 +12,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: CHK-4288-update-pay-methods-env
+      ref: main
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
