@@ -38,7 +38,7 @@ public class JwtTokenIssuerClient {
 
     private static void logWebClientException(WebClientResponseException e) {
         log.info(
-                "Got bad response from wallet-service [HTTP {}]: {}",
+                "Got bad response from jwt-issuer-service [HTTP {}]: {}",
                 e.getStatusCode(),
                 e.getResponseBodyAsString()
         );
