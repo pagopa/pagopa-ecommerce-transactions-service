@@ -25,7 +25,10 @@ public class JWTIssuerWebClientConfig {
                                            ) int jwtIssuerWebClientReadTimeout,
                                            @Value(
                                                "${jwtissuer.connectionTimeout}"
-                                           ) int jwtIssuerWebClientConnectionTimeout
+                                           ) int jwtIssuerWebClientConnectionTimeout,
+                                           @Value(
+                                               "${jwtissuer.apiKey}"
+                                           ) String jwtIssuerApiKey
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, jwtIssuerWebClientConnectionTimeout)
@@ -42,7 +45,10 @@ public class JWTIssuerWebClientConfig {
                 new ReactorClientHttpConnector(httpClient)
         ).baseUrl(jwtIssuerWebClientUri).build();
 
-        return new JwtIssuerApi(new ApiClient(webClient).setBasePath(jwtIssuerWebClientUri));
+        ApiClient apiClient = new ApiClient(webClient).setBasePath(jwtIssuerWebClientUri)
+                .addDefaultHeader("x-api-key", jwtIssuerApiKey);
+
+        return new JwtIssuerApi(apiClient);
     }
 
     @Bean
