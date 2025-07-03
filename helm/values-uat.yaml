@@ -7,7 +7,7 @@ microservice-chart:
     ingress:
       bluegreen: false
       #set canary deployment with traffic balancing see https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#canary for more info
-      header: true
+      header: false
       headerName: deployment
       headerValue: blue
       weightPercent: 0
