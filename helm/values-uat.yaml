@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
       NODE_FOR_PSP_URI: /ecommerce/mock/nodo/v1/activatePaymentNotice
       NODO_PER_PM_URI: /ecommerce/mock/nodoPerPM/v1
-      ECOMMERCE_PAYMENT_METHODS_URI_V2: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/beta/pagopa-ecommerce-payment-methods-service/v2
+      ECOMMERCE_PAYMENT_METHODS_URI_V2: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/pagopa-ecommerce-payment-methods-service/v2
       PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.platform.pagopa.it/ecommerce/mock/pdv/v1"
       NPG_URI: "https://api.uat.platform.pagopa.it/ecommerce/mock/npg/v1"
       AUTH_REQUESTED_EVENT_VISIBILITY_TIMEOUT_SECONDS: "0"
@@ -206,7 +206,7 @@ microservice-chart:
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
     PERSONAL_DATA_VAULT_API_KEY: ecommerce-load-test-subscription-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
-    ECOMMERCE_PAYMENT_METHODS_APY_KEY: ecommerce-load-test-subscription-key
+    ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     WALLET_API_KEY: wallet-api-key
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
