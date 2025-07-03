@@ -19,6 +19,7 @@ import it.pagopa.transactions.utils.UUIDUtils;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +62,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+
+    @Value("${security.apiKey.primary}")
+    private String primaryKey;
 
     @ExceptionHandler(
         {
@@ -796,6 +800,7 @@ public class TransactionsController implements TransactionsApi {
                             .post()
                             .uri("http://localhost:8080/transactions")
                             .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
+                            .header("x-api-key", primaryKey)
                             .bodyValue(transactionsUtils.buildWarmupRequestV1())
                             .retrieve()
                             .bodyToMono(NewTransactionResponseDto.class)
@@ -806,7 +811,7 @@ public class TransactionsController implements TransactionsApi {
                             .uri(
                                     "http://localhost:8080/transactions/{transactionId}",
                                     newTransactionResponseDto.getTransactionId()
-                            )
+                            ).header("x-api-key", primaryKey)
                             .retrieve()
                             .toBodilessEntity()
                             .block(Duration.ofSeconds(30));
