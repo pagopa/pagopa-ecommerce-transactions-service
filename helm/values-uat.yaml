@@ -128,10 +128,10 @@ microservice-chart:
     NODO_PARALLEL_REQUESTS: "5"
     NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
     NODO_ECOMMERCE_CLIENT_ID: ecomm
-    ECOMMERCE_PAYMENT_METHODS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
+    ECOMMERCE_PAYMENT_METHODS_URI: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/pagopa-ecommerce-payment-methods-service
     ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_METHODS_URI_V2: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v2
+    ECOMMERCE_PAYMENT_METHODS_URI_V2: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/pagopa-ecommerce-payment-methods-service/v2
     WALLET_URI: https://api.uat.platform.pagopa.it/payment-wallet-for-ecommerce/v1
     WALLET_READ_TIMEOUT: "10000"
     WALLET_CONNECTION_TIMEOUT: "10000"
