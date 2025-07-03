@@ -125,10 +125,10 @@ microservice-chart:
     NODO_CONNECTION_STRING: "{\"idPSP\":\"AGID_01\",\"idChannel\":\"97735020584_09\",\"idBrokerPSP\":\"97735020584\"}"
     NODO_PARALLEL_REQUESTS: "5"
     NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
-    ECOMMERCE_PAYMENT_METHODS_URI: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/pagopa-ecommerce-payment-methods-service
+    ECOMMERCE_PAYMENT_METHODS_URI: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/beta/pagopa-ecommerce-payment-methods-service
     ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_METHODS_URI_V2: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/pagopa-ecommerce-payment-methods-service/v2
+    ECOMMERCE_PAYMENT_METHODS_URI_V2: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/beta/pagopa-ecommerce-payment-methods-service/v2
     WALLET_URI: https://api.uat.platform.pagopa.it/payment-wallet-for-ecommerce/v1
     WALLET_READ_TIMEOUT: "10000"
     WALLET_CONNECTION_TIMEOUT: "10000"
