@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "2.1.0"
+    tag: "2.2.0"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -207,6 +207,7 @@ microservice-chart:
     NPG_GOOGLE_PAY_PSP_KEYS: npg-google-pay-psp-keys
     SECURITY_API_KEYS_PRIMARY: ecommerce-transactions-service-primary-api-key
     SECURITY_API_KEYS_SECONDARY: ecommerce-transactions-service-secondary-api-key
+    JWT_ISSUER_API_KEY: ecommerce-jwt-issuer-service-active-api-key
   keyvault:
     name: "pagopa-u-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
