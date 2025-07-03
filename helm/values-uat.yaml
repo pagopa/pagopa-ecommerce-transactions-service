@@ -26,11 +26,11 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
       NODE_FOR_PSP_URI: /ecommerce/mock/nodo/v1/activatePaymentNotice
       NODO_PER_PM_URI: /ecommerce/mock/nodoPerPM/v1
-      ECOMMERCE_PAYMENT_METHODS_URI_V2: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/pagopa-ecommerce-payment-methods-service/v2
       PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.platform.pagopa.it/ecommerce/mock/pdv/v1"
       NPG_URI: "https://api.uat.platform.pagopa.it/ecommerce/mock/npg/v1"
       AUTH_REQUESTED_EVENT_VISIBILITY_TIMEOUT_SECONDS: "0"
       NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/ecommerce/mock/node-forwader/v1"
+      SECURITY_API_KEYS_SECURED_PATHS: ""
     envSecret: {}
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
