@@ -8,7 +8,7 @@ This is a PagoPA microservice that handles eCommerce transactions' lifecycle and
 
 - **Java 21** or higher
 - **Maven 3.6+**
-- **Docker** for containerized deployment
+- **Docker** (for containerized deployment)
 
 ### Environment variables
 
