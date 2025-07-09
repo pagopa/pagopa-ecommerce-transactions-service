@@ -108,7 +108,6 @@ microservice-chart:
     MONGO_SERVER_SELECTION_TIMEOUT_MS: "2000"
     MONGO_WAITING_QUEUE_MS: "2000"
     MONGO_HEARTBEAT_FREQUENCY_MS: "5000"
-    MONGO_REPLICA_SET_OPTION: "&replicaSet=globaldb"
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.platform.pagopa.it
