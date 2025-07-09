@@ -29,7 +29,7 @@ microservice-chart:
     envSecret: {}
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "3.0.1" #improve
+    tag: "3.0.2" #improve
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
