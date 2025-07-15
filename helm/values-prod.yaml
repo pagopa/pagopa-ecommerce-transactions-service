@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.65.1"
+    tag: "3.0.2"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -108,7 +108,6 @@ microservice-chart:
     MONGO_SERVER_SELECTION_TIMEOUT_MS: "2000"
     MONGO_WAITING_QUEUE_MS: "2000"
     MONGO_HEARTBEAT_FREQUENCY_MS: "5000"
-    MONGO_REPLICA_SET_OPTION: "&replicaSet=globaldb"
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.platform.pagopa.it
@@ -174,8 +173,8 @@ microservice-chart:
     SESSION_URL_OUTCOME_SUFFIX: "/ecommerce-fe/esito#clientId={clientId}&transactionId={transactionId}&sessionToken={sessionToken}"
     SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-    REDIRECT_PAYMENT_TYPE_CODE_LIST: "PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,RBPS,RPIC,CHECKOUT-BPPIITRRXXX-RBPR,CHECKOUT-BPPIITRRXXX-RBPP,CHECKOUT-BPPIITRRXXX-RBPB,IO-PPAYITR1XXX-RBPP,RICO"
-    REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING: '{"RBPR":"Poste addebito in conto Retail","RBPB":"Poste addebito in conto Business","RBPP":"Paga con BottonePostePay","RPIC":"Pago in Conto Intesa","RBPS":"SCRIGNO Internet Banking","RICO":"Conto ICONTO"}'
+    REDIRECT_PAYMENT_TYPE_CODE_LIST: "PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,RBPS,RPIC,CHECKOUT-BPPIITRRXXX-RBPR,CHECKOUT-BPPIITRRXXX-RBPP,CHECKOUT-BPPIITRRXXX-RBPB,IO-PPAYITR1XXX-RBPP,RICO,KLRN"
+    REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING: '{"RBPR":"Poste addebito in conto Retail","RBPB":"Poste addebito in conto Business","RBPP":"Paga con BottonePostePay","RPIC":"Pago in Conto Intesa","RBPS":"SCRIGNO Internet Banking","RICO":"Conto ICONTO","KLRN":"Klarna (anche a rate)"}'
     NODE_FORWARDER_URL: "https://api.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
@@ -188,6 +187,7 @@ microservice-chart:
     JWT_ISSUER_URI: "https://weuprod.ecommerce.internal.platform.pagopa.it/pagopa-jwt-issuer-service"
     JWT_ISSUER_READ_TIMEOUT: "10000"
     JWT_ISSUER_CONNECTION_TIMEOUT: "10000"
+    SECURITY_API_KEYS_SECURED_PATHS: "/transactions,/v2/transactions,/v2.1/transactions"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
@@ -210,6 +210,9 @@ microservice-chart:
     NPG_SATISPAY_PSP_KEYS: npg-satispay-psp-keys
     NPG_APPLEPAY_PSP_KEYS: npg-apple-pay-psp-keys
     NPG_GOOGLE_PAY_PSP_KEYS: npg-google-pay-psp-keys
+    SECURITY_API_KEYS_PRIMARY: ecommerce-transactions-service-primary-api-key
+    SECURITY_API_KEYS_SECONDARY: ecommerce-transactions-service-secondary-api-key
+    JWT_ISSUER_API_KEY: ecommerce-jwt-issuer-service-active-api-key
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

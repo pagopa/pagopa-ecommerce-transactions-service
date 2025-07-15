@@ -28,13 +28,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
@@ -58,27 +55,27 @@ class TransactionsControllerTest {
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
 
-    @MockBean
+    @MockitoBean
     @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
 
-    @MockBean
+    @MockitoBean
     @Qualifier("jwtIssuerClient")
     private JwtIssuerClient jwtIssuerClient;
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
+    @MockitoBean
     private TransactionsUtils transactionsUtils;
 
-    @MockBean
+    @MockitoBean
     private UUIDUtils uuidUtils;
 
-    @MockBean
+    @MockitoBean
     private UniqueIdUtils uniqueIdUtils;
 
-    @MockBean
+    @MockitoBean
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Mock
@@ -140,8 +137,8 @@ class TransactionsControllerTest {
             Mockito.when(mockExchange.getRequest())
                     .thenReturn(mockRequest);
 
-            Mockito.when(mockExchange.getRequest().getMethodValue())
-                    .thenReturn("POST");
+            Mockito.when(mockExchange.getRequest().getMethod())
+                    .thenReturn(HttpMethod.POST);
 
             Mockito.when(mockExchange.getRequest().getURI())
                     .thenReturn(
@@ -244,6 +241,7 @@ class TransactionsControllerTest {
                 .uri("/v2.1/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .body(BodyInserters.fromValue("{}"))
                 .exchange()
                 .expectStatus()
@@ -287,6 +285,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
 
                 .expectStatus().isEqualTo(HttpStatus.SERVICE_UNAVAILABLE)
@@ -324,6 +323,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
 
                 .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
@@ -361,6 +361,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
 
                 .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
@@ -398,6 +399,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
                 .expectBody(ValidationFaultPaymentUnavailableProblemJsonDto.class)
@@ -432,6 +434,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentOngoingStatusFaultPaymentProblemJsonDto.class)
@@ -466,6 +469,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentExpiredStatusFaultPaymentProblemJsonDto.class)
@@ -500,6 +504,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentCanceledStatusFaultPaymentProblemJsonDto.class)
@@ -536,6 +541,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentDuplicatedStatusFaultPaymentProblemJsonDto.class)
@@ -569,6 +575,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
                 .expectBody(GatewayFaultPaymentProblemJsonDto.class)
@@ -654,6 +661,7 @@ class TransactionsControllerTest {
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isBadRequest()
@@ -684,6 +692,7 @@ class TransactionsControllerTest {
                 .uri("/v2.1/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .bodyValue(newTransactionRequestDto)
                 .exchange()
                 .expectStatus()
@@ -693,7 +702,7 @@ class TransactionsControllerTest {
                     assertEquals(400, p.getStatus());
                     assertTrue(
                             p.getDetail().contains(
-                                    "Missing request header 'x-correlation-id' for method parameter of type UUID"
+                                    "Required header 'x-correlation-id' is not present."
                             )
                     );
                 });
@@ -749,8 +758,8 @@ class TransactionsControllerTest {
             Mockito.when(mockExchange.getRequest())
                     .thenReturn(mockRequest);
 
-            Mockito.when(mockExchange.getRequest().getMethodValue())
-                    .thenReturn("POST");
+            Mockito.when(mockExchange.getRequest().getMethod())
+                    .thenReturn(HttpMethod.POST);
 
             Mockito.when(mockExchange.getRequest().getURI())
                     .thenReturn(

@@ -4,13 +4,19 @@
 
 This is a PagoPA microservice that handles eCommerce transactions' lifecycle and workflow.
 
+## Requirements
+
+- **Java 21** or higher
+- **Maven 3.6+**
+- **Docker** (for containerized deployment)
+
 ### Environment variables
 
 These are all environment variables needed by the application:
 
 | Variable name                                   |      | Description                                                                                                                                                                     | type    | default |
 |-------------------------------------------------|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|---------|
-| MONGO_HOST                                      |      | Host where MongoDB instance used to persise events and view resides                                                                                                             | string  |         |
+| MONGO_HOST                                      |      | Host where MongoDB instance used to persise events and view resides                                                                                                             | string  |
 | MONGO_USERNAME                                  |      | Username used for connecting to MongoDB instance                                                                                                                                | string  |         |
 | MONGO_PASSWORD                                  |      | Password used for connecting to MongoDB instance                                                                                                                                | string  |         |
 | MONGO_PORT                                      |      | Port used for connecting to MongoDB instance                                                                                                                                    | string  |         |
@@ -22,7 +28,6 @@ These are all environment variables needed by the application:
 | MONGO_SERVER_SELECTION_TIMEOUT_MS               |      | Max time to wait for a server to be selected while performing a communication with Mongo in milliseconds. See docs *                                                            | string  |         |
 | MONGO_WAITING_QUEUE_MS                          |      | Max time a thread has to wait for a connection to be available in milliseconds. See docs *                                                                                      | string  |         |
 | MONGO_HEARTBEAT_FREQUENCY_MS                    |      | Hearth beat frequency in milliseconds. This is an hello command that is sent periodically on each active connection to perform an health check. See docs *                      | string  |         |
-| MONGO_REPLICA_SET_OPTION                        |      | The replica set connection string option valued with the name of the replica set. See docs *                                                                                    | string  |         |
 | REDIS_HOST                                      |      | Host where the redis instance used to persist idempotency keys can be found                                                                                                     | string  |         |
 | REDIS_PASSWORD                                  |      | Password used for connecting to Redis instance                                                                                                                                  | string  |         |
 | NODO_URI                                        |      | Nodo connection URI                                                                                                                                                             | string  |         |
@@ -96,8 +101,12 @@ These are all environment variables needed by the application:
 | JWT_ISSUER_URI                                  |      | JWT Issuer URI                                                                                                                                                                  | string  |         |
 | JWT_ISSUER_READ_TIMEOUT                         |      | Timeout for requests towards JWT Issuer                                                                                                                                         | string  |         |
 | JWT_ISSUER_CONNECTION_TIMEOUT                   |      | Timeout for establishing connections towards JWT Issuer                                                                                                                         | string  |         |
+| JWT_ISSUER_API_KEY                              |      | Jwt issuer service API key                                                                                                                                                      | string  |         |
 | NODO_NODEFORPSP_API_KEY                         |      | API Key for NODE FOR PSP WS                                                                                                                                                     | string  |         |
 | NODO_NODEFORECOMMERCE_API_KEY                   |      | API Key for Nodo closePayment API                                                                                                                                               | string  |         |
+| SECURITY_API_KEYS_SECURED_PATHS                 |      | Comma-separated list of secured API paths                                                                                                                                       | string  |         |
+| SECURITY_API_KEYS_PRIMARY                       |      | Secured api primary key                                                                                                                                                         | string  |         |
+| SECURITY_API_KEYS_SECONDARY                     |      | Secured api secondary key                                                                                                                                                       | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

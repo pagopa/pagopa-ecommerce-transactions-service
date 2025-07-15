@@ -19,6 +19,7 @@ import it.pagopa.transactions.utils.UUIDUtils;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
@@ -61,6 +62,9 @@ public class TransactionsController implements TransactionsApi {
 
     @Autowired
     private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+
+    @Value("${security.apiKey.primary}")
+    private String primaryKey;
 
     @ExceptionHandler(
         {
@@ -101,7 +105,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -123,7 +127,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -211,7 +215,7 @@ public class TransactionsController implements TransactionsApi {
         return new TransactionTracingUtils.TransactionInfo(
                 new TransactionId(transactionId),
                 new HashSet<>(),
-                exchange.getRequest().getMethodValue(),
+                exchange.getRequest().getMethod().name(),
                 exchange.getRequest().getURI().getPath()
         );
     }
@@ -279,7 +283,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         domainTransactionId,
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -338,7 +342,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -407,7 +411,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -430,7 +434,7 @@ public class TransactionsController implements TransactionsApi {
                                 new TransactionTracingUtils.TransactionInfo(
                                         new TransactionId(transactionId),
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -709,31 +713,31 @@ public class TransactionsController implements TransactionsApi {
     ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
 
         return switch (exception.getFaultCode()) {
-            case String s && Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new PartyConfigurationFaultPaymentProblemJsonDto()
                                     .title("EC error")
                                     .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
                                     .faultCodeDetail(PartyConfigurationFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s && Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new ValidationFaultPaymentProblemJsonDto()
                                     .title("Validation Fault")
                                     .faultCodeCategory(FaultCategoryDto.PAYMENT_UNKNOWN)
                                     .faultCodeDetail(ValidationFaultDto.fromValue(s)), HttpStatus.NOT_FOUND);
-            case String s && Arrays.stream(GatewayFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(GatewayFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new GatewayFaultPaymentProblemJsonDto()
                                     .title("Payment unavailable")
                                     .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
                                     .faultCodeDetail(GatewayFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s && Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new PartyTimeoutFaultPaymentProblemJsonDto()
                                     .title("Gateway Timeout")
                                     .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
                                     .faultCodeDetail(PartyTimeoutFaultDto.fromValue(s)), HttpStatus.GATEWAY_TIMEOUT);
-            case String s && Arrays.stream(PaymentStatusFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
+            case String s when Arrays.stream(PaymentStatusFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
                     new ResponseEntity<>(
                             new PaymentStatusFaultPaymentProblemJsonDto()
                                     .title("Payment Status Fault")
@@ -796,6 +800,7 @@ public class TransactionsController implements TransactionsApi {
                             .post()
                             .uri("http://localhost:8080/transactions")
                             .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
+                            .header("x-api-key", primaryKey)
                             .bodyValue(transactionsUtils.buildWarmupRequestV1())
                             .retrieve()
                             .bodyToMono(NewTransactionResponseDto.class)
@@ -806,7 +811,7 @@ public class TransactionsController implements TransactionsApi {
                             .uri(
                                     "http://localhost:8080/transactions/{transactionId}",
                                     newTransactionResponseDto.getTransactionId()
-                            )
+                            ).header("x-api-key", primaryKey)
                             .retrieve()
                             .toBodilessEntity()
                             .block(Duration.ofSeconds(30));

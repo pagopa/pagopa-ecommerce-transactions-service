@@ -51,7 +51,7 @@ stages:
             mavenPomFile: 'pom.xml'
             mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
             javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '17'
+            jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
@@ -63,7 +63,7 @@ stages:
             mavenPomFile: 'pom.xml'
             mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
             javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '17'
+            jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
@@ -109,3 +109,14 @@ stages:
             testResultsFormat: 'JUnit'
             testResultsFiles: '**/*-TEST.xml' 
             searchFolder: '$(System.DefaultWorkingDirectory)'
+        - script: |
+            echo "Printing logs for all running containers:"
+            for container in $(docker ps -q); do
+              name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\/\(.*\)/\1/')
+              echo "===== Logs for $name ====="
+              docker logs $container
+              echo "===== End of logs for $name ====="
+            done
+          condition: always()
+          displayName: 'Print Docker container logs'
+

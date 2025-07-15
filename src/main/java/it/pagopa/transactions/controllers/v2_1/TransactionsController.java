@@ -12,8 +12,10 @@ import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v2_1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
@@ -26,7 +28,6 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
-import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.UUID;
@@ -47,6 +48,9 @@ public class TransactionsController implements V21Api {
 
     @Autowired
     private OpenTelemetryUtils openTelemetryUtils;
+
+    @Value("${security.apiKey.primary}")
+    private String primaryKey;
 
     @ExceptionHandler(
         {
@@ -97,7 +101,7 @@ public class TransactionsController implements V21Api {
                                 new TransactionTracingUtils.TransactionInfo(
                                         transactionId,
                                         new HashSet<>(),
-                                        exchange.getRequest().getMethodValue(),
+                                        exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
                                 context
@@ -256,6 +260,7 @@ public class TransactionsController implements V21Api {
                             .uri("http://localhost:8080/v2.1/transactions")
                             .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
                             .header("x-correlation-id", UUID.randomUUID().toString())
+                            .header("x-api-key", "primary-key")
                             .bodyValue(transactionsUtils.buildWarmupRequestV2_1())
                             .retrieve()
                             .bodyToMono(NewTransactionResponseDto.class)
@@ -268,6 +273,7 @@ public class TransactionsController implements V21Api {
                                     newTransactionResponseDto.getTransactionId()
                             )
                             .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
+                            .header("x-api-key", primaryKey)
                             .retrieve()
                             .toBodilessEntity()
                             .block(Duration.ofSeconds(30));

@@ -29,13 +29,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
@@ -52,7 +49,8 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -65,26 +63,26 @@ class TransactionsControllerTest {
     @InjectMocks
     private it.pagopa.transactions.controllers.v2.TransactionsController transactionsController = new it.pagopa.transactions.controllers.v2.TransactionsController();
 
-    @MockBean
+    @MockitoBean
     @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
+    @MockitoBean
     private TransactionsUtils transactionsUtils;
 
-    @MockBean
+    @MockitoBean
     private UUIDUtils uuidUtils;
 
-    @MockBean
+    @MockitoBean
     private UniqueIdUtils uniqueIdUtils;
 
-    @MockBean
+    @MockitoBean
     private OpenTelemetryUtils openTelemetryUtils;
 
-    @MockBean
+    @MockitoBean
     private it.pagopa.transactions.controllers.v1.TransactionsController transactionsControllerV1;
 
     @Mock
@@ -137,8 +135,8 @@ class TransactionsControllerTest {
             Mockito.when(mockExchange.getRequest())
                     .thenReturn(mockRequest);
 
-            Mockito.when(mockExchange.getRequest().getMethodValue())
-                    .thenReturn("POST");
+            Mockito.when(mockExchange.getRequest().getMethod())
+                    .thenReturn(HttpMethod.POST);
 
             Mockito.when(mockExchange.getRequest().getURI())
                     .thenReturn(
@@ -232,6 +230,7 @@ class TransactionsControllerTest {
                 .uri("/v2/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .body(BodyInserters.fromValue("{}"))
                 .exchange()
                 .expectStatus()
@@ -276,6 +275,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
 
                 .expectStatus().isEqualTo(HttpStatus.SERVICE_UNAVAILABLE)
@@ -314,6 +314,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
 
                 .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
@@ -352,8 +353,8 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
-
                 .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
                 .expectBody(ValidationFaultPaymentDataErrorProblemJsonDto.class)
                 .value(response -> {
@@ -390,6 +391,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
                 .expectBody(ValidationFaultPaymentUnavailableProblemJsonDto.class)
@@ -422,6 +424,7 @@ class TransactionsControllerTest {
         webTestClient.post()
                 .uri("/v2/transactions").contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
@@ -460,6 +463,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentExpiredStatusFaultPaymentProblemJsonDto.class)
@@ -495,6 +499,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentCanceledStatusFaultPaymentProblemJsonDto.class)
@@ -532,6 +537,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentDuplicatedStatusFaultPaymentProblemJsonDto.class)
@@ -566,6 +572,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
                 .expectBody(GatewayFaultPaymentProblemJsonDto.class)
@@ -652,6 +659,7 @@ class TransactionsControllerTest {
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isOk();
@@ -676,6 +684,7 @@ class TransactionsControllerTest {
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isBadRequest()
@@ -706,6 +715,7 @@ class TransactionsControllerTest {
                 .uri("/v2/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .bodyValue(newTransactionRequestDto)
                 .exchange()
                 .expectStatus()
@@ -715,7 +725,7 @@ class TransactionsControllerTest {
                     assertEquals(400, p.getStatus());
                     assertTrue(
                             p.getDetail().contains(
-                                    "Missing request header 'x-correlation-id' for method parameter of type UUID"
+                                    "Required header 'x-correlation-id' is not present."
                             )
                     );
                 });
@@ -757,6 +767,7 @@ class TransactionsControllerTest {
                 .uri("/v2/transactions/{transactionId}", Map.of("transactionId", transactionId))
                 .header("X-Client-Id", "CHECKOUT")
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.OK)
@@ -828,6 +839,7 @@ class TransactionsControllerTest {
         webTestClient.patch()
                 .uri("/v2/transactions/{transactionId}/auth-requests", transactionId.value())
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("x-api-key", "primary-key")
                 .bodyValue(expectedRequest)
                 .exchange()
                 .expectStatus()
