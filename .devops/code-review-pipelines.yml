@@ -13,7 +13,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: main
+      ref: mongo-init-fi
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
@@ -94,6 +94,8 @@ stages:
             sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
           displayName: 'Change transaction branch name ecommerce-local .env'
         - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik azurite-init pagopa-psp-mock pagopa-jwt-issuer-mock -d
+          continueOnError: true
+        - script: docker container logs mongo-init
           displayName: 'Run app with docker-compose'
         - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
