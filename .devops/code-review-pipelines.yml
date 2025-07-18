@@ -13,7 +13,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local 
-      ref: mongo-init-fi
+      ref: CHK-4331-ecommerce-cdc-mongo-configuration
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
