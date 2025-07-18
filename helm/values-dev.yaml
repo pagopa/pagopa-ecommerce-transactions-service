@@ -29,7 +29,7 @@ microservice-chart:
     envSecret: {}
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "2.2.0" #improve
+    tag: "3.0.2" #improve
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -156,11 +156,11 @@ microservice-chart:
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,BNLIITRR,PASCITMM,WOLLNLB1,IFSPIT21"
-    NPG_PAYPAL_PSP_LIST: "BCITITMM,SIGPITM1XXX"
+    NPG_PAYPAL_PSP_LIST: "BCITITMM,SIGPITM1XXX,MOONITMMXXX"
     NPG_MYBANK_PSP_LIST: "BCITITMM,UNCRITMM"
     NPG_BANCOMATPAY_PSP_LIST: "BCITITMM"
     NPG_SATISPAY_PSP_LIST: "SATYLUL1"
-    NPG_APPLEPAY_PSP_LIST: "SIGPITM1XXX,CIPBITMM"
+    NPG_APPLEPAY_PSP_LIST: "SIGPITM1XXX,CIPBITMM,MOONITMMXXX"
     NPG_GOOGLE_PAY_PSP_LIST: "CIPBITMM"
     NPG_AUTHORIZATION_ERROR_CODE_MAPPING: '{"907":"25","908":"25","909":"25","110":"3","111":"7","210":"3","115":"25","116":"116","413":"2","117":"117","118":"3","119":"2","911":"25","999":"25","913":"25","120":"2","121":"121","100":"2","122":"2","101":"7","123":"2","200":"2","102":"2","124":"2","125":"3","202":"2","104":"3","126":"2","204":"2","106":"2","129":"2","888":"2","109":"25","208":"3","209":"3","902":"2","903":"2","904":"25","906":"25"}'
     AUTH_REQUESTED_EVENT_VISIBILITY_TIMEOUT_SECONDS: "0"
