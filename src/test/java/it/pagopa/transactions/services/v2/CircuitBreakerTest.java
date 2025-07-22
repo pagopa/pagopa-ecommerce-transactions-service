@@ -68,7 +68,7 @@ class CircuitBreakerTest {
 
     @Autowired
     private RetryRegistry retryRegistry;
-
+    private static final Long MOCK_AMOUNT = 100L;
     private static final JsonNode resilience4jConfiguration;
 
     private static final Map<String, Exception> exceptionMapper = Stream.of(
@@ -84,7 +84,7 @@ class CircuitBreakerTest {
             ),
             new NotImplementedException(""),
             new InvalidRequestException(""),
-            new TransactionAmountMismatchException(10, 11),
+            new TransactionAmountMismatchException(10L, 11L),
             new NodoErrorException(new CtFaultBean()),
             new InvalidNodoResponseException("")
     ).collect(Collectors.toMap(exception -> exception.getClass().getCanonicalName(), Function.identity()));
@@ -148,7 +148,9 @@ class CircuitBreakerTest {
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(10));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(MOCK_AMOUNT)
+                );
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
@@ -159,9 +161,9 @@ class CircuitBreakerTest {
                                         it.pagopa.ecommerce.commons.v1.TransactionTestUtils.PAYMENT_TOKEN,
                                         null,
                                         "desc",
-                                        0,
+                                        0L,
                                         TEST_CCP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0L, null)),
                                         false,
                                         null,
                                         null
@@ -205,7 +207,9 @@ class CircuitBreakerTest {
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(10));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(MOCK_AMOUNT)
+                );
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
@@ -216,9 +220,9 @@ class CircuitBreakerTest {
                                         TransactionTestUtils.PAYMENT_TOKEN,
                                         null,
                                         "dest",
-                                        0,
+                                        0L,
                                         TEST_CCP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0L, null)),
                                         false,
                                         null,
                                         null
@@ -266,7 +270,9 @@ class CircuitBreakerTest {
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(10));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(MOCK_AMOUNT)
+                );
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
@@ -277,9 +283,9 @@ class CircuitBreakerTest {
                                         TransactionTestUtils.PAYMENT_TOKEN,
                                         null,
                                         "dest",
-                                        0,
+                                        0L,
                                         TEST_CCP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0L, null)),
                                         false,
                                         null,
                                         null

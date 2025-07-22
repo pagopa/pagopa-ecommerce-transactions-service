@@ -83,7 +83,7 @@ class CircuitBreakerTest {
             new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID)),
             new NotImplementedException(""),
             new InvalidRequestException(""),
-            new TransactionAmountMismatchException(10, 11),
+            new TransactionAmountMismatchException(10L, 11L),
             new NodoErrorException(new CtFaultBean()),
             new InvalidNodoResponseException(""),
             new PaymentMethodNotFoundException("paymentMethodId", "clientId"),

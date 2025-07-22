@@ -208,12 +208,12 @@ class TransactionsUtilsTest {
         TransactionsUtils utils = new TransactionsUtils(null, null);
         it.pagopa.ecommerce.commons.documents.v1.Transaction transaction = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        int totalAmount = transaction.getPaymentNotices().stream()
-                .mapToInt(
+        long totalAmount = transaction.getPaymentNotices().stream()
+                .mapToLong(
                         it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                 ).sum();
-        Integer methodTotalAmount = utils.getTransactionTotalAmount(transaction);
-        assertEquals(totalAmount, methodTotalAmount.intValue());
+        Long methodTotalAmount = utils.getTransactionTotalAmount(transaction);
+        assertEquals(totalAmount, methodTotalAmount);
     }
 
     @Test
@@ -221,12 +221,12 @@ class TransactionsUtilsTest {
         TransactionsUtils utils = new TransactionsUtils(null, null);
         it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        int totalAmount = transaction.getPaymentNotices().stream()
-                .mapToInt(
+        long totalAmount = transaction.getPaymentNotices().stream()
+                .mapToLong(
                         it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                 ).sum();
-        Integer methodTotalAmount = utils.getTransactionTotalAmount(transaction);
-        assertEquals(totalAmount, methodTotalAmount.intValue());
+        long methodTotalAmount = utils.getTransactionTotalAmount(transaction);
+        assertEquals(totalAmount, methodTotalAmount);
     }
 
     @Test

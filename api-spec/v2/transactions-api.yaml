@@ -338,8 +338,13 @@ components:
     AmountEuroCents:
       description: Amount for payments, in euro cents
       type: integer
+      format: int64
       minimum: 0
-      maximum: 999999999
+      maximum: 99999999999
+    FeeEuroCents:
+      description: Fee for payments, in euro cents
+      type: integer
+      format: int32
     TransactionStatus:
       type: string
       description: Possible statuses a transaction can be in
@@ -831,7 +836,7 @@ components:
         status:
           $ref: '#/components/schemas/TransactionStatus'
         feeTotal:
-          $ref: '#/components/schemas/AmountEuroCents'
+          $ref: '#/components/schemas/FeeEuroCents'
         idCart:
           description: Cart identifier provided by creditor institution
           type: string

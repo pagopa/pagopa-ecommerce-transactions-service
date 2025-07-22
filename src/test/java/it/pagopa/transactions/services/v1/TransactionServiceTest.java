@@ -60,7 +60,7 @@ import static org.mockito.Mockito.verify;
 
 @AutoConfigureDataRedis
 class TransactionServiceTest {
-
+    private static final Long MOCK_AMOUNT = 100L;
     private final TransactionsViewRepository transactionsViewRepository = Mockito
             .mock(TransactionsViewRepository.class);
     @Autowired
@@ -70,20 +70,6 @@ class TransactionServiceTest {
 
     private final WalletClient walletClient = Mockito
             .mock(WalletClient.class);
-
-    private final PaymentGatewayClient paymentGatewayClient = Mockito.mock(PaymentGatewayClient.class);
-
-    private final NodeForPspClient nodeForPspClient = Mockito.mock(NodeForPspClient.class);
-
-    private final AzureStorageConfig azureStorageConfig = new AzureStorageConfig();
-
-    private final QueueAsyncClient queueAsyncClientClosureRetryV1 = Mockito.mock(QueueAsyncClient.class);
-
-    private final QueueAsyncClient queueAsyncClientRefundV1 = Mockito.mock(QueueAsyncClient.class);
-
-    private final QueueAsyncClient queueAsyncClientClosureRetryV2 = Mockito.mock(QueueAsyncClient.class);
-
-    private final QueueAsyncClient queueAsyncClientRefundV2 = Mockito.mock(QueueAsyncClient.class);
 
     private final it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler transactionActivateHandlerV2 = Mockito
             .mock(it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class);
@@ -112,14 +98,7 @@ class TransactionServiceTest {
     private final TransactionsEventStoreRepository transactionsEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    @Captor
-    private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
-
     private final TransactionsUtils transactionsUtils = Mockito.mock(TransactionsUtils.class);
-
-    private final AuthRequestDataUtils authRequestDataUtils = Mockito.mock(AuthRequestDataUtils.class);
-
-    private final TracingUtils tracingUtils = Mockito.mock(TracingUtils.class);
 
     private final ConfidentialDataManager confidentialDataManager = ConfidentialDataManagerTest.getMock();
 
@@ -215,7 +194,9 @@ class TransactionServiceTest {
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(100));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(MOCK_AMOUNT)
+                );
 
         it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData transactionActivatedData = new it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
@@ -226,9 +207,9 @@ class TransactionServiceTest {
                                         TransactionTestUtils.PAYMENT_TOKEN,
                                         null,
                                         "dest",
-                                        0,
+                                        0L,
                                         TEST_CPP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0L, null)),
                                         false,
                                         null,
                                         null
@@ -256,7 +237,7 @@ class TransactionServiceTest {
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
                                 new PaymentContextCode(TEST_CPP.toString()),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName(null),
                                 null

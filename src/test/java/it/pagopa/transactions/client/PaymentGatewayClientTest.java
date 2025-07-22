@@ -75,6 +75,7 @@ class PaymentGatewayClientTest {
 
     public static final String MOCK_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJJc3N1ZXIiOiJJc3N1ZXIiLCJwYXltZW50TWV0aG9kSWQiOiJwYXltZW50SW5zdHJ1bWVudElkIiwiZXhwIjo0OTA0MjgzMDU0LCJpYXQiOjE3NDg2MDk0NTQsInRyYW5zYWN0aW9uSWQiOiI4OWU5NWRhYmRiYjM0MTQzOTJlNmUwNmY2NDgzMmViYSJ9.BT_DJ5PD3P_2-T9EEV24mTVX4RQLobuHPxaE9X7trwY";
     public static final String MOCK_JWT_WITH_ORDERID = "eyJhbGciOiJIUzI1NiJ9.eyJJc3N1ZXIiOiJJc3N1ZXIiLCJvcmRlcklkIjoib3JkZXJJZEdlbmVyYXRlZCIsInBheW1lbnRNZXRob2RJZCI6InBheW1lbnRJbnN0cnVtZW50SWQiLCJleHAiOjQ5MDQyODMwNTQsImlhdCI6MTc0ODYwOTQ1NCwidHJhbnNhY3Rpb25JZCI6Ijg5ZTk1ZGFiZGJiMzQxNDM5MmU2ZTA2ZjY0ODMyZWJhIn0.gwP3cZ7w2lrgOv8FACpGclDljWp-PomIc0DAfa3wjeg";
+    private static final Long MOCK_AMOUNT = 100L;
 
     private PaymentGatewayClient client;
 
@@ -177,10 +178,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -237,10 +238,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -295,7 +296,7 @@ class PaymentGatewayClientTest {
                 transaction
                         .getPaymentNotices()
                         .stream()
-                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value())
+                        .mapToLong(paymentNotice -> paymentNotice.transactionAmount().value())
                         .sum() + authorizationData.fee()
         );
         verify(npgClient, times(1))
@@ -318,10 +319,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -411,10 +412,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -493,10 +494,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -582,10 +583,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -764,10 +765,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -886,10 +887,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -997,10 +998,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1110,10 +1111,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1307,10 +1308,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1350,8 +1351,8 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
@@ -1478,10 +1479,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1521,8 +1522,8 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
@@ -1641,10 +1642,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1683,8 +1684,8 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
@@ -1832,8 +1833,8 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
@@ -1933,7 +1934,7 @@ class PaymentGatewayClientTest {
                         new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode("paymentContextCode"),
                                 List.of(
@@ -1983,8 +1984,8 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
@@ -2080,7 +2081,7 @@ class PaymentGatewayClientTest {
                         new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode("paymentContextCode"),
                                 List.of(
@@ -2147,8 +2148,8 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
@@ -2272,8 +2273,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString()
         );
         String idPaymentMethod = "RBPS";
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(idPaymentMethod)
                 .paymentMethod("Redirect payment type code description RBPS")
@@ -2383,8 +2384,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString()
         );
         String idPaymentMethod = "RBPS";
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .paymentMethod("Redirect payment type code description RBPS")
                 .idPaymentMethod(idPaymentMethod)
@@ -2542,10 +2543,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -2893,8 +2894,8 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)

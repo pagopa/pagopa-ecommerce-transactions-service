@@ -63,7 +63,7 @@ class TransactionActivateHandlerTest {
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
-
+    private static final Long MOCK_AMOUNT = 1200L;
     private final NodoOperations nodoOperations = Mockito.mock(NodoOperations.class);
 
     private final QueueAsyncClient transactionActivatedQueueAsyncClient = Mockito.mock(QueueAsyncClient.class);
@@ -139,7 +139,7 @@ class TransactionActivateHandlerTest {
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
         requestDto.setOrderId(ORDER_ID);
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -314,7 +314,7 @@ class TransactionActivateHandlerTest {
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -454,7 +454,7 @@ class TransactionActivateHandlerTest {
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -566,7 +566,7 @@ class TransactionActivateHandlerTest {
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
         paymentNoticeInfoDto.setRptId(rptId.value());
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         requestDto.setEmail("jhon.doe@email.com");
 
@@ -655,7 +655,7 @@ class TransactionActivateHandlerTest {
                 new NewTransactionResponseDto()
                         .addPaymentsItem(
                                 new PaymentInfoDto()
-                                        .amount(1)
+                                        .amount(MOCK_AMOUNT)
                                         .rptId(TEST_RPTID)
                                         .paymentToken(TEST_TOKEN)
                                         .reason("")
@@ -668,7 +668,7 @@ class TransactionActivateHandlerTest {
                 new NewTransactionResponseDto()
                         .addPaymentsItem(
                                 new PaymentInfoDto()
-                                        .amount(1)
+                                        .amount(MOCK_AMOUNT)
                                         .rptId(TEST_RPTID)
                                         .paymentToken(TEST_TOKEN)
                                         .reason("")
@@ -692,14 +692,13 @@ class TransactionActivateHandlerTest {
         String paName = "paName";
         String paTaxcode = "77777777777";
         String description = "Description";
-        Integer amount = 1000;
         TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail("jhon.doe@email.com");
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -731,12 +730,12 @@ class TransactionActivateHandlerTest {
                 paTaxcode,
                 paName,
                 description,
-                amount,
+                MOCK_AMOUNT,
                 dueDate,
                 null,
                 null,
                 idempotencyKey,
-                List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, amount, null)),
+                List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, MOCK_AMOUNT, null)),
                 false,
                 null
         );
