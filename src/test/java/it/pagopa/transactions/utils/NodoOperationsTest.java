@@ -2029,7 +2029,7 @@ class NodoOperationsTest {
         assert response != null;
         assert response.transferList() != null;
         assert Objects.equals(response.transferList().get(0).transferCategory(), codiceConvenzioneValue);
-        assert Objects.equals(response.transferList().get(0).transferAmount(), 0);
+        assert Objects.equals(response.transferList().get(0).transferAmount(), 0L);
         assert Objects.equals(response.transferList().get(0).paFiscalCode(), "77777777777");
     }
 }
