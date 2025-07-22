@@ -904,7 +904,7 @@ public class TransactionsService {
                                                      it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice
     ) {
         return new PaymentNoticeDto()
-                .paymentAmount(paymentNotice.getAmount().longValue())
+                .paymentAmount(paymentNotice.getAmount())
                 .primaryCreditorInstitution(paymentNotice.getRptId().substring(0, 11))
                 .transferList(mapTransferInfoListToV2DtoList(paymentNotice.getTransferList()));
     }

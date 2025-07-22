@@ -1351,7 +1351,7 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -1522,7 +1522,7 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -1684,7 +1684,7 @@ class PaymentGatewayClientTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString()
         );
-        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
