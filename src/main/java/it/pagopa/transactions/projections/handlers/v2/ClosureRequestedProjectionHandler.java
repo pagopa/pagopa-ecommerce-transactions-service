@@ -31,6 +31,7 @@ public class ClosureRequestedProjectionHandler implements
                 )
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.CLOSURE_REQUESTED);
+                    transactionDocument.setLastProcessedEventAt(System.currentTimeMillis());
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }

@@ -69,6 +69,7 @@ public class AuthorizationUpdateProjectionHandler
                     };
                     transactionDocument.setAuthorizationErrorCode(gatewayStatusAndErrorCode.getT2().orElse(null));
                     transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());
+                    transactionDocument.setLastProcessedEventAt(System.currentTimeMillis());
 
                     return transactionsViewRepository.save(transactionDocument);
                 })

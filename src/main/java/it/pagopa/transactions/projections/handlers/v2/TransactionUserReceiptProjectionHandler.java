@@ -30,6 +30,7 @@ public class TransactionUserReceiptProjectionHandler
                     TransactionStatusDto newStatus = TransactionStatusDto.NOTIFICATION_REQUESTED;
                     transactionDocument.setStatus(newStatus);
                     transactionDocument.setSendPaymentResultOutcome(data.getData().getResponseOutcome());
+                    transactionDocument.setLastProcessedEventAt(System.currentTimeMillis());
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }

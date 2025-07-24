@@ -34,6 +34,7 @@ public class CancellationRequestProjectionHandler
                 )
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.CANCELLATION_REQUESTED);
+                    transactionDocument.setLastProcessedEventAt(System.currentTimeMillis());
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
