@@ -17,11 +17,19 @@ public class CancellationRequestProjectionHandler
         ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
     public static final String QUALIFIER_NAME = "cancellationRequestProjectionHandlerV2";
-    @Autowired
-    private TransactionsViewRepository transactionsViewRepository;
 
-    @Value("${transactionsview.update.enabled}")
-    private boolean transactionsviewUpdateEnabled;
+    private final TransactionsViewRepository transactionsViewRepository;
+
+    private final boolean transactionsviewUpdateEnabled;
+
+    @Autowired
+    public CancellationRequestProjectionHandler(
+            TransactionsViewRepository transactionsViewRepository,
+            @Value("${transactionsview.update.enabled}") boolean transactionsviewUpdateEnabled
+    ) {
+        this.transactionsViewRepository = transactionsViewRepository;
+        this.transactionsviewUpdateEnabled = transactionsviewUpdateEnabled;
+    }
 
     @Override
     public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(

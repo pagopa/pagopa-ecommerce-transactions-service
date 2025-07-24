@@ -24,10 +24,12 @@ class AuthorizationUpdateProjectionHandlerTest {
     private final TransactionsViewRepository viewRepository = Mockito.mock(TransactionsViewRepository.class);
 
     private final int paymentTokenValidity = TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC;
+    private final boolean transactionsviewUpdateEnabled = true;
 
     private final it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler = new AuthorizationUpdateProjectionHandler(
             viewRepository,
-            paymentTokenValidity
+            paymentTokenValidity,
+            transactionsviewUpdateEnabled
     );
 
     private static final String expectedOperationTimeStamp = "2023-01-01T01:02:03";

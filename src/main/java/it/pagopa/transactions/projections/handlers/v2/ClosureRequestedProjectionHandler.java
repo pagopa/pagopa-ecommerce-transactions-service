@@ -14,11 +14,19 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class ClosureRequestedProjectionHandler implements
         ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
-    @Autowired
-    private TransactionsViewRepository transactionsViewRepository;
 
-    @Value("${transactionsview.update.enabled}")
-    private boolean transactionsviewUpdateEnabled;
+    private final TransactionsViewRepository transactionsViewRepository;
+
+    private final boolean transactionsviewUpdateEnabled;
+
+    @Autowired
+    public ClosureRequestedProjectionHandler(
+            TransactionsViewRepository transactionsViewRepository,
+            @Value("${transactionsview.update.enabled}") boolean transactionsviewUpdateEnabled
+    ) {
+        this.transactionsViewRepository = transactionsViewRepository;
+        this.transactionsviewUpdateEnabled = transactionsviewUpdateEnabled;
+    }
 
     @Override
     public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(

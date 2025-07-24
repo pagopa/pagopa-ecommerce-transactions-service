@@ -22,11 +22,14 @@ import static org.mockito.ArgumentMatchers.any;
 @ExtendWith(MockitoExtension.class)
 public class ClosureRequestedProjectionHandlerTests {
 
-    @InjectMocks
-    private ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
+    private Boolean transactionsviewUpdateEnabled = true;
 
-    @Mock
-    private TransactionsViewRepository transactionsViewRepository;
+    private TransactionsViewRepository transactionsViewRepository = Mockito.mock();
+
+    private final ClosureRequestedProjectionHandler closureRequestedProjectionHandler = new ClosureRequestedProjectionHandler(
+            transactionsViewRepository,
+            transactionsviewUpdateEnabled
+    );
 
     @Test
     void shouldHandleProjection() {
