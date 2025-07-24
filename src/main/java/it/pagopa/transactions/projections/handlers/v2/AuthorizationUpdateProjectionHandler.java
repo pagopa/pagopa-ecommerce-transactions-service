@@ -34,24 +34,29 @@ public class AuthorizationUpdateProjectionHandler
     private final TransactionsViewRepository transactionsViewRepository;
 
     private final Integer paymentTokenValidity;
+    private final boolean transactionsviewUpdateEnabled;
 
     @Autowired
     public AuthorizationUpdateProjectionHandler(
             TransactionsViewRepository transactionsViewRepository,
-            @Value("${payment.token.validity}") Integer paymentTokenValidity
+            @Value("${payment.token.validity}") Integer paymentTokenValidity,
+            @Value("${transactionsview.update.enabled}") boolean transactionsviewUpdateEnabled
     ) {
         this.transactionsViewRepository = transactionsViewRepository;
         this.paymentTokenValidity = paymentTokenValidity;
+        this.transactionsviewUpdateEnabled = transactionsviewUpdateEnabled;
     }
 
     @Override
     public Mono<TransactionActivated> handle(TransactionAuthorizationCompletedEvent data) {
-        return transactionsViewRepository.findById(data.getTransactionId())
-                .switchIfEmpty(
-                        Mono.error(new TransactionNotFoundException(data.getTransactionId()))
-                )
-                .cast(Transaction.class)
-                .flatMap(transactionDocument -> {
+
+
+        Mono<Transaction> monoTransaction = transactionsViewRepository.findById(data.getTransactionId())
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getTransactionId())))
+                .cast(Transaction.class);
+        if (transactionsviewUpdateEnabled) {
+
+            monoTransaction = monoTransaction.flatMap(transactionDocument -> {
                     transactionDocument.setRrn(data.getData().getRrn());
                     transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
                     transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
@@ -71,8 +76,9 @@ public class AuthorizationUpdateProjectionHandler
                     transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());
 
                     return transactionsViewRepository.save(transactionDocument);
-                })
-                .map(
+                });
+            }
+                return monoTransaction.map(
                         transactionDocument -> new TransactionActivated(
                                 new TransactionId(transactionDocument.getTransactionId()),
                                 transactionDocument.getPaymentNotices().stream()

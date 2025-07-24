@@ -187,6 +187,7 @@ microservice-chart:
     JWT_ISSUER_READ_TIMEOUT: "10000"
     JWT_ISSUER_CONNECTION_TIMEOUT: "10000"
     SECURITY_API_KEYS_SECURED_PATHS: "/transactions,/v2/transactions,/v2.1/transactions"
+    TRANSACTIONSVIEW_UPDATE_ENABLED: "true"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
@@ -212,7 +213,6 @@ microservice-chart:
     SECURITY_API_KEYS_PRIMARY: ecommerce-transactions-service-primary-api-key
     SECURITY_API_KEYS_SECONDARY: ecommerce-transactions-service-secondary-api-key
     JWT_ISSUER_API_KEY: ecommerce-jwt-issuer-service-active-api-key
-    TRANSACTIONSVIEW_UPDATE_ENABLED: "true"
   keyvault:
     name: "pagopa-d-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

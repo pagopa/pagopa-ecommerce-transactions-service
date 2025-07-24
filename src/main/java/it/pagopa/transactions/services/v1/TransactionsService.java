@@ -103,7 +103,6 @@ public class TransactionsService {
 
     private final boolean transactionsviewUpdateEnabled;
 
-
     @Autowired
     public TransactionsService(
             @Qualifier(
@@ -1497,7 +1496,10 @@ public class TransactionsService {
 
     }
 
-    private Mono<Transaction> maybeHandleProjection(TransactionUserReceiptRequestedEvent event, String transactionId) {
+    private Mono<Transaction> maybeHandleProjection(
+                                                    TransactionUserReceiptRequestedEvent event,
+                                                    String transactionId
+    ) {
         if (transactionsviewUpdateEnabled) {
             log.debug("Projection handler enabled for transactionId: [{}] (feature flag true)", transactionId);
             return transactionUserReceiptProjectionHandlerV2.handle(event);
