@@ -74,7 +74,8 @@ class AuthorizationRequestProjectionHandlerTest {
                 initialDocument.getRrn(),
                 initialDocument.getUserId(),
                 TransactionTestUtils.PAYMENT_TYPE_CODE,
-                TransactionTestUtils.PSP_ID
+                TransactionTestUtils.PSP_ID,
+                null
         );
 
         when(transactionsViewRepository.findById(initialDocument.getTransactionId()))

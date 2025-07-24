@@ -49,6 +49,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 "rrn",
                 TransactionTestUtils.USER_ID,
                 null,
+                null,
                 null
         );
 
@@ -133,6 +134,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 "rrn",
                 TransactionTestUtils.USER_ID,
                 null,
+                null,
                 null
         );
         String authorizationErrorCode = "authorization error code";
@@ -214,6 +216,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 transaction.getTransactionActivatedData().getIdCart(),
                 "rrn",
                 TransactionTestUtils.USER_ID,
+                null,
                 null,
                 null
         );

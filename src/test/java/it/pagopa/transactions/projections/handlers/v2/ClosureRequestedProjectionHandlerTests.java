@@ -49,7 +49,8 @@ public class ClosureRequestedProjectionHandlerTests {
                 transaction.getRrn(),
                 TransactionTestUtils.USER_ID,
                 transaction.getPaymentTypeCode(),
-                transaction.getPspId()
+                transaction.getPspId(),
+                null
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
