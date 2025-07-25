@@ -636,7 +636,8 @@ class TransactionServiceTests {
                 transactionDocument.getRrn(),
                 transactionDocument.getUserId(),
                 transactionDocument.getPaymentTypeCode(),
-                transactionDocument.getPspId()
+                transactionDocument.getPspId(),
+                transactionDocument.getLastProcessedEventAt()
         );
 
         /* preconditions */

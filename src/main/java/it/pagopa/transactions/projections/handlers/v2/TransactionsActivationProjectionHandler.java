@@ -19,7 +19,7 @@ public class TransactionsActivationProjectionHandler
 
     public static final String QUALIFIER_NAME = "transactionsActivationProjectionHandlerV2";
     @Autowired
-    private TransactionsViewRepository viewEventStoreRepository;
+    private TransactionsViewRepository transactionsViewRepository;
 
     @Override
     public Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionActivated> handle(
@@ -69,7 +69,7 @@ public class TransactionsActivationProjectionHandler
         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
                 .from(transaction);
 
-        return viewEventStoreRepository
+        return transactionsViewRepository
                 .save(transactionDocument)
                 .doOnNext(t -> log.info("Transactions update view for transactionId: {}", t.getTransactionId()))
                 .thenReturn(transaction);
