@@ -44,7 +44,7 @@ class TransactionsActivationProjectionHandlerTest {
         String paymentTokenString = UUID.randomUUID().toString();
         String transactionDescription = "transaction description";
         String orderId = "orderId";
-        int amountInt = 100;
+        long amountInt = 100;
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
         transactionActivatedData

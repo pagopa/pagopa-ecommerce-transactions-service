@@ -5,13 +5,13 @@ import lombok.Getter;
 @Getter
 public class TransactionAmountMismatchException extends RuntimeException {
 
-    private Integer requestAmount;
+    private Long requestAmount;
 
-    private Integer transactionAmount;
+    private Long transactionAmount;
 
     public TransactionAmountMismatchException(
-            Integer requestAmount,
-            Integer transactionAmount
+            Long requestAmount,
+            Long transactionAmount
     ) {
         super("Transaction amount mismatch");
         this.requestAmount = requestAmount;

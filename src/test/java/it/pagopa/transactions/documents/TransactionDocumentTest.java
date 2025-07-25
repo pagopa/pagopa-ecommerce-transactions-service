@@ -33,7 +33,7 @@ class TransactionDocumentTest {
         String RRN = "RRN";
         ZonedDateTime TEST_TIME = ZonedDateTime.now();
         Confidential<Email> CONFIDENTIAL_TEST_EMAIL = TransactionTestUtils.EMAIL;
-        int TEST_AMOUNT = 1;
+        Long TEST_AMOUNT = 1L;
         TransactionStatusDto TEST_STATUS = TransactionStatusDto.ACTIVATED;
 
         /*
