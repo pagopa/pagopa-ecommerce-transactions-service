@@ -6,6 +6,7 @@ import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -16,8 +17,18 @@ public class TransactionUserReceiptProjectionHandler
         ProjectionHandler<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
     public static final String QUALIFIER_NAME = "transactionUserReceiptProjectionHandlerV2";
-    @Autowired
+
     private TransactionsViewRepository transactionsViewRepository;
+    private final boolean transactionsviewUpdateEnabled;
+
+    @Autowired
+    public TransactionUserReceiptProjectionHandler(
+            TransactionsViewRepository transactionsViewRepository,
+            @Value("${transactionsview.update.enabled}") boolean transactionsviewUpdateEnabled
+    ) {
+        this.transactionsViewRepository = transactionsViewRepository;
+        this.transactionsviewUpdateEnabled = transactionsviewUpdateEnabled;
+    }
 
     @Override
     public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
@@ -26,11 +37,20 @@ public class TransactionUserReceiptProjectionHandler
         return transactionsViewRepository.findById(data.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getTransactionId())))
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
-                .flatMap(transactionDocument -> {
-                    TransactionStatusDto newStatus = TransactionStatusDto.NOTIFICATION_REQUESTED;
-                    transactionDocument.setStatus(newStatus);
-                    transactionDocument.setSendPaymentResultOutcome(data.getData().getResponseOutcome());
-                    return transactionsViewRepository.save(transactionDocument);
-                });
+                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, data));
+    }
+
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
+                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
+                                                                                                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent data
+    ) {
+        TransactionStatusDto newStatus = TransactionStatusDto.NOTIFICATION_REQUESTED;
+        transactionDocument.setStatus(newStatus);
+        transactionDocument.setSendPaymentResultOutcome(data.getData().getResponseOutcome());
+        if (transactionsviewUpdateEnabled) {
+            return transactionsViewRepository.save(transactionDocument);
+        } else {
+            return Mono.just(transactionDocument);
+        }
     }
 }

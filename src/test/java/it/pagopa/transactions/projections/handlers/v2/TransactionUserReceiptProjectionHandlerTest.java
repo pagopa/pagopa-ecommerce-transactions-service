@@ -9,7 +9,6 @@ import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,17 +22,174 @@ import static org.mockito.ArgumentMatchers.argThat;
 @ExtendWith(MockitoExtension.class)
 class TransactionUserReceiptProjectionHandlerTest {
 
-    @InjectMocks
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @Mock
-    private TransactionsViewRepository viewRepository;
+    private TransactionsViewRepository transactionsViewRepository;
 
     @Test
     void shouldHandleTransactionWithOKOutcome() {
+
+        transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
+                transactionsViewRepository,
+                true
+        );
         Transaction transaction = TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
+        Transaction expectedDocument = getTransaction(transaction);
+        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.OK);
+
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+                );
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
+                .thenReturn(Mono.just(transaction));
+
+        Mockito.when(transactionsViewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+
+        /*
+         * Test
+         */
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
+                .expectNext(expectedDocument)
+                .verifyComplete();
+
+        /*
+         * Assertions
+         */
+        Mockito.verify(transactionsViewRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                savedTransaction -> ((Transaction) savedTransaction).getStatus()
+                                        .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
+                        )
+                );
+    }
+
+    @Test
+    void shouldHandleTransactionWithOKOutcomeWithoutSavingWhenViewUpdateDisabled() {
+
+        transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
+                transactionsViewRepository,
+                false // flag disabilitato
+        );
+
+        Transaction transaction = TransactionTestUtils
+                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
+
+        Transaction expectedDocument = getTransaction(transaction);
+        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.OK);
+
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+                );
+
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
+                .thenReturn(Mono.just(transaction));
+
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
+                .expectNext(expectedDocument)
+                .verifyComplete();
+
+        Mockito.verify(transactionsViewRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldHandleTransactionWithKOOutcome() {
+        transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
+                transactionsViewRepository,
+                true
+        );
+
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        Transaction expectedDocument = getTransaction(transaction);
+        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
+
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+                );
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId().value()))
+                .thenReturn(Mono.just(Transaction.from(transaction)));
+
+        Mockito.when(transactionsViewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+
+        /*
+         * Test
+         */
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
+                .expectNext(expectedDocument)
+                .verifyComplete();
+
+        /*
+         * Assertions
+         */
+        Mockito.verify(transactionsViewRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                savedTransaction -> ((Transaction) savedTransaction).getStatus()
+                                        .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
+                        )
+                );
+    }
+
+    @Test
+    void shouldHandleTransactionWithKOOutcomeWithoutSavingWhenViewUpdateDisabled() {
+        transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
+                transactionsViewRepository,
+                false // flag disabilitato
+        );
+
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        Transaction expectedDocument = getTransaction(transaction);
+        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
+
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+                );
+
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId().value()))
+                .thenReturn(Mono.just(Transaction.from(transaction)));
+
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
+                .expectNext(expectedDocument)
+                .verifyComplete();
+
+        Mockito.verify(transactionsViewRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    private static Transaction getTransaction(TransactionActivated transaction) {
+        return new Transaction(
+                transaction.getTransactionId().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.NOTIFICATION_REQUESTED,
+                transaction.getClientId(),
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart(),
+                null,
+                TransactionTestUtils.USER_ID,
+                null,
+                null
+        );
+    }
+
+    private static Transaction getTransaction(Transaction transaction) {
         Transaction expectedDocument = new Transaction(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -48,89 +204,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 null,
                 null
         );
-        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.OK);
-
-        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
-                .transactionUserReceiptRequestedEvent(
-                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-                );
-
-        /*
-         * Preconditions
-         */
-        Mockito.when(viewRepository.findById(transaction.getTransactionId()))
-                .thenReturn(Mono.just(transaction));
-
-        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
-
-        /*
-         * Test
-         */
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
-                .expectNext(expectedDocument)
-                .verifyComplete();
-
-        /*
-         * Assertions
-         */
-        Mockito.verify(viewRepository, Mockito.times(1))
-                .save(
-                        argThat(
-                                savedTransaction -> ((Transaction) savedTransaction).getStatus()
-                                        .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
-                        )
-                );
+        return expectedDocument;
     }
 
-    @Test
-    void shouldHandleTransactionWithKOOutcome() {
-        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
-
-        Transaction expectedDocument = new Transaction(
-                transaction.getTransactionId().value(),
-                transaction.getTransactionActivatedData().getPaymentNotices(),
-                null,
-                transaction.getEmail(),
-                TransactionStatusDto.NOTIFICATION_REQUESTED,
-                transaction.getClientId(),
-                transaction.getCreationDate().toString(),
-                transaction.getTransactionActivatedData().getIdCart(),
-                null,
-                TransactionTestUtils.USER_ID,
-                null,
-                null
-        );
-        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
-
-        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
-                .transactionUserReceiptRequestedEvent(
-                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
-                );
-
-        /*
-         * Preconditions
-         */
-        Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
-                .thenReturn(Mono.just(Transaction.from(transaction)));
-
-        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
-
-        /*
-         * Test
-         */
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
-                .expectNext(expectedDocument)
-                .verifyComplete();
-
-        /*
-         * Assertions
-         */
-        Mockito.verify(viewRepository, Mockito.times(1))
-                .save(
-                        argThat(
-                                savedTransaction -> ((Transaction) savedTransaction).getStatus()
-                                        .equals(TransactionStatusDto.NOTIFICATION_REQUESTED)
-                        )
-                );
-    }
 }
