@@ -35,9 +35,7 @@ public class CancellationRequestProjectionHandler
     public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
                                                                              it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent transactionUserCanceledEvent
     ) {
-
-        Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> monoTransaction = transactionsViewRepository
-                .findById(transactionUserCanceledEvent.getTransactionId())
+        return transactionsViewRepository.findById(transactionUserCanceledEvent.getTransactionId())
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
                 .switchIfEmpty(
                         Mono.error(
@@ -45,14 +43,18 @@ public class CancellationRequestProjectionHandler
                                         transactionUserCanceledEvent.getTransactionId()
                                 )
                         )
-                );
+                )
+                .flatMap(this::conditionallySaveTransactionView);
+    }
+
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
+                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument
+    ) {
+        transactionDocument.setStatus(TransactionStatusDto.CANCELLATION_REQUESTED);
         if (transactionsviewUpdateEnabled) {
-            return monoTransaction.flatMap(transactionDocument -> {
-                transactionDocument.setStatus(TransactionStatusDto.CANCELLATION_REQUESTED);
-                return transactionsViewRepository.save(transactionDocument);
-            });
+            return transactionsViewRepository.save(transactionDocument);
         } else {
-            return monoTransaction;
+            return Mono.just(transactionDocument);
         }
     }
 }

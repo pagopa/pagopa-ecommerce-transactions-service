@@ -32,8 +32,7 @@ public class ClosureRequestedProjectionHandler implements
     public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
                                                                              it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent transactionClosureRequestedEvent
     ) {
-        Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> monoTransaction = transactionsViewRepository
-                .findById(transactionClosureRequestedEvent.getTransactionId())
+        return transactionsViewRepository.findById(transactionClosureRequestedEvent.getTransactionId())
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
                 .switchIfEmpty(
                         Mono.error(
@@ -41,15 +40,18 @@ public class ClosureRequestedProjectionHandler implements
                                         transactionClosureRequestedEvent.getTransactionId()
                                 )
                         )
-                );
+                )
+                .flatMap(this::conditionallySaveTransactionView);
+    }
 
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
+                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument
+    ) {
+        transactionDocument.setStatus(TransactionStatusDto.CLOSURE_REQUESTED);
         if (transactionsviewUpdateEnabled) {
-            return monoTransaction.flatMap(transactionDocument -> {
-                transactionDocument.setStatus(TransactionStatusDto.CLOSURE_REQUESTED);
-                return transactionsViewRepository.save(transactionDocument);
-            });
+            return transactionsViewRepository.save(transactionDocument);
         } else {
-            return monoTransaction;
+            return Mono.just(transactionDocument);
         }
     }
 

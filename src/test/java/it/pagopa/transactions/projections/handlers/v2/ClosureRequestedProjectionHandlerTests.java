@@ -8,8 +8,6 @@ import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
@@ -40,20 +38,7 @@ public class ClosureRequestedProjectionHandlerTests {
                 transaction.getTransactionId()
         );
 
-        Transaction expected = new Transaction(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getFeeTotal(),
-                transaction.getEmail(),
-                TransactionStatusDto.CLOSURE_REQUESTED,
-                Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate(),
-                transaction.getIdCart(),
-                transaction.getRrn(),
-                TransactionTestUtils.USER_ID,
-                transaction.getPaymentTypeCode(),
-                transaction.getPspId()
-        );
+        Transaction expected = getTransaction(transaction);
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
                 .thenReturn(Mono.just(transaction));
@@ -63,6 +48,32 @@ public class ClosureRequestedProjectionHandlerTests {
         StepVerifier.create(closureRequestedProjectionHandler.handle(transactionClosureRequestedEvent))
                 .expectNext(expected)
                 .verifyComplete();
+    }
+
+    @Test
+    void shouldHandleProjectionWithoutSavingWhenViewUpdateDisabled() {
+        ClosureRequestedProjectionHandler handler = new ClosureRequestedProjectionHandler(
+                transactionsViewRepository,
+                false
+        );
+
+        Transaction transaction = TransactionTestUtils
+                .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
+
+        TransactionClosureRequestedEvent transactionClosureRequestedEvent = new TransactionClosureRequestedEvent(
+                transaction.getTransactionId()
+        );
+
+        Transaction expected = getTransaction(transaction);
+
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
+                .thenReturn(Mono.just(transaction));
+
+        StepVerifier.create(handler.handle(transactionClosureRequestedEvent))
+                .expectNext(expected)
+                .verifyComplete();
+
+        Mockito.verify(transactionsViewRepository, Mockito.never()).save(Mockito.any());
     }
 
     @Test
@@ -79,5 +90,22 @@ public class ClosureRequestedProjectionHandlerTests {
         StepVerifier.create(closureRequestedProjectionHandler.handle(transactionClosureRequestedEvent))
                 .expectError(TransactionNotFoundException.class)
                 .verify();
+    }
+
+    private static Transaction getTransaction(Transaction transaction) {
+        return new Transaction(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getFeeTotal(),
+                transaction.getEmail(),
+                TransactionStatusDto.CLOSURE_REQUESTED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate(),
+                transaction.getIdCart(),
+                transaction.getRrn(),
+                TransactionTestUtils.USER_ID,
+                transaction.getPaymentTypeCode(),
+                transaction.getPspId()
+        );
     }
 }

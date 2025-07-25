@@ -11,9 +11,9 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,11 +28,18 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 @ExtendWith(MockitoExtension.class)
 class TransactionsActivationProjectionHandlerTest {
 
-    @InjectMocks
     private TransactionsActivationProjectionHandler handler;
 
     @Mock
     TransactionsViewRepository transactionsViewRepository;
+
+    @BeforeEach
+    void setUp() {
+        handler = new TransactionsActivationProjectionHandler(
+                transactionsViewRepository,
+                true
+        );
+    }
 
     @Test
     void shouldSaveTransaction() {

@@ -9,6 +9,7 @@ import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -20,8 +21,18 @@ public class AuthorizationRequestProjectionHandler
         ProjectionHandler<AuthorizationRequestData, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
 
     public static final String QUALIFIER_NAME = "authorizationRequestProjectionHandlerV2";
+
+    private final TransactionsViewRepository transactionsViewRepository;
+    private final boolean transactionsviewUpdateEnabled;
+
     @Autowired
-    private TransactionsViewRepository transactionsViewRepository;
+    public AuthorizationRequestProjectionHandler(
+            TransactionsViewRepository transactionsViewRepository,
+            @Value("${transactionsview.update.enabled}") boolean transactionsviewUpdateEnabled
+    ) {
+        this.transactionsViewRepository = transactionsViewRepository;
+        this.transactionsviewUpdateEnabled = transactionsviewUpdateEnabled;
+    }
 
     @Override
     public Mono<Transaction> handle(AuthorizationRequestData data) {
@@ -34,13 +45,23 @@ public class AuthorizationRequestProjectionHandler
                                 )
                         )
                 )
-                .flatMap(transactionDocument -> {
-                    transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
-                    transactionDocument.setPaymentGateway(data.paymentGatewayId());
-                    transactionDocument.setPaymentTypeCode(data.paymentTypeCode());
-                    transactionDocument.setPspId(data.pspId());
-                    transactionDocument.setFeeTotal(data.fee());
-                    return transactionsViewRepository.save(transactionDocument);
-                });
+                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, data));
+    }
+
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
+                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
+                                                                                                        AuthorizationRequestData data
+    ) {
+        transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
+        transactionDocument.setPaymentGateway(data.paymentGatewayId());
+        transactionDocument.setPaymentTypeCode(data.paymentTypeCode());
+        transactionDocument.setPspId(data.pspId());
+        transactionDocument.setFeeTotal(data.fee());
+
+        if (transactionsviewUpdateEnabled) {
+            return transactionsViewRepository.save(transactionDocument);
+        } else {
+            return Mono.just(transactionDocument);
+        }
     }
 }
