@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,9 +34,14 @@ public class CancellationRequestProjectionHandlerTests {
         Transaction transaction = TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
 
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
         TransactionUserCanceledEvent transactionUserCanceledEvent = new TransactionUserCanceledEvent(
                 transaction.getTransactionId()
         );
+
+        TransactionUserCanceledEvent spyEvent = Mockito.spy(transactionUserCanceledEvent);
+        Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
 
         Transaction expected = new Transaction(
                 transaction.getTransactionId(),
@@ -50,7 +56,7 @@ public class CancellationRequestProjectionHandlerTests {
                 TransactionTestUtils.USER_ID,
                 transaction.getPaymentTypeCode(),
                 transaction.getPspId(),
-                transaction.getLastProcessedEventAt()
+                fixedEventTime.toInstant().toEpochMilli()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
@@ -58,7 +64,7 @@ public class CancellationRequestProjectionHandlerTests {
         Mockito.when(transactionsViewRepository.save(any()))
                 .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
+        StepVerifier.create(cancellationRequestProjectionHandler.handle(spyEvent))
                 .expectNext(expected)
                 .verifyComplete();
     }

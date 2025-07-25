@@ -11,7 +11,9 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mockito;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -37,6 +39,8 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
         Transaction expectedDocument = new Transaction(
                 transaction.getTransactionId().value(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
@@ -50,7 +54,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 TransactionTestUtils.USER_ID,
                 null,
                 null,
-                null
+                fixedEventTime.toInstant().toEpochMilli()
         );
 
         expectedDocument.setPaymentGateway(null);
@@ -77,6 +81,9 @@ class AuthorizationUpdateProjectionHandlerTest {
                 statusAuthCompleted
         );
 
+        TransactionAuthorizationCompletedEvent spyEvent = Mockito.spy(event);
+        Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
+
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -97,12 +104,13 @@ class AuthorizationUpdateProjectionHandlerTest {
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
                 .thenReturn(Mono.just(Transaction.from(transaction)));
 
-        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+        Mockito.when(viewRepository.save(any(Transaction.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
         /*
          * Test
          */
-        StepVerifier.create(authorizationUpdateProjectionHandler.handle(event))
+        StepVerifier.create(authorizationUpdateProjectionHandler.handle(spyEvent))
                 .expectNext(expected)
                 .verifyComplete();
 
@@ -122,6 +130,8 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
         Transaction expectedDocument = new Transaction(
                 transaction.getTransactionId().value(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
@@ -135,7 +145,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 TransactionTestUtils.USER_ID,
                 null,
                 null,
-                null
+                fixedEventTime.toInstant().toEpochMilli()
         );
         String authorizationErrorCode = "authorization error code";
 
@@ -160,6 +170,9 @@ class AuthorizationUpdateProjectionHandlerTest {
                 statusAuthCompleted
         );
 
+        TransactionAuthorizationCompletedEvent spyEvent = Mockito.spy(event);
+        Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
+
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -180,12 +193,13 @@ class AuthorizationUpdateProjectionHandlerTest {
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
                 .thenReturn(Mono.just(Transaction.from(transaction)));
 
-        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+        Mockito.when(viewRepository.save(any(Transaction.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
         /*
          * Test
          */
-        StepVerifier.create(authorizationUpdateProjectionHandler.handle(event))
+        StepVerifier.create(authorizationUpdateProjectionHandler.handle(spyEvent))
                 .expectNext(expected)
                 .verifyComplete();
 
@@ -205,6 +219,8 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
         Transaction expectedDocument = new Transaction(
                 transaction.getTransactionId().value(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
@@ -218,7 +234,7 @@ class AuthorizationUpdateProjectionHandlerTest {
                 TransactionTestUtils.USER_ID,
                 null,
                 null,
-                null
+                fixedEventTime.toInstant().toEpochMilli()
         );
 
         expectedDocument.setPaymentGateway(null);
@@ -245,6 +261,9 @@ class AuthorizationUpdateProjectionHandlerTest {
                 statusAuthCompleted
         );
 
+        TransactionAuthorizationCompletedEvent spyEvent = Mockito.spy(event);
+        Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
+
         TransactionActivated expected = new TransactionActivated(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -265,12 +284,13 @@ class AuthorizationUpdateProjectionHandlerTest {
         Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
                 .thenReturn(Mono.just(Transaction.from(transaction)));
 
-        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+        Mockito.when(viewRepository.save(any(Transaction.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
         /*
          * Test
          */
-        StepVerifier.create(authorizationUpdateProjectionHandler.handle(event))
+        StepVerifier.create(authorizationUpdateProjectionHandler.handle(spyEvent))
                 .expectNext(expected)
                 .verifyComplete();
 
