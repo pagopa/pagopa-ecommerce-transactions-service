@@ -637,7 +637,7 @@ class TransactionServiceTests {
                 transactionDocument.getUserId(),
                 transactionDocument.getPaymentTypeCode(),
                 transactionDocument.getPspId(),
-                null
+                transactionDocument.getLastProcessedEventAt()
         );
 
         /* preconditions */

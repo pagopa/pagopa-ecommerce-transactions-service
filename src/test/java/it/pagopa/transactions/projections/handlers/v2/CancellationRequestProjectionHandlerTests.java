@@ -50,7 +50,7 @@ public class CancellationRequestProjectionHandlerTests {
                 TransactionTestUtils.USER_ID,
                 transaction.getPaymentTypeCode(),
                 transaction.getPspId(),
-                null
+                transaction.getLastProcessedEventAt()
         );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))

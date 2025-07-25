@@ -47,7 +47,7 @@ class TransactionUserReceiptProjectionHandlerTest {
                 TransactionTestUtils.USER_ID,
                 null,
                 null,
-                null
+                transaction.getLastProcessedEventAt()
         );
         expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.OK);
 

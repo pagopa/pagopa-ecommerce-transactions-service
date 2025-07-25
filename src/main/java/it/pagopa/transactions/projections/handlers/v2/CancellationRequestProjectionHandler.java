@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,7 +35,10 @@ public class CancellationRequestProjectionHandler
                 )
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.CANCELLATION_REQUESTED);
-                    transactionDocument.setLastProcessedEventAt(System.currentTimeMillis());
+                    transactionDocument.setLastProcessedEventAt(
+                            ZonedDateTime.parse(transactionUserCanceledEvent.getCreationDate()).toInstant()
+                                    .toEpochMilli()
+                    );
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
