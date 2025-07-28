@@ -59,6 +59,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -496,6 +497,8 @@ class TransactionServiceTests {
 
         Mockito.when(transactionRequestAuthorizationHandlerV2.handle(commandArgumentCaptor.capture()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
+        Mockito.when(transactionRequestAuthorizationHandlerV2.handleWithCreationDate(any()))
+                .thenReturn(Mono.just(Tuples.of(requestAuthorizationResponse, "2023-01-01T10:00:00Z")));
 
         /* test */
         StepVerifier

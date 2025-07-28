@@ -661,12 +661,15 @@ public class TransactionsService {
 
         if (transactionDocument instanceof Transaction) {
             return requestAuthHandlerV2
-                    .handle(transactionRequestAuthCommand)
-                    .doOnNext(logAuthRequestedFor(transactionDocument.getTransactionId()))
+                    .handleWithCreationDate(transactionRequestAuthCommand)
+                    .doOnNext(
+                            responseAndDate -> logAuthRequestedFor(transactionDocument.getTransactionId())
+                                    .accept(responseAndDate.getT1())
+                    )
                     .flatMap(
-                            res -> authorizationProjectionHandlerV2
-                                    .handle(authData)
-                                    .thenReturn(res)
+                            responseAndDate -> authorizationProjectionHandlerV2
+                                    .handle(authData, responseAndDate.getT2())
+                                    .thenReturn(responseAndDate.getT1())
                     );
         } else {
             return Mono.error(

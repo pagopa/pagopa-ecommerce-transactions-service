@@ -120,6 +120,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
+        return handleWithCreationDate(command).map(Tuple2::getT1);
+    }
+
+    public Mono<Tuple2<RequestAuthorizationResponseDto, String>> handleWithCreationDate(TransactionRequestAuthorizationCommand command) {
         AuthorizationRequestData authorizationRequestData = command.getData();
         URI logo = getLogo(command.getData());
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
@@ -318,9 +322,9 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 log.info("Saved the TRANSACTION_AUTHORIZATION_REQUESTED_EVENT event for transactionId: [{}] and authorizationRequestId: [{}]", transactionId, authorizationRequestId);
                                             })
                                             .flatMap(
-                                                    e -> Mono
+                                                    savedEvent -> Mono
                                                             .just(
-                                                                    e.getData()
+                                                                    savedEvent.getData()
                                                                             .getPaymentGateway()
                                                             )
                                                             .flatMap(
@@ -329,7 +333,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                             tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
                                                                                     .sendMessageWithResponse(
                                                                                             new QueueEvent<>(
-                                                                                                    e,
+                                                                                                    savedEvent,
                                                                                                     tracingInfo
                                                                                             ),
                                                                                             Duration.ofSeconds(
@@ -341,16 +345,16 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                     )
                                                                     )
                                                             )
-                                            )
-                                            .thenReturn(authorizationOutput)
-                                            .map(
-                                                    auth -> new RequestAuthorizationResponseDto()
-                                                            .authorizationUrl(
-                                                                    authorizationOutput.authorizationUrl()
-                                                            )
-                                                            .authorizationRequestId(
-                                                                    authorizationOutput.authorizationId()
-                                                            )
+                                                            .map(queueResponse -> Tuples.of(
+                                                                    new RequestAuthorizationResponseDto()
+                                                                            .authorizationUrl(
+                                                                                    authorizationOutput.authorizationUrl()
+                                                                            )
+                                                                            .authorizationRequestId(
+                                                                                    authorizationOutput.authorizationId()
+                                                                            ),
+                                                                    savedEvent.getCreationDate()
+                                                            ))
                                             );
                                 })
                                 .doOnError(error -> log.error("Error performing authorization", error))

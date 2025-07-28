@@ -6,6 +6,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -40,6 +41,32 @@ public class AuthorizationRequestProjectionHandler
                     transactionDocument.setPaymentTypeCode(data.paymentTypeCode());
                     transactionDocument.setPspId(data.pspId());
                     transactionDocument.setFeeTotal(data.fee());
+                    return transactionsViewRepository.save(transactionDocument);
+                });
+    }
+
+    public Mono<Transaction> handle(
+                                    AuthorizationRequestData data,
+                                    String creationDate
+    ) {
+        return transactionsViewRepository.findById(data.transactionId().value())
+                .cast(Transaction.class)
+                .switchIfEmpty(
+                        Mono.error(
+                                new TransactionNotFoundException(
+                                        data.transactionId().value()
+                                )
+                        )
+                )
+                .flatMap(transactionDocument -> {
+                    transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
+                    transactionDocument.setPaymentGateway(data.paymentGatewayId());
+                    transactionDocument.setPaymentTypeCode(data.paymentTypeCode());
+                    transactionDocument.setPspId(data.pspId());
+                    transactionDocument.setFeeTotal(data.fee());
+                    transactionDocument.setLastProcessedEventAt(
+                            ZonedDateTime.parse(creationDate).toInstant().toEpochMilli()
+                    );
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
