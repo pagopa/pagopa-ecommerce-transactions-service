@@ -6,6 +6,7 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,7 @@ public class AuthorizationRequestProjectionHandler
                     transactionDocument.setPaymentTypeCode(data.paymentTypeCode());
                     transactionDocument.setPspId(data.pspId());
                     transactionDocument.setFeeTotal(data.fee());
+                    transactionDocument.setLastProcessedEventAt(Instant.now().toEpochMilli());
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
