@@ -88,7 +88,6 @@ public class TransactionsActivationProjectionHandler
                                                                                                               it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
                                                                                                               it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction
     ) {
-        transactionDocument.setStatus(TransactionStatusDto.CLOSURE_REQUESTED);
         if (transactionsviewUpdateEnabled) {
             return transactionsViewRepository
                     .save(transactionDocument)
