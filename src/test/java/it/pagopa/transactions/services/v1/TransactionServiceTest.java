@@ -150,8 +150,6 @@ class TransactionServiceTest {
     private final Set<String> ecommercePossibleFinalStates = Set
             .of("AUTHORIZATION_COMPLETED", "CLOSURE_REQUESTED", "CLOSURE_ERROR");
 
-    private final boolean transactionsviewUpdateEnabled = true;
-
     private final TransactionsService transactionsServiceV1 = new TransactionsService(
             transactionActivateHandlerV2,
             transactionRequestAuthorizationHandlerV2,
@@ -177,8 +175,7 @@ class TransactionServiceTest {
             updateTransactionStatusTracerUtils,
             npgAuthorizationErrorCodeMapping,
             ecommerceFinalStates,
-            ecommercePossibleFinalStates,
-            transactionsviewUpdateEnabled
+            ecommercePossibleFinalStates
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
@@ -206,8 +203,7 @@ class TransactionServiceTest {
             updateTransactionStatusTracerUtils,
             npgAuthorizationErrorCodeMapping,
             ecommerceFinalStates,
-            ecommercePossibleFinalStates,
-            transactionsviewUpdateEnabled
+            ecommercePossibleFinalStates
     );
 
     @Test

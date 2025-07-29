@@ -101,8 +101,6 @@ public class TransactionsService {
     private final Set<TransactionStatusDto> ecommerceFinalStates;
     private final Set<TransactionStatusDto> ecommercePossibleFinalState;
 
-    private final boolean transactionsviewUpdateEnabled;
-
     @Autowired
     public TransactionsService(
             @Qualifier(
@@ -147,8 +145,7 @@ public class TransactionsService {
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
             @Value("#{${npg.authorizationErrorCodeMapping}}") Map<String, String> npgAuthorizationErrorCodeMapping,
             @Value("${ecommerce.finalStates}") Set<String> ecommerceFinalStates,
-            @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates,
-            @Value("${transactionsview.update.enabled}") boolean transactionsviewUpdateEnabled
+            @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.requestAuthHandlerV2 = requestAuthHandlerV2;
@@ -181,7 +178,6 @@ public class TransactionsService {
                 .collect(Collectors.toSet());
         this.ecommercePossibleFinalState = ecommercePossibleFinalStates.stream().map(TransactionStatusDto::valueOf)
                 .collect(Collectors.toSet());
-        this.transactionsviewUpdateEnabled = transactionsviewUpdateEnabled;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -1479,7 +1475,8 @@ public class TransactionsService {
                                                     transactionUserReceiptRequestedEvent.getTransactionId()
                                             )
                                     )
-                                    .flatMap(event -> maybeHandleProjection((TransactionUserReceiptRequestedEvent) event, transactionId))
+                                    .flatMap(event -> transactionUserReceiptProjectionHandlerV2
+                                            .handle((TransactionUserReceiptRequestedEvent) event))
                                     .doOnNext(
                                             transaction -> log.info(
                                                     "AddUserReceipt transaction status updated [{}] for transactionId: [{}]",
@@ -1494,27 +1491,6 @@ public class TransactionsService {
                 );
 
 
-    }
-
-    private Mono<Transaction> maybeHandleProjection(
-                                                    TransactionUserReceiptRequestedEvent event,
-                                                    String transactionId
-    ) {
-        if (transactionsviewUpdateEnabled) {
-            log.debug("Projection handler enabled for transactionId: [{}] (feature flag true)", transactionId);
-            return transactionUserReceiptProjectionHandlerV2.handle(event);
-        } else {
-            log.debug("Projection handler disabled for transactionId: [{}] (feature flag false)", transactionId);
-            return transactionsViewRepository.findById(transactionId)
-                    .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                    .flatMap(baseView -> {
-                        if (baseView instanceof Transaction t) {
-                            return Mono.just(t);
-                        } else {
-                            return Mono.error(new IllegalStateException("Unexpected transaction type"));
-                        }
-                    });
-        }
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEventV2(
