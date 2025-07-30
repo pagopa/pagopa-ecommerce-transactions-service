@@ -84,7 +84,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             EcommercePaymentMethodsClient paymentMethodsClient,
             TransactionTemplateWrapper transactionTemplateWrapper,
             @Qualifier(
-                    "transactionAuthorizationRequestedQueueAsyncClientV2"
+                "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
             @Value("${authorization.event.visibilityTimeoutSeconds}") Integer authRequestEventVisibilityTimeoutSeconds,
@@ -368,10 +368,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      * @param clientId                 transaction client id
      */
     private void traceAuthorizationRequestedOperation(
-            AuthorizationRequestData authorizationRequestData,
-            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome,
-            UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult,
-            Transaction.ClientId clientId
+                                                      AuthorizationRequestData authorizationRequestData,
+                                                      UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome,
+                                                      UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult,
+                                                      Transaction.ClientId clientId
     ) {
         updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
                 new UpdateTransactionStatusTracerUtils.AuthorizationRequestedStatusUpdate(
@@ -393,12 +393,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      * @param authorizationData authorization data
      * @param clientId          client that initiated the transaction
      * @return a tuple of redirection url, psp authorization id and authorization
-     * timeout
+     *         timeout
      */
     protected Mono<AuthorizationOutput> redirectionAuthRequestPipeline(
-            AuthorizationRequestData authorizationData,
-            Transaction.ClientId clientId,
-            UUID userId
+                                                                       AuthorizationRequestData authorizationData,
+                                                                       Transaction.ClientId clientId,
+                                                                       UUID userId
 
     ) {
         Transaction.ClientId effectiveClient = switch (clientId) {

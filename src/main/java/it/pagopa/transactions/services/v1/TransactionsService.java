@@ -107,34 +107,34 @@ public class TransactionsService {
     @Autowired
     public TransactionsService(
             @Qualifier(
-                    TransactionActivateHandler.QUALIFIER_NAME
+                TransactionActivateHandler.QUALIFIER_NAME
             ) TransactionActivateHandler transactionActivateHandlerV2,
             TransactionRequestAuthorizationHandler requestAuthHandlerV2,
             @Qualifier(
-                    TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
+                TransactionUpdateAuthorizationHandler.QUALIFIER_NAME
             ) TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2,
             TransactionSendClosureRequestHandler transactionSendClosureRequestHandler,
             @Qualifier(
-                    TransactionRequestUserReceiptHandler.QUALIFIER_NAME
+                TransactionRequestUserReceiptHandler.QUALIFIER_NAME
             ) TransactionRequestUserReceiptHandler transactionRequestUserReceiptHandlerV2,
             @Qualifier(
-                    TransactionUserCancelHandler.QUALIFIER_NAME
+                TransactionUserCancelHandler.QUALIFIER_NAME
             ) TransactionUserCancelHandler transactionCancelHandlerV2,
             @Qualifier(
-                    AuthorizationRequestProjectionHandler.QUALIFIER_NAME
+                AuthorizationRequestProjectionHandler.QUALIFIER_NAME
             ) AuthorizationRequestProjectionHandler authorizationProjectionHandlerV2,
             @Qualifier(
-                    AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
+                AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
             ) AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2,
             ClosureRequestedProjectionHandler closureRequestedProjectionHandler,
             @Qualifier(
-                    CancellationRequestProjectionHandler.QUALIFIER_NAME
+                CancellationRequestProjectionHandler.QUALIFIER_NAME
             ) CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2,
             @Qualifier(
-                    TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
+                TransactionUserReceiptProjectionHandler.QUALIFIER_NAME
             ) TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2,
             @Qualifier(
-                    TransactionsActivationProjectionHandler.QUALIFIER_NAME
+                TransactionsActivationProjectionHandler.QUALIFIER_NAME
             ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsViewRepository transactionsViewRepository,
             EcommercePaymentMethodsClient ecommercePaymentMethodsClient,
@@ -186,9 +186,9 @@ public class TransactionsService {
     @CircuitBreaker(name = "node-backend")
     @Retry(name = "newTransaction")
     public Mono<NewTransactionResponseDto> newTransaction(
-            NewTransactionRequestDto newTransactionRequestDto,
-            ClientIdDto clientIdDto,
-            TransactionId transactionId
+                                                          NewTransactionRequestDto newTransactionRequestDto,
+                                                          ClientIdDto clientIdDto,
+                                                          TransactionId transactionId
     ) {
         Transaction.ClientId clientId = Transaction.ClientId.fromString(
                 Optional.ofNullable(clientIdDto)
@@ -252,8 +252,8 @@ public class TransactionsService {
     @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionInfo")
     public Mono<TransactionInfoDto> getTransactionInfo(
-            String transactionId,
-            UUID xUserId
+                                                       String transactionId,
+                                                       UUID xUserId
     ) {
         log.info("Get Transaction Invoked with id {} ", transactionId);
         return getBaseTransactionView(transactionId, xUserId)
@@ -264,8 +264,8 @@ public class TransactionsService {
     @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionOutcome")
     public Mono<TransactionOutcomeInfoDto> getTransactionOutcome(
-            String transactionId,
-            UUID xUserId
+                                                                 String transactionId,
+                                                                 UUID xUserId
     ) {
         log.info("Get transaction outcome invoked with id {} ", transactionId);
         return getBaseTransactionView(transactionId, xUserId)
@@ -288,10 +288,10 @@ public class TransactionsService {
     }
 
     private Boolean evaluateFinalStatus(
-            TransactionStatusDto status,
-            ClosureErrorData closureErrorData,
-            String paymentGateway,
-            String gatewayAuthorizationStatus
+                                        TransactionStatusDto status,
+                                        ClosureErrorData closureErrorData,
+                                        String paymentGateway,
+                                        String gatewayAuthorizationStatus
     ) {
         return ecommerceFinalStates.contains(status) ||
                 (closureErrorData != null && closureErrorData.getHttpErrorCode() != null
@@ -546,11 +546,11 @@ public class TransactionsService {
 
     @Retry(name = "requestTransactionAuthorization")
     public Mono<RequestAuthorizationResponseDto> requestTransactionAuthorization(
-            String transactionId,
-            UUID xUserId,
-            String paymentGatewayId,
-            String lang,
-            RequestAuthorizationRequestDto authRequest
+                                                                                 String transactionId,
+                                                                                 UUID xUserId,
+                                                                                 String paymentGatewayId,
+                                                                                 String lang,
+                                                                                 RequestAuthorizationRequestDto authRequest
     ) {
         return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
@@ -570,10 +570,10 @@ public class TransactionsService {
      * @return A Mono containing the authorization response
      */
     private Mono<RequestAuthorizationResponseDto> executeAuthPipeline(
-            Tuple2<BaseTransactionView, AuthorizationRequestSessionData> args,
-            String lang,
-            RequestAuthorizationRequestDto authRequest,
-            String paymentGatewayId
+                                                                      Tuple2<BaseTransactionView, AuthorizationRequestSessionData> args,
+                                                                      String lang,
+                                                                      RequestAuthorizationRequestDto authRequest,
+                                                                      String paymentGatewayId
     ) {
         BaseTransactionView transactionDocument = args.getT1();
         AuthorizationRequestSessionData authRequestSessionData = args.getT2();
@@ -607,10 +607,10 @@ public class TransactionsService {
      * @return Authorization request data
      */
     private AuthorizationRequestData createAuthRequestData(
-            BaseTransactionView transactionDocument,
-            AuthorizationRequestSessionData authRequestSessionData,
-            RequestAuthorizationRequestDto authRequest,
-            String paymentGatewayId
+                                                           BaseTransactionView transactionDocument,
+                                                           AuthorizationRequestSessionData authRequestSessionData,
+                                                           RequestAuthorizationRequestDto authRequest,
+                                                           String paymentGatewayId
     ) {
 
         BundleDto bundle = authRequestSessionData.bundle().orElseThrow();
@@ -656,9 +656,9 @@ public class TransactionsService {
      * @return A Mono containing the authorization response
      */
     private Mono<RequestAuthorizationResponseDto> executeHandlerBasedOnTransactionType(
-            BaseTransactionView transactionDocument,
-            TransactionRequestAuthorizationCommand transactionRequestAuthCommand,
-            AuthorizationRequestData authData
+                                                                                       BaseTransactionView transactionDocument,
+                                                                                       TransactionRequestAuthorizationCommand transactionRequestAuthCommand,
+                                                                                       AuthorizationRequestData authData
     ) {
 
         if (transactionDocument instanceof Transaction) {
@@ -803,8 +803,8 @@ public class TransactionsService {
      * @return A tuple containing the transaction and authorization session data
      */
     private Mono<Tuple2<BaseTransactionView, AuthorizationRequestSessionData>> processAuthRequest(
-            BaseTransactionView transaction,
-            RequestAuthorizationRequestDto authRequest
+                                                                                                  BaseTransactionView transaction,
+                                                                                                  RequestAuthorizationRequestDto authRequest
     ) {
         log.info("Authorization psp validation for transactionId: {}", transaction.getTransactionId());
 
@@ -838,9 +838,9 @@ public class TransactionsService {
      * @return A tuple containing the fee response and the payment session data
      */
     private Mono<Tuple2<CalculateFeeResponseDto, PaymentSessionData>> calculateTransactionFee(
-            BaseTransactionView transaction,
-            RequestAuthorizationRequestDto authRequest,
-            PaymentSessionData paymentSessionData
+                                                                                              BaseTransactionView transaction,
+                                                                                              RequestAuthorizationRequestDto authRequest,
+                                                                                              PaymentSessionData paymentSessionData
     ) {
 
         List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices = transactionsUtils
@@ -871,10 +871,10 @@ public class TransactionsService {
      * @return A fee calculation request DTO
      */
     private CalculateFeeRequestDto createCalculateFeeRequest(
-            BaseTransactionView transaction,
-            RequestAuthorizationRequestDto authRequest,
-            PaymentSessionData paymentSessionData,
-            List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices
+                                                             BaseTransactionView transaction,
+                                                             RequestAuthorizationRequestDto authRequest,
+                                                             PaymentSessionData paymentSessionData,
+                                                             List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices
     ) {
         return new CalculateFeeRequestDto()
                 .touchpoint(transactionsUtils.getEffectiveClientId(transaction))
@@ -891,7 +891,7 @@ public class TransactionsService {
      * @return A list of V2 payment notice DTOs
      */
     private List<PaymentNoticeDto> mapPaymentNoticeListToV2DtoList(
-            List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices
+                                                                   List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNotices
     ) {
         return paymentNotices
                 .stream()
@@ -906,7 +906,7 @@ public class TransactionsService {
      * @return A V2 payment notice DTO
      */
     private PaymentNoticeDto mapPaymentNoticeToV2Dto(
-            it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice
+                                                     it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice
     ) {
         return new PaymentNoticeDto()
                 .paymentAmount(paymentNotice.getAmount().longValue())
@@ -950,8 +950,8 @@ public class TransactionsService {
      * @return An authorization session data object
      */
     private AuthorizationRequestSessionData createAuthSessionData(
-            RequestAuthorizationRequestDto authRequest,
-            Tuple2<CalculateFeeResponseDto, PaymentSessionData> paymentData
+                                                                  RequestAuthorizationRequestDto authRequest,
+                                                                  Tuple2<CalculateFeeResponseDto, PaymentSessionData> paymentData
     ) {
 
         CalculateFeeResponseDto calculateFeeResponse = paymentData.getT1();
@@ -975,11 +975,11 @@ public class TransactionsService {
      * @param calculateFeeResponse The fee calculation response
      * @param authRequest          The authorization request
      * @return An optional containing the matching bundle, or empty if no match
-     * found
+     *         found
      */
     private Optional<BundleDto> findMatchingBundle(
-            CalculateFeeResponseDto calculateFeeResponse,
-            RequestAuthorizationRequestDto authRequest
+                                                   CalculateFeeResponseDto calculateFeeResponse,
+                                                   RequestAuthorizationRequestDto authRequest
     ) {
         return calculateFeeResponse.getBundles().stream()
                 .filter(psp -> isMatchingPspAndFee(psp, authRequest)).findFirst();
@@ -993,8 +993,8 @@ public class TransactionsService {
      * @return true if the bundle matches, false otherwise
      */
     private boolean isMatchingPspAndFee(
-            BundleDto psp,
-            RequestAuthorizationRequestDto authRequest
+                                        BundleDto psp,
+                                        RequestAuthorizationRequestDto authRequest
     ) {
         return authRequest.getPspId().equals(psp.getIdPsp())
                 && Long.valueOf(authRequest.getFee()).equals(psp.getTaxPayerFee());
@@ -1008,8 +1008,8 @@ public class TransactionsService {
      * @return A Mono error with UnsatisfiablePspRequestException
      */
     private <T> Mono<T> createUnsatisfiablePspRequestError(
-            String transactionId,
-            RequestAuthorizationRequestDto authRequest
+                                                           String transactionId,
+                                                           RequestAuthorizationRequestDto authRequest
     ) {
         return Mono.error(
                 new UnsatisfiablePspRequestException(
@@ -1028,8 +1028,8 @@ public class TransactionsService {
      * @return A Mono containing the validated transaction or an error
      */
     private Mono<BaseTransactionView> validateTransactionDetails(
-            BaseTransactionView transaction,
-            RequestAuthorizationRequestDto authRequest
+                                                                 BaseTransactionView transaction,
+                                                                 RequestAuthorizationRequestDto authRequest
     ) {
         String transactionId = transaction.getTransactionId();
         log.info("Authorization request amount validation for transactionId: {}", transactionId);
@@ -1051,8 +1051,8 @@ public class TransactionsService {
      * @return true if there's a mismatch, false otherwise
      */
     private boolean hasAmountMismatch(
-            RequestAuthorizationRequestDto authRequest,
-            BaseTransactionView transaction
+                                      RequestAuthorizationRequestDto authRequest,
+                                      BaseTransactionView transaction
     ) {
         return !transactionsUtils.getTransactionTotalAmount(transaction)
                 .equals(authRequest.getAmount());
@@ -1067,8 +1067,8 @@ public class TransactionsService {
      * @return true if there's a mismatch, false otherwise
      */
     private boolean hasAllCCPMismatch(
-            RequestAuthorizationRequestDto authRequest,
-            BaseTransactionView transaction
+                                      RequestAuthorizationRequestDto authRequest,
+                                      BaseTransactionView transaction
     ) {
         return !transactionsUtils.isAllCcp(transaction, 0).equals(authRequest.getIsAllCCP());
     }
@@ -1081,8 +1081,8 @@ public class TransactionsService {
      * @return A Mono error with appropriate exception
      */
     private <T> Mono<T> createAmountMismatchError(
-            RequestAuthorizationRequestDto authRequest,
-            BaseTransactionView transaction
+                                                  RequestAuthorizationRequestDto authRequest,
+                                                  BaseTransactionView transaction
     ) {
         return Mono.error(
                 new TransactionAmountMismatchException(
@@ -1100,8 +1100,8 @@ public class TransactionsService {
      * @return A Mono error with appropriate exception
      */
     private <T> Mono<T> createAllCCPMismatchError(
-            RequestAuthorizationRequestDto authRequest,
-            BaseTransactionView transaction
+                                                  RequestAuthorizationRequestDto authRequest,
+                                                  BaseTransactionView transaction
     ) {
         return Mono.error(
                 new PaymentNoticeAllCCPMismatchException(
@@ -1280,9 +1280,9 @@ public class TransactionsService {
     }
 
     private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV2(
-            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
-            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-            ZonedDateTime authorizationRequestedTime
+                                                                            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
+                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
+                                                                            ZonedDateTime authorizationRequestedTime
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
@@ -1301,22 +1301,22 @@ public class TransactionsService {
         return wasTransactionAuthorized(
                 transaction.getTransactionId()
         ).<Either<TransactionInfoDto, Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction>>>flatMap(
-                        alreadyAuthorized -> {
-                            if (Boolean.FALSE.equals(alreadyAuthorized)) {
-                                return Mono.just(baseTransaction).map(Either::right);
-                            } else {
-                                return baseTransaction.map(
-                                        trx -> {
-                                            log.info(
-                                                    "UpdateTransactionAuthorization outcome already received. Transaction status: [{}]",
-                                                    trx.getStatus()
-                                            );
-                                            return buildTransactionInfoDtoV2(trx);
-                                        }
-                                ).map(Either::left);
-                            }
-                        }
-                )
+                alreadyAuthorized -> {
+                    if (Boolean.FALSE.equals(alreadyAuthorized)) {
+                        return Mono.just(baseTransaction).map(Either::right);
+                    } else {
+                        return baseTransaction.map(
+                                trx -> {
+                                    log.info(
+                                            "UpdateTransactionAuthorization outcome already received. Transaction status: [{}]",
+                                            trx.getStatus()
+                                    );
+                                    return buildTransactionInfoDtoV2(trx);
+                                }
+                        ).map(Either::left);
+                    }
+                }
+        )
                 .flatMap(
                         either -> either.fold(
                                 Mono::just,
@@ -1359,7 +1359,7 @@ public class TransactionsService {
     }
 
     private Mono<Transaction> closePaymentV2(
-            BaseTransactionWithPaymentToken transaction
+                                             BaseTransactionWithPaymentToken transaction
     ) {
 
         TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
@@ -1384,7 +1384,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV2(
-            Transaction transactionDocument
+                                                         Transaction transactionDocument
     ) {
         return new TransactionInfoDto()
                 .transactionId(
@@ -1409,7 +1409,7 @@ public class TransactionsService {
     }
 
     private TransactionInfoDto buildTransactionInfoDtoV2(
-            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
+                                                         it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
     ) {
         return new TransactionInfoDto()
                 .transactionId(baseTransaction.getTransactionId().value())
@@ -1428,7 +1428,7 @@ public class TransactionsService {
     }
 
     private Mono<Boolean> wasTransactionAuthorized(
-            TransactionId transactionId
+                                                   TransactionId transactionId
     ) {
         /*
          * @formatter:off
@@ -1499,8 +1499,8 @@ public class TransactionsService {
     }
 
     private Mono<NewTransactionResponseDto> projectActivatedEventV2(
-            TransactionActivatedEvent transactionActivatedEvent,
-            String authToken
+                                                                    TransactionActivatedEvent transactionActivatedEvent,
+                                                                    String authToken
     ) {
         return transactionsActivationProjectionHandlerV2
                 .handle(transactionActivatedEvent)
@@ -1547,7 +1547,7 @@ public class TransactionsService {
     }
 
     public NewTransactionResponseDto.ClientIdEnum convertClientId(
-            it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
+                                                                  it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId)
                 .map(
@@ -1563,7 +1563,7 @@ public class TransactionsService {
     }
 
     public NewTransactionResponseDto.ClientIdEnum convertClientId(
-            Transaction.ClientId clientId
+                                                                  Transaction.ClientId clientId
     ) {
         return Optional.ofNullable(clientId)
                 .map(
