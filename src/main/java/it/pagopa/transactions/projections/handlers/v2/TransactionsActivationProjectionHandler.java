@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -59,6 +60,7 @@ public class TransactionsActivationProjectionHandler
                 email,
                 faultCode,
                 faultCodeString,
+                ZonedDateTime.parse(event.getCreationDate()),
                 clientId,
                 idCart,
                 paymentTokenValiditySeconds,
