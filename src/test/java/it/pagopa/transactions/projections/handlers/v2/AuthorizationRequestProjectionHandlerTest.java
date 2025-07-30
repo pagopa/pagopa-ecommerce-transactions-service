@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.commands.data.AuthorizationRequestedEventData;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import java.time.ZoneId;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,28 +43,31 @@ class AuthorizationRequestProjectionHandlerTest {
         Integer fee = 50;
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                new TransactionId(initialDocument.getTransactionId()),
-                null,
-                initialDocument.getEmail(),
-                fee,
-                null,
-                TransactionTestUtils.PSP_ID,
-                TransactionTestUtils.PAYMENT_TYPE_CODE,
-                "brokerName",
-                "pspChannelCode",
-                "CARDS",
-                "paymentMethodDescription",
-                "pspBusinessName",
-                false,
-                initialDocument.getPaymentGateway(),
-                Optional.of(UUID.randomUUID().toString()),
-                Optional.empty(),
-                "VISA",
-                null,
-                "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+        AuthorizationRequestedEventData authorizationData = new AuthorizationRequestedEventData(
+                new AuthorizationRequestData(
+                        new TransactionId(initialDocument.getTransactionId()),
+                        null,
+                        initialDocument.getEmail(),
+                        fee,
+                        null,
+                        TransactionTestUtils.PSP_ID,
+                        TransactionTestUtils.PAYMENT_TYPE_CODE,
+                        "brokerName",
+                        "pspChannelCode",
+                        "CARDS",
+                        "paymentMethodDescription",
+                        "pspBusinessName",
+                        false,
+                        initialDocument.getPaymentGateway(),
+                        Optional.of(UUID.randomUUID().toString()),
+                        Optional.empty(),
+                        "VISA",
+                        null,
+                        "http://asset",
+                        Optional.of(Map.of("VISA", "http://visaAsset")),
+                        UUID.randomUUID().toString()
+                ),
+                TransactionTestUtils.transactionAuthorizationRequestedEvent()
         );
 
         Transaction expectedDocument = new Transaction(

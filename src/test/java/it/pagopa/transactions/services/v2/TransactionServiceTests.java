@@ -71,6 +71,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 import reactor.util.function.Tuples;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
@@ -500,7 +501,14 @@ class TransactionServiceTests {
                 transactionRequestAuthorizationHandlerV2
                         .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class))
         )
-                .thenReturn(Mono.just(Tuples.of(requestAuthorizationResponse, ZonedDateTime.now().toString())));
+                .thenReturn(
+                        Mono.just(
+                                Tuples.of(
+                                        requestAuthorizationResponse,
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
 
         /* test */
         StepVerifier
@@ -1263,7 +1271,14 @@ class TransactionServiceTests {
                 transactionRequestAuthorizationHandlerV2
                         .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class))
         )
-                .thenReturn(Mono.just(Tuples.of(requestAuthorizationResponse, ZonedDateTime.now().toString())));
+                .thenReturn(
+                        Mono.just(
+                                Tuples.of(
+                                        requestAuthorizationResponse,
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
 
         Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
