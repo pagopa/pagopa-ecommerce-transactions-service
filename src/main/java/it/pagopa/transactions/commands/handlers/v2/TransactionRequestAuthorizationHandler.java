@@ -11,8 +11,8 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGate
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.WalletInfo;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -84,7 +84,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             EcommercePaymentMethodsClient paymentMethodsClient,
             TransactionTemplateWrapper transactionTemplateWrapper,
             @Qualifier(
-                "transactionAuthorizationRequestedQueueAsyncClientV2"
+                    "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
             @Value("${authorization.event.visibilityTimeoutSeconds}") Integer authRequestEventVisibilityTimeoutSeconds,
@@ -121,7 +121,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         return handleWithCreationDate(command).map(Tuple2::getT1);
     }
 
-    public Mono<Tuple2<RequestAuthorizationResponseDto, String>> handleWithCreationDate(TransactionRequestAuthorizationCommand command) {
+    public Mono<Tuple2<RequestAuthorizationResponseDto, TransactionAuthorizationRequestedEvent>> handleWithCreationDate(TransactionRequestAuthorizationCommand command) {
         AuthorizationRequestData authorizationRequestData = command.getData();
         URI logo = getLogo(command.getData());
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
@@ -351,7 +351,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                             .authorizationRequestId(
                                                                                     authorizationOutput.authorizationId()
                                                                             ),
-                                                                    savedEvent.getCreationDate()
+                                                                    savedEvent
                                                             ))
                                             );
                                 })
@@ -368,10 +368,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      * @param clientId                 transaction client id
      */
     private void traceAuthorizationRequestedOperation(
-                                                      AuthorizationRequestData authorizationRequestData,
-                                                      UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome,
-                                                      UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult,
-                                                      Transaction.ClientId clientId
+            AuthorizationRequestData authorizationRequestData,
+            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome,
+            UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult,
+            Transaction.ClientId clientId
     ) {
         updateTransactionStatusTracerUtils.traceStatusUpdateOperation(
                 new UpdateTransactionStatusTracerUtils.AuthorizationRequestedStatusUpdate(
@@ -393,12 +393,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
      * @param authorizationData authorization data
      * @param clientId          client that initiated the transaction
      * @return a tuple of redirection url, psp authorization id and authorization
-     *         timeout
+     * timeout
      */
     protected Mono<AuthorizationOutput> redirectionAuthRequestPipeline(
-                                                                       AuthorizationRequestData authorizationData,
-                                                                       Transaction.ClientId clientId,
-                                                                       UUID userId
+            AuthorizationRequestData authorizationData,
+            Transaction.ClientId clientId,
+            UUID userId
 
     ) {
         Transaction.ClientId effectiveClient = switch (clientId) {
