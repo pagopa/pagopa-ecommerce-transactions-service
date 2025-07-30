@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,7 @@ public class TransactionsActivationProjectionHandler
 
     public static final String QUALIFIER_NAME = "transactionsActivationProjectionHandlerV2";
     @Autowired
-    private TransactionsViewRepository viewEventStoreRepository;
+    private TransactionsViewRepository transactionsViewRepository;
 
     @Override
     public Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionActivated> handle(
@@ -59,6 +60,7 @@ public class TransactionsActivationProjectionHandler
                 email,
                 faultCode,
                 faultCodeString,
+                ZonedDateTime.parse(event.getCreationDate()),
                 clientId,
                 idCart,
                 paymentTokenValiditySeconds,
@@ -69,7 +71,7 @@ public class TransactionsActivationProjectionHandler
         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
                 .from(transaction);
 
-        return viewEventStoreRepository
+        return transactionsViewRepository
                 .save(transactionDocument)
                 .doOnNext(t -> log.info("Transactions update view for transactionId: {}", t.getTransactionId()))
                 .thenReturn(transaction);

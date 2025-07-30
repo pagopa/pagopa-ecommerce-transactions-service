@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,6 +32,10 @@ public class ClosureRequestedProjectionHandler implements
                 )
                 .flatMap(transactionDocument -> {
                     transactionDocument.setStatus(TransactionStatusDto.CLOSURE_REQUESTED);
+                    transactionDocument.setLastProcessedEventAt(
+                            ZonedDateTime.parse(transactionClosureRequestedEvent.getCreationDate()).toInstant()
+                                    .toEpochMilli()
+                    );
                     return transactionsViewRepository.save(transactionDocument);
                 });
     }
