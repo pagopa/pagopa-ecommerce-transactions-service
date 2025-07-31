@@ -169,8 +169,7 @@ class TransactionsActivationProjectionHandlerTest {
     }
 
     @Test
-    void shouldSaveTransactionWithoutSavingWhenUpdateDisabled
-            () {
+    void shouldSaveTransactionWithoutSavingWhenUpdateDisabled() {
         handler = new TransactionsActivationProjectionHandler(
                 transactionsViewRepository,
                 false
