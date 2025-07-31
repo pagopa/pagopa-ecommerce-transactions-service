@@ -6,6 +6,7 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -36,9 +37,14 @@ public class CancellationRequestProjectionHandlerTests {
         Transaction transaction = TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
 
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
         TransactionUserCanceledEvent transactionUserCanceledEvent = new TransactionUserCanceledEvent(
                 transaction.getTransactionId()
         );
+
+        TransactionUserCanceledEvent spyEvent = Mockito.spy(transactionUserCanceledEvent);
+        Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
 
         Transaction expected = getExpected(transaction);
 
@@ -47,7 +53,7 @@ public class CancellationRequestProjectionHandlerTests {
         Mockito.when(transactionsViewRepository.save(any()))
                 .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
-        StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
+        StepVerifier.create(cancellationRequestProjectionHandler.handle(spyEvent))
                 .expectNext(expected)
                 .verifyComplete();
     }
@@ -71,7 +77,6 @@ public class CancellationRequestProjectionHandlerTests {
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
                 .thenReturn(Mono.just(transaction));
 
-        // Notare che non facciamo il mock di save perché non dovrebbe essere chiamato
 
         StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
                 .expectNext(expected)
@@ -102,6 +107,9 @@ public class CancellationRequestProjectionHandlerTests {
     }
 
     private static Transaction getExpected(Transaction transaction) {
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
+
         return new Transaction(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -114,7 +122,8 @@ public class CancellationRequestProjectionHandlerTests {
                 transaction.getRrn(),
                 TransactionTestUtils.USER_ID,
                 transaction.getPaymentTypeCode(),
-                transaction.getPspId()
+                transaction.getPspId(),
+                fixedEventTime.toInstant().toEpochMilli()
         );
     }
 }

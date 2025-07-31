@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,13 +42,18 @@ public class ClosureRequestedProjectionHandler implements
                                 )
                         )
                 )
-                .flatMap(this::conditionallySaveTransactionView);
+                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, transactionClosureRequestedEvent));
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
-                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument
+                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
+                                                                                                        it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent transactionClosureRequestedEvent
     ) {
         transactionDocument.setStatus(TransactionStatusDto.CLOSURE_REQUESTED);
+        transactionDocument.setLastProcessedEventAt(
+                ZonedDateTime.parse(transactionClosureRequestedEvent.getCreationDate()).toInstant()
+                        .toEpochMilli()
+        );
         if (transactionsviewUpdateEnabled) {
             return transactionsViewRepository.save(transactionDocument);
         } else {
