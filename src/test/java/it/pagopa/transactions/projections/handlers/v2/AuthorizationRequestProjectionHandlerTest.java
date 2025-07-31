@@ -26,7 +26,6 @@ import java.util.*;
 @ExtendWith(MockitoExtension.class)
 class AuthorizationRequestProjectionHandlerTest {
 
-    @InjectMocks
     private it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler authorizationRequestProjectionHandler;
 
     @Mock
@@ -111,7 +110,6 @@ class AuthorizationRequestProjectionHandlerTest {
 
     }
 
-
     @Test
     void shouldReturnUpdatedTransactionWithoutSavingWhenUpdateDisabled() {
         Transaction initialDocument = TransactionTestUtils.transactionDocument(
@@ -147,7 +145,6 @@ class AuthorizationRequestProjectionHandlerTest {
                 ),
                 TransactionTestUtils.transactionAuthorizationRequestedEvent()
         );
-
 
         authorizationRequestProjectionHandler = new AuthorizationRequestProjectionHandler(
                 transactionsViewRepository,

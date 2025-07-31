@@ -50,12 +50,15 @@ public class AuthorizationRequestProjectionHandler
                                 )
                         )
                 )
-                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, data));
+                .flatMap(
+                        transactionDocument -> conditionallySaveTransactionView(transactionDocument, data, creationDate)
+                );
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
                                                                                                         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
-                                                                                                        AuthorizationRequestData data
+                                                                                                        AuthorizationRequestData data,
+                                                                                                        String creationDate
     ) {
         transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
         transactionDocument.setPaymentGateway(data.paymentGatewayId());

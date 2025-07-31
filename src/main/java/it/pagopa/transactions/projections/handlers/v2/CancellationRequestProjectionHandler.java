@@ -45,7 +45,12 @@ public class CancellationRequestProjectionHandler
                                 )
                         )
                 )
-                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, transactionUserCanceledEvent));
+                .flatMap(
+                        transactionDocument -> conditionallySaveTransactionView(
+                                transactionDocument,
+                                transactionUserCanceledEvent
+                        )
+                );
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(

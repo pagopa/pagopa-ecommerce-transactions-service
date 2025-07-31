@@ -116,7 +116,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument =  getRrn(transaction);
+        Transaction expectedDocument = getRrn(transaction);
         String authorizationErrorCode = "authorization error code";
 
         expectedDocument.setPaymentGateway(null);
@@ -213,7 +213,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedEvent spyEvent = Mockito.spy(event);
         Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
 
-        TransactionActivated expected =  getExpected(transaction, expectedDocument);
+        TransactionActivated expected = getExpected(transaction, expectedDocument);
         /*
          * Preconditions
          */
@@ -311,7 +311,7 @@ class AuthorizationUpdateProjectionHandlerTest {
     private static Transaction getRrn(TransactionActivated transaction) {
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        return  new Transaction(
+        return new Transaction(
                 transaction.getTransactionId().value(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,

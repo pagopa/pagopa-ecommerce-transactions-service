@@ -42,7 +42,21 @@ class TransactionUserReceiptProjectionHandlerTest {
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument = getTransaction(transaction);
+        Transaction expectedDocument = new Transaction(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.NOTIFICATION_REQUESTED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate(),
+                transaction.getIdCart(),
+                "rrn",
+                TransactionTestUtils.USER_ID,
+                null,
+                null,
+                fixedEventTime.toInstant().toEpochMilli()
+        );
         expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.OK);
 
         TransactionUserReceiptRequestedEvent event = TransactionTestUtils
@@ -82,12 +96,29 @@ class TransactionUserReceiptProjectionHandlerTest {
 
     @Test
     void shouldHandleTransactionWithKOOutcome() {
+        transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
+                transactionsViewRepository,
+                true
+        );
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument = getTransaction(transaction);
-
+        Transaction expectedDocument = new Transaction(
+                transaction.getTransactionId().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.NOTIFICATION_REQUESTED,
+                transaction.getClientId(),
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart(),
+                null,
+                TransactionTestUtils.USER_ID,
+                null,
+                null,
+                fixedEventTime.toInstant().toEpochMilli()
+        );
         expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
 
         TransactionUserReceiptRequestedEvent event = TransactionTestUtils
@@ -129,31 +160,13 @@ class TransactionUserReceiptProjectionHandlerTest {
     void shouldHandleTransactionWithKOOutcomeWithoutSavingWhenViewUpdateDisabled() {
         transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
                 transactionsViewRepository,
-                false // flag disabilitato
+                false
         );
-
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
-        Transaction expectedDocument = getTransaction(transaction);
-        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
-                .transactionUserReceiptRequestedEvent(
-                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
-                );
-
-        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId().value()))
-                .thenReturn(Mono.just(Transaction.from(transaction)));
-
-        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(event))
-                .expectNext(expectedDocument)
-                .verifyComplete();
-
-        Mockito.verify(transactionsViewRepository, Mockito.never()).save(Mockito.any());
-    }
-
-    private static Transaction getTransaction(TransactionActivated transaction) {
-        return new Transaction(
+        Transaction expectedDocument = new Transaction(
                 transaction.getTransactionId().value(),
                 transaction.getTransactionActivatedData().getPaymentNotices(),
                 null,
@@ -165,29 +178,27 @@ class TransactionUserReceiptProjectionHandlerTest {
                 null,
                 TransactionTestUtils.USER_ID,
                 null,
-                null
-        );
-    }
-
-    private static Transaction getTransaction(Transaction transaction) {
-        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
-
-        Transaction expectedDocument = new Transaction(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                null,
-                transaction.getEmail(),
-                TransactionStatusDto.NOTIFICATION_REQUESTED,
-                Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate(),
-                transaction.getIdCart(),
-                "rrn",
-                TransactionTestUtils.USER_ID,
-                null,
                 null,
                 fixedEventTime.toInstant().toEpochMilli()
         );
-        return expectedDocument;
+        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
+
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+                );
+
+        TransactionUserReceiptRequestedEvent spyEvent = Mockito.spy(event);
+        Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
+
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId().value()))
+                .thenReturn(Mono.just(Transaction.from(transaction)));
+
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(spyEvent))
+                .expectNext(expectedDocument)
+                .verifyComplete();
+
+        Mockito.verify(transactionsViewRepository, Mockito.never()).save(Mockito.any());
     }
 
 }

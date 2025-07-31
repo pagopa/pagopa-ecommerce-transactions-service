@@ -42,7 +42,12 @@ public class ClosureRequestedProjectionHandler implements
                                 )
                         )
                 )
-                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, transactionClosureRequestedEvent));
+                .flatMap(
+                        transactionDocument -> conditionallySaveTransactionView(
+                                transactionDocument,
+                                transactionClosureRequestedEvent
+                        )
+                );
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(

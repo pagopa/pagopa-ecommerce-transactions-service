@@ -46,7 +46,21 @@ public class CancellationRequestProjectionHandlerTests {
         TransactionUserCanceledEvent spyEvent = Mockito.spy(transactionUserCanceledEvent);
         Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
 
-        Transaction expected = getExpected(transaction);
+        Transaction expected = new Transaction(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getFeeTotal(),
+                transaction.getEmail(),
+                TransactionStatusDto.CANCELLATION_REQUESTED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate(),
+                transaction.getIdCart(),
+                transaction.getRrn(),
+                TransactionTestUtils.USER_ID,
+                transaction.getPaymentTypeCode(),
+                transaction.getPspId(),
+                fixedEventTime.toInstant().toEpochMilli()
+        );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
                 .thenReturn(Mono.just(transaction));
@@ -68,15 +82,31 @@ public class CancellationRequestProjectionHandlerTests {
         Transaction transaction = TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
 
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
         TransactionUserCanceledEvent transactionUserCanceledEvent = new TransactionUserCanceledEvent(
                 transaction.getTransactionId()
         );
+        transactionUserCanceledEvent.setCreationDate(fixedEventTime.toString());
 
-        Transaction expected = getExpected(transaction);
+        Transaction expected = new Transaction(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getFeeTotal(),
+                transaction.getEmail(),
+                TransactionStatusDto.CANCELLATION_REQUESTED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate(),
+                transaction.getIdCart(),
+                transaction.getRrn(),
+                TransactionTestUtils.USER_ID,
+                transaction.getPaymentTypeCode(),
+                transaction.getPspId(),
+                fixedEventTime.toInstant().toEpochMilli()
+        );
 
         Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
                 .thenReturn(Mono.just(transaction));
-
 
         StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
                 .expectNext(expected)
@@ -104,26 +134,5 @@ public class CancellationRequestProjectionHandlerTests {
         StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
                 .expectError(TransactionNotFoundException.class)
                 .verify();
-    }
-
-    private static Transaction getExpected(Transaction transaction) {
-        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
-
-
-        return new Transaction(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getFeeTotal(),
-                transaction.getEmail(),
-                TransactionStatusDto.CANCELLATION_REQUESTED,
-                Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate(),
-                transaction.getIdCart(),
-                transaction.getRrn(),
-                TransactionTestUtils.USER_ID,
-                transaction.getPaymentTypeCode(),
-                transaction.getPspId(),
-                fixedEventTime.toInstant().toEpochMilli()
-        );
     }
 }
