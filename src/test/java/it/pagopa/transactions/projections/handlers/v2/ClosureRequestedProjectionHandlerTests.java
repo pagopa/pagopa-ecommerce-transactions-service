@@ -23,7 +23,7 @@ public class ClosureRequestedProjectionHandlerTests {
 
     private TransactionsViewRepository transactionsViewRepository = Mockito.mock();
 
-    private ClosureRequestedProjectionHandler closureRequestedProjectionHandler ;
+    private ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
 
     @Test
     void shouldHandleProjection() {
@@ -59,7 +59,8 @@ public class ClosureRequestedProjectionHandlerTests {
     void shouldHandleProjectionWithoutSavingWhenViewUpdateDisabled() {
         closureRequestedProjectionHandler = new ClosureRequestedProjectionHandler(
                 transactionsViewRepository,
-                false);
+                false
+        );
 
         Transaction transaction = TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());

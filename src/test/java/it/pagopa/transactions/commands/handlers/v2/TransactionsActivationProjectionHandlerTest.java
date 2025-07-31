@@ -258,8 +258,6 @@ class TransactionsActivationProjectionHandlerTest {
         it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
                 .from(transaction);
 
-
-
         TransactionActivated transactionResult = handler.handle(event).block();
 
         assertNotEquals(transactionResult, transaction);
