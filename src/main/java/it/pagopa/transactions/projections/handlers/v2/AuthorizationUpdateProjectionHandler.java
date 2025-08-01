@@ -34,14 +34,17 @@ public class AuthorizationUpdateProjectionHandler
     private final TransactionsViewRepository transactionsViewRepository;
 
     private final Integer paymentTokenValidity;
+    private final boolean transactionsviewUpdateEnabled;
 
     @Autowired
     public AuthorizationUpdateProjectionHandler(
             TransactionsViewRepository transactionsViewRepository,
-            @Value("${payment.token.validity}") Integer paymentTokenValidity
+            @Value("${payment.token.validity}") Integer paymentTokenValidity,
+            @Value("${transactionsview.update.enabled}") boolean transactionsviewUpdateEnabled
     ) {
         this.transactionsViewRepository = transactionsViewRepository;
         this.paymentTokenValidity = paymentTokenValidity;
+        this.transactionsviewUpdateEnabled = transactionsviewUpdateEnabled;
     }
 
     @Override
@@ -51,28 +54,7 @@ public class AuthorizationUpdateProjectionHandler
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
                 .cast(Transaction.class)
-                .flatMap(transactionDocument -> {
-                    transactionDocument.setRrn(data.getData().getRrn());
-                    transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
-                    transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
-
-                    Tuple2<String, Optional<String>> gatewayStatusAndErrorCode = switch (data.getData().getTransactionGatewayAuthorizationData()) {
-                        case NpgTransactionGatewayAuthorizationData npgData -> Tuples.of(
-                                npgData.getOperationResult().toString(),
-                                Optional.ofNullable(npgData.getErrorCode())
-                        );
-                        case RedirectTransactionGatewayAuthorizationData redirectData -> Tuples.of(
-                                redirectData.getOutcome().toString(),
-                                Optional.ofNullable(redirectData.getErrorCode())
-                        );
-                        case PgsTransactionGatewayAuthorizationData pgsData -> throw new IllegalArgumentException("Pgs authorization complete data not handled!");
-                    };
-                    transactionDocument.setAuthorizationErrorCode(gatewayStatusAndErrorCode.getT2().orElse(null));
-                    transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());
-                    transactionDocument.setLastProcessedEventAt(ZonedDateTime.parse(data.getCreationDate()).toInstant().toEpochMilli());
-
-                    return transactionsViewRepository.save(transactionDocument);
-                })
+                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, data))
                 .map(
                         transactionDocument -> new TransactionActivated(
                                 new TransactionId(transactionDocument.getTransactionId()),
@@ -109,6 +91,36 @@ public class AuthorizationUpdateProjectionHandler
                                 transactionDocument.getUserId()
                         )
                 );
+    }
+
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument, TransactionAuthorizationCompletedEvent data) {
+        transactionDocument.setRrn(data.getData().getRrn());
+        transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
+        transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
+
+        Tuple2<String, Optional<String>> gatewayStatusAndErrorCode = switch (data.getData().getTransactionGatewayAuthorizationData()) {
+            case NpgTransactionGatewayAuthorizationData npgData -> Tuples.of(
+                    npgData.getOperationResult().toString(),
+                    Optional.ofNullable(npgData.getErrorCode())
+            );
+            case RedirectTransactionGatewayAuthorizationData redirectData -> Tuples.of(
+                    redirectData.getOutcome().toString(),
+                    Optional.ofNullable(redirectData.getErrorCode())
+            );
+            case PgsTransactionGatewayAuthorizationData pgsData -> throw new IllegalArgumentException("Pgs authorization complete data not handled!");
+        };
+        transactionDocument.setAuthorizationErrorCode(gatewayStatusAndErrorCode.getT2().orElse(null));
+        transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());
+        transactionDocument.setLastProcessedEventAt(ZonedDateTime.parse(data.getCreationDate()).toInstant().toEpochMilli());
+
+
+
+        if(transactionsviewUpdateEnabled){
+            return transactionsViewRepository.save(transactionDocument);
+        }
+        else{
+            return Mono.just(transactionDocument);
+        }
     }
 
 }

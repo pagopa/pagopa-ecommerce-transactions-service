@@ -25,14 +25,18 @@ import static org.mockito.ArgumentMatchers.argThat;
 @ExtendWith(MockitoExtension.class)
 class TransactionUserReceiptProjectionHandlerTest {
 
-    @InjectMocks
     private TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandler;
 
     @Mock
-    private TransactionsViewRepository viewRepository;
+    private TransactionsViewRepository transactionsViewRepository;
 
     @Test
     void shouldHandleTransactionWithOKOutcome() {
+
+        transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
+                transactionsViewRepository,
+                true
+        );
         Transaction transaction = TransactionTestUtils
                 .transactionDocument(TransactionStatusDto.AUTHORIZATION_COMPLETED, ZonedDateTime.now());
 
@@ -66,10 +70,10 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Preconditions
          */
-        Mockito.when(viewRepository.findById(transaction.getTransactionId()))
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(viewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
+        Mockito.when(transactionsViewRepository.save(expectedDocument)).thenReturn(Mono.just(expectedDocument));
 
         /*
          * Test
@@ -81,7 +85,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Assertions
          */
-        Mockito.verify(viewRepository, Mockito.times(1))
+        Mockito.verify(transactionsViewRepository, Mockito.times(1))
                 .save(
                         argThat(
                                 savedTransaction -> ((Transaction) savedTransaction).getStatus()
@@ -92,6 +96,10 @@ class TransactionUserReceiptProjectionHandlerTest {
 
     @Test
     void shouldHandleTransactionWithKOOutcome() {
+        transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
+                transactionsViewRepository,
+                true
+        );
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
@@ -124,10 +132,10 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Preconditions
          */
-        Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId().value()))
                 .thenReturn(Mono.just(Transaction.from(transaction)));
 
-        Mockito.when(viewRepository.save(any(Transaction.class)))
+        Mockito.when(transactionsViewRepository.save(any(Transaction.class)))
                 .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
         /*
          * Test
@@ -139,7 +147,7 @@ class TransactionUserReceiptProjectionHandlerTest {
         /*
          * Assertions
          */
-        Mockito.verify(viewRepository, Mockito.times(1))
+        Mockito.verify(transactionsViewRepository, Mockito.times(1))
                 .save(
                         argThat(
                                 savedTransaction -> ((Transaction) savedTransaction).getStatus()
@@ -147,4 +155,50 @@ class TransactionUserReceiptProjectionHandlerTest {
                         )
                 );
     }
+
+    @Test
+    void shouldHandleTransactionWithKOOutcomeWithoutSavingWhenViewUpdateDisabled() {
+        transactionUserReceiptProjectionHandler = new TransactionUserReceiptProjectionHandler(
+                transactionsViewRepository,
+                false
+        );
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
+        Transaction expectedDocument = new Transaction(
+                transaction.getTransactionId().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.NOTIFICATION_REQUESTED,
+                transaction.getClientId(),
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart(),
+                null,
+                TransactionTestUtils.USER_ID,
+                null,
+                null,
+                fixedEventTime.toInstant().toEpochMilli()
+        );
+        expectedDocument.setSendPaymentResultOutcome(TransactionUserReceiptData.Outcome.KO);
+
+        TransactionUserReceiptRequestedEvent event = TransactionTestUtils
+                .transactionUserReceiptRequestedEvent(
+                        TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.KO)
+                );
+
+        TransactionUserReceiptRequestedEvent spyEvent = Mockito.spy(event);
+        Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
+
+        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId().value()))
+                .thenReturn(Mono.just(Transaction.from(transaction)));
+
+        StepVerifier.create(transactionUserReceiptProjectionHandler.handle(spyEvent))
+                .expectNext(expectedDocument)
+                .verifyComplete();
+
+        Mockito.verify(transactionsViewRepository, Mockito.never()).save(Mockito.any());
+    }
+
 }

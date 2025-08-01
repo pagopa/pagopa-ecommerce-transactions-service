@@ -26,37 +26,29 @@ class AuthorizationUpdateProjectionHandlerTest {
     private final TransactionsViewRepository viewRepository = Mockito.mock(TransactionsViewRepository.class);
 
     private final int paymentTokenValidity = TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC;
+    private final boolean transactionsviewUpdateEnabled = true;
 
     private final it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler = new AuthorizationUpdateProjectionHandler(
             viewRepository,
-            paymentTokenValidity
+            paymentTokenValidity,
+            transactionsviewUpdateEnabled
     );
 
     private static final String expectedOperationTimeStamp = "2023-01-01T01:02:03";
 
     @Test
     void shouldHandleTransactionNpg() {
+        AuthorizationUpdateProjectionHandler handler = new AuthorizationUpdateProjectionHandler(
+                viewRepository,
+                paymentTokenValidity,
+                false
+        );
 
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument = new Transaction(
-                transaction.getTransactionId().value(),
-                transaction.getTransactionActivatedData().getPaymentNotices(),
-                null,
-                transaction.getEmail(),
-                TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate().toString(),
-                transaction.getTransactionActivatedData().getIdCart(),
-                "rrn",
-                TransactionTestUtils.USER_ID,
-                null,
-                null,
-                fixedEventTime.toInstant().toEpochMilli()
-        );
-
+        Transaction expectedDocument = getTransactionView(transaction);
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
@@ -84,20 +76,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedEvent spyEvent = Mockito.spy(event);
         Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
 
-        TransactionActivated expected = new TransactionActivated(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                null,
-                null,
-                ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                Transaction.ClientId.CHECKOUT,
-                transaction.getTransactionActivatedData().getIdCart(),
-                paymentTokenValidity,
-                new EmptyTransactionGatewayActivationData(),
-                TransactionTestUtils.USER_ID
-        );
-
+        TransactionActivated expected = getExpected(transaction, expectedDocument);
         /*
          * Preconditions
          */
@@ -126,27 +105,18 @@ class AuthorizationUpdateProjectionHandlerTest {
     }
 
     @Test
-    void shouldHandleTransactionRedirection() {
+    void shouldHandleTransactionNpgWithoutSavingWhenViewUpdateDisabled() {
+        AuthorizationUpdateProjectionHandler handler = new AuthorizationUpdateProjectionHandler(
+                viewRepository,
+                paymentTokenValidity,
+                false
+        );
 
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument = new Transaction(
-                transaction.getTransactionId().value(),
-                transaction.getTransactionActivatedData().getPaymentNotices(),
-                null,
-                transaction.getEmail(),
-                TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate().toString(),
-                transaction.getTransactionActivatedData().getIdCart(),
-                "rrn",
-                TransactionTestUtils.USER_ID,
-                null,
-                null,
-                fixedEventTime.toInstant().toEpochMilli()
-        );
+        Transaction expectedDocument = getTransactionView(transaction);
         String authorizationErrorCode = "authorization error code";
 
         expectedDocument.setPaymentGateway(null);
@@ -173,19 +143,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedEvent spyEvent = Mockito.spy(event);
         Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
 
-        TransactionActivated expected = new TransactionActivated(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                null,
-                null,
-                ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                Transaction.ClientId.CHECKOUT,
-                transaction.getTransactionActivatedData().getIdCart(),
-                paymentTokenValidity,
-                new EmptyTransactionGatewayActivationData(),
-                TransactionTestUtils.USER_ID
-        );
+        TransactionActivated expected = getExpected(transaction, expectedDocument);
 
         /*
          * Preconditions
@@ -215,27 +173,18 @@ class AuthorizationUpdateProjectionHandlerTest {
     }
 
     @Test
-    void shouldSaveErrorCodeForNpgKOAuthorizationRequest() {
+    void shouldHandleTransactionRedirectionWithoutSavingWhenViewUpdateDisabled() {
+        AuthorizationUpdateProjectionHandler handler = new AuthorizationUpdateProjectionHandler(
+                viewRepository,
+                paymentTokenValidity,
+                false
+        );
 
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument = new Transaction(
-                transaction.getTransactionId().value(),
-                transaction.getTransactionActivatedData().getPaymentNotices(),
-                null,
-                transaction.getEmail(),
-                TransactionStatusDto.AUTHORIZATION_COMPLETED,
-                Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate().toString(),
-                transaction.getTransactionActivatedData().getIdCart(),
-                "rrn",
-                TransactionTestUtils.USER_ID,
-                null,
-                null,
-                fixedEventTime.toInstant().toEpochMilli()
-        );
+        Transaction expectedDocument = getTransactionView(transaction);
 
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
@@ -264,20 +213,7 @@ class AuthorizationUpdateProjectionHandlerTest {
         TransactionAuthorizationCompletedEvent spyEvent = Mockito.spy(event);
         Mockito.when(spyEvent.getCreationDate()).thenReturn(fixedEventTime.toString());
 
-        TransactionActivated expected = new TransactionActivated(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getEmail(),
-                null,
-                null,
-                ZonedDateTime.parse(expectedDocument.getCreationDate()),
-                Transaction.ClientId.CHECKOUT,
-                transaction.getTransactionActivatedData().getIdCart(),
-                paymentTokenValidity,
-                new EmptyTransactionGatewayActivationData(),
-                TransactionTestUtils.USER_ID
-        );
-
+        TransactionActivated expected = getExpected(transaction, expectedDocument);
         /*
          * Preconditions
          */
@@ -303,5 +239,93 @@ class AuthorizationUpdateProjectionHandlerTest {
                                 .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
                 )
         );
+    }
+
+    @Test
+    void shouldNotSaveErrorCodeForNpgKOAuthorizationRequestWhenUpdateDisabled() {
+        AuthorizationUpdateProjectionHandler handler = new AuthorizationUpdateProjectionHandler(
+                viewRepository,
+                paymentTokenValidity,
+                false
+        );
+
+        TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+
+        Transaction expectedDocument = getTransactionView(transaction);
+
+        expectedDocument.setPaymentGateway(null);
+        expectedDocument.setAuthorizationCode("authorizationCode");
+        expectedDocument.setAuthorizationErrorCode("errorCode");
+        expectedDocument.setGatewayAuthorizationStatus("DECLINED");
+
+        TransactionAuthorizationCompletedData statusAuthCompleted = new TransactionAuthorizationCompletedData(
+                "authorizationCode",
+                "rrn",
+                expectedOperationTimeStamp,
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.DECLINED,
+                        "operationId",
+                        "paymentEndToEndId",
+                        "errorCode",
+                        null
+                )
+        );
+
+        TransactionAuthorizationCompletedEvent event = new TransactionAuthorizationCompletedEvent(
+                transaction.getTransactionId().value(),
+                statusAuthCompleted
+        );
+
+        TransactionActivated expected = getExpected(transaction, expectedDocument);
+
+        Mockito.when(viewRepository.findById(transaction.getTransactionId().value()))
+                .thenReturn(Mono.just(Transaction.from(transaction)));
+
+        StepVerifier.create(handler.handle(event))
+                .expectNext(expected)
+                .verifyComplete();
+
+        Mockito.verify(viewRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    private TransactionActivated getExpected(
+                                             TransactionActivated transaction,
+                                             Transaction expectedDocument
+    ) {
+        return new TransactionActivated(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                null,
+                null,
+                ZonedDateTime.parse(expectedDocument.getCreationDate()),
+                Transaction.ClientId.CHECKOUT,
+                transaction.getTransactionActivatedData().getIdCart(),
+                paymentTokenValidity,
+                new EmptyTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
+        );
+
+    }
+
+    private static Transaction getTransactionView(TransactionActivated transaction) {
+        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
+
+        return new Transaction(
+                transaction.getTransactionId().value(),
+                transaction.getTransactionActivatedData().getPaymentNotices(),
+                null,
+                transaction.getEmail(),
+                TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                Transaction.ClientId.CHECKOUT,
+                transaction.getCreationDate().toString(),
+                transaction.getTransactionActivatedData().getIdCart(),
+                "rrn",
+                TransactionTestUtils.USER_ID,
+                null,
+                null,
+                fixedEventTime.toInstant().toEpochMilli()
+        );
+
     }
 }
