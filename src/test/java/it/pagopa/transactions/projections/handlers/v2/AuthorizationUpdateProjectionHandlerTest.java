@@ -48,7 +48,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument = getRrn(transaction);
+        Transaction expectedDocument = getTransactionView(transaction);
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
         expectedDocument.setAuthorizationErrorCode(null);
@@ -116,7 +116,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument = getRrn(transaction);
+        Transaction expectedDocument = getTransactionView(transaction);
         String authorizationErrorCode = "authorization error code";
 
         expectedDocument.setPaymentGateway(null);
@@ -184,7 +184,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
-        Transaction expectedDocument = getRrn(transaction);
+        Transaction expectedDocument = getTransactionView(transaction);
 
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
@@ -251,7 +251,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
 
-        Transaction expectedDocument = getRrn(transaction);
+        Transaction expectedDocument = getTransactionView(transaction);
 
         expectedDocument.setPaymentGateway(null);
         expectedDocument.setAuthorizationCode("authorizationCode");
@@ -308,7 +308,7 @@ class AuthorizationUpdateProjectionHandlerTest {
 
     }
 
-    private static Transaction getRrn(TransactionActivated transaction) {
+    private static Transaction getTransactionView(TransactionActivated transaction) {
         ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
         return new Transaction(

@@ -36,16 +36,12 @@ class TransactionsActivationProjectionHandlerTest {
     @Mock
     TransactionsViewRepository transactionsViewRepository;
 
-    @BeforeEach
-    void setUp() {
+    @Test
+    void shouldSaveTransaction() {
         handler = new TransactionsActivationProjectionHandler(
                 transactionsViewRepository,
                 true
         );
-    }
-
-    @Test
-    void shouldSaveTransaction() {
         /* preconditions */
         String creditorReferenceId = UUID.randomUUID().toString();
         String transactionIdString = TransactionTestUtils.TRANSACTION_ID;
