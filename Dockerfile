@@ -6,15 +6,16 @@ RUN apk add --no-cache git
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
+
 #validate step will execute the scm plugin to perform checkout and installation of the pagopa-commons library
-RUN ./mvnw validate -DskipTests
+RUN ./mvnw validate -DskipTests -Dmaven.site.skip=true
 RUN ./mvnw dependency:copy-dependencies
 RUN ./mvnw dependency:go-offline
 
 COPY src src
 COPY api-spec api-spec
 COPY eclipse-style.xml eclipse-style.xml
-RUN ./mvnw install -DskipTests --offline
+RUN ./mvnw compile spring-boot:process-aot install -DskipTests --offline
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
 FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd
@@ -37,4 +38,4 @@ RUN true
 COPY --from=build --chown=user ${EXTRACTED}/application/ ./
 RUN true
 
-ENTRYPOINT ["java","-javaagent:opentelemetry-javaagent.jar","org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java","-javaagent:opentelemetry-javaagent.jar","org.springframework.boot.loader.launch.JarLauncher", "-Dspring.aot.enabled=true"]
