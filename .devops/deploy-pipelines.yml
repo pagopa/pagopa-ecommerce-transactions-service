@@ -38,7 +38,7 @@ stages:
   # --- START Deploy UAT --- #
   - stage: "Build_release_candidate"
     displayName: "Build release candidate"
-    condition: not(eq(${{parameters.SOURCE_REF}},"-"))
+    condition: eq(${{parameters.BUILD_IMAGE}},true)
     jobs:
       - job: "build"
         displayName: 'Build release candidate docker image'
