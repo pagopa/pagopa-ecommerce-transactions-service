@@ -37,14 +37,14 @@ stages:
     displayName: "Build release candidate"
     condition: neq(${{parameters.SOURCE_REF}}, "-")
     jobs:
-      - script: |
-          checkoutVersion=${{ parameters.SOURCE_REF }}
-          echo "Checkout current version repo tag: [$checkoutVersion]" 
-          git checkout $checkoutVersion
-        displayName: "Checkout source ref"
       - job: "build"
         displayName: 'Build release candidate docker image'
         steps:
+          - script: |
+              checkoutVersion=${{ parameters.SOURCE_REF }}
+              echo "Checkout current version repo tag: [$checkoutVersion]" 
+              git checkout $checkoutVersion
+            displayName: "Checkout source ref"
           - template: templates/docker-release/template.yaml@pagopaCommons
             parameters:
               CONTAINER_REGISTRY_SERVICE_CONN: $(UAT_CONTAINER_REGISTRY_SERVICE_CONN)
