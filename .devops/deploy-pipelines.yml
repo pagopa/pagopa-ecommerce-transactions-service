@@ -16,6 +16,9 @@ parameters:
   - name: 'BUILD_IMAGE'
     displayName: 'Check this to (re)build image'
     type: boolean
+  - name: "ENABLE_CANARY"
+    displayName: "Enable canary?"
+    type: boolean
 resources:
   repositories:
     - repository: pagopaCommons
@@ -87,7 +90,7 @@ stages:
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
                     DO_DEPLOY: true
-                    DO_BLUE_GREEN_DEPLOY: false
+                    DO_BLUE_GREEN_DEPLOY: ${{ parameters.ENABLE_CANARY }}
                     ENV: 'UAT'
                     KUBERNETES_SERVICE_CONN: $(UAT_KUBERNETES_SERVICE_CONN)
                     NAMESPACE: ecommerce

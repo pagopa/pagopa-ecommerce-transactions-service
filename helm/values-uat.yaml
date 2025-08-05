@@ -3,7 +3,7 @@ microservice-chart:
   nameOverride: "soak-pagopa-ecommerce-transactions-service"
   fullnameOverride: "soak-pagopaecommercetransactionsservice"
   canaryDelivery:
-    create: true
+    create: false
     ingress:
       bluegreen: false
       #set canary deployment with traffic balancing see https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#canary for more info
@@ -22,8 +22,8 @@ microservice-chart:
       TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue-b
       TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue-b
       TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue-b
-      OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
-      ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-soak-aot
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-soak-beta,deployment.environment=uat"
+      ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-soak-beta
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "3.1.1"
@@ -144,14 +144,14 @@ microservice-chart:
     PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.platform.pagopa.it/ecommerce/mock/pdv/v1"
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
-    OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=uat"
+    OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-soak,deployment.environment=uat"
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.elastic-system.svc:4317"
     OTEL_EXPORTER_OTLP_PROTOCOL: grpc
     OTEL_TRACES_EXPORTER: otlp
     OTEL_METRICS_EXPORTER: otlp
     OTEL_LOGS_EXPORTER: none
     OTEL_TRACES_SAMPLER: "always_on"
-    ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
+    ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-soak
     ECS_SERVICE_ENVIRONMENT: "uat"
     NPG_URI: "https://api.uat.platform.pagopa.it/ecommerce/mock/npg/v1"
     NPG_READ_TIMEOUT: "10000"
