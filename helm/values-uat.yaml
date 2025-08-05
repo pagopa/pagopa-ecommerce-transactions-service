@@ -1,7 +1,7 @@
 microservice-chart:
   namespace: "ecommerce"
-  nameOverride: ""
-  fullnameOverride: ""
+  nameOverride: "soak-pagopa-ecommerce-transactions-service"
+  fullnameOverride: "soak-pagopaecommercetransactionsservice"
   canaryDelivery:
     create: false
     ingress:
@@ -55,7 +55,7 @@ microservice-chart:
   ingress:
     create: true
     host: "weuuat.ecommerce.internal.uat.platform.pagopa.it"
-    path: /pagopa-ecommerce-transactions-service/(.*)
+    path: /soak/pagopa-ecommerce-transactions-service/(.*)
     servicePort: 8080
   serviceAccount:
     create: false
@@ -86,6 +86,11 @@ microservice-chart:
           # Required
           type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
+  strategy:
+    type: "RollingUpdate"
+    rollingUpdate:
+      maxSurge: "100%"
+      maxUnavailable: "100%"
     advanced:
       horizontalPodAutoscalerConfig:
         behavior:
@@ -107,36 +112,36 @@ microservice-chart:
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
-    NODE_FOR_PSP_URI: /nodo-auth/node-for-psp/v1
-    NODO_PER_PM_URI: /nodo-auth/node-for-ecommerce/v2
+    NODE_FOR_PSP_URI: /ecommerce/mock/nodo/v1/activatePaymentNotice
+    NODO_PER_PM_URI: /ecommerce/mock/nodoPerPM/v1
     NODO_READ_TIMEOUT: "14000"
     NODO_CONNECTION_TIMEOUT: "14000"
     NODO_CONNECTION_STRING: "{\"idPSP\":\"AGID_01\",\"idChannel\":\"97735020584_09\",\"idBrokerPSP\":\"97735020584\"}"
     NODO_PARALLEL_REQUESTS: "5"
     NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
     NODO_ECOMMERCE_CLIENT_ID: ecomm
-    ECOMMERCE_PAYMENT_METHODS_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
+    ECOMMERCE_PAYMENT_METHODS_URI: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/beta/pagopa-ecommerce-payment-methods-service
     ECOMMERCE_PAYMENT_METHODS_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_CONNECTION_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_METHODS_URI_V2: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v2
+    ECOMMERCE_PAYMENT_METHODS_URI_V2: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/beta/pagopa-ecommerce-payment-methods-service/v2
     WALLET_URI: https://api.uat.platform.pagopa.it/payment-wallet-for-ecommerce/v1
     WALLET_READ_TIMEOUT: "10000"
     WALLET_CONNECTION_TIMEOUT: "10000"
     NOTIFICATIONS_SERVICE_URI: https://api.uat.platform.pagopa.it/ecommerce/notifications-service/v1
     NOTIFICATIONS_SERVICE_READ_TIMEOUT: "10000"
     NOTIFICATIONS_SERVICE_CONNECTION_TIMEOUT: "10000"
-    TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue
-    TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue
-    TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue
-    TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue
-    TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue
-    TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue
+    TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue-b
+    TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue-b
+    TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue-b
+    TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue-b
+    TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue-b
+    TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue-b
     PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
     WEB_LOGGING_LEVEL: "off"
     SERVICE_LOGGING_LEVEL: "info"
-    PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1"
+    PERSONAL_DATA_VAULT_API_BASE_PATH: "https://api.uat.platform.pagopa.it/ecommerce/mock/pdv/v1"
     WARMUP_REQUEST_NEW_TRANSACTION_NOTICE_CODE_PREFIX: "3020"
     SERVER_ERROR_INCLUDE_STACKTRACE: "never"
     OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service,deployment.environment=uat"
@@ -146,9 +151,9 @@ microservice-chart:
     OTEL_METRICS_EXPORTER: otlp
     OTEL_LOGS_EXPORTER: none
     OTEL_TRACES_SAMPLER: "always_on"
-    ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service
+    ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
     ECS_SERVICE_ENVIRONMENT: "uat"
-    NPG_URI: "https://stg-ta.nexigroup.com/api/phoenix-0.0"
+    NPG_URI: "https://api.uat.platform.pagopa.it/ecommerce/mock/npg/v1"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
     NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,BNLIITRR,PASCITMM,WOLLNLB1,BPMOIT22,SARDIT31,IFSPIT21,BCEPITMM"
@@ -170,7 +175,7 @@ microservice-chart:
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
     REDIRECT_PAYMENT_TYPE_CODE_LIST: "BPPIITRRXXX-RBPR,BPPIITRRXXX-RBPP,BPPIITRRXXX-RBPB,PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,IO-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,RBPS,RPIC,RICO,KLRN"
     REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING: '{"RBPR":"Poste addebito in conto Retail","RBPB":"Poste addebito in conto Business","RBPP":"Paga con BottonePostePay","RPIC":"Pago in Conto Intesa","RBPS":"SCRIGNO Internet Banking","RICO":"Conto ICONTO","KLRN":"Klarna (anche a rate)"}'
-    NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-node-forwarder/api/v1"
+    NODE_FORWARDER_URL: "https://api.uat.platform.pagopa.it/ecommerce/mock/node-forwader/v1"
     NODE_FORWARDER_READ_TIMEOUT: "29000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "29000"
     CHECKOUT_NPG_GDI_URL: "https://uat.checkout.pagopa.it/gdi-check"
@@ -194,11 +199,11 @@ microservice-chart:
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
-    ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
+    ECOMMERCE_PAYMENT_METHODS_APY_KEY: ecommerce-load-test-subscription-key
     WALLET_API_KEY: wallet-api-key
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
-    NODE_FORWARDER_API_KEY: node-forwarder-api-key
+    NODE_FORWARDER_API_KEY: ecommerce-load-test-subscription-key
     REDIRECT_URL_MAPPING: redirect-url-mapping
     NPG_PAYPAL_PSP_KEYS: npg-paypal-psp-keys
     NPG_BANCOMATPAY_PSP_KEYS: npg-bancomatpay-psp-keys
