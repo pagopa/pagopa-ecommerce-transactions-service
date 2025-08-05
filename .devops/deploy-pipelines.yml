@@ -13,6 +13,9 @@ parameters:
     displayName: 'Source ref that will be checked out to build service (build skipped if empty, otherwise docker image will be replaced)'
     type: string
     default: '-'
+  - name: 'BUILD_IMAGE'
+    displayName: 'Check this to build image'
+    type: boolean
 resources:
   repositories:
     - repository: pagopaCommons
@@ -35,7 +38,7 @@ stages:
   # --- START Deploy UAT --- #
   - stage: "Build_release_candidate"
     displayName: "Build release candidate"
-    condition: not(eq(${{parameters.SOURCE_REF}},-))
+    condition: not(eq(${{parameters.SOURCE_REF}},"-"))
     jobs:
       - job: "build"
         displayName: 'Build release candidate docker image'
