@@ -3,14 +3,14 @@ microservice-chart:
   nameOverride: "soak-pagopa-ecommerce-transactions-service"
   fullnameOverride: "soak-pagopaecommercetransactionsservice"
   canaryDelivery:
-    create: false
+    create: true
     ingress:
       bluegreen: false
       #set canary deployment with traffic balancing see https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#canary for more info
       header: true
       headerName: deployment
       headerValue: blue
-      weightPercent: 10
+      weightPercent: 50
     image:
       repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
       tag: "latest"
@@ -23,7 +23,7 @@ microservice-chart:
       TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue-b
       TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue-b
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
-      ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
+      ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-soak-aot
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "3.1.1"
