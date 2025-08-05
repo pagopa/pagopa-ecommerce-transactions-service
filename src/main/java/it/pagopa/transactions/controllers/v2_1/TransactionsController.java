@@ -53,9 +53,9 @@ public class TransactionsController implements V21Api {
     private String primaryKey;
 
     @ExceptionHandler(
-            {
-                    CallNotPermittedException.class
-            }
+        {
+                CallNotPermittedException.class
+        }
     )
     public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(CallNotPermittedException error) {
         log.error("Error - OPEN circuit breaker", error);
@@ -78,11 +78,11 @@ public class TransactionsController implements V21Api {
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
-            ClientIdDto xClientId,
-            UUID correlationId,
-            Mono<NewTransactionRequestDto> newTransactionRequest,
-            UUID xUserId,
-            ServerWebExchange exchange
+                                                                          ClientIdDto xClientId,
+                                                                          UUID correlationId,
+                                                                          Mono<NewTransactionRequestDto> newTransactionRequest,
+                                                                          UUID xUserId,
+                                                                          ServerWebExchange exchange
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
@@ -173,12 +173,12 @@ public class TransactionsController implements V21Api {
     }
 
     @ExceptionHandler(
-            {
-                    InvalidRequestException.class,
-                    ConstraintViolationException.class,
-                    ServerWebInputException.class,
-                    MethodArgumentTypeMismatchException.class
-            }
+        {
+                InvalidRequestException.class,
+                ConstraintViolationException.class,
+                ServerWebInputException.class,
+                MethodArgumentTypeMismatchException.class
+        }
     )
     ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
         log.warn("Got invalid input: {}", exception.getMessage());
@@ -192,9 +192,9 @@ public class TransactionsController implements V21Api {
     }
 
     @ExceptionHandler(
-            {
-                    JwtIssuerResponseException.class
-            }
+        {
+                JwtIssuerResponseException.class
+        }
     )
     ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JwtIssuerResponseException exception) {
         log.warn(exception.getMessage());
@@ -233,9 +233,9 @@ public class TransactionsController implements V21Api {
     }
 
     @ExceptionHandler(
-            {
-                    InvalidNodoResponseException.class,
-            }
+        {
+                InvalidNodoResponseException.class,
+        }
     )
     ResponseEntity<ProblemJsonDto> invalidNodoResponse(InvalidNodoResponseException exception) {
         log.warn(exception.getMessage());
