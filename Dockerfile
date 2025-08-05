@@ -16,7 +16,44 @@ COPY src src
 COPY api-spec api-spec
 COPY eclipse-style.xml eclipse-style.xml
 RUN ./mvnw compile spring-boot:process-aot install -DskipTests --offline
-RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
+
+FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd AS optimizer
+
+WORKDIR /workspace/app
+
+#copy maven target folder from previous build
+COPY --from=build /workspace/app/target target
+
+COPY src/test/resources/application-tests.properties application-tests.properties
+# extract jar
+RUN mkdir extracted && java -Djarmode=layertools -jar target/*.jar extract --destination extracted
+
+# generate Class Data Sharing archive
+WORKDIR /workspace/app/cds
+
+RUN if [ -z "$(ls -A ../extracted/dependencies)" ];\
+then echo "Skipped empty folder"; \
+else cp -R ../extracted/dependencies/* ./; \
+fi
+RUN if [ -z "$(ls -A ../extracted/spring-boot-loader)" ];\
+then echo "Skipped empty folder"; \
+else cp -R ../extracted/spring-boot-loader/* ./; \
+fi
+RUN if [ -z "$(ls -A ../extracted/snapshot-dependencies)" ]; \
+then echo "Skipped empty folder"; \
+else cp -R ../extracted/snapshot-dependencies/* ./; \
+fi
+RUN if [ -z "$(ls -A ../extracted/application)" ]; \
+then echo "Skipped empty folder"; \
+else cp -R ../extracted/application/* ./; \
+fi
+
+RUN java \
+-Dspring.aot.enabled=true \
+-XX:ArchiveClassesAtExit=../cds.jsa \
+-Dspring.context.exit=onRefresh \
+-Dspring.config.location=/workspace/app/application-tests.properties \
+org.springframework.boot.loader.launch.JarLauncher
 
 FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd
 
@@ -25,17 +62,24 @@ USER user:user
 
 WORKDIR /app/
 
-ARG EXTRACTED=/workspace/app/target/extracted
+ARG EXTRACTED=/workspace/app/extracted
 #ELK Agent
 ADD --chown=user https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.1.0/opentelemetry-javaagent.jar .
 
-COPY --from=build --chown=user ${EXTRACTED}/dependencies/ ./
+COPY --from=optimizer --chown=user ${EXTRACTED}/dependencies/ ./
 RUN true
-COPY --from=build --chown=user ${EXTRACTED}/spring-boot-loader/ ./
+COPY --from=optimizer --chown=user ${EXTRACTED}/spring-boot-loader/ ./
 RUN true
-COPY --from=build --chown=user ${EXTRACTED}/snapshot-dependencies/ ./
+COPY --from=optimizer --chown=user ${EXTRACTED}/snapshot-dependencies/ ./
 RUN true
-COPY --from=build --chown=user ${EXTRACTED}/application/ ./
+COPY --from=optimizer --chown=user ${EXTRACTED}/application/ ./
+RUN true
+COPY --from=optimizer --chown=user /workspace/app/cds.jsa cds.jsa
 RUN true
 
-ENTRYPOINT ["java","-javaagent:opentelemetry-javaagent.jar","org.springframework.boot.loader.launch.JarLauncher", "-Dspring.aot.enabled=true"]
+ENTRYPOINT ["java", \
+    "-javaagent:opentelemetry-javaagent.jar", \
+    "-Dspring.aot.enabled=true", \
+    "-XX:SharedArchiveFile=cds.jsa", \
+    "org.springframework.boot.loader.launch.JarLauncher"\
+    ]

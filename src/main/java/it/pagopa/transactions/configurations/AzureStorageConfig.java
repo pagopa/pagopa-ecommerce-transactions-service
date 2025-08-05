@@ -184,8 +184,6 @@ public class AzureStorageConfig {
                         ).build()
                 )
                 .buildAsyncClient();
-        queueAsyncClient.createIfNotExists().block();
-
         return new QueueAsyncClient(queueAsyncClient, jsonSerializer);
     }
 }
