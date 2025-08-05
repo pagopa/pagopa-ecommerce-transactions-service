@@ -59,6 +59,8 @@ stages:
 
   - stage: "Deploy_UAT_Green"
     displayName: 'UAT green deployment'
+    dependsOn: Build_release_candidate
+    condition: in(dependencies.Build_release_candidate.result, 'Succeeded', 'Skipped')
     variables:
       app_version: ${{ parameters.IMAGE_TAG }}
     jobs:
