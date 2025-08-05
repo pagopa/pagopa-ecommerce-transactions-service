@@ -14,7 +14,7 @@ parameters:
     type: string
     default: '-'
   - name: 'BUILD_IMAGE'
-    displayName: 'Check this to build image'
+    displayName: 'Check this to (re)build image'
     type: boolean
 resources:
   repositories:
