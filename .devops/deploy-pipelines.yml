@@ -6,7 +6,7 @@
 
 parameters:
   - name: 'IMAGE_TAG'
-    displayName: 'Tag used for docker image in ACR'
+    displayName: 'ACR image docker tag (used for push/pull image from repository)'
     type: string
     default: perf
   - name: 'SOURCE_REF'
@@ -18,7 +18,6 @@ parameters:
     type: boolean
   - name: "ENABLE_CANARY"
     displayName: "Enable canary?"
-    type: boolean
 resources:
   repositories:
     - repository: pagopaCommons
@@ -94,7 +93,10 @@ stages:
                     ENV: 'UAT'
                     KUBERNETES_SERVICE_CONN: $(UAT_KUBERNETES_SERVICE_CONN)
                     NAMESPACE: ecommerce
-                    APP_NAME: soak-$(K8S_IMAGE_REPOSITORY_NAME)
+                    ${{ if eq(parameters['ENABLE_CANARY'], false) }}:
+                      APP_NAME: soak-$(K8S_IMAGE_REPOSITORY_NAME)
+                    ${{ else }}:
+                    APP_NAME: soak-canary-$(K8S_IMAGE_REPOSITORY_NAME)
                     VALUE_FILE: "helm/values-uat.yaml"
                     GREEN_VERSION: $(app_version)
 
