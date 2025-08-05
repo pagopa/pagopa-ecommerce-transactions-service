@@ -15,13 +15,6 @@ microservice-chart:
       repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
       tag: "latest"
     envConfig:
-      NODO_ECOMMERCE_CLIENT_ID: ecomm-blue
-      TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue-b
-      TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue-b
-      TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-queue-b
-      TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue-b
-      TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue-b
-      TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue-b
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-soak-beta,deployment.environment=uat"
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-soak-beta
   image:
