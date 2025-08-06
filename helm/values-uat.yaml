@@ -17,6 +17,7 @@ microservice-chart:
     envConfig:
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-soak-beta,deployment.environment=uat"
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-soak-beta
+    envSecret: {}
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "3.1.1"
