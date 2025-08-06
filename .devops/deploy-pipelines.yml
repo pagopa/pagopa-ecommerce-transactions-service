@@ -96,7 +96,7 @@ stages:
                     ${{ if eq(parameters['ENABLE_CANARY'], false) }}:
                       APP_NAME: soak-$(K8S_IMAGE_REPOSITORY_NAME)
                     ${{ else }}:
-                    APP_NAME: soak-canary-$(K8S_IMAGE_REPOSITORY_NAME)
+                      APP_NAME: soak-canary-$(K8S_IMAGE_REPOSITORY_NAME)
                     VALUE_FILE: "helm/values-uat.yaml"
                     GREEN_VERSION: $(app_version)
 
