@@ -6,15 +6,16 @@ RUN apk add --no-cache git
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
-#validate step will execute the scm plugin to perform checkout and installation of the pagopa-commons library
-RUN ./mvnw validate -DskipTests
-RUN ./mvnw dependency:copy-dependencies
-RUN ./mvnw dependency:go-offline
+RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+    ./mvnw dependency:copy-dependencies
+RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+    ./mvnw dependency:go-offline
 
 COPY src src
 COPY api-spec api-spec
 COPY eclipse-style.xml eclipse-style.xml
-RUN ./mvnw install -DskipTests --offline
+RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+    ./mvnw install -DskipTests --offline
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
 FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd
