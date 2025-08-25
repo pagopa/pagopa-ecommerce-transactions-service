@@ -179,7 +179,7 @@ class TransactionsActivationProjectionHandlerTest {
         String paymentTokenString = UUID.randomUUID().toString();
         String transactionDescription = "transaction description";
         String orderId = "orderId";
-        int amountInt = 100;
+        long amount = 100;
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
         transactionActivatedData
@@ -190,9 +190,9 @@ class TransactionsActivationProjectionHandlerTest {
                                 paymentTokenString,
                                 rptIdString,
                                 transactionDescription,
-                                amountInt,
+                                amount,
                                 null,
-                                List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null)),
+                                List.of(new PaymentTransferInformation(paFiscalCode, false, amount, null)),
                                 false,
                                 null,
                                 creditorReferenceId
@@ -212,7 +212,7 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionDescription description = new TransactionDescription(
                 data.getPaymentNotices().get(0).getDescription()
         );
-        TransactionAmount amount = new TransactionAmount(data.getPaymentNotices().get(0).getAmount());
+        TransactionAmount transactionAmount = new TransactionAmount(data.getPaymentNotices().get(0).getAmount());
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
@@ -225,14 +225,14 @@ class TransactionsActivationProjectionHandlerTest {
                         new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 paymentToken,
                                 rptId,
-                                amount,
+                                transactionAmount,
                                 description,
                                 nullPaymentContextCode,
                                 List.of(
                                         new PaymentTransferInfo(
                                                 rptIdString.substring(0, 11),
                                                 false,
-                                                amount.value(),
+                                                transactionAmount.value(),
                                                 null
                                         )
                                 ),
