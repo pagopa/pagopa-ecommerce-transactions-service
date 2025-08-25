@@ -6,15 +6,15 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.*;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
@@ -28,8 +28,10 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.v2.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.*;
-import java.util.function.Consumer;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.PaymentSessionData;
+import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -47,9 +49,10 @@ import reactor.util.function.Tuples;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.*;
+import static it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED;
 
 @Service(TransactionsService.QUALIFIER_NAME)
 @Slf4j
@@ -307,16 +310,16 @@ public class TransactionsService {
     }
 
     private TransactionOutcomeInfoDto.OutcomeEnum evaluateOutcome(
-                                                                  TransactionStatusDto status,
-                                                                  TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
-                                                                  String paymentGateway,
-                                                                  String gatewayAuthorizationStatus,
-                                                                  String authorizationErrorCode,
-                                                                  ClosureErrorData closureErrorData
+            TransactionStatusDto status,
+            TransactionUserReceiptData.Outcome sendPaymentResultOutcome,
+            String paymentGateway,
+            String gatewayAuthorizationStatus,
+            String authorizationErrorCode,
+            ClosureErrorData closureErrorData
     ) {
         if (closureErrorData != null) {
             return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
-                    evaluateClosePaymentResultError(closureErrorData): //Authorized
+                    evaluateClosePaymentResultError(closureErrorData) : //Authorized
                     evaluateUnauthorizedStatus(paymentGateway, gatewayAuthorizationStatus, authorizationErrorCode); //Not authorized
         } else {
             switch (status) {
@@ -339,7 +342,7 @@ public class TransactionsService {
                 }
                 case CLOSURE_ERROR, AUTHORIZATION_COMPLETED -> {
                     return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1: //Authorized
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1 : //Authorized
                             evaluateUnauthorizedStatus(
                                     paymentGateway,
                                     gatewayAuthorizationStatus,
@@ -347,7 +350,7 @@ public class TransactionsService {
                 }
                 case CLOSURE_REQUESTED -> {
                     return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17:
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17 :
                             evaluateUnauthorizedStatus(
                                     paymentGateway,
                                     gatewayAuthorizationStatus,
@@ -355,7 +358,7 @@ public class TransactionsService {
                 }
                 case UNAUTHORIZED -> {
                     return wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus) ?
-                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25:
+                            TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25 :
                             evaluateUnauthorizedStatus(
                                     paymentGateway,
                                     gatewayAuthorizationStatus,
@@ -529,10 +532,9 @@ public class TransactionsService {
                             );
 
                             return switch (transactionDocument) {
-                                case Transaction t ->
-                                        transactionCancelHandlerV2
-                                                .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
-                                                        .handle((TransactionUserCanceledEvent) event));
+                                case Transaction t -> transactionCancelHandlerV2
+                                        .handle(transactionCancelCommand).flatMap(event -> cancellationRequestProjectionHandlerV2
+                                                .handle((TransactionUserCanceledEvent) event));
                                 default ->
                                         Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type", HttpStatus.BAD_GATEWAY));
                             };
@@ -661,12 +663,15 @@ public class TransactionsService {
 
         if (transactionDocument instanceof Transaction) {
             return requestAuthHandlerV2
-                    .handle(transactionRequestAuthCommand)
-                    .doOnNext(logAuthRequestedFor(transactionDocument.getTransactionId()))
+                    .handleWithCreationDate(transactionRequestAuthCommand)
+                    .doOnNext(
+                            responseAndDate -> logAuthRequestedFor(transactionDocument.getTransactionId())
+                                    .accept(responseAndDate.getT1())
+                    )
                     .flatMap(
-                            res -> authorizationProjectionHandlerV2
-                                    .handle(authData)
-                                    .thenReturn(res)
+                            responseAndDate -> authorizationProjectionHandlerV2
+                                    .handle(new AuthorizationRequestedEventData(authData, responseAndDate.getT2()))
+                                    .thenReturn(responseAndDate.getT1())
                     );
         } else {
             return Mono.error(
@@ -1111,7 +1116,7 @@ public class TransactionsService {
      * Retrieves the base transaction view, filtering by user ID if provided
      *
      * @param transactionId The ID of the transaction to retrieve
-     * @param xUserId The user ID to filter by, may be null
+     * @param xUserId       The user ID to filter by, may be null
      * @return A Mono containing the transaction view if found
      */
     private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
