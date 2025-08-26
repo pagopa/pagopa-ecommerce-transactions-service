@@ -1,21 +1,26 @@
 FROM eclipse-temurin:21-jdk-alpine@sha256:2f2f553ce09d25e2d2f0f521ab94cd73f70c9b21327a29149c23a2b63b8e29a0 AS build
 WORKDIR /workspace/app
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git gettext
 
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
+COPY settings.xml.template /tmp/
+
 RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
-    ./mvnw dependency:copy-dependencies
-RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
-    ./mvnw dependency:go-offline
+      mkdir -p ~/.m2 && \
+      envsubst < /tmp/settings.xml.template > ~/.m2/settings.xml && \
+      ./mvnw dependency:copy-dependencies
+
+  RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+      ./mvnw dependency:go-offline
 
 COPY src src
 COPY api-spec api-spec
 COPY eclipse-style.xml eclipse-style.xml
 RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
-    ./mvnw install -DskipTests --offline
+    ./mvnw install -DskipTests
 RUN mkdir target/extracted && java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
 
 FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd

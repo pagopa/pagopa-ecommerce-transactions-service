@@ -20,7 +20,7 @@
         <repository>
             <id>github</id>
             <!--suppress UnresolvedMavenProperty, create a github personal access token with at least package:read permission and set in environment-->
-            <url>https://public:${env.GITHUB_TOKEN}@maven.pkg.github.com/pagopa/pagopa-ecommerce-commons</url>
+            <url>https://maven.pkg.github.com/pagopa/pagopa-ecommerce-commons</url>
         </repository>
     </repositories>
     <properties>
