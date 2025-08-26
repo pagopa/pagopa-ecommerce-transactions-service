@@ -274,17 +274,17 @@ public class TransactionsService {
     }
 
     private TransactionOutcomeInfoDto buildTransactionOutcomeInfoDtoFromView(BaseTransactionView baseTransactionView) {
-        switch (baseTransactionView) {
-            case Transaction transaction -> {
-                TransactionOutcomeInfoDto.OutcomeEnum outcome = evaluateOutcome(transaction.getStatus(), transaction.getSendPaymentResultOutcome(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus(), transaction.getAuthorizationErrorCode(), transaction.getClosureErrorData());
-                return new TransactionOutcomeInfoDto()
-                        .outcome(outcome)
-                        .totalAmount(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0 ? transaction.getPaymentNotices().stream().mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() : null)
-                        .fees(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0 ? +Optional.ofNullable(transaction.getFeeTotal()).orElse(0) : null)
-                        .isFinalStatus(evaluateFinalStatus(transaction.getStatus(), transaction.getClosureErrorData(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus()));
+            switch (baseTransactionView) {
+                case Transaction transaction -> {
+                    TransactionOutcomeInfoDto.OutcomeEnum outcome = evaluateOutcome(transaction.getStatus(), transaction.getSendPaymentResultOutcome(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus(), transaction.getAuthorizationErrorCode(), transaction.getClosureErrorData());
+                                return new TransactionOutcomeInfoDto()
+                                .outcome(outcome)
+                                .totalAmount(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0  ? transaction.getPaymentNotices().stream().mapToLong(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() : null)
+                                .fees(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0  ?  + Optional.ofNullable(transaction.getFeeTotal()).orElse(0) : null)
+                                .isFinalStatus(evaluateFinalStatus(transaction.getStatus(), transaction.getClosureErrorData(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus()));
+                }
+                default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
             }
-            default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
-        }
     }
 
     private Boolean evaluateFinalStatus(
@@ -909,7 +909,7 @@ public class TransactionsService {
                                                      it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice
     ) {
         return new PaymentNoticeDto()
-                .paymentAmount(paymentNotice.getAmount().longValue())
+                .paymentAmount(paymentNotice.getAmount())
                 .primaryCreditorInstitution(paymentNotice.getRptId().substring(0, 11))
                 .transferList(mapTransferInfoListToV2DtoList(paymentNotice.getTransferList()));
     }

@@ -113,7 +113,7 @@ class TransactionsControllerTest {
             newTransactionRequestDto.orderId("orderId");
             NewTransactionResponseDto response = new NewTransactionResponseDto();
             PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-            paymentInfoDto.setAmount(10);
+            paymentInfoDto.setAmount(10L);
             paymentInfoDto.setReason("Reason");
             paymentInfoDto.setPaymentToken("payment_token");
             paymentInfoDto.setRptId(RPTID);

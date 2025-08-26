@@ -401,7 +401,7 @@ public class TransactionsUtils {
                         Collections.singletonList(
                                 new PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
-                                        .amount(100)
+                                        .amount(100L)
                         )
                 );
     }
@@ -423,7 +423,7 @@ public class TransactionsUtils {
                         Collections.singletonList(
                                 new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
-                                        .amount(100)
+                                        .amount(100L)
                         )
                 );
     }
@@ -445,15 +445,15 @@ public class TransactionsUtils {
                         Collections.singletonList(
                                 new it.pagopa.generated.transactions.v2_1.server.model.PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
-                                        .amount(100)
+                                        .amount(100L)
                         )
                 );
     }
 
-    public Integer getTransactionTotalAmount(BaseTransactionView baseTransactionView) {
+    public Long getTransactionTotalAmount(BaseTransactionView baseTransactionView) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.stream()
-                .mapToInt(
+                .mapToLong(
                         PaymentNotice::getAmount
                 ).sum();
     }

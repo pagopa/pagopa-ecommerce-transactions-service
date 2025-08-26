@@ -82,6 +82,7 @@ import static org.mockito.Mockito.*;
 )
 @AutoConfigureDataRedis
 class TransactionServiceTests {
+    private static final Long MOCK_AMOUNT = 100L;
     @MockitoBean
     private TransactionsViewRepository repository;
 
@@ -319,7 +320,7 @@ class TransactionServiceTests {
     @Test
     void shouldReturnNotFoundForNonExistingRequest() {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(0)
                 .paymentInstrumentId("paymentInstrumentId")
                 .isAllCCP(false)
@@ -421,7 +422,7 @@ class TransactionServiceTests {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(0)
+                .amount(0L)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
                 .fee(0)
@@ -473,7 +474,7 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_OK,
                         50,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
-                                .totalAmount(100)
+                                .totalAmount(MOCK_AMOUNT)
                                 .fees(50)
                                 .isFinalStatus(true)
                 ),
@@ -563,9 +564,9 @@ class TransactionServiceTests {
                 "paymentToken",
                 "77777777777111111111111111111",
                 "description",
-                100,
+                MOCK_AMOUNT,
                 "paymentContextCode",
-                List.of(new PaymentTransferInformation("transferPAFiscalCode", false, 100, "transferCategory")),
+                List.of(new PaymentTransferInformation("transferPAFiscalCode", false, MOCK_AMOUNT, "transferCategory")),
                 false,
                 "companyName",
                 "222222222222"
@@ -574,9 +575,9 @@ class TransactionServiceTests {
                 "paymentToken",
                 "77777777777111111111111111112",
                 "description",
-                200,
+                200L,
                 "paymentContextCode2",
-                List.of(new PaymentTransferInformation("transferPAFiscalCode", false, 100, "transferCategory")),
+                List.of(new PaymentTransferInformation("transferPAFiscalCode", false, MOCK_AMOUNT, "transferCategory")),
                 false,
                 "companyName",
                 "222222222222"
@@ -586,7 +587,7 @@ class TransactionServiceTests {
 
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
-                .totalAmount(300)
+                .totalAmount(300L)
                 .fees(50)
                 .isFinalStatus(true);
 
@@ -675,7 +676,7 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
                                 .isFinalStatus(true)
-                                .totalAmount(100)
+                                .totalAmount(MOCK_AMOUNT)
                                 .fees(50)
                 ),
                 Arguments.of(
@@ -701,7 +702,7 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0)
                                 .isFinalStatus(true)
-                                .totalAmount(100)
+                                .totalAmount(MOCK_AMOUNT)
                                 .fees(50)
                 ),
                 Arguments.of(
@@ -2591,7 +2592,7 @@ class TransactionServiceTests {
         if (it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK
                 .equals(sendPaymentResultOutcome)) {
             expected.setFees(50);
-            expected.setTotalAmount(100);
+            expected.setTotalAmount(MOCK_AMOUNT);
         }
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         assertEquals(
@@ -2626,7 +2627,7 @@ class TransactionServiceTests {
         if (it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData.Outcome.OK
                 .equals(sendPaymentResultOutcome)) {
             expected.setFees(50);
-            expected.setTotalAmount(100);
+            expected.setTotalAmount(MOCK_AMOUNT);
         }
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         assertEquals(

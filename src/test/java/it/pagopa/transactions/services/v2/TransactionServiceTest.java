@@ -58,6 +58,7 @@ class TransactionServiceTest {
     private final ConfidentialDataManager confidentialDataManager = ConfidentialDataManagerTest.getMock();
 
     private final ConfidentialMailUtils confidentialMailUtils = new ConfidentialMailUtils(confidentialDataManager);
+    private static final Long MOCK_AMOUNT = 100L;
 
     @Autowired
     private final TransactionsService transactionsService = new TransactionsService(
@@ -77,7 +78,9 @@ class TransactionServiceTest {
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(100));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(MOCK_AMOUNT)
+                );
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
@@ -88,9 +91,9 @@ class TransactionServiceTest {
                                         TransactionTestUtils.PAYMENT_TOKEN,
                                         null,
                                         "dest",
-                                        0,
+                                        0L,
                                         TEST_CPP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0L, null)),
                                         false,
                                         null,
                                         null
@@ -118,7 +121,7 @@ class TransactionServiceTest {
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
                                 new PaymentContextCode(TEST_CPP.toString()),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName(null),
                                 null
@@ -178,7 +181,9 @@ class TransactionServiceTest {
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(100));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(MOCK_AMOUNT)
+                );
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
@@ -189,9 +194,9 @@ class TransactionServiceTest {
                                         TransactionTestUtils.PAYMENT_TOKEN,
                                         null,
                                         "dest",
-                                        0,
+                                        0L,
                                         TEST_CPP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0L, null)),
                                         false,
                                         null,
                                         creditorReferenceId
@@ -219,7 +224,7 @@ class TransactionServiceTest {
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
                                 new PaymentContextCode(TEST_CPP.toString()),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName(null),
                                 creditorReferenceId
@@ -279,7 +284,9 @@ class TransactionServiceTest {
 
         NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
                 .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(100));
+                .addPaymentNoticesItem(
+                        new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(MOCK_AMOUNT)
+                );
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
         transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
@@ -290,9 +297,9 @@ class TransactionServiceTest {
                                         TransactionTestUtils.PAYMENT_TOKEN,
                                         null,
                                         "dest",
-                                        0,
+                                        0L,
                                         TEST_CPP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
+                                        List.of(new PaymentTransferInformation("77777777777", false, 0L, null)),
                                         false,
                                         null,
                                         creditorReferenceId
@@ -320,7 +327,7 @@ class TransactionServiceTest {
                                 new TransactionAmount(0),
                                 new TransactionDescription("desc"),
                                 new PaymentContextCode(TEST_CPP.toString()),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName(null),
                                 creditorReferenceId
