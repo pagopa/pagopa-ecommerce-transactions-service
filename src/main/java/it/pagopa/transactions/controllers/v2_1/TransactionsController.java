@@ -260,7 +260,7 @@ public class TransactionsController implements V21Api {
                             .uri("http://localhost:8080/v2.1/transactions")
                             .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
                             .header("x-correlation-id", UUID.randomUUID().toString())
-                            .header("x-api-key", "primary-key")
+                            .header("x-api-key", primaryKey)
                             .bodyValue(transactionsUtils.buildWarmupRequestV2_1())
                             .retrieve()
                             .bodyToMono(NewTransactionResponseDto.class)
