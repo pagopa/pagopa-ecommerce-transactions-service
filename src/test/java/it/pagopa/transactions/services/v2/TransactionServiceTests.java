@@ -68,7 +68,10 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
+import reactor.util.function.Tuples;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
@@ -494,8 +497,18 @@ class TransactionServiceTests {
         Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
 
-        Mockito.when(transactionRequestAuthorizationHandlerV2.handle(commandArgumentCaptor.capture()))
-                .thenReturn(Mono.just(requestAuthorizationResponse));
+        Mockito.when(
+                transactionRequestAuthorizationHandlerV2
+                        .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class))
+        )
+                .thenReturn(
+                        Mono.just(
+                                Tuples.of(
+                                        requestAuthorizationResponse,
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
 
         /* test */
         StepVerifier
@@ -511,6 +524,8 @@ class TransactionServiceTests {
                 )
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
+
+        verify(transactionRequestAuthorizationHandlerV2).handleWithCreationDate(commandArgumentCaptor.capture());
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
@@ -636,7 +651,8 @@ class TransactionServiceTests {
                 transactionDocument.getRrn(),
                 transactionDocument.getUserId(),
                 transactionDocument.getPaymentTypeCode(),
-                transactionDocument.getPspId()
+                transactionDocument.getPspId(),
+                transactionDocument.getLastProcessedEventAt()
         );
 
         /* preconditions */
@@ -1224,7 +1240,7 @@ class TransactionServiceTests {
                 );
 
         final var calculateFeeRequest = ArgumentCaptor.forClass(CalculateFeeRequestDto.class);
-        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), calculateFeeRequest.capture(), any()))
+        Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any()))
                 .thenReturn(
                         Mono.just(calculateFeeResponseDto)
                 );
@@ -1251,8 +1267,18 @@ class TransactionServiceTests {
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-        Mockito.when(transactionRequestAuthorizationHandlerV2.handle(commandArgumentCaptor.capture()))
-                .thenReturn(Mono.just(requestAuthorizationResponse));
+        Mockito.when(
+                transactionRequestAuthorizationHandlerV2
+                        .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class))
+        )
+                .thenReturn(
+                        Mono.just(
+                                Tuples.of(
+                                        requestAuthorizationResponse,
+                                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                                )
+                        )
+                );
 
         Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
@@ -1270,6 +1296,7 @@ class TransactionServiceTests {
                         authorizationRequest
                 ).block();
 
+        verify(ecommercePaymentMethodsClient).calculateFee(any(), any(), calculateFeeRequest.capture(), any());
         assertEquals(clientId.getEffectiveClient().name(), calculateFeeRequest.getValue().getTouchpoint());
     }
 }
