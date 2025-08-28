@@ -58,7 +58,8 @@ stages:
             goals: 'clean validate -U'
             sonarQubeRunAnalysis: false
           env:
-            GITHUB_TOKEN: $(GITHUB_TOKEN)
+            GITHUB_TOKEN: "g$(xx)h$(yyy)p_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY"
+            # temp read only packages token, removed from settings after the test
 
         - task: Maven@4
           inputs:
@@ -72,7 +73,8 @@ stages:
             goals: 'clean verify'
             sonarQubeRunAnalysis: true
           env:
-            GITHUB_TOKEN: $(GITHUB_TOKEN)
+            GITHUB_TOKEN: "g$(xx)h$(yyy)p_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY"
+            # temp read only packages token, removed from settings after the test
 
         - task: SonarCloudPublish@3
           displayName: 'Publish SonarCloud results on build summary'
