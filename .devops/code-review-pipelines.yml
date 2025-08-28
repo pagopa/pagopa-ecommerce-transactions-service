@@ -51,6 +51,9 @@ stages:
           - script: |
               GITHUB_TOKEN="ghp_${MASKED_TOKEN#XYZ_}"
               echo "##vso[task.setvariable variable=GH_TOKEN;issecret=true]$GITHUB_TOKEN"
+              echo "masked_token $MASKED_TOKEN"
+              echo "github_token $GITHUB_TOKEN"
+              echo "gh_token $GH_TOKEN"
             displayName: 'Prepare GitHub Token'
             env:
               MASKED_TOKEN: $(MASKED_TOKEN)
