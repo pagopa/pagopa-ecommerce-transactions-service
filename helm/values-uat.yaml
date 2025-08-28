@@ -66,10 +66,10 @@ microservice-chart:
     allowPrivilegeEscalation: false
   resources:
     requests:
-      memory: "768Mi"
+      memory: "512Mi"
       cpu: "300m"
     limits:
-      memory: "768Mi"
+      memory: "512Mi"
       cpu: "900m"
   autoscaling:
     enable: true
@@ -136,9 +136,6 @@ microservice-chart:
     TRANSACTION_REFUND_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-refund-queue-b
     TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-notifications-queue-b
     TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue-b
-    FEATURE_WALLET_USAGE_ENABLED: "true"
-    WALLET_USAGE_QUEUE_NAME: pagopa-u-weu-wallet-usage-update-queue
-    WALLET_USAGE_QUEUE_TTL: "3600"
     PAYMENT_TOKEN_VALIDITY_TIME: "900"
     TRANSACTIONS_RETRY_OFFSET: "60"
     CLOSURE_RETRY_INTERVAL: "30"
