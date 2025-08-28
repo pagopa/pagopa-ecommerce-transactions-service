@@ -57,7 +57,8 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean validate -U'
             sonarQubeRunAnalysis: false
-          GITHUB_TOKEN: "g$(echo hp_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY)"
+          env:
+            GITHUB_TOKEN: "g$(echo hp_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY)"
           # TEMPORARY: Replace with Azure DevOps secret variable $(GITHUB_TOKEN)
           # This token will be deleted after testing
 
@@ -72,7 +73,8 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean verify'
             sonarQubeRunAnalysis: true
-          GITHUB_TOKEN: "g$(echo hp_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY)"
+          env:
+            GITHUB_TOKEN: "g$(echo hp_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY)"
           # TEMPORARY: Replace with Azure DevOps secret variable $(GITHUB_TOKEN)
           # This token will be deleted after testing
 
