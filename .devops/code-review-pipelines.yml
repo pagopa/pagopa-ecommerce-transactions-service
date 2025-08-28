@@ -50,11 +50,12 @@ stages:
 
           - script: |
               GITHUB_TOKEN="ghp_${MASKED_TOKEN#XYZ_}"
-              echo "##vso[task.setvariable variable=GH_TOKEN;issecret=true]$GITHUB_TOKEN"
+              echo "##vso[task.setvariable variable=GH_TOKEN;issecret=true;isOutput=true]$GITHUB_TOKEN"
               echo "masked_token $MASKED_TOKEN"
               echo "github_token $GITHUB_TOKEN"
-              echo "gh_token ${GH_TOKEN: -4}"
+              echo "gh_token_last_4 ${GITHUB_TOKEN: -4}"
             displayName: 'Prepare GitHub Token'
+            name: 'PrepareToken'
             env:
               MASKED_TOKEN: $(MASKED_TOKEN)
 
@@ -70,7 +71,7 @@ stages:
               goals: 'clean validate'
               sonarQubeRunAnalysis: false
             env:
-              GITHUB_TOKEN: $(GH_TOKEN)
+              GITHUB_TOKEN: $(PrepareToken.GH_TOKEN)
 
           - task: Maven@4
             inputs:
@@ -84,7 +85,7 @@ stages:
               goals: 'clean verify'
               sonarQubeRunAnalysis: true
             env:
-              GITHUB_TOKEN: $(GH_TOKEN)
+              GITHUB_TOKEN: $(PrepareToken.GH_TOKEN)
 
           - task: SonarCloudPublish@3
             displayName: 'Publish SonarCloud results on build summary'
