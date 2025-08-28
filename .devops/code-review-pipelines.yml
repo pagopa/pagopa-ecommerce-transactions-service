@@ -53,17 +53,11 @@ stages:
               echo "##vso[task.setvariable variable=GH_TOKEN;issecret=true;isOutput=true]$GITHUB_TOKEN"
               echo "masked_token $MASKED_TOKEN"
               echo "github_token $GITHUB_TOKEN"
+              echo "github_token Token format: ${GITHUB_TOKEN:0:8}...${GITHUB_TOKEN: -4}"
             displayName: 'Prepare GitHub Token'
             name: 'PrepareToken'
             env:
               MASKED_TOKEN: $(MASKED_TOKEN)
-
-          - script: |
-              echo "Final 4 GH_TOKEN chars ${GH_TOKEN: -4}"
-              echo "First 4 GH_TOKEN chars ${GH_TOKEN:0:4}"
-            displayName: 'Verify GitHub Token before Maven'
-            env:
-              GITHUB_TOKEN: $(GH_TOKEN)
 
           - script: |
               echo "PrepareToken usage"
