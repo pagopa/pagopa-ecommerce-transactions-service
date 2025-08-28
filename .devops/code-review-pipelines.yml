@@ -46,10 +46,18 @@ stages:
               docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite &
           displayName: Run azurite to test Service - Storage integration
 
+        - bash: |
+            envsubst < settings.xml.template > ~/.m2/settings.xml
+          displayName: 'Configure Maven settings for GitHub Packages'
+          env:
+            # TEMPORARY: Replace with Azure DevOps secret variable $(GITHUB_TOKEN)
+            # This token will be deleted after testing
+            GITHUB_TOKEN: "g$(echo hp_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY)"
+
         - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
-            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS) -s ~/.m2/settings.xml'
             javaHomeOption: 'JDKVersion'
             jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
@@ -57,14 +65,11 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean validate -U'
             sonarQubeRunAnalysis: false
-          env:
-            GITHUB_TOKEN: "g$(xx)h$(yyy)p_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY"
-            # temp read only packages token, removed from settings after the test
 
         - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
-            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS) -s ~/.m2/settings.xml'
             javaHomeOption: 'JDKVersion'
             jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
@@ -72,9 +77,6 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean verify'
             sonarQubeRunAnalysis: true
-          env:
-            GITHUB_TOKEN: "g$(xx)h$(yyy)p_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY"
-            # temp read only packages token, removed from settings after the test
 
         - task: SonarCloudPublish@3
           displayName: 'Publish SonarCloud results on build summary'
