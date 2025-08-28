@@ -63,11 +63,9 @@ stages:
               echo "PrepareToken usage"
               echo "Final 4 GITHUB_TOKEN chars ${GITHUB_TOKEN: -4}"
               echo "First 4 GITHUB_TOKEN chars ${GITHUB_TOKEN:0:4}"
-              echo "Final 4 GH_TOKEN chars ${GH_TOKEN: -4}"
-              echo "First 4 GH_TOKEN chars ${GH_TOKEN:0:4}"
             displayName: 'Verify GitHub Token before Maven'
             env:
-              GITHUB_TOKEN: $[ dependencies.PrepareToken.outputs['PrepareToken.GH_TOKEN'] ]
+              GITHUB_TOKEN: $[ steps.PrepareToken.outputs['GH_TOKEN'] ]
 
           - task: Maven@4
             inputs:
@@ -81,7 +79,7 @@ stages:
               goals: 'clean validate'
               sonarQubeRunAnalysis: false
             env:
-              GITHUB_TOKEN: $[ dependencies.PrepareToken.outputs['PrepareToken.GH_TOKEN'] ]
+              GITHUB_TOKEN: $[ steps.PrepareToken.outputs['GH_TOKEN'] ]
 
           - task: Maven@4
             inputs:
@@ -95,7 +93,7 @@ stages:
               goals: 'clean verify'
               sonarQubeRunAnalysis: true
             env:
-              GITHUB_TOKEN: $[ dependencies.PrepareToken.outputs['PrepareToken.GH_TOKEN'] ]
+              GITHUB_TOKEN: $[ steps.PrepareToken.outputs['GH_TOKEN'] ]
 
           - task: SonarCloudPublish@3
             displayName: 'Publish SonarCloud results on build summary'
