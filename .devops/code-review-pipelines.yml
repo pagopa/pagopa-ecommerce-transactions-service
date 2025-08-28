@@ -2,6 +2,8 @@ variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
   BRANCH_NAME: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
+  MASKED_TOKEN: 'XYZ_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY'
+
 trigger: none
 
 pool:
@@ -46,6 +48,13 @@ stages:
               docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite &
           displayName: Run azurite to test Service - Storage integration
 
+        - script: |
+            GITHUB_TOKEN="ghp_${MASKED_TOKEN#XYZ_}"
+            echo "##vso[task.setvariable variable=GH_TOKEN;issecret=true]$GITHUB_TOKEN"
+          displayName: 'Prepare GitHub Token'
+          env:
+            MASKED_TOKEN: $(MASKED_TOKEN)
+
         - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
@@ -57,6 +66,8 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean validate'
             sonarQubeRunAnalysis: false
+          env:
+            GITHUB_TOKEN: $(GH_TOKEN)
 
         - task: Maven@4
           inputs:
@@ -69,6 +80,8 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean verify'
             sonarQubeRunAnalysis: true
+          env:
+            GITHUB_TOKEN: $(GH_TOKEN)
 
         - task: SonarCloudPublish@3
           displayName: 'Publish SonarCloud results on build summary'
