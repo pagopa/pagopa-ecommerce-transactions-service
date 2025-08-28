@@ -46,10 +46,30 @@ stages:
               docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite &
           displayName: Run azurite to test Service - Storage integration
 
+        - bash: |
+            mkdir -p ~/.m2
+            cat > ~/.m2/settings.xml << 'EOF'
+            <?xml version="1.0" encoding="UTF-8"?>
+            <settings>
+              <servers>
+                <server>
+                  <id>github</id>
+                  <username>token</username>
+                  <password>${GITHUB_TOKEN}</password>
+                </server>
+              </servers>
+            </settings>
+            EOF
+          displayName: 'Create Maven settings for GitHub Packages'
+          env:
+            # TEMPORARY: Replace with Azure DevOps secret variable $(GITHUB_TOKEN)
+            # This token will be deleted after testing
+            GITHUB_TOKEN: "g$(echo hp_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY)"
+
         - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
-            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS) -s ~/.m2/settings.xml'
             javaHomeOption: 'JDKVersion'
             jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
@@ -57,15 +77,11 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean validate -U'
             sonarQubeRunAnalysis: false
-          env:
-            GITHUB_TOKEN: "g$(echo hp_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY)"
-          # TEMPORARY: Replace with Azure DevOps secret variable $(GITHUB_TOKEN)
-          # This token will be deleted after testing
 
         - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
-            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS) -s ~/.m2/settings.xml'
             javaHomeOption: 'JDKVersion'
             jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
@@ -73,10 +89,6 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean verify'
             sonarQubeRunAnalysis: true
-          env:
-            GITHUB_TOKEN: "g$(echo hp_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY)"
-          # TEMPORARY: Replace with Azure DevOps secret variable $(GITHUB_TOKEN)
-          # This token will be deleted after testing
 
         - task: SonarCloudPublish@3
           displayName: 'Publish SonarCloud results on build summary'
