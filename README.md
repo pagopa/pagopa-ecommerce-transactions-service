@@ -2,7 +2,13 @@
 
 ## What is this?
 
-This is a PagoPA microservice that handles transactions' lifecycle and workflow.
+This is a PagoPA microservice that handles eCommerce transactions' lifecycle and workflow.
+
+## Requirements
+
+- **Java 21** or higher
+- **Maven 3.6+**
+- **Docker** (for containerized deployment)
 
 ### Environment variables
 
@@ -66,9 +72,6 @@ These are all environment variables needed by the application:
 | SESSION_URL_BASEPATH                            |      | Url used into npg order build request to enhance the merchantUrl field                                                                                                          | string  |         |
 | SESSION_URL_OUTCOME_SUFFIX                      |      | Suffix concatenated to the merchant url to enhance the resultUrl field in the order build to NPG                                                                                | string  |         |
 | SESSION_URL_NOTIFICATION_URL                    |      | Url used into npg order build request to enhance the notificationUrl field                                                                                                      | string  |         |
-| JWT_NPG_NOTIFICATION_SECRET                     |      | Secret key used to sign npg notification url authorization jwt                                                                                                                  | string  |         |
-| JWT_ECOMMERCE_SECRET                            |      | Secret key used to sign authorization jwt for ecommerce REST calls                                                                                                              | string  |         |
-| JWT_ECOMMERCE_WEBVIEW_SECRET                    |      | Secret key used to sign authorization jwt for ecommerce REST calls from authorization webview                                                                                   | string  |         |
 | NODE_FORWARDER_API_KEY                          |      | Node forwarder api key                                                                                                                                                          | string  |         |
 | REDIRECT_PAYMENT_TYPE_CODE_LIST                 |      | List of all redirect payment type codes that are expected to be present in other redirect configurations such as REDIRECT_URL_MAPPING (used for configuration cross validation) | string  |         |
 | REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING  |      | Redirect Payment type code to description mapping                                                                                                                               | string  |         |
@@ -88,12 +91,23 @@ These are all environment variables needed by the application:
 | NPG_SATISPAY_PSP_LIST                           |      | List of all psp ids that are expected to be found into the NPG_SATISPAY_PSP_KEYS configuration (used for configuration cross validation)                                        | string  |         |
 | NPG_APPLEPAY_PSP_KEYS                           |      | Secret structure that holds psp - api keys association for authorization request used for APM Apple pay payment method                                                          | string  |         |
 | NPG_APPLEPAY_PSP_LIST                           |      | List of all psp ids that are expected to be found into the NPG_APPLEPAY_PSP_KEYS configuration (used for configuration cross validation)                                        | string  |         |
-| FEATURE_WALLET_USAGE_ENABLED                    |      | Enable wallet usage event publication                                                                                                                                           | boolean | false   |
-| WALLET_USAGE_QUEUE_NAME                         |      | Name of the queue for wallet usage events                                                                                                                                       | string  |         |
-| WALLET_USAGE_QUEUE_TTL                          |      | TTL to be used when sending events on wallet usage queue (in seconds)                                                                                                           | number  | 3600    |
-| WALLET_STORAGE_CONNECTION_STRING                |      | Connection string to wallet storage (queues)                                                                                                                                    | string  |         |
 | NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES          |      | NPG error codes for which eCommerce will not perform retry during authorization request                                                                                         | string  |         |
 | EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS             |      | Exclusive lock Redis document TTL for authorization status update (in seconds)                                                                                                  | number  | 2       |
+| NPG_GOOGLE_PAY_PSP_KEYS                         |      | Secret structure that holds psp - api keys association for authorization request used for APM Google pay payment method                                                         | string  |         |
+| NPG_GOOGLE_PAY_PSP_LIST                         |      | List of all psp ids that are expected to be found into the NPG_GOOGLE_PAY_PSP_KEYS configuration (used for configuration cross validation)                                      | string  |         |
+| NPG_AUTHORIZATION_ERROR_CODE_MAPPING            |      | Map to bind authorization error code received from NPG to the right outcome code. This info is used when NPG authorization status is DECLINED                                   | string  |         |
+| ECOMMERCE_FINAL_STATES                          |      | List of all ecommerce transactions final states                                                                                                                                 | string  |         |
+| ECOMMERCE_POSSIBLE_FINAL_STATES                 |      | List of all ecommerce transactions possible final states that requires more condition check to be sure to declare it as final to the touchpoints                                | string  |         |
+| JWT_ISSUER_URI                                  |      | JWT Issuer URI                                                                                                                                                                  | string  |         |
+| JWT_ISSUER_READ_TIMEOUT                         |      | Timeout for requests towards JWT Issuer                                                                                                                                         | string  |         |
+| JWT_ISSUER_CONNECTION_TIMEOUT                   |      | Timeout for establishing connections towards JWT Issuer                                                                                                                         | string  |         |
+| JWT_ISSUER_API_KEY                              |      | Jwt issuer service API key                                                                                                                                                      | string  |         |
+| NODO_NODEFORPSP_API_KEY                         |      | API Key for NODE FOR PSP WS                                                                                                                                                     | string  |         |
+| NODO_NODEFORECOMMERCE_API_KEY                   |      | API Key for Nodo closePayment API                                                                                                                                               | string  |         |
+| SECURITY_API_KEYS_SECURED_PATHS                 |      | Comma-separated list of secured API paths                                                                                                                                       | string  |         |
+| SECURITY_API_KEYS_PRIMARY                       |      | Secured api primary key                                                                                                                                                         | string  |         |
+| SECURITY_API_KEYS_SECONDARY                     |      | Secured api secondary key                                                                                                                                                       | string  |         |
+| TRANSACTIONSVIEW_UPDATE_ENABLED                 |      | Feature flag to enable/disable view writing                                                                                                                                     | boolean | true    |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

@@ -15,13 +15,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
-import javax.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBElement;
 
 @Component
 @Slf4j
@@ -30,6 +31,8 @@ public class NodeForPspClient {
     private final WebClient nodoWebClient;
     private final String nodoPerPspUri;
     private final String ecommerceClientId;
+    private final String nodoPerPspApiKey;
+    private final String nodeForEcommerceApiKey;
 
     private final String nodoPerPmUri;
 
@@ -43,16 +46,21 @@ public class NodeForPspClient {
             @Qualifier("nodoWebClient") WebClient nodoWebClient,
             @Value("${nodo.nodeforpsp.uri}") String nodoPerPspUri,
             @Value("${nodo.ecommerce.clientId}") String ecommerceClientId,
-            @Value("${nodo.nodoperpm.uri}") String nodoPerPmUri
+            @Value("${nodo.nodoperpm.uri}") String nodoPerPmUri,
+            @Value("${nodo.nodeforpsp.apikey}") String nodoPerPspApiKey,
+            @Value("${nodo.nodeforecommerce.apikey}") String nodeForEcommerceApiKey
     ) {
         this.nodoWebClient = nodoWebClient;
         this.nodoPerPspUri = nodoPerPspUri;
         this.ecommerceClientId = ecommerceClientId;
         this.nodoPerPmUri = nodoPerPmUri;
+        this.nodoPerPspApiKey = nodoPerPspApiKey;
+        this.nodeForEcommerceApiKey = nodeForEcommerceApiKey;
     }
 
     public Mono<ActivatePaymentNoticeV2Response> activatePaymentNoticeV2(
-                                                                         JAXBElement<ActivatePaymentNoticeV2Request> request
+                                                                         JAXBElement<ActivatePaymentNoticeV2Request> request,
+                                                                         String transactionId
     ) {
         log.info(
                 "ActivatePaymentNoticeV2 init for noticeNumber [{}]; idPSP: [{}], IdemPK: [{}]",
@@ -64,10 +72,12 @@ public class NodeForPspClient {
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
                 .header("SOAPAction", "activatePaymentNoticeV2")
+                .header("x-transaction-id", transactionId)
+                .header("ocp-apim-subscription-key", nodoPerPspApiKey)
                 .body(Mono.just(new SoapEnvelope("", request)), SoapEnvelope.class)
                 .retrieve()
                 .onStatus(
-                        HttpStatus::isError,
+                        HttpStatusCode::isError,
                         clientResponse -> clientResponse.bodyToMono(String.class)
                                 .flatMap(
                                         errorResponseBody -> Mono.error(
@@ -91,7 +101,10 @@ public class NodeForPspClient {
                         ResponseStatusException.class,
                         error -> {
                             log.error("ActivatePaymentNoticeV2 ResponseStatus Error:", error);
-                            return new BadGatewayException(error.getReason(), error.getStatus());
+                            return new BadGatewayException(
+                                    error.getReason(),
+                                    HttpStatus.valueOf(error.getStatusCode().value())
+                            );
                         }
                 )
                 .doOnError(Exception.class, error -> log.error("ActivatePaymentNoticeV2 Generic Error:", error));
@@ -111,10 +124,11 @@ public class NodeForPspClient {
                                 .queryParam("clientId", ecommerceClientId).build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header("ocp-apim-subscription-key", nodeForEcommerceApiKey)
                 .body(Mono.just(request), ClosePaymentRequestV2Dto.class)
                 .retrieve()
                 .onStatus(
-                        HttpStatus::isError,
+                        HttpStatusCode::isError,
                         clientResponse -> clientResponse
                                 .bodyToMono(String.class)
                                 .switchIfEmpty(Mono.just("N/A"))
@@ -151,11 +165,14 @@ public class NodeForPspClient {
 
                                 return new BadGatewayException(
                                         objectMapper.readValue(error.getReason(), ErrorDto.class).getDescription(),
-                                        error.getStatus()
+                                        HttpStatus.valueOf(error.getStatusCode().value())
                                 );
                             } catch (JsonProcessingException e) {
 
-                                return new BadGatewayException(error.getReason(), error.getStatus());
+                                return new BadGatewayException(
+                                        error.getReason(),
+                                        HttpStatus.valueOf(error.getStatusCode().value())
+                                );
                             }
 
                         }

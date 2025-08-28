@@ -10,7 +10,7 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
@@ -61,7 +61,7 @@ class TransactionSendClosureRequestedHandlerTest {
     private ArgumentCaptor<Duration> durationCaptor;
 
     @BeforeEach
-    private void init() {
+    public void init() {
         transactionSendClosureRequestHandler = new TransactionSendClosureRequestHandler(
                 transactionEventClosureRequestedRepository,
                 transactionSendClosureRequestQueueClient,

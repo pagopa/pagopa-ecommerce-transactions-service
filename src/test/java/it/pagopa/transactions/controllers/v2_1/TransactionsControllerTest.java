@@ -3,11 +3,9 @@ package it.pagopa.transactions.controllers.v2_1;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import io.vavr.control.Either;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -30,20 +28,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import javax.crypto.SecretKey;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -60,26 +55,27 @@ class TransactionsControllerTest {
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
 
-    @MockBean
+    @MockitoBean
     @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
 
-    @MockBean
-    private JwtTokenUtils jwtTokenUtils;
+    @MockitoBean
+    @Qualifier("jwtIssuerClient")
+    private JwtIssuerClient jwtIssuerClient;
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
+    @MockitoBean
     private TransactionsUtils transactionsUtils;
 
-    @MockBean
+    @MockitoBean
     private UUIDUtils uuidUtils;
 
-    @MockBean
+    @MockitoBean
     private UniqueIdUtils uniqueIdUtils;
 
-    @MockBean
+    @MockitoBean
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Mock
@@ -98,6 +94,9 @@ class TransactionsControllerTest {
     @Test
     void shouldGetOk() {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+        HashMap<String, String> map = new HashMap();
+        map.put("transactionId", transactionId.value());
+        map.put("orderId", "orderId");
         try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
             uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
             String RPTID = "77777777777302016723749670035";
@@ -116,12 +115,12 @@ class TransactionsControllerTest {
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
             Mockito.when(
-                    jwtTokenUtils.generateToken(
-                            any(SecretKey.class),
+                    jwtIssuerClient.createJWTToken(
+                            any(String.class),
                             anyInt(),
-                            eq(new Claims(transactionId, "orderId", null, userId))
+                            eq(map)
                     )
-            ).thenReturn(Either.right(""));
+            ).thenReturn(Mono.just(new CreateTokenResponseDto().token("")));
             Mockito.lenient()
                     .when(
                             transactionsService
@@ -138,8 +137,8 @@ class TransactionsControllerTest {
             Mockito.when(mockExchange.getRequest())
                     .thenReturn(mockRequest);
 
-            Mockito.when(mockExchange.getRequest().getMethodValue())
-                    .thenReturn("POST");
+            Mockito.when(mockExchange.getRequest().getMethod())
+                    .thenReturn(HttpMethod.POST);
 
             Mockito.when(mockExchange.getRequest().getURI())
                     .thenReturn(
@@ -229,12 +228,20 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+        HashMap<String, String> map = new HashMap<>();
+        Mockito.when(
+                jwtIssuerClient.createJWTToken(
+                        any(String.class),
+                        anyInt(),
+                        eq(map)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("")));
+
         webTestClient.post()
                 .uri("/v2.1/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .body(BodyInserters.fromValue("{}"))
                 .exchange()
                 .expectStatus()
@@ -278,6 +285,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
 
                 .expectStatus().isEqualTo(HttpStatus.SERVICE_UNAVAILABLE)
@@ -315,6 +323,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
 
                 .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
@@ -352,6 +361,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
 
                 .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
@@ -389,6 +399,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
                 .expectBody(ValidationFaultPaymentUnavailableProblemJsonDto.class)
@@ -423,6 +434,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentOngoingStatusFaultPaymentProblemJsonDto.class)
@@ -457,6 +469,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentExpiredStatusFaultPaymentProblemJsonDto.class)
@@ -491,6 +504,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentCanceledStatusFaultPaymentProblemJsonDto.class)
@@ -527,6 +541,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody(PaymentDuplicatedStatusFaultPaymentProblemJsonDto.class)
@@ -560,6 +575,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
                 .expectBody(GatewayFaultPaymentProblemJsonDto.class)
@@ -601,7 +617,7 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnResponseEntityWithInternalServerErrorForErrorGeneratingJwtToken() {
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
-                .jwtTokenGenerationError(new JWTTokenGenerationException());
+                .jwtTokenGenerationError(new JwtIssuerResponseException(HttpStatus.BAD_GATEWAY, "jwt Issuer error"));
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
         assertEquals("Internal server error: cannot generate JWT token", responseEntity.getBody().getDetail());
 
@@ -621,8 +637,14 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnBadRequestForNullMail() {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+        Mockito.when(
+                jwtIssuerClient.createJWTToken(
+                        any(String.class),
+                        anyInt(),
+                        anyMap()
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("")));
+
         Mockito.when(transactionsService.newTransaction(any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -639,6 +661,7 @@ class TransactionsControllerTest {
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
                 .header("x-correlation-id", UUID.randomUUID().toString())
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isBadRequest()
@@ -669,6 +692,7 @@ class TransactionsControllerTest {
                 .uri("/v2.1/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .bodyValue(newTransactionRequestDto)
                 .exchange()
                 .expectStatus()
@@ -678,7 +702,7 @@ class TransactionsControllerTest {
                     assertEquals(400, p.getStatus());
                     assertTrue(
                             p.getDetail().contains(
-                                    "Missing request header 'x-correlation-id' for method parameter of type UUID"
+                                    "Required header 'x-correlation-id' is not present."
                             )
                     );
                 });
@@ -689,4 +713,91 @@ class TransactionsControllerTest {
         fault.setFaultCode(faultCode);
         return fault;
     }
+
+    @Test
+    void shouldCreateNewTransactionWithHugeAmount() {
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+        Integer hugeAmount = 999999999;
+        try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
+            uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
+            String RPTID = "77777777777302016723749670035";
+            UUID userId = UUID.randomUUID();
+            ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
+            NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
+            newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
+            newTransactionRequestDto.setEmailToken(UUID.randomUUID().toString());
+            newTransactionRequestDto.orderId("orderId");
+            NewTransactionResponseDto response = new NewTransactionResponseDto();
+            PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
+            paymentInfoDto.setAmount(hugeAmount);
+            paymentInfoDto.setReason("Reason");
+            paymentInfoDto.setPaymentToken("payment_token");
+            paymentInfoDto.setRptId(RPTID);
+            response.addPaymentsItem(paymentInfoDto);
+            response.setAuthToken("token");
+            Mockito.when(
+                    jwtIssuerClient.createJWTToken(
+                            any(),
+                            anyInt(),
+                            any()
+                    )
+            ).thenReturn(Mono.just(new CreateTokenResponseDto().token("")));
+            Mockito.lenient()
+                    .when(
+                            transactionsService
+                                    .newTransaction(
+                                            newTransactionRequestDto,
+                                            clientIdDto,
+                                            UUID.randomUUID(),
+                                            transactionId,
+                                            userId
+                                    )
+                    )
+                    .thenReturn(Mono.just(response));
+
+            Mockito.when(mockExchange.getRequest())
+                    .thenReturn(mockRequest);
+
+            Mockito.when(mockExchange.getRequest().getMethod())
+                    .thenReturn(HttpMethod.POST);
+
+            Mockito.when(mockExchange.getRequest().getURI())
+                    .thenReturn(
+                            URI.create(
+                                    String.join(
+                                            "/",
+                                            "https://localhost/transactions",
+                                            transactionId.value()
+                                    )
+                            )
+                    );
+
+            ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
+                    .newTransaction(
+                            clientIdDto,
+                            UUID.randomUUID(),
+                            Mono.just(newTransactionRequestDto),
+                            UUID.randomUUID(),
+                            mockExchange
+                    )
+                    .block();
+
+            // Verify mock
+            Mockito.verify(transactionsService, Mockito.times(1))
+                    .newTransaction(
+                            newTransactionRequestDto,
+                            clientIdDto,
+                            UUID.randomUUID(),
+                            transactionId,
+                            UUID.randomUUID()
+                    );
+
+            // Verify status code and response
+            assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+            assertEquals(response, responseEntity.getBody());
+            assertEquals(hugeAmount, responseEntity.getBody().getPayments().get(0).getAmount());
+
+        }
+    }
+
 }

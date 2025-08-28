@@ -5,31 +5,28 @@ microservice-chart:
   canaryDelivery:
     create: false
     ingress:
-      create: true
-      canary:
-        type: bluegreen
-    service:
-      create: true
-    deployment:
-      create: true
-      image:
-        repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-        tag: "latest"
-        pullPolicy: Always
-      envConfig:
-        NODO_ECOMMERCE_CLIENT_ID: ecomm-blue
-        TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-expiration-queue-b
-        TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-close-payment-retry-queue-b
-        TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-close-payment-queue-b
-        TRANSACTION_REFUND_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-refund-queue-b
-        TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-notifications-queue-b
-        TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-auth-requested-queue-b
-        WALLET_USAGE_QUEUE_NAME: pagopa-p-weu-wallet-usage-update-queue-b
-        OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
-        ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
+      bluegreen: false
+      #set canary deployment with traffic balancing see https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#canary for more info
+      header: true
+      headerName: deployment
+      headerValue: blue
+      weightPercent: 10
+    image:
+      repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
+      tag: "latest"
+    envConfig:
+      NODO_ECOMMERCE_CLIENT_ID: ecomm-blue
+      TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-expiration-queue-b
+      TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-close-payment-retry-queue-b
+      TRANSACTION_CLOSE_PAYMENT_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-close-payment-queue-b
+      TRANSACTION_REFUND_QUEUE_NAME: pagopa-p-weu-ecommerce-transactions-refund-queue-b
+      TRANSACTION_NOTIFICATIONS_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-notifications-queue-b
+      TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-auth-requested-queue-b
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
+      ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "1.41.2"
+    tag: "3.1.2"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -63,7 +60,7 @@ microservice-chart:
   serviceAccount:
     create: false
     annotations: {}
-    name: ""
+    name: "ecommerce-workload-identity"
   podAnnotations: {}
   podSecurityContext:
     seccompProfile:
@@ -96,7 +93,7 @@ microservice-chart:
   strategy:
     type: "RollingUpdate"
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: 2
       maxUnavailable: 0
   envConfig:
     MONGO_HOST: pagopa-p-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
@@ -114,10 +111,11 @@ microservice-chart:
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
     NODO_HOSTNAME: https://api.platform.pagopa.it
-    NODE_FOR_PSP_URI: /nodo/node-for-psp/v1
-    NODO_PER_PM_URI: /nodo/nodo-per-pm/v2
+    NODE_FOR_PSP_URI: /nodo-auth/node-for-psp/v1
+    NODO_PER_PM_URI: /nodo-auth/node-for-ecommerce/v2
     NODO_READ_TIMEOUT: "14000"
     NODO_CONNECTION_TIMEOUT: "14000"
+    NODO_CONNECTION_STRING: "{\"idPSP\":\"AGID_01\",\"idChannel\":\"97735020584_09\",\"idBrokerPSP\":\"97735020584\"}"
     NODO_PARALLEL_REQUESTS: "5"
     NODO_ALL_CCP_ON_TRANSFER_IBAN_ENABLED: "true"
     NODO_ECOMMERCE_CLIENT_ID: ecomm
@@ -158,12 +156,14 @@ microservice-chart:
     NPG_URI: "https://xpay.nexigroup.com/api/phoenix-0.0"
     NPG_READ_TIMEOUT: "10000"
     NPG_CONNECTION_TIMEOUT: "10000"
-    NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,PASCITMM,WOLLNLB1,BPMOIT22,SARDIT31,IFSPIT21"
-    NPG_PAYPAL_PSP_LIST: ""
-    NPG_MYBANK_PSP_LIST: "UNCRITMM"
-    NPG_BANCOMATPAY_PSP_LIST: ""
-    NPG_SATISPAY_PSP_LIST: ""
-    NPG_APPLEPAY_PSP_LIST: ""
+    NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,BNLIITRR,PASCITMM,WOLLNLB1,BPMOIT22,SARDIT31,IFSPIT21,BCEPITMM"
+    NPG_PAYPAL_PSP_LIST: "BCITITMM,SIGPITM1XXX"
+    NPG_MYBANK_PSP_LIST: "BCITITMM,UNCRITMM"
+    NPG_BANCOMATPAY_PSP_LIST: "BCITITMM"
+    NPG_SATISPAY_PSP_LIST: "SATYLUL1"
+    NPG_APPLEPAY_PSP_LIST: "SIGPITM1XXX"
+    NPG_GOOGLE_PAY_PSP_LIST: ""
+    NPG_AUTHORIZATION_ERROR_CODE_MAPPING: '{"907":"25","908":"25","909":"25","110":"3","111":"7","210":"3","115":"25","116":"116","413":"2","117":"117","118":"3","119":"2","911":"25","999":"25","913":"25","120":"2","121":"121","100":"2","122":"2","101":"7","123":"2","200":"2","102":"2","124":"2","125":"3","202":"2","104":"3","126":"2","204":"2","106":"2","129":"2","888":"2","109":"25","208":"3","209":"3","902":"2","903":"2","904":"25","906":"25"}'
     AUTH_REQUESTED_EVENT_VISIBILITY_TIMEOUT_SECONDS: "0"
     TRANSACTION_DOCUMENT_TTL: "600"
     CHECKOUT_BASE_PATH: "https://checkout.pagopa.it"
@@ -173,42 +173,47 @@ microservice-chart:
     SESSION_URL_OUTCOME_SUFFIX: "/ecommerce-fe/esito#clientId={clientId}&transactionId={transactionId}&sessionToken={sessionToken}"
     SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-    REDIRECT_PAYMENT_TYPE_CODE_LIST: "PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR"
-    REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING: '{"RBPR":"Poste addebito in conto Retail","RBPB":"Poste addebito in conto Business","RBPP":"Paga con BottonePostePay","RPIC":"Pago in Conto Intesa","RBPS":"SCRIGNO Internet Banking","RICO":"Conto ICONTO"}'
+    REDIRECT_PAYMENT_TYPE_CODE_LIST: "PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,RBPS,RPIC,CHECKOUT-BPPIITRRXXX-RBPR,CHECKOUT-BPPIITRRXXX-RBPP,CHECKOUT-BPPIITRRXXX-RBPB,IO-PPAYITR1XXX-RBPP,RICO,KLRN"
+    REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING: '{"RBPR":"Poste addebito in conto Retail","RBPB":"Poste addebito in conto Business","RBPP":"Paga con BottonePostePay","RPIC":"Pago in Conto Intesa","RBPS":"SCRIGNO Internet Banking","RICO":"Conto ICONTO","KLRN":"Klarna (anche a rate)"}'
     NODE_FORWARDER_URL: "https://api.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
-    FEATURE_WALLET_USAGE_ENABLED: "false"
-    WALLET_USAGE_QUEUE_NAME: pagopa-p-weu-wallet-usage-update-queue
-    WALLET_USAGE_QUEUE_TTL: "3600"
     CHECKOUT_NPG_GDI_URL: "https://checkout.pagopa.it/gdi-check"
     CHECKOUT_OUTCOME_URL: "https://checkout.pagopa.it/esito"
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
     EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "2"
+    ECOMMERCE_FINAL_STATES: "NOTIFIED_OK,NOTIFIED_KO,NOTIFICATION_ERROR,NOTIFICATION_REQUESTED,EXPIRED,REFUNDED,CANCELED,UNAUTHORIZED,REFUND_ERROR,REFUND_REQUESTED,CANCELLATION_EXPIRED"
+    ECOMMERCE_POSSIBLE_FINAL_STATES: "AUTHORIZATION_COMPLETED,CLOSURE_REQUESTED,CLOSURE_ERROR"
+    JWT_ISSUER_URI: "https://weuprod.ecommerce.internal.platform.pagopa.it/pagopa-jwt-issuer-service"
+    JWT_ISSUER_READ_TIMEOUT: "10000"
+    JWT_ISSUER_CONNECTION_TIMEOUT: "10000"
+    SECURITY_API_KEYS_SECURED_PATHS: "/transactions,/v2/transactions,/v2.1/transactions"
+    TRANSACTIONSVIEW_UPDATE_ENABLED: "true"
   envSecret:
+    NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
+    NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
     MONGO_PASSWORD: mongo-ecommerce-password
     REDIS_PASSWORD: redis-ecommerce-access-key
     REDIS_HOST: redis-ecommerce-hostname
-    NODO_CONNECTION_STRING: nodo-connection-string
     NOTIFICATIONS_SERVICE_API_KEY: notifications-service-api-key
     ECOMMERCE_STORAGE_TRANSIENT_CONNECTION_STRING: ecommerce-storage-transient-connection-string
-    JWT_ECOMMERCE_SECRET: sessions-jwt-secret
-    JWT_ECOMMERCE_WEBVIEW_SECRET: ecommerce-io-jwt-signing-key
     PERSONAL_DATA_VAULT_API_KEY: personal-data-vault-api-key
     OTEL_EXPORTER_OTLP_HEADERS: elastic-otel-token-header
     ECOMMERCE_PAYMENT_METHODS_APY_KEY: payment-method-api-key
     WALLET_API_KEY: wallet-api-key
     NPG_API_KEY: npg-api-key
     NPG_CARDS_PSP_KEYS: npg-cards-psp-keys
-    JWT_NPG_NOTIFICATION_SECRET: npg-notification-signing-key
     NODE_FORWARDER_API_KEY: node-forwarder-api-key
     REDIRECT_URL_MAPPING: redirect-url-mapping
     NPG_PAYPAL_PSP_KEYS: npg-paypal-psp-keys
     NPG_BANCOMATPAY_PSP_KEYS: npg-bancomatpay-psp-keys
     NPG_MYBANK_PSP_KEYS: npg-mybank-psp-keys
-    WALLET_STORAGE_CONNECTION_STRING: wallet-storage-connection-string
     NPG_SATISPAY_PSP_KEYS: npg-satispay-psp-keys
     NPG_APPLEPAY_PSP_KEYS: npg-apple-pay-psp-keys
+    NPG_GOOGLE_PAY_PSP_KEYS: npg-google-pay-psp-keys
+    SECURITY_API_KEYS_PRIMARY: ecommerce-transactions-service-primary-api-key
+    SECURITY_API_KEYS_SECONDARY: ecommerce-transactions-service-secondary-api-key
+    JWT_ISSUER_API_KEY: ecommerce-jwt-issuer-service-active-api-key
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
@@ -232,3 +237,5 @@ microservice-chart:
                 app.kubernetes.io/instance: pagopaecommercetransactionsservice
             namespaces: ["ecommerce"]
             topologyKey: topology.kubernetes.io/zone
+  azure:
+    workloadIdentityClientId: "d5614882-90dd-47a1-aad1-cdf295201469"

@@ -6,12 +6,13 @@ import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.*;
-import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
 import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyMissingPspRequestedException;
 import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
 import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
@@ -19,13 +20,12 @@ import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
-import it.pagopa.transactions.configurations.SecretsConfigurations;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
@@ -54,18 +54,17 @@ import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.*;
-import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.USER_ID;
+import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -73,6 +72,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 class PaymentGatewayClientTest {
+
+    public static final String MOCK_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJJc3N1ZXIiOiJJc3N1ZXIiLCJwYXltZW50TWV0aG9kSWQiOiJwYXltZW50SW5zdHJ1bWVudElkIiwiZXhwIjo0OTA0MjgzMDU0LCJpYXQiOjE3NDg2MDk0NTQsInRyYW5zYWN0aW9uSWQiOiI4OWU5NWRhYmRiYjM0MTQzOTJlNmUwNmY2NDgzMmViYSJ9.BT_DJ5PD3P_2-T9EEV24mTVX4RQLobuHPxaE9X7trwY";
+    public static final String MOCK_JWT_WITH_ORDERID = "eyJhbGciOiJIUzI1NiJ9.eyJJc3N1ZXIiOiJJc3N1ZXIiLCJvcmRlcklkIjoib3JkZXJJZEdlbmVyYXRlZCIsInBheW1lbnRNZXRob2RJZCI6InBheW1lbnRJbnN0cnVtZW50SWQiLCJleHAiOjQ5MDQyODMwNTQsImlhdCI6MTc0ODYwOTQ1NCwidHJhbnNhY3Rpb25JZCI6Ijg5ZTk1ZGFiZGJiMzQxNDM5MmU2ZTA2ZjY0ODMyZWJhIn0.gwP3cZ7w2lrgOv8FACpGclDljWp-PomIc0DAfa3wjeg";
 
     private PaymentGatewayClient client;
 
@@ -107,21 +109,21 @@ class PaymentGatewayClientTest {
     @Mock
     NpgClient npgClient;
 
+    @Mock
+    JwtTokenIssuerClient jwtTokenIssuerClient;
+
     private final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
     @Spy
     ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final String STRONG_KEY = "ODMzNUZBNTZENDg3NTYyREUyNDhGNDdCRUZDNzI3NDMzMzQwNTFEREZGQ0MyQzA5Mjc1RjY2NTQ1NDk5MDMxNzU5NDc0NUVFMTdDMDhGNzk4Q0Q3RENFMEJBODE1NURDREExNEY2Mzk4QzFEMTU0NTExNjUyMEExMzMwMTdDMDk";
-
     private static final int TOKEN_VALIDITY_TIME_SECONDS = 900;
-
-    private final SecretKey jwtSecretKey = new SecretsConfigurations().npgNotificationSigningKey(STRONG_KEY);
 
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderClient = Mockito
             .mock(NodeForwarderClient.class);
 
-    private static final Set<String> redirectPaymentTypeCodes = Set.of("RBPR", "RBPB", "RBPP", "RPIC", "RBPS", "RICO");
+    private static final Set<String> redirectPaymentTypeCodes = Set
+            .of("RBPR", "RBPB", "RBPP", "RPIC", "RBPS", "RICO", "KLRN");
 
     private static final Map<String, String> redirectPaymentTypeCodeDescription = redirectPaymentTypeCodes.stream()
             .collect(
@@ -154,15 +156,14 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 configurationKeysConfig,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                redirectPaymentTypeCodeDescription
+                redirectPaymentTypeCodeDescription,
+                jwtTokenIssuerClient
         );
 
         Hooks.onOperatorDebug();
@@ -188,9 +189,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
 
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -213,7 +216,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 Mockito.mock(RequestAuthorizationRequestDetailsDto.class),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         /* test */
@@ -245,9 +249,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -271,7 +277,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         StateResponseDto ngpStateResponse = new StateResponseDto().url("https://example.com");
         /* preconditions */
@@ -323,9 +330,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -349,7 +358,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         /* preconditions */
@@ -413,9 +423,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -439,7 +451,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         /* preconditions */
@@ -492,9 +505,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -518,7 +533,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         /* preconditions */
@@ -559,8 +575,9 @@ class PaymentGatewayClientTest {
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
         UUID userId = UUID.randomUUID();
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         TransactionActivated transaction = new TransactionActivated(
-                transactionId,
+                mockedTransactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
@@ -577,9 +594,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -603,7 +622,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -626,6 +646,8 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         Mockito.when(npgApiKeyHandler.getDefaultApiKey()).thenReturn(npgDefaultApiKey);
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT_WITH_ORDERID)));
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
@@ -644,7 +666,7 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
 
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -655,47 +677,43 @@ class PaymentGatewayClientTest {
                 ).toString();
 
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
                                 Transaction.ClientId.IO.name(),
                                 "transactionId",
-                                transactionId.value(),
+                                mockedTransactionId.value(),
                                 "sessionToken",
                                 "sessionToken"
                         )
                 ).toString();
 
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
         verify(npgClient, times(1))
                 .buildForm(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
-                                        transactionId.value(),
+                                        npgOutcomeUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
-                                        transactionId.value(),
+                                        npgNotificationUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
-                                        transactionId.value(),
+                                        npgOutcomeUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
@@ -758,9 +776,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -784,9 +804,13 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* preconditions */
         HttpStatus npgErrorStatus = HttpStatus.valueOf(npgHttpErrorCode);
         Mockito.when(
@@ -874,9 +898,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -900,9 +926,13 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
@@ -979,9 +1009,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -1005,9 +1037,13 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
@@ -1067,8 +1103,9 @@ class PaymentGatewayClientTest {
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
         UUID userId = UUID.randomUUID();
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         TransactionActivated transaction = new TransactionActivated(
-                transactionId,
+                mockedTransactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
@@ -1085,9 +1122,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -1111,9 +1150,13 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT_WITH_ORDERID)));
+
         /* preconditions */
         Mockito.when(
                 npgClient.buildForm(
@@ -1148,23 +1191,21 @@ class PaymentGatewayClientTest {
                 .verify();
 
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
                                 Transaction.ClientId.IO.name(),
                                 "transactionId",
-                                transactionId.value(),
+                                mockedTransactionId.value(),
                                 "sessionToken",
                                 "sessionToken"
                         )
                 ).toString();
 
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -1173,16 +1214,15 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         verify(npgClient, times(1))
                 .buildForm(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
-                                        transactionId.value(),
+                                        npgOutcomeUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
@@ -1190,16 +1230,16 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
-                                        transactionId.value(),
+                                        npgNotificationUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
-                                        transactionId.value(),
+                                        npgOutcomeUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
@@ -1260,8 +1300,9 @@ class PaymentGatewayClientTest {
         String contractId = "contractId";
         String correlationId = UUID.randomUUID().toString();
         UUID userId = UUID.randomUUID();
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         TransactionActivated transaction = new TransactionActivated(
-                transactionId,
+                mockedTransactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
@@ -1278,9 +1319,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -1304,7 +1347,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1333,6 +1377,8 @@ class PaymentGatewayClientTest {
         ).thenReturn(Mono.just(npgBuildSessionResponse));
 
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any())).thenReturn(Either.right("pspKey1"));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT_WITH_ORDERID)));
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
@@ -1351,23 +1397,21 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
 
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
                                 Transaction.ClientId.IO.name(),
                                 "transactionId",
-                                transactionId.value(),
+                                mockedTransactionId.value(),
                                 "sessionToken",
                                 "sessionToken"
                         )
                 ).toString();
 
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -1376,16 +1420,15 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         verify(npgClient, times(1))
                 .buildFormForPayment(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
-                                        transactionId.value(),
+                                        npgOutcomeUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
@@ -1393,16 +1436,16 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
-                                        transactionId.value(),
+                                        npgNotificationUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
-                                        transactionId.value(),
+                                        npgOutcomeUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
@@ -1447,9 +1490,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         WalletAuthRequestDetailsDto walletDetails = new WalletAuthRequestDetailsDto()
                 .walletId(walletId);
@@ -1473,7 +1518,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 walletDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1485,7 +1531,8 @@ class PaymentGatewayClientTest {
                 .url("http://localhost/redirectionUrl");
         /* preconditions */
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1497,11 +1544,8 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
 
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
-
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -1510,15 +1554,14 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
+
         Mockito.when(
                 npgClient.buildFormForPayment(
                         eq(UUID.fromString(correlationId)),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
+                                        npgOutcomeUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1526,7 +1569,7 @@ class PaymentGatewayClientTest {
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
+                                        npgNotificationUrl,
                                         transactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
@@ -1544,6 +1587,8 @@ class PaymentGatewayClientTest {
                         any()
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
 
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any()))
                 .thenReturn(Either.left(new NpgApiKeyMissingPspRequestedException("pspId2", Set.of())));
@@ -1587,10 +1632,11 @@ class PaymentGatewayClientTest {
         String orderId = "orderIdGenerated";
         String sessionId = "sessionId";
         String correlationId = UUID.randomUUID().toString();
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         UUID userId = UUID.randomUUID();
-        Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.IO;
+        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO;
         TransactionActivated transaction = new TransactionActivated(
-                transactionId,
+                mockedTransactionId,
                 List.of(
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
@@ -1609,7 +1655,9 @@ class PaymentGatewayClientTest {
                 null,
                 clientId,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         ApmAuthRequestDetailsDto apmDetails = new ApmAuthRequestDetailsDto();
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
@@ -1632,7 +1680,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 apmDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1660,6 +1709,8 @@ class PaymentGatewayClientTest {
                 )
         ).thenReturn(Mono.just(npgBuildSessionResponse));
         Mockito.when(npgApiKeyHandler.getApiKeyForPaymentMethod(any(), any())).thenReturn(Either.right("pspKey1"));
+        Mockito.when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT_WITH_ORDERID)));
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
         /* test */
@@ -1678,7 +1729,7 @@ class PaymentGatewayClientTest {
                 .verifyComplete();
 
         String npgNotificationUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.notificationUrl())
+                .fromUriString(sessionUrlConfig.notificationUrl())
                 .build(
                         Map.of(
                                 "orderId",
@@ -1688,45 +1739,42 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
         String npgOutcomeUrl = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
                                 Transaction.ClientId.IO.name(),
                                 "transactionId",
-                                transactionId.value(),
+                                mockedTransactionId.value(),
                                 "sessionToken",
                                 "sessionToken"
                         )
                 ).toString();
-        String npgNotificationUrlPrefix = npgNotificationUrl
-                .substring(0, npgNotificationUrl.indexOf("sessionToken=") + "sessionToken=".length());
-        String outcomeUrlPrefix = npgOutcomeUrl
-                .substring(0, npgOutcomeUrl.indexOf("sessionToken=") + "sessionToken=".length());
         verify(npgClient, times(1))
                 .buildFormForPayment(
                         any(),
                         eq(URI.create(sessionUrlConfig.basePath())),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
-                                        transactionId.value(),
+                                        npgOutcomeUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
                         argThat(
                                 new NpgNotificationUrlMatcher(
-                                        npgNotificationUrlPrefix,
-                                        transactionId.value(),
+                                        npgNotificationUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
                         ),
                         argThat(
                                 new NpgOutcomeUrlMatcher(
-                                        outcomeUrlPrefix,
-                                        transactionId.value(),
+                                        npgOutcomeUrl,
+                                        mockedTransactionId.value(),
                                         orderId,
                                         authorizationData.paymentInstrumentId()
                                 )
@@ -1758,10 +1806,11 @@ class PaymentGatewayClientTest {
                                                                    String mappedPaymentMethodDescription
     ) {
         String pspId = "pspId";
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
+                mockedTransactionId,
                 transaction.getPaymentNotices(),
                 transaction.getEmail(),
                 10,
@@ -1780,7 +1829,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1788,14 +1838,15 @@ class PaymentGatewayClientTest {
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
                 .idPsp(pspId)
-                .idTransaction(transaction.getTransactionId().value())
+                .idTransaction(mockedTransactionId.value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
                 .paymentMethod(mappedPaymentMethodDescription)
                 .paName(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1807,13 +1858,12 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
 
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
-
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.just(
                         new NodeForwarderClient.NodeForwarderResponse<>(
@@ -1850,7 +1900,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -1873,14 +1923,14 @@ class PaymentGatewayClientTest {
         String pspId = "pspId";
         String longPaName = it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME.repeat(6) + "abcde";
         String expectedPaName = it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME.repeat(6) + "a...";
-
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         assertTrue(longPaName.length() > 70);
         assertEquals(70, expectedPaName.length());
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = new it.pagopa.ecommerce.commons.domain.v2.TransactionActivated(
-                new TransactionId(TRANSACTION_ID),
+                mockedTransactionId,
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -1930,7 +1980,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -1945,7 +1996,8 @@ class PaymentGatewayClientTest {
                 .paName(expectedPaName);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -1957,13 +2009,13 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
 
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
-
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.just(
                         new NodeForwarderClient.NodeForwarderResponse<>(
@@ -2000,7 +2052,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -2021,10 +2073,11 @@ class PaymentGatewayClientTest {
                                                                                                           String mappedPaymentMethodDescription
     ) {
         String pspId = "pspId";
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = new it.pagopa.ecommerce.commons.domain.v2.TransactionActivated(
-                new TransactionId(TRANSACTION_ID),
+                mockedTransactionId,
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
                                 new TransactionAmount(100),
@@ -2042,7 +2095,7 @@ class PaymentGatewayClientTest {
                                 new CompanyName("companyName"),
                                 null
                         ),
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111112"),
                                 new TransactionAmount(200),
@@ -2091,7 +2144,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -2106,7 +2160,8 @@ class PaymentGatewayClientTest {
                 .paName(null);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -2118,13 +2173,13 @@ class PaymentGatewayClientTest {
                         )
                 ).toString();
 
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
-
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.just(
                         new NodeForwarderClient.NodeForwarderResponse<>(
@@ -2161,7 +2216,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -2191,9 +2246,10 @@ class PaymentGatewayClientTest {
                                                    Class<? extends Exception> expectedMappedException
     ) {
         String pspId = "pspId";
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
+                mockedTransactionId,
                 transaction.getPaymentNotices(),
                 transaction.getEmail(),
                 10,
@@ -2212,7 +2268,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         String idPaymentMethod = "RBPS";
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
@@ -2222,12 +2279,13 @@ class PaymentGatewayClientTest {
                 .paymentMethod("Redirect payment type code description RBPS")
                 .amount(totalAmount)
                 .idPsp(pspId)
-                .idTransaction(transaction.getTransactionId().value())
+                .idTransaction(mockedTransactionId.value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -2238,10 +2296,8 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
-
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
                         new NodeForwarderClientException(
@@ -2284,7 +2340,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -2302,8 +2358,9 @@ class PaymentGatewayClientTest {
     void shouldHandleErrorRetrievingRedirectionUrlWithGenericException() {
         String pspId = "pspId";
         TransactionActivated transaction = TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString());
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
+                mockedTransactionId,
                 transaction.getPaymentNotices(),
                 transaction.getEmail(),
                 10,
@@ -2322,7 +2379,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         String idPaymentMethod = "RBPS";
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
@@ -2332,12 +2390,13 @@ class PaymentGatewayClientTest {
                 .idPaymentMethod(idPaymentMethod)
                 .amount(totalAmount)
                 .idPsp(pspId)
-                .idTransaction(transaction.getTransactionId().value())
+                .idTransaction(mockedTransactionId.value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -2348,9 +2407,8 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
 
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.error(
@@ -2387,7 +2445,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()
@@ -2424,7 +2482,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         Hooks.onOperatorDebug();
@@ -2439,16 +2498,17 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, codeListTypeMapping),
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                redirectPaymentTypeCodeDescription
+                redirectPaymentTypeCodeDescription,
+                jwtTokenIssuerClient
         );
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
         /* test */
         StepVerifier.create(
                 redirectClient.requestRedirectUrlAuthorization(
@@ -2494,9 +2554,11 @@ class PaymentGatewayClientTest {
                 TransactionTestUtils.EMAIL,
                 null,
                 null,
-                it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.CHECKOUT,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
                 "idCart",
-                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                null,
+                null
         );
         CardsAuthRequestDetailsDto cardDetails = new CardsAuthRequestDetailsDto()
                 .orderId(UUID.randomUUID().toString());
@@ -2520,7 +2582,8 @@ class PaymentGatewayClientTest {
                 "VISA",
                 cardDetails,
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         HttpStatus httpStatusErrorCode = HttpStatus.INTERNAL_SERVER_ERROR;
         /* preconditions */
@@ -2639,15 +2702,14 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                redirectPaymentTypeCodeDescription
+                redirectPaymentTypeCodeDescription,
+                jwtTokenIssuerClient
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -2672,13 +2734,16 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
                 .url("http://redirectionUrl")
                 .idPSPTransaction("idPspTransaction");
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
         given(nodeForwarderClient.proxyRequest(any(), any(), any(), any())).willReturn(
                 Mono.just(
                         new NodeForwarderClient.NodeForwarderResponse<>(
@@ -2730,15 +2795,14 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                redirectPaymentTypeCodeDescription
+                redirectPaymentTypeCodeDescription,
+                jwtTokenIssuerClient
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -2763,10 +2827,15 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
 
         Hooks.onOperatorDebug();
+
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
+
         /* test */
         StepVerifier.create(
                 redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint, UUID.fromString(USER_ID))
@@ -2798,10 +2867,11 @@ class PaymentGatewayClientTest {
                                                                                                                      String paymentTypeCode
     ) {
         String pspId = "pspId";
+        TransactionId mockedTransactionId = new TransactionId("89e95dabdbb3414392e6e06f64832eba");
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionActivated(ZonedDateTime.now().toString());
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
-                transaction.getTransactionId(),
+                mockedTransactionId,
                 transaction.getPaymentNotices(),
                 transaction.getEmail(),
                 10,
@@ -2820,7 +2890,8 @@ class PaymentGatewayClientTest {
                 "N/A",
                 new RedirectionAuthRequestDetailsDto(),
                 "http://asset",
-                Optional.of(Map.of("VISA", "http://visaAsset"))
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString()
         );
         int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
                 .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
@@ -2828,14 +2899,15 @@ class PaymentGatewayClientTest {
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
                 .idPsp(pspId)
-                .idTransaction(transaction.getTransactionId().value())
+                .idTransaction(mockedTransactionId.value())
                 .description(transaction.getPaymentNotices().get(0).transactionDescription().value())
                 .touchpoint(RedirectUrlRequestDto.TouchpointEnum.CHECKOUT)
                 .paymentMethod(null)
                 .paName(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.COMPANY_NAME);
 
         String urlBack = UriComponentsBuilder
-                .fromHttpUrl(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .fromUriString(sessionUrlConfig.basePath().concat(sessionUrlConfig.outcomeSuffix()))
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
@@ -2846,9 +2918,6 @@ class PaymentGatewayClientTest {
                                 "sessionToken"
                         )
                 ).toString();
-
-        String urlBackPrefix = urlBack
-                .substring(0, urlBack.indexOf("sessionToken=") + "sessionToken=".length());
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
                 .timeout(60000)
@@ -2862,6 +2931,8 @@ class PaymentGatewayClientTest {
                         )
                 )
         );
+        given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
         PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 objectMapper,
                 mockUuidUtils,
@@ -2869,15 +2940,14 @@ class PaymentGatewayClientTest {
                 npgClient,
                 sessionUrlConfig,
                 uniqueIdUtils,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
-                jwtSecretKey,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
                 configurationKeysConfig,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
-                Map.of()
+                Map.of(),
+                jwtTokenIssuerClient
         );
         Hooks.onOperatorDebug();
         /* test */
@@ -2907,7 +2977,7 @@ class PaymentGatewayClientTest {
                     );
                     assertTrue(
                             new NpgOutcomeUrlMatcher(
-                                    urlBackPrefix,
+                                    urlBack,
                                     authorizationData.transactionId().value(),
                                     null,
                                     authorizationData.paymentInstrumentId()

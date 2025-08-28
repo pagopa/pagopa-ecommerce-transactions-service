@@ -12,8 +12,8 @@ import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.PaymentToken;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
@@ -35,8 +35,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -60,7 +60,7 @@ class CircuitBreakerTest {
     @Autowired
     private TransactionsService transactionsService;
 
-    @MockBean
+    @MockitoBean
     private TransactionActivateHandler transactionActivateHandlerV2;
 
     @Autowired
@@ -151,7 +151,7 @@ class CircuitBreakerTest {
                 .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(10));
 
         TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setEmail(it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL);
+        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
         transactionActivatedData
                 .setPaymentNotices(
                         List.of(

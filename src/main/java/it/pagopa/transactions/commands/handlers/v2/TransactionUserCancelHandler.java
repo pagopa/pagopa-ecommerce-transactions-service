@@ -23,7 +23,7 @@ import java.time.Duration;
 @Slf4j
 public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCommon {
 
-    public static final String QUALIFIER_NAME = "TransactionUserCancelHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionUserCancelHandlerV2";
     private final TransactionsEventStoreRepository<Void> transactionEventUserCancelStoreRepository;
 
     @Autowired

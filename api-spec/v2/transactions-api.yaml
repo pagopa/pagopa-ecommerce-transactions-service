@@ -16,6 +16,8 @@ externalDocs:
   description: Design review
 servers:
   - url: https://api.platform.pagopa.it/transactions-service
+security:
+  - ApiKeyAuth: [ ]
 paths:
   /v2/transactions:
     post:
@@ -91,6 +93,92 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PartyConfigurationFaultPaymentProblemJson'
+  /v2/transactions/{transactionId}:
+    get:
+      tags:
+        - transactions
+      operationId: getTransactionInfo
+      summary: Get transaction information
+      description: Return information for the input specific transaction resource
+      parameters:
+        - in: header
+          name: x-user-id
+          required: false
+          description: User id (valued for authenticated payments) owner of the transaction
+          schema:
+            $ref: '#/components/schemas/UserId'
+        - in: path
+          name: transactionId
+          schema:
+            type: string
+          required: true
+          description: Transaction ID
+      responses:
+        '200':
+          description: Transaction data successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionInfo"
+        '400':
+          description: Invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+  /v2/transactions/{transactionId}/auth-requests:
+    patch:
+      tags:
+        - transactions
+      operationId: updateTransactionAuthorization
+      summary: Update authorization
+      description: Callback endpoint used for notify authorization outcome
+      parameters:
+        - in: path
+          name: transactionId
+          schema:
+            type: string
+          required: true
+          description: Base64 of bytes related to TransactionId
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateAuthorizationRequest"
+      responses:
+        '200':
+          description: Transaction authorization request successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateAuthorizationResponse"
+        '400':
+          description: Invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
+        '502':
+          description: Bad gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemJson"
 components:
   schemas:
     RptId:
@@ -251,7 +339,7 @@ components:
       description: Amount for payments, in euro cents
       type: integer
       minimum: 0
-      maximum: 99999999
+      maximum: 999999999
     TransactionStatus:
       type: string
       description: Possible statuses a transaction can be in
@@ -713,6 +801,193 @@ components:
         - PAA_ATTIVA_RPT_IMPORTO_NON_VALIDO
         - PPT_ERRORE_EMESSO_DA_PAA
         - PAA_SYSTEM_ERROR
+
+    TransactionInfo:
+      description: Transaction data returned when querying for an existing transaction
+      type: object
+      properties:
+        transactionId:
+          type: string
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentInfo'
+          minItems: 1
+          maxItems: 5
+          example:
+            - rptId: '77777777777302012387654312384'
+              paymentToken: paymentToken1
+              reason: reason1
+              amount: 600
+              transferList:
+                - paFiscalCode: '77777777777'
+                  digitalStamp: false
+                  transferCategory: transferCategory1
+                  transferAmount: 500
+                - paFiscalCode: '11111111111'
+                  digitalStamp: true
+                  transferCategory: transferCategory2
+                  transferAmount: 100
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        feeTotal:
+          $ref: '#/components/schemas/AmountEuroCents'
+        idCart:
+          description: Cart identifier provided by creditor institution
+          type: string
+          example: idCartFromCreditorInstitution
+        clientId:
+          description: transaction client id
+          type: string
+          enum:
+            - IO
+            - CHECKOUT
+            - CHECKOUT_CART
+            - UNKNOWN
+        nodeInfo:
+          type: object
+          description: Node operation info
+          properties:
+            closePaymentResultError:
+              type: object
+              description: Error details for close payment result
+              properties:
+                statusCode:
+                  description: Status code (4xx, 5xx) of the error received on the node
+                  type: number
+                description:
+                  description: Description of the error received on the node
+                  type: string
+            sendPaymentResultOutcome:
+              description: The outcome of sendPaymentResult api (OK, KO, NOT_RECEIVED)
+              type: string
+              enum:
+                - OK
+                - KO
+                - NOT_RECEIVED
+        gatewayInfo:
+          type: object
+          description: Gateway info
+          properties:
+            gateway:
+              type: string
+              pattern: NPG|REDIRECT
+              description: Payment gateway identifier
+            authorizationStatus:
+              type: string
+              description: Payment gateway authorization status
+            authorizationCode:
+              type: string
+              description: Payment gateway-specific authorization code related to the transaction
+            errorCode:
+              type: string
+              description: Payment gateway-specific error code from the gateway
+      required:
+        - status
+        - transactionId
+        - payments
+    UpdateAuthorizationResponse:
+      type: object
+      description: Update authorization response
+      properties:
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+      required:
+        - status
+    UpdateAuthorizationRequest:
+      type: object
+      description: Request body for updating an authorization for a transaction
+      properties:
+        outcomeGateway:
+          type: object
+          oneOf:
+            - $ref: '#/components/schemas/OutcomeNpgGateway'
+            - $ref: '#/components/schemas/OutcomeRedirectGateway'
+          discriminator:
+            propertyName: paymentGatewayType
+            mapping:
+              NPG: '#/components/schemas/OutcomeNpgGateway'
+              REDIRECT: '#/components/schemas/OutcomeRedirectGateway'
+        timestampOperation:
+          type: string
+          format: date-time
+          description: Payment timestamp
+      required:
+        - outcomeGateway
+        - timestampOperation
+
+        - GENERIC_ERROR
+    OutcomeNpgGateway:
+      type: object
+      properties:
+        paymentGatewayType:
+          type: string
+          example: 'NPG'
+        operationResult:
+          type: string
+          description: outcome received by NPG - https://developer.nexi.it/it/api/notifica
+          enum:
+            - AUTHORIZED
+            - EXECUTED
+            - DECLINED
+            - DENIED_BY_RISK
+            - THREEDS_VALIDATED
+            - THREEDS_FAILED
+            - PENDING
+            - CANCELED
+            - VOIDED
+            - REFUNDED
+            - FAILED
+        orderId:
+          description: Operator unique order ID
+          type: string
+        operationId:
+          description: Operation ID
+          type: string
+        authorizationCode:
+          type: string
+          description: Authorization code
+        errorCode:
+          type: string
+          description: Error code
+        paymentEndToEndId:
+          description: Circuit unique transaction ID
+          type: string
+        rrn:
+          description: Transaction rrn
+          type: string
+        validationServiceId:
+          description: Validation service id
+          type: string
+      required:
+        - paymentGatewayType
+        - operationResult
+    OutcomeRedirectGateway:
+      type: object
+      properties:
+        paymentGatewayType:
+          type: string
+          example: REDIRECT
+          description: disciminator field. fixed value `REDIRECT`
+        pspTransactionId:
+          type: string
+          description: PSP transaction unique ID
+        outcome:
+          $ref: 'https://raw.githubusercontent.com/pagopa/pagopa-api/SANP3.6.1/openapi/redirect.yaml#/components/schemas/AuthorizationOutcome'
+        pspId:
+          type: string
+          description: PSP ID from which the authorization outcome request come
+        authorizationCode:
+          type: string
+          description: payment authorization code
+        errorCode:
+          type: string
+          description: payment error code
+      required:
+        - paymentGatewayType
+        - pspId
+        - outcome
+        - pspTransactionId
   requestBodies:
     NewTransactionRequest:
       required: true
@@ -720,3 +995,15 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/NewTransactionRequest"
+    UpdateAuthorizationRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateAuthorizationRequest"
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: api key authentication

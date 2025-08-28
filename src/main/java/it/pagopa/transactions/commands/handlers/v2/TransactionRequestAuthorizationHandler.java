@@ -11,22 +11,21 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGate
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.WalletInfo;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.client.WalletAsyncQueueClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationOutput;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -45,11 +44,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
@@ -68,8 +65,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     protected final TracingUtils tracingUtils;
     protected final OpenTelemetryUtils openTelemetryUtils;
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
-
-    private final Optional<WalletAsyncQueueClient> walletAsyncQueueClient;
 
     protected final Integer authRequestEventVisibilityTimeoutSeconds;
     protected final Integer transientQueuesTTLSeconds;
@@ -91,15 +86,11 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Qualifier(
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
             ) QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2,
-            @Qualifier(
-                "walletAsyncQueueClient"
-            ) Optional<WalletAsyncQueueClient> walletAsyncQueueClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") Integer transientQueuesTTLSeconds,
             @Value("${authorization.event.visibilityTimeoutSeconds}") Integer authRequestEventVisibilityTimeoutSeconds,
             TracingUtils tracingUtils,
             OpenTelemetryUtils openTelemetryUtils,
-            JwtTokenUtils jwtTokenUtils,
-            @Qualifier("ecommerceWebViewSigningKey") SecretKey ecommerceWebViewSigningKey,
+            JwtTokenIssuerClient jwtTokenIssuerClient,
             @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
             ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper
@@ -110,8 +101,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 checkoutNpgGdiUrl,
                 checkoutOutcomeUrl,
                 transactionTemplateWrapper,
-                jwtTokenUtils,
-                ecommerceWebViewSigningKey,
+                jwtTokenIssuerClient,
                 jwtWebviewValidityTimeInSeconds
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
@@ -122,13 +112,16 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
         this.authRequestEventVisibilityTimeoutSeconds = authRequestEventVisibilityTimeoutSeconds;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
-        this.walletAsyncQueueClient = walletAsyncQueueClient;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
         this.exclusiveLockDocumentWrapper = exclusiveLockDocumentWrapper;
     }
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
+        return handleWithCreationDate(command).map(Tuple2::getT1);
+    }
+
+    public Mono<Tuple2<RequestAuthorizationResponseDto, TransactionAuthorizationRequestedEvent>> handleWithCreationDate(TransactionRequestAuthorizationCommand command) {
         AuthorizationRequestData authorizationRequestData = command.getData();
         URI logo = getLogo(command.getData());
         Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
@@ -193,8 +186,6 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 )
                 .orElse(Mono.empty());
         return transactionActivated
-                .doOnNext(t -> this.fireWalletLastUsageEvent(command, t)
-                )
                 .flatMap(t -> switch (command.getData().authDetails()) {
                     case CardsAuthRequestDetailsDto authRequestDetails -> paymentMethodsClient.updateSession(
                             command.getData().paymentInstrumentId(),
@@ -317,15 +308,21 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     authorizationOutput.authorizationId(),
                                                     paymentGateway,
                                                     command.getData().paymentMethodDescription(),
-                                                    transactionGatewayAuthorizationRequestedData
+                                                    transactionGatewayAuthorizationRequestedData,
+                                                    command.getData().idBundle()
                                             )
                                     );
 
                                     return transactionEventStoreRepository.save(authorizationEvent)
+                                            .doOnNext(e -> {
+                                                String authorizationRequestId = e.getData().getAuthorizationRequestId();
+                                                String transactionId = t.getTransactionId().value();
+                                                log.info("Saved the TRANSACTION_AUTHORIZATION_REQUESTED_EVENT event for transactionId: [{}] and authorizationRequestId: [{}]", transactionId, authorizationRequestId);
+                                            })
                                             .flatMap(
-                                                    e -> Mono
+                                                    savedEvent -> Mono
                                                             .just(
-                                                                    e.getData()
+                                                                    savedEvent.getData()
                                                                             .getPaymentGateway()
                                                             )
                                                             .flatMap(
@@ -334,7 +331,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                             tracingInfo -> transactionAuthorizationRequestedQueueAsyncClientV2
                                                                                     .sendMessageWithResponse(
                                                                                             new QueueEvent<>(
-                                                                                                    e,
+                                                                                                    savedEvent,
                                                                                                     tracingInfo
                                                                                             ),
                                                                                             Duration.ofSeconds(
@@ -346,16 +343,16 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                                                     )
                                                                     )
                                                             )
-                                            )
-                                            .thenReturn(authorizationOutput)
-                                            .map(
-                                                    auth -> new RequestAuthorizationResponseDto()
-                                                            .authorizationUrl(
-                                                                    authorizationOutput.authorizationUrl()
-                                                            )
-                                                            .authorizationRequestId(
-                                                                    authorizationOutput.authorizationId()
-                                                            )
+                                                            .map(queueResponse -> Tuples.of(
+                                                                    new RequestAuthorizationResponseDto()
+                                                                            .authorizationUrl(
+                                                                                    authorizationOutput.authorizationUrl()
+                                                                            )
+                                                                            .authorizationRequestId(
+                                                                                    authorizationOutput.authorizationId()
+                                                                            ),
+                                                                    savedEvent
+                                                            ))
                                             );
                                 })
                                 .doOnError(error -> log.error("Error performing authorization", error))
@@ -413,49 +410,5 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .valueOf(effectiveClient.name());
 
         return redirectionAuthRequestPipeline(authorizationData, touchpoint, userId);
-    }
-
-    /**
-     * Emit Wallet Used event on wallet queue. The semantic
-     * of this method is fire-and-forget, so any action performed by this
-     * method is executed asynchronously.
-     * e.g. doOnNext(_ -> fireWalletLastUsageEvent(...))
-     */
-    private void fireWalletLastUsageEvent(
-            TransactionRequestAuthorizationCommand command,
-            TransactionActivated transactionActivated
-    ) {
-        final var wallet = switch (command.getData().authDetails()) {
-            case WalletAuthRequestDetailsDto walletData -> Mono.just(walletData);
-            default -> Mono.<WalletAuthRequestDetailsDto>empty();
-        };
-
-        walletAsyncQueueClient.ifPresent(
-                queueClient -> wallet.flatMap(walletData -> tracingUtils.traceMono(
-                                        this.getClass().getSimpleName(),
-                                        tracingInfo -> queueClient.fireWalletLastUsageEvent(
-                                                walletData.getWalletId(),
-                                                transactionActivated.getClientId(),
-                                                tracingInfo
-                                        )
-                                ).doOnError(
-                                        exception -> log.error(
-                                                "Failed to send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
-                                                transactionActivated.getTransactionId(),
-                                                walletData.getWalletId(),
-                                                transactionActivated.getClientId(),
-                                                exception
-                                        )
-                                )
-                                .doOnNext(
-                                        ignored -> log.info(
-                                                "Send event WALLET_USED for transactionId: [{}], wallet: [{}], clientId: [{}]",
-                                                transactionActivated.getTransactionId(),
-                                                walletData.getWalletId(),
-                                                transactionActivated.getClientId()
-                                        )
-                                ).then())
-                        .subscribeOn(Schedulers.boundedElastic())
-                        .subscribe());
     }
 }

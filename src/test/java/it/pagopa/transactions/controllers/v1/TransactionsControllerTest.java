@@ -5,12 +5,9 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.PaymentToken;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.JWTTokenGenerationException;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -21,6 +18,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,11 +34,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.*;
 import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
@@ -48,7 +46,6 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import javax.crypto.SecretKey;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
@@ -60,7 +57,8 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -74,29 +72,26 @@ class TransactionsControllerTest {
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
 
-    @MockBean
+    @MockitoBean
     @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
-
-    @MockBean
-    private JwtTokenUtils jwtTokenUtils;
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
+    @MockitoBean
     private TransactionsUtils transactionsUtils;
 
-    @MockBean
+    @MockitoBean
     private UUIDUtils uuidUtils;
 
-    @MockBean
+    @MockitoBean
     private UniqueIdUtils uniqueIdUtils;
 
-    @MockBean
+    @MockitoBean
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
-    @MockBean
+    @MockitoBean
     private OpenTelemetryUtils openTelemetryUtils;
 
     private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
@@ -112,7 +107,7 @@ class TransactionsControllerTest {
     @Mock
     HttpHeaders mockHeaders;
 
-    @MockBean
+    @MockitoBean
     private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
     private final Integer paymentTokenValidityTime = 120;
 
@@ -138,13 +133,7 @@ class TransactionsControllerTest {
 
             response.addPaymentsItem(paymentInfoDto);
             response.setAuthToken("token");
-            Mockito.when(
-                    jwtTokenUtils.generateToken(
-                            any(SecretKey.class),
-                            anyInt(),
-                            eq(new Claims(transactionId, "orderId", null, null))
-                    )
-            ).thenReturn(Either.right(""));
+
             Mockito.lenient()
                     .when(
                             transactionsService
@@ -159,8 +148,8 @@ class TransactionsControllerTest {
             Mockito.when(mockExchange.getRequest())
                     .thenReturn(mockRequest);
 
-            Mockito.when(mockExchange.getRequest().getMethodValue())
-                    .thenReturn("POST");
+            Mockito.when(mockExchange.getRequest().getMethod())
+                    .thenReturn(HttpMethod.POST);
 
             Mockito.when(mockExchange.getRequest().getURI())
                     .thenReturn(URI.create("https://localhost/transactions"));
@@ -197,8 +186,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("GET");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.GET);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
@@ -224,8 +213,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("DELETE");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.DELETE);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
@@ -251,8 +240,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("DELETE");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.DELETE);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
@@ -263,7 +252,7 @@ class TransactionsControllerTest {
                 transactionsController
                         .requestTransactionUserCancellation(transactionId, null, mockExchange)
         )
-                .expectErrorMatches(error -> error instanceof TransactionNotFoundException)
+                .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
 
@@ -303,6 +292,7 @@ class TransactionsControllerTest {
                 .bodyValue(authorizationRequest)
                 .header("X-Client-Id", client)
                 .header("X-Pgs-Id", pgsId)
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -347,6 +337,7 @@ class TransactionsControllerTest {
                 .bodyValue(authorizationRequest)
                 .header("X-Client-Id", client)
                 .header("X-Pgs-Id", pgsId)
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isNotFound()
@@ -494,8 +485,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("POST");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.POST);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -512,12 +503,12 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+
         webTestClient.post()
                 .uri("/transactions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .body(BodyInserters.fromValue("{}"))
                 .exchange()
                 .expectStatus()
@@ -752,7 +743,7 @@ class TransactionsControllerTest {
     @Test
     void shouldReturnResponseEntityWithInternalServerErrorForErrorGeneratingJwtToken() {
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
-                .jwtTokenGenerationError(new JWTTokenGenerationException());
+                .jwtTokenGenerationError(new JwtIssuerResponseException(HttpStatus.BAD_GATEWAY, "jwt issuer error"));
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
         assertEquals("Internal server error: cannot generate JWT token", responseEntity.getBody().getDetail());
 
@@ -782,13 +773,7 @@ class TransactionsControllerTest {
                 ).authToken("token");
 
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
-        Mockito.when(
-                jwtTokenUtils.generateToken(
-                        any(SecretKey.class),
-                        anyInt(),
-                        eq(new Claims(new TransactionId(transactionId), null, null, null))
-                )
-        ).thenReturn(Either.right(""));
+
         for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
                 .values()) {
             response.setStatus(TransactionStatusDto.fromValue(status.toString()));
@@ -796,6 +781,7 @@ class TransactionsControllerTest {
                     .thenReturn(Mono.just(response));
             webTestClient.get()
                     .uri("/transactions/{trnId}", Map.of("trnId", transactionId))
+                    .header("x-api-key", "primary-key")
                     .exchange()
                     .expectStatus()
                     .isOk()
@@ -813,8 +799,7 @@ class TransactionsControllerTest {
             }
     )
     void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+
         Mockito.when(transactionsService.newTransaction(any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -830,6 +815,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isOk();
@@ -837,8 +823,7 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnBadRequestForInvalidMail() {
-        Mockito.when(jwtTokenUtils.generateToken(any(SecretKey.class), anyInt(), any(Claims.class)))
-                .thenReturn(Either.right(""));
+
         Mockito.when(transactionsService.newTransaction(any(), any(), any()))
                 .thenReturn(Mono.just(new NewTransactionResponseDto()));
         NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
@@ -855,6 +840,7 @@ class TransactionsControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTransactionRequestDto)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isBadRequest()
@@ -906,6 +892,7 @@ class TransactionsControllerTest {
                 .bodyValue(authorizationRequest)
                 .header("X-Client-Id", client)
                 .header("X-Pgs-Id", pgsId)
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isNotFound()
@@ -945,6 +932,7 @@ class TransactionsControllerTest {
                 .bodyValue(authorizationRequest)
                 .header("X-Client-Id", client)
                 .header("X-Pgs-Id", pgsId)
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isBadRequest()
@@ -982,6 +970,7 @@ class TransactionsControllerTest {
                 .bodyValue(authorizationRequest)
                 .header("X-Client-Id", client)
                 .header("X-Pgs-Id", pgsId)
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isBadRequest()
@@ -1019,6 +1008,7 @@ class TransactionsControllerTest {
                 )
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .body(BodyInserters.fromValue(addUserReceiptRequest))
                 .exchange()
                 .expectStatus()
@@ -1055,6 +1045,7 @@ class TransactionsControllerTest {
                 )
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .body(BodyInserters.fromValue(addUserReceiptRequest))
                 .exchange()
                 .expectStatus()
@@ -1094,6 +1085,7 @@ class TransactionsControllerTest {
                 )
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .body(BodyInserters.fromValue(addUserReceiptRequest))
                 .exchange()
                 .expectStatus()
@@ -1129,6 +1121,7 @@ class TransactionsControllerTest {
                 )
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-Client-Id", "CHECKOUT")
+                .header("x-api-key", "primary-key")
                 .body(BodyInserters.fromValue(addUserReceiptRequest))
                 .exchange()
                 .expectStatus()
@@ -1264,8 +1257,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("POST");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.POST);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1345,8 +1338,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("POST");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.POST);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1443,8 +1436,8 @@ class TransactionsControllerTest {
         Mockito.when(mockExchange.getRequest())
                 .thenReturn(mockRequest);
 
-        Mockito.when(mockExchange.getRequest().getMethodValue())
-                .thenReturn("POST");
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.POST);
 
         Mockito.when(mockExchange.getRequest().getURI())
                 .thenReturn(
@@ -1526,6 +1519,7 @@ class TransactionsControllerTest {
                 .bodyValue(authorizationRequest)
                 .header("X-Client-Id", client)
                 .header("X-Pgs-Id", pgsId)
+                .header("x-api-key", "primary-key")
                 .exchange()
                 .expectStatus()
                 .isEqualTo(422)
@@ -1555,6 +1549,7 @@ class TransactionsControllerTest {
         webTestClient.patch()
                 .uri("/transactions/{transactionId}/auth-requests", b64TransactionId)
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("x-api-key", "primary-key")
                 .bodyValue(updateAuthorizationRequestDto)
                 .exchange()
                 .expectStatus()
@@ -1570,6 +1565,37 @@ class TransactionsControllerTest {
                             );
                         }
                 );
+    }
+
+    @Test
+    void shouldGetTransactionOutcomeInfoWithInfoEmptyOK() {
+        TransactionOutcomeInfoDto response = new TransactionOutcomeInfoDto()
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0).isFinalStatus(true);
+
+        String transactionId = new TransactionId(UUID.randomUUID()).value();
+
+        Mockito.lenient().when(transactionsService.getTransactionOutcome(eq(transactionId), any()))
+                .thenReturn(Mono.just(response));
+
+        Mockito.when(mockExchange.getRequest())
+                .thenReturn(mockRequest);
+
+        Mockito.when(mockExchange.getRequest().getMethod())
+                .thenReturn(HttpMethod.GET);
+
+        Mockito.when(mockExchange.getRequest().getURI())
+                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId, "outcomes")));
+
+        ResponseEntity<TransactionOutcomeInfoDto> responseEntity = transactionsController
+                .getTransactionOutcomes(transactionId, null, mockExchange).block();
+
+        // Verify mock
+        verify(transactionsService, Mockito.times(1)).getTransactionOutcome(transactionId, null);
+
+        // Verify status code and response
+        Assertions.assertNotNull(responseEntity);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(response, responseEntity.getBody());
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
