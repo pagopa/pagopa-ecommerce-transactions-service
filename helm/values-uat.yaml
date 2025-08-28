@@ -191,7 +191,7 @@ microservice-chart:
     JWT_ISSUER_URI: "https://weuuat.ecommerce.internal.uat.platform.pagopa.it/pagopa-jwt-issuer-service"
     JWT_ISSUER_READ_TIMEOUT: "10000"
     JWT_ISSUER_CONNECTION_TIMEOUT: "10000"
-    SECURITY_API_KEYS_SECURED_PATHS: "/transactions,/v2/transactions,/v2.1/transactions"
+    SECURITY_API_KEYS_SECURED_PATHS: ""
     TRANSACTIONSVIEW_UPDATE_ENABLED: "true"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
