@@ -37,6 +37,20 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
         - it.pagopa.transactions.exceptions.NodoErrorException
         - it.pagopa.transactions.exceptions.InvalidNodoResponseException
+    getTransactionOutcome:
+      maxAttempts: 3
+      waitDuration: 2s
+      enableExponentialBackoff: false
+      ignoreExceptions:
+        - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
+        - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
+        - it.pagopa.transactions.exceptions.TransactionNotFoundException
+        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.NotImplementedException
+        - it.pagopa.transactions.exceptions.InvalidRequestException
+        - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
+        - it.pagopa.transactions.exceptions.NodoErrorException
+        - it.pagopa.transactions.exceptions.InvalidNodoResponseException
     requestTransactionAuthorization:
       maxAttempts: 3
       waitDuration: 2s
@@ -53,6 +67,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.InvalidNodoResponseException
         - it.pagopa.transactions.exceptions.PaymentMethodNotFoundException
         - it.pagopa.transactions.exceptions.NpgNotRetryableErrorException
+        - it.pagopa.transactions.exceptions.LockNotAcquiredException
     updateTransactionAuthorization:
       maxAttempts: 3
       waitDuration: 2s
@@ -67,6 +82,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
         - it.pagopa.transactions.exceptions.NodoErrorException
         - it.pagopa.transactions.exceptions.InvalidNodoResponseException
+        - it.pagopa.transactions.exceptions.LockNotAcquiredException
     cancelTransaction:
       maxAttempts: 3
       waitDuration: 2s

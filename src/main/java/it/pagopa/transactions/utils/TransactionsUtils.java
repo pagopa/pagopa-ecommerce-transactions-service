@@ -5,10 +5,13 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.Email;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.Email;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
+import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedAuthorization;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.generated.transactions.v2.server.model.*;
@@ -35,16 +38,16 @@ public class TransactionsUtils {
 
     private final String warmUpNoticeCodePrefix;
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMapV1 = new EnumMap<>(
-            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    private static final Map<TransactionStatusDto, it.pagopa.generated.transactions.server.model.TransactionStatusDto> transactionStatusLookupMapV1 = new EnumMap<>(
+            TransactionStatusDto.class
     );
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto> transactionStatusLookupMapV2 = new EnumMap<>(
-            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    private static final Map<TransactionStatusDto, it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto> transactionStatusLookupMapV2 = new EnumMap<>(
+            TransactionStatusDto.class
     );
 
-    private static final Map<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto, it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto> transactionStatusLookupMapV2_1 = new EnumMap<>(
-            it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.class
+    private static final Map<TransactionStatusDto, it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto> transactionStatusLookupMapV2_1 = new EnumMap<>(
+            TransactionStatusDto.class
     );
 
     public static Map<String, ResponseEntity<?>> nodeErrorToV2TransactionsResponseEntityMapping = new HashMap<>();
@@ -62,7 +65,7 @@ public class TransactionsUtils {
 
     static {
         Set<String> commonsStatuses = Set
-                .of(it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.values())
+                .of(TransactionStatusDto.values())
                 .stream()
                 .map(Enum::toString)
                 .collect(Collectors.toSet());
@@ -121,7 +124,7 @@ public class TransactionsUtils {
                             .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
             );
         }
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+        for (TransactionStatusDto enumValue : TransactionStatusDto
                 .values()) {
             /*
              * @formatter:off
@@ -136,7 +139,7 @@ public class TransactionsUtils {
             );
         }
 
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+        for (TransactionStatusDto enumValue : TransactionStatusDto
                 .values()) {
             /*
              * @formatter:off
@@ -152,7 +155,7 @@ public class TransactionsUtils {
             );
         }
 
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto enumValue : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
+        for (TransactionStatusDto enumValue : TransactionStatusDto
                 .values()) {
             /*
              * @formatter:off
@@ -318,14 +321,15 @@ public class TransactionsUtils {
         nodeErrorToV2_1TransactionsResponseEntityMapping = new HashMap<>(
                 nodeErrorToV2TransactionsResponseEntityMapping
         );
+
     }
 
     public Mono<BaseTransaction> reduceEventsV1(TransactionId transactionId) {
         return reduceEvent(
                 transactionId,
-                new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction(),
-                it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent,
-                it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction.class
+                new EmptyTransaction(),
+                Transaction::applyEvent,
+                BaseTransaction.class
         );
     }
 
@@ -364,19 +368,19 @@ public class TransactionsUtils {
     }
 
     public it.pagopa.generated.transactions.server.model.TransactionStatusDto convertEnumerationV1(
-                                                                                                   it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+                                                                                                   TransactionStatusDto status
     ) {
         return transactionStatusLookupMapV1.get(status);
     }
 
     public it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto convertEnumerationV2(
-                                                                                                      it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+                                                                                                      TransactionStatusDto status
     ) {
         return transactionStatusLookupMapV2.get(status);
     }
 
     public it.pagopa.generated.transactions.v2_1.server.model.TransactionStatusDto convertEnumerationV2_1(
-                                                                                                          it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status
+                                                                                                          TransactionStatusDto status
     ) {
         return transactionStatusLookupMapV2_1.get(status);
     }
@@ -450,7 +454,7 @@ public class TransactionsUtils {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.stream()
                 .mapToInt(
-                        it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
+                        PaymentNotice::getAmount
                 ).sum();
     }
 
@@ -475,10 +479,19 @@ public class TransactionsUtils {
         return paymentNotices.stream().map(PaymentNotice::getRptId).toList();
     }
 
-    public List<it.pagopa.ecommerce.commons.documents.PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
+    public List<PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getPaymentNotices();
+            default ->
+                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
+        };
+    }
+
+    public String getEffectiveClientId(BaseTransactionView baseTransactionView) {
+        return switch (baseTransactionView) {
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
+            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().getEffectiveClient().toString();
             default ->
                     throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
@@ -495,11 +508,17 @@ public class TransactionsUtils {
 
     public Confidential<Email> getEmail(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
-            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getEmail();
+            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> convertEmailFromV1ToV2(t.getEmail());
             case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getEmail();
             default ->
                     throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
+    }
+
+    private Confidential<Email> convertEmailFromV1ToV2(
+                                                       Confidential<it.pagopa.ecommerce.commons.domain.v1.Email> emailV1
+    ) {
+        return new Confidential<>(emailV1.opaqueData());
     }
 
     public Optional<String> getPspId(BaseTransaction transaction) {

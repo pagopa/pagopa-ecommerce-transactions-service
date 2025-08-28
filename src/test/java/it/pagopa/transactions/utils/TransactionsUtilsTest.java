@@ -5,9 +5,9 @@ import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.Email;
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.Email;
+import it.pagopa.ecommerce.commons.domain.v2.RptId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -159,6 +159,18 @@ class TransactionsUtilsTest {
         String result = utils.getClientId(transaction);
         assertNotNull(result);
         assertEquals(clientId.name(), result);
+    }
+
+    @Test
+    void shouldGetEffectiveClientIdFromTransactionV2() {
+        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.WISP_REDIRECT;
+        TransactionsUtils utils = new TransactionsUtils(null, null);
+        it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+        transaction.setClientId(clientId);
+        String result = utils.getEffectiveClientId(transaction);
+        assertNotNull(result);
+        assertEquals(clientId.getEffectiveClient().name(), result);
     }
 
     @Test

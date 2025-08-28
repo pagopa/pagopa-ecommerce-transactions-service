@@ -3,12 +3,10 @@ package it.pagopa.transactions.commands.handlers.v2;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.TransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
-import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandlerCommon;
@@ -30,7 +28,7 @@ import java.util.Map;
 @Slf4j
 public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuthorizationHandlerCommon {
 
-    public static final String QUALIFIER_NAME = "TransactionUpdateAuthorizationHandlerV2";
+    public static final String QUALIFIER_NAME = "transactionUpdateAuthorizationHandlerV2";
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData> transactionEventStoreRepository;
 
     private final Map<String, URI> npgPaymentCircuitLogoMap;
@@ -68,20 +66,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 outcomeNpgGateway.getPaymentEndToEndId(),
                                 authRequestDataExtracted.errorCode(),
                                 outcomeNpgGateway.getValidationServiceId()
-                        );
-                        case OutcomeXpayGatewayDto ignored -> new PgsTransactionGatewayAuthorizationData(
-                                authRequestDataExtracted.errorCode(),
-                                AuthorizationResultDto
-                                        .fromValue(
-                                                authRequestDataExtracted.outcome()
-                                        )
-                        );
-                        case OutcomeVposGatewayDto ignored -> new PgsTransactionGatewayAuthorizationData(
-                                authRequestDataExtracted.errorCode(),
-                                AuthorizationResultDto
-                                        .fromValue(
-                                                authRequestDataExtracted.outcome()
-                                        )
                         );
                         case OutcomeRedirectGatewayDto outcomeRedirectGatewayDto ->
                                 new RedirectTransactionGatewayAuthorizationData(

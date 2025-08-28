@@ -1,14 +1,12 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mockito;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,114 +18,6 @@ class AuthRequestDataUtilsTest {
     private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils(uuidUtils);
 
     private static final String TRANSACTION_ID_ENCODED = "transactionIdEncoded";
-
-    @Test
-    void shouldExtractVposInformation() {
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeVposGatewayDto()
-                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
-                                .authorizationCode("authorizationCode")
-                                .rrn("rrn")
-                )
-                .timestampOperation(OffsetDateTime.now());
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
-                .from(updateAuthorizationRequest, transactionId);
-
-        assertEquals(
-                data.authorizationCode(),
-                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
-        );
-        assertEquals(data.rrn(), ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn());
-        assertEquals(
-                data.outcome(),
-                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
-        );
-    }
-
-    @Test
-    void shouldExtractVposInformationWithErrorCode() {
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeVposGatewayDto()
-                                .outcome(OutcomeVposGatewayDto.OutcomeEnum.OK)
-                                .errorCode(OutcomeVposGatewayDto.ErrorCodeEnum._01)
-                )
-                .timestampOperation(OffsetDateTime.now());
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
-                .from(updateAuthorizationRequest, transactionId);
-
-        assertEquals(
-                data.authorizationCode(),
-                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
-        );
-        assertEquals(data.rrn(), ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getRrn());
-        assertEquals(
-                data.outcome(),
-                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
-        );
-        assertEquals(
-                data.errorCode(),
-                ((OutcomeVposGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getErrorCode().toString()
-        );
-    }
-
-    @Test
-    void shouldExtractXpayInformation() {
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeXpayGatewayDto()
-                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                .authorizationCode("authorizationCode")
-                )
-                .timestampOperation(OffsetDateTime.now());
-
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        Mockito.when(uuidUtils.uuidToBase64(transactionId.uuid())).thenReturn(TRANSACTION_ID_ENCODED);
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
-                .from(updateAuthorizationRequest, transactionId);
-
-        assertEquals(TRANSACTION_ID_ENCODED, data.rrn());
-        assertEquals(
-                data.authorizationCode(),
-                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
-        );
-        assertEquals(
-                data.outcome(),
-                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
-        );
-    }
-
-    @Test
-    void shouldExtractXpayInformationWithErrorCode() {
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeXpayGatewayDto()
-                                .outcome(OutcomeXpayGatewayDto.OutcomeEnum.OK)
-                                .errorCode(OutcomeXpayGatewayDto.ErrorCodeEnum.NUMBER_1)
-                )
-                .timestampOperation(OffsetDateTime.now());
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        Mockito.when(uuidUtils.uuidToBase64(transactionId.uuid())).thenReturn(TRANSACTION_ID_ENCODED);
-        AuthRequestDataUtils.AuthRequestData data = authRequestDataUtils
-                .from(updateAuthorizationRequest, transactionId);
-
-        assertEquals(TRANSACTION_ID_ENCODED, data.rrn());
-        assertEquals(
-                data.authorizationCode(),
-                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getAuthorizationCode()
-        );
-        assertEquals(
-                data.outcome(),
-                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getOutcome().toString()
-        );
-        assertEquals(
-                data.errorCode(),
-                ((OutcomeXpayGatewayDto) updateAuthorizationRequest.getOutcomeGateway()).getErrorCode().toString()
-        );
-    }
 
     @ParameterizedTest
     @EnumSource(OutcomeNpgGatewayDto.OperationResultEnum.class)

@@ -1,9 +1,9 @@
 package it.pagopa.transactions.commands.data;
 
 import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.Email;
-import it.pagopa.ecommerce.commons.domain.PaymentNotice;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.Email;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentNotice;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDetailsDto;
 
 import java.util.List;
@@ -35,6 +35,7 @@ public record AuthorizationRequestData(
 
         String asset,
 
-        Optional<Map<String, String>> brandAssets
+        Optional<Map<String, String>> brandAssets,
+        String idBundle
 ) {
 }

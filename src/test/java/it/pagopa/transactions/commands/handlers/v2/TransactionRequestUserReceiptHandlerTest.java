@@ -3,13 +3,13 @@ package it.pagopa.transactions.commands.handlers.v2;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.*;
+import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
-import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.WalletInfo;
-import it.pagopa.ecommerce.commons.domain.PaymentNotice;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
-import it.pagopa.ecommerce.commons.generated.server.model.AuthorizationResultDto;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
@@ -21,6 +21,7 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.InvalidStatusException;
 import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -102,7 +103,13 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -220,7 +227,13 @@ class TransactionRequestUserReceiptHandlerTest {
         authorizationRequestedEvent.setData(data);
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -335,7 +348,13 @@ class TransactionRequestUserReceiptHandlerTest {
         authorizationRequestedEvent.setData(data);
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -451,7 +470,13 @@ class TransactionRequestUserReceiptHandlerTest {
         authorizationRequestedEvent.setData(data);
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -552,7 +577,13 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -636,7 +667,13 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -714,13 +751,82 @@ class TransactionRequestUserReceiptHandlerTest {
     }
 
     @Test
+    void shouldRejectTransactionInInvalidStateClosureRequested() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
+        );
+
+        TransactionClosureRequestedEvent transactionClosureRequestedEvent = transactionClosureRequestedEvent();
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction.getTransactionId(),
+                addUserReceiptRequest
+        );
+
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData
+        );
+
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
+                .just(
+                        transactionActivatedEvent,
+                        authorizationRequestedEvent,
+                        authorizationCompletedEvent,
+                        transactionClosureRequestedEvent
+                ));
+
+        /* preconditions */
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
+                .expectErrorMatches(InvalidStatusException.class::isInstance)
+                .verify();
+
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
+    }
+
+    @Test
     void shouldRejectTransactionInInvalidState() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -757,7 +863,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .expectErrorMatches(AlreadyProcessedException.class::isInstance)
                 .verify();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
@@ -820,7 +926,13 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosedEvent closureSentEvent = TransactionTestUtils
@@ -865,7 +977,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .expectErrorMatches(AlreadyProcessedException.class::isInstance)
                 .verify();
 
         verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(
@@ -882,7 +994,13 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -969,7 +1087,13 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -1065,7 +1189,8 @@ class TransactionRequestUserReceiptHandlerTest {
                                 PAYMENT_CONTEXT_CODE,
                                 List.of(),
                                 false,
-                                COMPANY_NAME
+                                COMPANY_NAME,
+                                CREDITOR_REFERENCE_ID
                         )
                 )
         );
@@ -1074,7 +1199,13 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
@@ -1155,7 +1286,8 @@ class TransactionRequestUserReceiptHandlerTest {
                                 PAYMENT_CONTEXT_CODE,
                                 List.of(),
                                 false,
-                                COMPANY_NAME
+                                COMPANY_NAME,
+                                CREDITOR_REFERENCE_ID
                         )
                 )
         );
@@ -1164,7 +1296,13 @@ class TransactionRequestUserReceiptHandlerTest {
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
 
         TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-                new PgsTransactionGatewayAuthorizationData(null, AuthorizationResultDto.OK)
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.EXECUTED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
         );
 
         TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils

@@ -3,21 +3,17 @@ package it.pagopa.transactions.services.v1;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
-import it.pagopa.ecommerce.commons.documents.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.PaymentToken;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
-import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.commands.handlers.v1.TransactionActivateHandler;
+import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
+import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
+import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -33,9 +29,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -47,7 +43,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static it.pagopa.ecommerce.commons.v1.TransactionTestUtils.EMAIL_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -64,12 +59,9 @@ class CircuitBreakerTest {
     @Autowired
     private TransactionsService transactionsService;
 
-    @MockBean
-    private TransactionActivateHandler transactionActivateHandlerV1;
-
-    @MockBean
+    @MockitoBean
     private TransactionsViewRepository transactionsViewRepository;
-    @MockBean
+    @MockitoBean
     private TransactionsUtils transactionsUtils;
 
     @Autowired
@@ -95,7 +87,11 @@ class CircuitBreakerTest {
             new NodoErrorException(new CtFaultBean()),
             new InvalidNodoResponseException(""),
             new PaymentMethodNotFoundException("paymentMethodId", "clientId"),
-            new NpgNotRetryableErrorException("", HttpStatus.INTERNAL_SERVER_ERROR)
+            new NpgNotRetryableErrorException("", HttpStatus.INTERNAL_SERVER_ERROR),
+            new LockNotAcquiredException(
+                    new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                    new ExclusiveLockDocument("id", "holderName")
+            )
     ).collect(Collectors.toMap(exception -> exception.getClass().getCanonicalName(), Function.identity()));
 
     static {
@@ -138,12 +134,12 @@ class CircuitBreakerTest {
                 );
     }
 
-    private static Stream<Arguments> getIgnoredExceptionForNewTransactionRetry() {
-        return getIgnoredExceptionsForRetry("newTransaction");
-    }
-
     private static Stream<Arguments> getIgnoredExceptionForGetTransactionInfoRetry() {
         return getIgnoredExceptionsForRetry("getTransactionInfo");
+    }
+
+    private static Stream<Arguments> getIgnoredExceptionForGetTransactionOutcomeRetry() {
+        return getIgnoredExceptionsForRetry("getTransactionOutcome");
     }
 
     private static Stream<Arguments> getIgnoredExceptionForRequestTransactionAuthorizationRetry() {
@@ -160,67 +156,6 @@ class CircuitBreakerTest {
 
     private static Stream<Arguments> getIgnoredExceptionForAddUserReceiptRetry() {
         return getIgnoredExceptionsForRetry("addUserReceipt");
-    }
-
-    @ParameterizedTest
-    @MethodSource("getIgnoredExceptionForNewTransactionRetry")
-    @Order(0)
-    void shouldNotPerformRetryForExcludedException_newTransactionRetry(
-                                                                       Exception thrownException,
-                                                                       String retryInstanceName
-    ) {
-        Retry retry = retryRegistry.retry(retryInstanceName);
-        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-                + 1;
-        ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-        UUID TEST_CCP = UUID.randomUUID();
-        UUID TRANSACTION_ID = UUID.randomUUID();
-
-        NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
-                .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(10));
-
-        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
-        transactionActivatedData
-                .setPaymentNotices(
-                        List.of(
-                                new PaymentNotice(
-                                        TransactionTestUtils.PAYMENT_TOKEN,
-                                        null,
-                                        "desc",
-                                        0,
-                                        TEST_CCP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
-                                        false,
-                                        null
-                                )
-                        )
-                );
-
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                new TransactionId(TRANSACTION_ID).value(),
-                transactionActivatedData
-        );
-
-        /*
-         * Preconditions
-         */
-        Mockito.when(transactionActivateHandlerV1.handle(any())).thenReturn(Mono.error(thrownException));
-        StepVerifier
-                .create(
-                        transactionsService.newTransaction(
-                                transactionRequestDto,
-                                clientIdDto,
-                                new TransactionId(transactionActivatedEvent.getTransactionId())
-                        )
-                )
-                .expectError(thrownException.getClass())
-                .verify();
-        assertEquals(
-                expectedFailedCallsWithoutRetryAttempt,
-                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-        );
     }
 
     @ParameterizedTest
@@ -253,6 +188,35 @@ class CircuitBreakerTest {
     }
 
     @ParameterizedTest
+    @MethodSource("getIgnoredExceptionForGetTransactionOutcomeRetry")
+    @Order(0)
+    void shouldNotPerformRetryForExcludedException_getTransactionOutcomeInfoRetry(
+                                                                                  Exception thrownException,
+                                                                                  String retryInstanceName
+    ) {
+        Retry retry = retryRegistry.retry(retryInstanceName);
+        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
+                + 1;
+
+        /*
+         * Preconditions
+         */
+        Mockito.when(transactionsViewRepository.findById(any(String.class)))
+                .thenReturn(Mono.error(thrownException));
+
+        StepVerifier
+                .create(
+                        transactionsService.getTransactionOutcome("transactionId", null)
+                )
+                .expectError(thrownException.getClass())
+                .verify();
+        assertEquals(
+                expectedFailedCallsWithoutRetryAttempt,
+                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
+        );
+    }
+
+    @ParameterizedTest
     @MethodSource("getIgnoredExceptionForRequestTransactionAuthorizationRetry")
     @Order(0)
     void shouldNotPerformRetryForExcludedException_requestTransactionAuthorizationRetry(
@@ -275,6 +239,7 @@ class CircuitBreakerTest {
                                 "transactionId",
                                 null,
                                 "",
+                                null,
                                 new RequestAuthorizationRequestDto()
                         )
                 )
@@ -374,129 +339,28 @@ class CircuitBreakerTest {
 
     @Test
     @Order(1)
-    void shouldNotOpenCircuitBreakerForNodoErrorException() {
-        ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-        UUID TEST_CCP = UUID.randomUUID();
-        UUID TRANSACTION_ID = UUID.randomUUID();
-
-        NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
-                .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(10));
-
-        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
-        transactionActivatedData
-                .setPaymentNotices(
-                        List.of(
-                                new PaymentNotice(
-                                        TransactionTestUtils.PAYMENT_TOKEN,
-                                        null,
-                                        "dest",
-                                        0,
-                                        TEST_CCP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
-                                        false,
-                                        null
-                                )
-                        )
-                );
-
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                new TransactionId(TRANSACTION_ID).value(),
-                transactionActivatedData
-        );
-
-        /*
-         * Preconditions
-         */
-        CtFaultBean ctFaultBean = faultBeanWithCode(
-                PartyConfigurationFaultDto.PPT_STAZIONE_INT_PA_ERRORE_RESPONSE.getValue()
-        );
-        Mockito.when(transactionActivateHandlerV1.handle(any()))
-                .thenReturn(Mono.error(new NodoErrorException(ctFaultBean)));
-
-        StepVerifier
-                .create(
-                        transactionsService.newTransaction(
-                                transactionRequestDto,
-                                clientIdDto,
-                                new TransactionId(transactionActivatedEvent.getTransactionId())
-                        )
-                )
-                .expectError(NodoErrorException.class)
-                .verify();
-        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("node-backend");
-        assertEquals(CircuitBreaker.State.CLOSED, circuitBreaker.getState());
-
-    }
-
-    @Test
-    @Order(2)
-    void shouldOpenCircuitBreakerForNotExcludedExceptionPerformingRetry() {
-        Retry retry = retryRegistry.retry("newTransaction");
+    void shouldPerformRetryForInvalidStatusExceptionOnAddUserReceipt() {
+        Retry retry = retryRegistry.retry("addUserReceipt");
         long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt();
         long expectedFailedCallsWithRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt() + 1;
 
-        ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-        UUID TEST_CCP = UUID.randomUUID();
-        UUID TRANSACTION_ID = UUID.randomUUID();
-
-        NewTransactionRequestDto transactionRequestDto = new NewTransactionRequestDto()
-                .email(EMAIL_STRING)
-                .addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(TransactionTestUtils.RPT_ID).amount(10));
-
-        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
-        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
-        transactionActivatedData
-                .setPaymentNotices(
-                        List.of(
-                                new PaymentNotice(
-                                        TransactionTestUtils.PAYMENT_TOKEN,
-                                        null,
-                                        "dest",
-                                        0,
-                                        TEST_CCP.toString(),
-                                        List.of(new PaymentTransferInformation("77777777777", false, 0, null)),
-                                        false,
-                                        null
-                                )
-                        )
-                );
-
-        TransactionActivatedEvent transactionActivatedEvent = new TransactionActivatedEvent(
-                new TransactionId(TRANSACTION_ID).value(),
-                transactionActivatedData
-        );
-
         /*
          * Preconditions
          */
-        Mockito.when(transactionActivateHandlerV1.handle(any()))
-                .thenReturn(Mono.error(new RuntimeException("Invalid response received")));
+        Mockito.when(transactionsViewRepository.findById(any(String.class)))
+                .thenReturn(Mono.error(new InvalidStatusException("Error processing request")));
 
         StepVerifier
                 .create(
-                        transactionsService.newTransaction(
-                                transactionRequestDto,
-                                clientIdDto,
-                                new TransactionId(transactionActivatedEvent.getTransactionId())
-                        )
+                        transactionsService.addUserReceipt("", new AddUserReceiptRequestDto())
                 )
-                .expectError(CallNotPermittedException.class)
+                .expectError(InvalidStatusException.class)
                 .verify();
-        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("node-backend");
-        assertEquals(CircuitBreaker.State.OPEN, circuitBreaker.getState());
         assertEquals(
                 expectedFailedCallsWithoutRetryAttempt,
                 retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
         );
         assertEquals(expectedFailedCallsWithRetryAttempt, retry.getMetrics().getNumberOfFailedCallsWithRetryAttempt());
 
-    }
-
-    private static CtFaultBean faultBeanWithCode(String faultCode) {
-        CtFaultBean fault = new CtFaultBean();
-        fault.setFaultCode(faultCode);
-        return fault;
     }
 }

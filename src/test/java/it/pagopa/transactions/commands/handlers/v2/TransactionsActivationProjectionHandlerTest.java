@@ -5,14 +5,15 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,11 +24,13 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionsActivationProjectionHandlerTest {
 
-    @InjectMocks
     private TransactionsActivationProjectionHandler handler;
 
     @Mock
@@ -35,8 +38,12 @@ class TransactionsActivationProjectionHandlerTest {
 
     @Test
     void shouldSaveTransaction() {
+        handler = new TransactionsActivationProjectionHandler(
+                transactionsViewRepository,
+                true
+        );
         /* preconditions */
-
+        String creditorReferenceId = UUID.randomUUID().toString();
         String transactionIdString = TransactionTestUtils.TRANSACTION_ID;
         String paFiscalCode = "77777777777";
         String rptIdString = paFiscalCode + "111111111111111111";
@@ -58,7 +65,8 @@ class TransactionsActivationProjectionHandlerTest {
                                 null,
                                 List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null)),
                                 false,
-                                null
+                                null,
+                                creditorReferenceId
                         )
                 )
         );
@@ -85,7 +93,7 @@ class TransactionsActivationProjectionHandlerTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
@@ -100,7 +108,8 @@ class TransactionsActivationProjectionHandlerTest {
                                         )
                                 ),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                creditorReferenceId
                         )
                 ),
                 email,
@@ -140,6 +149,10 @@ class TransactionsActivationProjectionHandlerTest {
                 transaction.getPaymentNotices().get(0).rptId()
         );
         assertEquals(
+                transactionResult.getPaymentNotices().get(0).creditorReferenceId(),
+                transaction.getPaymentNotices().get(0).creditorReferenceId()
+        );
+        assertEquals(
                 transactionResult.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
                 transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken()
         );
@@ -149,6 +162,130 @@ class TransactionsActivationProjectionHandlerTest {
                 ((NpgTransactionGatewayActivationData) transaction.getTransactionActivatedData()
                         .getTransactionGatewayActivationData()).getOrderId()
         );
+    }
+
+    @Test
+    void shouldSaveTransactionWithoutSavingWhenUpdateDisabled() {
+        handler = new TransactionsActivationProjectionHandler(
+                transactionsViewRepository,
+                false
+        );
+
+        /* preconditions */
+        String creditorReferenceId = UUID.randomUUID().toString();
+        String transactionIdString = TransactionTestUtils.TRANSACTION_ID;
+        String paFiscalCode = "77777777777";
+        String rptIdString = paFiscalCode + "111111111111111111";
+        String paymentTokenString = UUID.randomUUID().toString();
+        String transactionDescription = "transaction description";
+        String orderId = "orderId";
+        int amountInt = 100;
+        TransactionActivatedData transactionActivatedData = new TransactionActivatedData();
+        transactionActivatedData.setEmail(TransactionTestUtils.EMAIL);
+        transactionActivatedData
+                .setTransactionGatewayActivationData(new NpgTransactionGatewayActivationData(orderId, null));
+        transactionActivatedData.setPaymentNotices(
+                List.of(
+                        new PaymentNotice(
+                                paymentTokenString,
+                                rptIdString,
+                                transactionDescription,
+                                amountInt,
+                                null,
+                                List.of(new PaymentTransferInformation(paFiscalCode, false, amountInt, null)),
+                                false,
+                                null,
+                                creditorReferenceId
+                        )
+                )
+        );
+
+        TransactionActivatedEvent event = new TransactionActivatedEvent(
+                transactionIdString,
+                transactionActivatedData
+        );
+
+        TransactionActivatedData data = event.getData();
+        TransactionId transactionId = new TransactionId(event.getTransactionId());
+        PaymentToken paymentToken = new PaymentToken(event.getData().getPaymentNotices().get(0).getPaymentToken());
+        RptId rptId = new RptId(event.getData().getPaymentNotices().get(0).getRptId());
+        TransactionDescription description = new TransactionDescription(
+                data.getPaymentNotices().get(0).getDescription()
+        );
+        TransactionAmount amount = new TransactionAmount(data.getPaymentNotices().get(0).getAmount());
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        String faultCode = "faultCode";
+        String faultCodeString = "faultCodeString";
+        String idCart = "idCart";
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                List.of(
+                                        new PaymentTransferInfo(
+                                                rptIdString.substring(0, 11),
+                                                false,
+                                                amount.value(),
+                                                null
+                                        )
+                                ),
+                                false,
+                                new CompanyName(null),
+                                creditorReferenceId
+                        )
+                ),
+                email,
+                faultCode,
+                faultCodeString,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                new NpgTransactionGatewayActivationData(orderId, null),
+                TransactionTestUtils.USER_ID
+        );
+
+        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument = it.pagopa.ecommerce.commons.documents.v2.Transaction
+                .from(transaction);
+
+        TransactionActivated transactionResult = handler.handle(event).block();
+
+        assertNotEquals(transactionResult, transaction);
+        assertEquals(transactionResult.getTransactionId(), transaction.getTransactionId());
+        assertEquals(transactionResult.getStatus(), transaction.getStatus());
+        assertEquals(
+                transactionResult.getPaymentNotices().get(0).transactionAmount(),
+                transaction.getPaymentNotices().get(0).transactionAmount()
+        );
+        assertEquals(
+                transactionResult.getPaymentNotices().get(0).transactionDescription(),
+                transaction.getPaymentNotices().get(0).transactionDescription()
+        );
+        assertEquals(
+                transactionResult.getPaymentNotices().get(0).rptId(),
+                transaction.getPaymentNotices().get(0).rptId()
+        );
+        assertEquals(
+                transactionResult.getPaymentNotices().get(0).creditorReferenceId(),
+                transaction.getPaymentNotices().get(0).creditorReferenceId()
+        );
+        assertEquals(
+                transactionResult.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken(),
+                transaction.getTransactionActivatedData().getPaymentNotices().get(0).getPaymentToken()
+        );
+        assertEquals(
+                ((NpgTransactionGatewayActivationData) transactionResult.getTransactionActivatedData()
+                        .getTransactionGatewayActivationData()).getOrderId(),
+                ((NpgTransactionGatewayActivationData) transaction.getTransactionActivatedData()
+                        .getTransactionGatewayActivationData()).getOrderId()
+        );
+        verify(transactionsViewRepository, never()).save(any());
 
     }
 

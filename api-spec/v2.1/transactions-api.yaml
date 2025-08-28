@@ -16,6 +16,8 @@ externalDocs:
   description: Design review
 servers:
   - url: https://api.platform.pagopa.it/transactions-service
+security:
+  - ApiKeyAuth: [ ]
 paths:
   /v2.1/transactions:
     post:
@@ -132,6 +134,9 @@ components:
         isAllCCP:
           type: boolean
           description: Flag for poste psp enabling in gec request
+        creditorReferenceId:
+          type: string
+          description: Creditor notice number's
       required:
         - rptId
         - amount
@@ -247,7 +252,7 @@ components:
       description: Amount for payments, in euro cents
       type: integer
       minimum: 0
-      maximum: 99999999
+      maximum: 999999999
     TransactionStatus:
       type: string
       description: Possible statuses a transaction can be in
@@ -717,3 +722,9 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/NewTransactionRequest"
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: api key authentication

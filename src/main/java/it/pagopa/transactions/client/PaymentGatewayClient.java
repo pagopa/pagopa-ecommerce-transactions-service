@@ -4,31 +4,22 @@ import com.azure.cosmos.implementation.InternalServerErrorException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
-import it.pagopa.ecommerce.commons.domain.Claims;
-import it.pagopa.ecommerce.commons.domain.TransactionId;
-import it.pagopa.ecommerce.commons.exceptions.NodeForwarderClientException;
-import it.pagopa.ecommerce.commons.exceptions.NpgApiKeyConfigurationException;
-import it.pagopa.ecommerce.commons.exceptions.NpgResponseException;
-import it.pagopa.ecommerce.commons.exceptions.RedirectConfigurationException;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.exceptions.*;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
+import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
-import it.pagopa.ecommerce.commons.utils.JwtTokenUtils;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
-import it.pagopa.generated.ecommerce.gateway.v1.api.VposInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.api.XPayInternalApi;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.VposAuthResponseDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthRequestDto;
-import it.pagopa.generated.ecommerce.gateway.v1.dto.XPayAuthResponseEntityDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
-import it.pagopa.generated.transactions.server.model.CardAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -42,9 +33,10 @@ import it.pagopa.transactions.utils.NpgBuildData;
 import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -52,246 +44,72 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
+import static it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId;
 
 @Component
 @Slf4j
 public class PaymentGatewayClient {
 
-    private final XPayInternalApi paymentTransactionGatewayXPayWebClient;
-
-    private final VposInternalApi creditCardInternalApiClient;
-
     private final ObjectMapper objectMapper;
-
-    private final UUIDUtils uuidUtils;
-
-    private final ConfidentialMailUtils confidentialMailUtils;
 
     private final NpgClient npgClient;
 
     private final NpgSessionUrlConfig npgSessionUrlConfig;
 
     private final UniqueIdUtils uniqueIdUtils;
-    private final SecretKey npgNotificationSigningKey;
     private final int npgJwtKeyValidityTime;
-    private final SecretKey ecommerceSigningKey;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
     private final RedirectKeysConfiguration redirectKeysConfig;
 
     private final Set<String> npgAuthorizationRetryExcludedErrorCodes;
 
-    static final Map<RedirectPaymentMethodId, String> redirectMethodsDescriptions = Map.of(
-            RedirectPaymentMethodId.RBPR,
-            "Poste addebito in conto Retail",
-            RedirectPaymentMethodId.RBPB,
-            "Poste addebito in conto Business",
-            RedirectPaymentMethodId.RBPP,
-            "Paga con BottonePostePay",
-            RedirectPaymentMethodId.RPIC,
-            "Pago in Conto Intesa",
-            RedirectPaymentMethodId.RBPS,
-            "SCRIGNO Internet Banking"
-    );
     private final NpgApiKeyConfiguration npgApiKeyConfiguration;
 
-    public enum RedirectPaymentMethodId {
-        RBPR,
-        RBPB,
-        RBPP,
-        RPIC,
-        RBPS;
+    private final Map<String, String> redirectPaymentTypeCodeDescription;
 
-        private static final Map<String, RedirectPaymentMethodId> lookupMap = Arrays
-                .stream(RedirectPaymentMethodId.values())
-                .collect(Collectors.toMap(Enum::toString, Function.identity()));
-
-        static RedirectPaymentMethodId fromPaymentTypeCode(String paymentTypeCode) {
-            RedirectPaymentMethodId converted = lookupMap.get(paymentTypeCode);
-            if (converted == null) {
-                throw new InvalidRequestException(
-                        "Unmanaged payment method with type code: [%s]".formatted(paymentTypeCode)
-                );
-            }
-            return converted;
-        }
-    }
+    private final JwtTokenIssuerClient jwtTokenIssuerClient;
 
     @Autowired
     public PaymentGatewayClient(
-            @Qualifier("paymentTransactionGatewayXPayWebClient") XPayInternalApi paymentTransactionGatewayXPayWebClient,
-            @Qualifier("creditCardInternalApiClient") VposInternalApi creditCardInternalApiClient,
+
             ObjectMapper objectMapper,
             UUIDUtils uuidUtils,
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
             NpgSessionUrlConfig npgSessionUrlConfig,
             UniqueIdUtils uniqueIdUtils,
-            @Qualifier("npgNotificationSigningKey") SecretKey npgNotificationSigningKey,
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
-            @Qualifier("ecommerceSigningKey") SecretKey ecommerceSigningKey,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
             RedirectKeysConfiguration redirectKeysConfig,
             NpgApiKeyConfiguration npgApiKeyConfiguration,
             @Value(
                 "${npg.authorization.retry.excluded.error.codes}"
-            ) Set<String> npgAuthorizationRetryExcludedErrorCodes
+            ) Set<String> npgAuthorizationRetryExcludedErrorCodes,
+            @Value(
+                "#{${redirect.paymentTypeCodeDescriptionMapping}}"
+            ) Map<String, String> redirectPaymentTypeCodeDescription,
+            JwtTokenIssuerClient jwtTokenIssuerClient
     ) {
-        this.paymentTransactionGatewayXPayWebClient = paymentTransactionGatewayXPayWebClient;
-        this.creditCardInternalApiClient = creditCardInternalApiClient;
         this.objectMapper = objectMapper;
-        this.uuidUtils = uuidUtils;
-        this.confidentialMailUtils = confidentialMailUtils;
         this.npgClient = npgClient;
         this.npgSessionUrlConfig = npgSessionUrlConfig;
         this.uniqueIdUtils = uniqueIdUtils;
-        this.npgNotificationSigningKey = npgNotificationSigningKey;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
         this.redirectKeysConfig = redirectKeysConfig;
-        this.ecommerceSigningKey = ecommerceSigningKey;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
-    }
-
-    public Mono<XPayAuthResponseEntityDto> requestXPayAuthorization(AuthorizationRequestData authorizationData) {
-
-        return Mono.just(authorizationData)
-                .filter(
-                        authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && TransactionAuthorizationRequestData.PaymentGateway.XPAY.equals(
-                                        TransactionAuthorizationRequestData.PaymentGateway
-                                                .valueOf(authorizationRequestData.paymentGatewayId())
-                                )
-                )
-                .switchIfEmpty(Mono.empty())
-                .flatMap(authorizationRequestData -> {
-                    final Mono<XPayAuthRequestDto> xPayAuthRequest;
-                    if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
-                        BigDecimal grandTotal = BigDecimal.valueOf(
-                                ((long) authorizationData.paymentNotices().stream()
-                                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
-                                        + authorizationData.fee()
-                        );
-                        xPayAuthRequest = Mono.just(
-                                new XPayAuthRequestDto()
-                                        .cvv(cardData.getCvv())
-                                        .pan(cardData.getPan())
-                                        .expiryDate(cardData.getExpiryDate())
-                                        .idTransaction(
-                                                uuidUtils.uuidToBase64(
-                                                        authorizationData.transactionId().uuid()
-                                                )
-                                        )
-                                        .grandTotal(grandTotal)
-                        );
-                    } else {
-                        xPayAuthRequest = Mono.error(
-                                new InvalidRequestException(
-                                        "Cannot perform XPAY authorization for null input CardAuthRequestDetailsDto"
-                                )
-                        );
-                    }
-                    return xPayAuthRequest;
-                })
-                .flatMap(
-                        xPayAuthRequestDto -> paymentTransactionGatewayXPayWebClient
-                                .authXpay(xPayAuthRequestDto, encodeMdcFields(authorizationData))
-                                .onErrorMap(
-                                        WebClientResponseException.class,
-                                        exception -> switch (exception.getStatusCode()) {
-                                        case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transactionId()
-                                        ); // 401
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                                "",
-                                                exception.getStatusCode()
-                                        ); // 500
-                                        default -> exception;
-                                        }
-                                )
-                );
-    }
-
-    public Mono<VposAuthResponseDto> requestCreditCardAuthorization(AuthorizationRequestData authorizationData) {
-        return Mono.just(authorizationData)
-                .filter(
-                        authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && TransactionAuthorizationRequestData.PaymentGateway.VPOS
-                                        .equals(
-                                                TransactionAuthorizationRequestData.PaymentGateway
-                                                        .valueOf(authorizationRequestData.paymentGatewayId())
-                                        )
-                )
-                .switchIfEmpty(Mono.empty())
-                .flatMap(
-                        authorizationRequestData -> confidentialMailUtils
-                                .toEmail(authorizationRequestData.email())
-                )
-                .flatMap(email -> {
-                    final Mono<VposAuthRequestDto> creditCardAuthRequest;
-                    if (authorizationData.authDetails()instanceof CardAuthRequestDetailsDto cardData) {
-                        BigDecimal grandTotal = BigDecimal.valueOf(
-                                ((long) authorizationData.paymentNotices().stream()
-                                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
-                                        + authorizationData.fee()
-                        );
-                        creditCardAuthRequest = Mono.just(
-                                new VposAuthRequestDto()
-                                        .pan(cardData.getPan())
-                                        .expireDate(cardData.getExpiryDate())
-                                        .idTransaction(
-                                                uuidUtils.uuidToBase64(
-                                                        authorizationData.transactionId().uuid()
-                                                )
-                                        )
-                                        .amount(grandTotal)
-                                        .emailCH(email.value())
-                                        .holder(cardData.getHolderName())
-                                        .securityCode(cardData.getCvv())
-                                        .isFirstPayment(true) // TODO TO BE CHECKED
-                                        .threeDsData(cardData.getThreeDsData())
-                                        .circuit(VposAuthRequestDto.CircuitEnum.valueOf(cardData.getBrand().toString()))
-                                        .idPsp(authorizationData.pspId())
-                        );
-                    } else {
-                        creditCardAuthRequest = Mono.error(
-                                new InvalidRequestException(
-                                        "Cannot perform VPOS authorization for null input CreditCardAuthRequestDto"
-                                )
-                        );
-                    }
-                    return creditCardAuthRequest;
-                })
-                .flatMap(
-                        creditCardAuthRequestDto -> creditCardInternalApiClient
-                                .step0VposAuth(
-                                        creditCardAuthRequestDto,
-                                        encodeMdcFields(authorizationData)
-                                )
-                                .onErrorMap(
-                                        WebClientResponseException.class,
-                                        exception -> switch (exception.getStatusCode()) {
-                                        case UNAUTHORIZED -> new AlreadyProcessedException(
-                                                authorizationData.transactionId()
-                                        ); // 401
-                                        case INTERNAL_SERVER_ERROR -> new BadGatewayException(
-                                                "",
-                                                exception.getStatusCode()
-                                        ); // 500
-                                        default -> exception;
-                                        }
-                                )
-                );
+        this.redirectPaymentTypeCodeDescription = redirectPaymentTypeCodeDescription;
+        this.jwtTokenIssuerClient = jwtTokenIssuerClient;
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -299,10 +117,11 @@ public class PaymentGatewayClient {
                                                                   String correlationId,
                                                                   boolean isWalletPayment,
                                                                   String clientId,
+                                                                  String lang,
                                                                   UUID userId
 
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId, userId);
+        return requestNpgBuildSession(authorizationData, correlationId, false, isWalletPayment, clientId, lang, userId);
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildApmPayment(
@@ -310,9 +129,10 @@ public class PaymentGatewayClient {
                                                                      String correlationId,
                                                                      boolean isWalletPayment,
                                                                      String clientId,
+                                                                     String lang,
                                                                      UUID userId
     ) {
-        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId, userId);
+        return requestNpgBuildSession(authorizationData, correlationId, true, isWalletPayment, clientId, lang, userId);
     }
 
     private Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -321,6 +141,7 @@ public class PaymentGatewayClient {
                                                                    boolean isApmPayment,
                                                                    boolean isWalletPayment,
                                                                    String clientId,
+                                                                   String lang,
                                                                    UUID userId
     ) {
         WorkflowStateDto expectedResponseState = isApmPayment ? WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN
@@ -340,7 +161,7 @@ public class PaymentGatewayClient {
                             URI merchantUrl = returnUrlBasePath;
 
                             URI notificationUrl = UriComponentsBuilder
-                                    .fromHttpUrl(npgSessionUrlConfig.notificationUrl())
+                                    .fromUriString(npgSessionUrlConfig.notificationUrl())
                                     .build(
                                             Map.of(
                                                     "orderId",
@@ -381,7 +202,8 @@ public class PaymentGatewayClient {
                                                                     paymentNotice -> paymentNotice.transactionAmount()
                                                                             .value()
                                                             ).sum()
-                                                            + authorizationData.fee()
+                                                            + authorizationData.fee(),
+                                                    lang
                                             ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                                         } else {
                                             return npgClient.buildForm(
@@ -399,7 +221,8 @@ public class PaymentGatewayClient {
                                                             () -> new InternalServerErrorException(
                                                                     "Invalid request missing contractId"
                                                             )
-                                                    )
+                                                    ),
+                                                    lang
                                             ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                                         }
                                     }
@@ -485,20 +308,9 @@ public class PaymentGatewayClient {
                                                                String correlationId
     ) {
         return Mono.just(authorizationData)
-                .filter(
-                        authorizationRequestData -> "CP".equals(authorizationRequestData.paymentTypeCode())
-                                && TransactionAuthorizationRequestData.PaymentGateway.NPG.equals(
-                                        TransactionAuthorizationRequestData.PaymentGateway
-                                                .valueOf(authorizationRequestData.paymentGatewayId())
-                                )
-                )
+                .filter(this::isValidPaymentType)
                 .switchIfEmpty(Mono.empty())
-                .filter(
-                        authorizationRequestData -> authorizationData
-                                .authDetails() instanceof CardsAuthRequestDetailsDto
-                                || authorizationData
-                                        .authDetails() instanceof WalletAuthRequestDetailsDto
-                )
+                .filter(this::isValidAuthDetails)
                 .switchIfEmpty(
                         Mono.error(
                                 new InvalidRequestException(
@@ -506,85 +318,140 @@ public class PaymentGatewayClient {
                                 )
                         )
                 )
-                .flatMap(authorizationRequestData -> {
-                    final BigDecimal grandTotal = BigDecimal.valueOf(
-                            ((long) authorizationData.paymentNotices().stream()
-                                    .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value()).sum())
-                                    + authorizationData.fee()
+                .flatMap(authData -> processAuthorization(authData, correlationId));
+    }
+
+    private boolean isValidPaymentType(AuthorizationRequestData data) {
+        return "CP".equals(data.paymentTypeCode()) &&
+                TransactionAuthorizationRequestData.PaymentGateway.NPG.equals(
+                        TransactionAuthorizationRequestData.PaymentGateway.valueOf(data.paymentGatewayId())
+                );
+    }
+
+    private boolean isValidAuthDetails(AuthorizationRequestData data) {
+        return data.authDetails() instanceof CardsAuthRequestDetailsDto ||
+                data.authDetails() instanceof WalletAuthRequestDetailsDto;
+    }
+
+    private Mono<StateResponseDto> processAuthorization(
+                                                        AuthorizationRequestData data,
+                                                        String correlationId
+    ) {
+        BigDecimal grandTotal = calculateGrandTotal(data);
+        if (data.sessionId().isEmpty()) {
+            return Mono.error(
+                    new BadGatewayException(
+                            "Missing sessionId for transactionId: " + data.transactionId(),
+                            HttpStatus.BAD_GATEWAY
+                    )
+            );
+        }
+
+        return npgApiKeyConfiguration.getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, data.pspId())
+                .fold(
+                        Mono::error,
+                        apiKey -> npgClient.confirmPayment(
+                                UUID.fromString(correlationId),
+                                data.sessionId().get(),
+                                grandTotal,
+                                apiKey
+                        ).onErrorMap(
+                                NpgResponseException.class,
+                                exception -> handleNpgResponseException(exception, data, correlationId)
+                        )
+                );
+    }
+
+    private BigDecimal calculateGrandTotal(AuthorizationRequestData data) {
+        long totalAmount = data.paymentNotices().stream()
+                .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value())
+                .sum();
+        return BigDecimal.valueOf(totalAmount + data.fee());
+    }
+
+    private Throwable handleNpgResponseException(
+                                                 NpgResponseException exception,
+                                                 AuthorizationRequestData data,
+                                                 String correlationId
+    ) {
+        return exception.getStatusCode()
+                .map(statusCode -> {
+                    List<String> errorCodes = exception.getErrors();
+                    log.error(
+                            "KO performing NPG confirmPayment: HTTP status code: [{}], errorCodes: {}",
+                            statusCode,
+                            errorCodes,
+                            exception
                     );
-                    if (authorizationData.sessionId().isEmpty()) {
-                        return Mono.error(
-                                new BadGatewayException(
-                                        "Missing sessionId for transactionId: "
-                                                + authorizationData.transactionId(),
-                                        HttpStatus.BAD_GATEWAY
-                                )
+                    if (errorCodes.stream().anyMatch(npgAuthorizationRetryExcludedErrorCodes::contains)) {
+                        return new NpgNotRetryableErrorException(
+                                "Npg received error codes: " + errorCodes + ", retry excluded error codes: "
+                                        + npgAuthorizationRetryExcludedErrorCodes,
+                                statusCode
                         );
                     }
-                    final var pspNpgApiKey = npgApiKeyConfiguration
-                            .getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, authorizationData.pspId());
-                    return pspNpgApiKey.fold(
-                            Mono::error,
-                            apiKey -> npgClient.confirmPayment(
-                                    UUID.fromString(correlationId),
-                                    authorizationData.sessionId().get(),
-                                    grandTotal,
-                                    apiKey
-                            )
-                                    .onErrorMap(
-                                            NpgResponseException.class,
-                                            exception -> exception
-                                                    .getStatusCode()
-                                                    .map(statusCode -> {
-                                                        List<String> errorCodes = exception.getErrors();
-                                                        log.error(
-                                                                "KO performing NPG confirmPayment: HTTP status code: [%s], errorCodes: %s"
-                                                                        .formatted(statusCode, errorCodes),
-                                                                exception
-                                                        );
-                                                        if (errorCodes.stream().anyMatch(
-                                                                npgAuthorizationRetryExcludedErrorCodes::contains
-                                                        )) {
-                                                            return new NpgNotRetryableErrorException(
-                                                                    "Npg received error codes: %s, retry excluded error codes: %s"
-                                                                            .formatted(
-                                                                                    errorCodes,
-                                                                                    npgAuthorizationRetryExcludedErrorCodes
-                                                                            ),
-                                                                    statusCode
-                                                            );
-                                                        }
-                                                        if (statusCode.is4xxClientError()) {
-                                                            return new NpgNotRetryableErrorException(
-                                                                    "Npg 4xx error for transactionId: [%s], correlationId: [%s]"
-                                                                            .formatted(
-                                                                                    authorizationData.transactionId()
-                                                                                            .value(),
-                                                                                    correlationId
-                                                                            ),
-                                                                    statusCode
-                                                            );
-                                                        } else if (statusCode.is5xxServerError()) {
-                                                            return new BadGatewayException(
-                                                                    "NPG internal server error response received",
-                                                                    statusCode
-                                                            );
-                                                        } else {
-                                                            return new BadGatewayException(
-                                                                    "Received NPG error response with unmanaged HTTP response status code",
-                                                                    statusCode
-                                                            );
-                                                        }
-                                                    })
-                                                    .orElse(
-                                                            new BadGatewayException(
-                                                                    "Received NPG error response with unknown HTTP response status code",
-                                                                    null
-                                                            )
-                                                    )
-                                    )
-                    );
-                });
+                    if (statusCode.is4xxClientError()) {
+                        return new NpgNotRetryableErrorException(
+                                "Npg 4xx error for transactionId: [" + data.transactionId().value()
+                                        + "], correlationId: [" + correlationId + "]",
+                                statusCode
+                        );
+                    } else if (statusCode.is5xxServerError()) {
+                        return new BadGatewayException("NPG internal server error response received", statusCode);
+                    } else {
+                        return new BadGatewayException(
+                                "Received NPG error response with unmanaged HTTP response status code",
+                                statusCode
+                        );
+                    }
+                })
+                .orElse(
+                        new BadGatewayException(
+                                "Received NPG error response with unknown HTTP response status code",
+                                null
+                        )
+                );
+    }
+
+    private Mono<String> generateJwtToken(
+                                          TransactionId transactionId,
+                                          String paymentInstrumentId,
+                                          UUID userId,
+                                          Integer validityTime,
+                                          String audience
+    ) {
+
+        return Mono.just(
+                userId == null ? Map.of(
+                        JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                        transactionId.value(),
+                        JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
+                        paymentInstrumentId
+                )
+                        : Map.of(
+                                JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                                transactionId.value(),
+                                JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
+                                paymentInstrumentId,
+                                JwtIssuerClient.USER_ID_CLAIM,
+                                userId.toString()
+                        )
+        ).flatMap(
+                claimsMap -> jwtTokenIssuerClient.createJWTToken(
+                        new CreateTokenRequestDto()
+                                .duration(validityTime)
+                                .audience(audience)
+                                .privateClaims(claimsMap)
+                )
+        ).doOnError(
+                c -> Mono.error(
+                        new JwtIssuerClientException(
+                                "Error while generating jwt token for webview",
+                                c
+                        )
+                )
+        )
+                .map(CreateTokenResponseDto::getToken);
     }
 
     /**
@@ -599,22 +466,17 @@ public class PaymentGatewayClient {
                                                                         RedirectUrlRequestDto.TouchpointEnum touchpoint,
                                                                         UUID userId
     ) {
-        return new JwtTokenUtils()
-                .generateToken(
-                        ecommerceSigningKey,
-                        jwtEcommerceValidityTimeInSeconds,
-                        new Claims(
-                                authorizationData.transactionId(),
-                                null,
-                                authorizationData.paymentInstrumentId(),
-                                userId
-                        )
-                ).fold(
-                        Mono::error,
+        return generateJwtToken(
+                authorizationData.transactionId(),
+                authorizationData.paymentInstrumentId(),
+                userId,
+                jwtEcommerceValidityTimeInSeconds,
+                JwtIssuerClient.ECOMMERCE_AUDIENCE
+        )
+                .flatMap(
                         outcomeJwtToken -> {
 
-                            RedirectPaymentMethodId idPaymentMethod = RedirectPaymentMethodId
-                                    .fromPaymentTypeCode(authorizationData.paymentTypeCode());
+                            String paymentTypeCode = authorizationData.paymentTypeCode();
 
                             /*
                              * `paName` is shown to users on the payment gateway redirect page. If there is
@@ -660,10 +522,10 @@ public class PaymentGatewayClient {
                                     )
                                     .touchpoint(touchpoint)
                                     .paymentMethod(
-                                            redirectMethodsDescriptions.get(idPaymentMethod)
+                                            redirectPaymentTypeCodeDescription.getOrDefault(paymentTypeCode, null)
                                     )
-                                    .idPaymentMethod(idPaymentMethod.toString())
-                                    .paName(paName);// optional
+                                    .idPaymentMethod(paymentTypeCode)
+                                    .paName(shortenRedirectPaName(paName));// optional
                             Either<RedirectConfigurationException, URI> pspConfiguredUrl = redirectKeysConfig
                                     .getRedirectUrlForPsp(
                                             touchpoint.name(),
@@ -683,7 +545,7 @@ public class PaymentGatewayClient {
                                                     NodeForwarderClientException.class,
                                                     exception -> {
                                                         String pspId = authorizationData.pspId();
-                                                        Optional<HttpStatus> responseHttpStatus = Optional
+                                                        Optional<HttpStatusCode> responseHttpStatus = Optional
                                                                 .ofNullable(exception.getCause())
                                                                 .filter(WebClientResponseException.class::isInstance)
                                                                 .map(
@@ -699,7 +561,8 @@ public class PaymentGatewayClient {
                                                                 exception
                                                         );
                                                         if (responseHttpStatus.isPresent()) {
-                                                            HttpStatus httpStatus = responseHttpStatus.get();
+                                                            HttpStatus httpStatus = HttpStatus
+                                                                    .valueOf(responseHttpStatus.get().value());
                                                             if (httpStatus.is4xxClientError()) {
                                                                 return new AlreadyProcessedException(
                                                                         authorizationData.transactionId()
@@ -733,6 +596,14 @@ public class PaymentGatewayClient {
 
     }
 
+    private String shortenRedirectPaName(@Nullable String paName) {
+        if (paName == null || paName.length() <= 70) {
+            return paName;
+        } else {
+            return paName.substring(0, 67) + "...";
+        }
+    }
+
     private String encodeMdcFields(AuthorizationRequestData authorizationData) {
         String mdcData;
         try {
@@ -751,41 +622,46 @@ public class PaymentGatewayClient {
                                                                UUID userId
     ) {
         return uniqueIdUtils.generateUniqueId()
+                .map(orderId -> {
+                    Map<String, String> claimsMap = new HashMap<>();
+                    claimsMap.put(JwtIssuerClient.ORDER_ID_CLAIM, orderId);
+                    claimsMap.put(
+                            JwtIssuerClient.TRANSACTION_ID_CLAIM,
+                            authorizationRequestData.transactionId().value()
+                    );
+                    claimsMap
+                            .put(
+                                    JwtIssuerClient.PAYMENT_METHOD_ID_CLAIM,
+                                    authorizationRequestData.paymentInstrumentId()
+                            );
+                    if (userId != null) {
+                        claimsMap.put(JwtIssuerClient.USER_ID_CLAIM, userId.toString());
+                    }
+                    return claimsMap;
+                })
                 .flatMap(
-                        orderId -> new JwtTokenUtils()
-                                .generateToken(
-                                        npgNotificationSigningKey,
-                                        npgJwtKeyValidityTime,
-                                        new Claims(
-                                                authorizationRequestData.transactionId(),
-                                                orderId,
-                                                authorizationRequestData.paymentInstrumentId(),
-                                                userId
-                                        )
-                                ).fold(
-                                        Mono::error,
-                                        notificationToken -> new JwtTokenUtils()
-                                                .generateToken(
-                                                        ecommerceSigningKey,
-                                                        jwtEcommerceValidityTimeInSeconds,
-                                                        new Claims(
-                                                                authorizationRequestData.transactionId(),
-                                                                orderId,
-                                                                authorizationRequestData.paymentInstrumentId(),
-                                                                userId
-                                                        )
-                                                ).fold(
-                                                        Mono::error,
-                                                        outcomeToken -> Mono.just(
-                                                                new NpgBuildData(
-                                                                        orderId,
-                                                                        notificationToken,
-                                                                        outcomeToken
-                                                                )
-                                                        )
-                                                )
+                        claims -> jwtTokenIssuerClient
+                                .createJWTToken(
+                                        new CreateTokenRequestDto().privateClaims(claims)
+                                                .audience(JwtIssuerClient.NPG_AUDIENCE)
+                                                .duration(npgJwtKeyValidityTime)
+                                ).doOnError(Mono::error)
+                                .map(response -> Tuples.of(claims, response))
+                )
+                .flatMap(
+                        response -> jwtTokenIssuerClient
+                                .createJWTToken(
+                                        new CreateTokenRequestDto().privateClaims(response.getT1())
+                                                .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
+                                                .duration(jwtEcommerceValidityTimeInSeconds)
                                 )
-
+                                .doOnError(Mono::error).map(
+                                        res -> new NpgBuildData(
+                                                response.getT1().get(JwtIssuerClient.ORDER_ID_CLAIM),
+                                                response.getT2().getToken(),
+                                                res.getToken()
+                                        )
+                                )
                 );
     }
 
@@ -794,12 +670,18 @@ public class PaymentGatewayClient {
                                    TransactionId transactionId,
                                    String sessionToken
     ) {
+        final var touchPoint = switch (ClientId.valueOf(clientId)) {
+            case IO -> ClientId.IO;
+            default -> ClientId.CHECKOUT;
+        };
         return UriComponentsBuilder
                 .fromUriString(npgSessionUrlConfig.basePath().concat(npgSessionUrlConfig.outcomeSuffix()))
+                // append query param to prevent caching
+                .queryParam("t", Instant.now().toEpochMilli())
                 .build(
                         Map.of(
                                 "clientId",
-                                clientId,
+                                touchPoint.toString(),
                                 "transactionId",
                                 transactionId.value(),
                                 "sessionToken",

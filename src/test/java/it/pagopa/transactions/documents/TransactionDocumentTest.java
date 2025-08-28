@@ -3,7 +3,8 @@ package it.pagopa.transactions.documents;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.v1.*;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -58,6 +59,7 @@ class TransactionDocumentTest {
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
                                 false,
+                                null,
                                 null
                         )
                 ),
@@ -81,6 +83,7 @@ class TransactionDocumentTest {
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
                                 false,
+                                null,
                                 null
                         )
                 ),
@@ -105,6 +108,7 @@ class TransactionDocumentTest {
                                 "",
                                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
                                 false,
+                                null,
                                 null
                         )
                 ),
@@ -124,6 +128,7 @@ class TransactionDocumentTest {
                 null,
                 List.of(new PaymentTransferInformation(TEST_PAFISCALCODE, false, TEST_AMOUNT, null)),
                 false,
+                null,
                 null
         );
         differentTransaction.setPaymentNotices(List.of(paymentNotice));
@@ -160,7 +165,7 @@ class TransactionDocumentTest {
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 List.of(
-                        new it.pagopa.ecommerce.commons.domain.PaymentNotice(
+                        new it.pagopa.ecommerce.commons.domain.v1.PaymentNotice(
                                 paymentToken,
                                 rptId,
                                 amount,
@@ -168,7 +173,8 @@ class TransactionDocumentTest {
                                 nullPaymentContextCode,
                                 List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, amount.value(), null)),
                                 false,
-                                new CompanyName(null)
+                                new CompanyName(null),
+                                null
                         )
                 ),
                 email,

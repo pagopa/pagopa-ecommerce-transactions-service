@@ -1,10 +1,11 @@
 package it.pagopa.transactions.utils;
 
 import io.opentelemetry.api.common.Attributes;
-import it.pagopa.ecommerce.commons.domain.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.PaymentTransferInfo;
-import it.pagopa.ecommerce.commons.domain.RptId;
-import it.pagopa.ecommerce.commons.repositories.PaymentRequestInfo;
+import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentTransferInfo;
+import it.pagopa.ecommerce.commons.domain.v2.RptId;
+import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.model.*;
@@ -23,7 +24,9 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -65,7 +68,43 @@ public class NodoOperations {
                                                            String transactionId,
                                                            Integer paymentTokenTimeout,
                                                            String idCart,
-                                                           String dueDate
+                                                           String dueDate,
+                                                           Transaction.ClientId clientId
+    ) {
+        return activatePaymentRequest(
+                rptId,
+                idempotencyKey,
+                amount,
+                transactionId,
+                paymentTokenTimeout,
+                idCart,
+                dueDate
+        )
+                .flatMap(paymentRequestInfo -> {
+                    if (clientId == Transaction.ClientId.WISP_REDIRECT
+                            && paymentRequestInfo.creditorReferenceId() == null) {
+                        return Mono.error(
+                                new InvalidNodoResponseException(
+                                        String.format(
+                                                "Mandatory creditorReferenceId for client %s is missing",
+                                                clientId.name()
+                                        )
+                                )
+                        );
+                    } else {
+                        return Mono.just(paymentRequestInfo);
+                    }
+                });
+    }
+
+    private Mono<PaymentRequestInfo> activatePaymentRequest(
+                                                            RptId rptId,
+                                                            IdempotencyKey idempotencyKey,
+                                                            Integer amount,
+                                                            String transactionId,
+                                                            Integer paymentTokenTimeout,
+                                                            String idCart,
+                                                            String dueDate
     ) {
 
         final BigDecimal amountAsBigDecimal = BigDecimal.valueOf(amount.doubleValue() / 100)
@@ -106,7 +145,10 @@ public class NodoOperations {
         // TODO Maybe here more values (all optional) can be passed such as Touchpoint
         // and PaymentMethod
         return nodeForPspClient
-                .activatePaymentNoticeV2(objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request))
+                .activatePaymentNoticeV2(
+                        objectFactoryNodeForPsp.createActivatePaymentNoticeV2Request(request),
+                        transactionId
+                )
                 .flatMap(
                         activatePaymentNoticeV2Response -> {
                             String faultCode = Optional.ofNullable(activatePaymentNoticeV2Response.getFault())
@@ -154,16 +196,13 @@ public class NodoOperations {
                                 response.getPaymentToken(),
                                 ZonedDateTime.now().toString(),
                                 new IdempotencyKey(idempotencyKey),
-                                response.getTransferList().getTransfer().stream()
-                                        .map(
-                                                transfer -> new PaymentTransferInfo(
-                                                        transfer.getFiscalCodePA(),
-                                                        transfer.getRichiestaMarcaDaBollo() != null,
-                                                        EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
-                                                        transfer.getTransferCategory()
-                                                )
-                                        ).toList(),
-                                isAllCCP(response, allCCPOnTransferIbanEnabled)
+                                getPaymentTransferInfoList(
+                                        response.getTransferList().getTransfer(),
+                                        response.getMetadata(),
+                                        response.getFiscalCodePA()
+                                ),
+                                isAllCCP(response, allCCPOnTransferIbanEnabled),
+                                response.getCreditorReferenceId()
                         )
                 );
     }
@@ -221,5 +260,71 @@ public class NodoOperations {
 
     public String getEcommerceFiscalCode() {
         return nodoConfig.nodoConnectionString().getIdBrokerPSP();
+    }
+
+    /**
+     * Retrieves a list of payment transfer information based on the provided
+     * transfer data and metadata.
+     *
+     * <p>
+     * This method processes a list of transfer objects and associated metadata to
+     * generate a corresponding list of payment transfer information. If the
+     * metadata contains a convention specifying additional transfers, these will be
+     * included in the resulting list (for more details see CHK-3525).
+     * </p>
+     *
+     * @param transferPSPV2List a list of {@link CtTransferPSPV2} objects containing
+     *                          the payment transfer data to be processed.
+     * @param metadata          an instance of {@link CtMetadata} containing
+     *                          relevant metadata for processing the transfers,
+     *                          which may include conventions for adding additional
+     *                          transfers.
+     * @param primaryFiscalCode primary paFiscalCode for transfer related to
+     *                          convention
+     * @return a list of {@link PaymentTransferInfo} objects, each representing
+     *         detailed information about a payment transfer, including any
+     *         additional transfers specified by the metadata.
+     *
+     * @throws IllegalArgumentException if the input parameters are null or invalid.
+     */
+    private List<PaymentTransferInfo> getPaymentTransferInfoList(
+                                                                 List<CtTransferPSPV2> transferPSPV2List,
+                                                                 CtMetadata metadata,
+                                                                 String primaryFiscalCode
+    ) {
+        List<PaymentTransferInfo> baseTransferList = transferPSPV2List.stream()
+                .map(
+                        transfer -> new PaymentTransferInfo(
+                                transfer.getFiscalCodePA(),
+                                transfer.getRichiestaMarcaDaBollo() != null,
+                                EuroUtils.euroToEuroCents(transfer.getTransferAmount()),
+                                transfer.getTransferCategory()
+                        )
+                )
+                .toList();
+
+        Optional<String> conventionValue = Optional.ofNullable(metadata)
+                .map(CtMetadata::getMapEntry)
+                .orElse(List.of())
+                .stream()
+                .filter(entry -> "codiceConvenzione".equals(entry.getKey()))
+                .map(CtMapEntry::getValue)
+                .findFirst();
+
+        return conventionValue
+                .map(
+                        value -> Stream.concat(
+                                baseTransferList.stream(),
+                                Stream.of(
+                                        new PaymentTransferInfo(
+                                                primaryFiscalCode,
+                                                false,
+                                                0,
+                                                value
+                                        )
+                                )
+                        ).toList()
+                )
+                .orElse(baseTransferList);
     }
 }

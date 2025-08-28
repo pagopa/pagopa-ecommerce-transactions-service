@@ -26,32 +26,8 @@ parameters:
     values:
       - False
       - True
-  - name: 'RELEASE_SEMVER'
-    displayName: 'When packing a release, define the version bump to apply (release is done automatically when deploying on UAT and skipped on DEV) '
-    type: string
-    values:
-      - major
-      - minor
-      - patch
-      - none
-    default: patch
-  - name: 'RELEASE_CHART_SEMVER'
-    displayName: 'When upgrading helm chart, define the version bump to apply'
-    type: string
-    values:
-      - major
-      - minor
-      - patch
-    default: patch
   - name: "FORCE_REPLACE_DOCKER_IMAGE"
     displayName: "Force the existing docker image to be replaced (latest tag)"
-    type: boolean
-    default: False
-    values:
-      - False
-      - True
-  - name: "SKIP_RELEASE"
-    displayName: "Skip release"
     type: boolean
     default: False
     values:
@@ -126,19 +102,10 @@ stages:
                     script: |
                       helm repo add microservice-chart https://pagopa.github.io/aks-microservice-chart-blueprint
                       helm dep build helm
-                - task: Kubernetes@1
-                  displayName: (workaround) Delete old beta deployment
-                  continueOnError: true
-                  inputs:
-                    kubernetesServiceEndpoint: $(DEV_KUBERNETES_SERVICE_CONN)
-                    kubernetesCluster: $(kubernetesCluster)
-                    namespace: ecommerce
-                    command: delete
-                    arguments: deployment beta-pagopaecommercetransactionsservice-microservice-chart
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
                     DO_DEPLOY: true
-                    DO_BLUE_GREEN_DEPLOY: true
+                    DO_BLUE_GREEN_DEPLOY: false
                     ENV: 'DEV'
                     KUBERNETES_SERVICE_CONN: $(DEV_KUBERNETES_SERVICE_CONN)
                     NAMESPACE: ecommerce
@@ -234,7 +201,7 @@ stages:
                     ENV: 'UAT'
                     KUBERNETES_SERVICE_CONN: $(UAT_KUBERNETES_SERVICE_CONN)
                     NAMESPACE: ecommerce
-                    APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
+                    APP_NAME: beta-$(K8S_IMAGE_REPOSITORY_NAME)
                     VALUE_FILE: "helm/values-uat.yaml"
                     GREEN_VERSION: $(green_app_version)
                     BLUE_VERSION: $(Build.SourceVersion)
@@ -248,7 +215,7 @@ stages:
           - checkout: pagopaCheckoutTests
           - template: azure-templates/api-tests.yml
             parameters:
-              COLLECTION_TEST_FILE: "api-tests/checkout-tests/pgs/checkout-for-ecommerce-api.tests.json"
+              COLLECTION_TEST_FILE: "api-tests/checkout-tests/npg/checkout-for-ecommerce-api.tests.json"
               ENV_FILE: "api-tests/uat.transactions.blue.envs.json"
               TEST_FILE_PREFIX: "blue-uat"
 
@@ -270,25 +237,23 @@ stages:
               instructions: "Please approve or reject UAT blue green promotions for $(commitUrl)"
               onTimeout: 'reject'
 
-  - stage: Release
-    ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], True) }}:
-      dependsOn: Build_release_candidate
-    ${{ if eq(parameters['UAT_SKIP_BLUE_DEPLOYMENT'], False) }}:
-      dependsOn: Bluegreen_WaitForApproval
-      condition: succeeded()
+
+  - stage: "Get_Release_Version"
+    displayName: "Get the app version to deploy"
+    dependsOn: Build_release_candidate
+    condition: in(dependencies.Build_release_candidate.result, 'Succeeded', 'Skipped')
     jobs:
-      - job: make_release
-        displayName: Make github release
+      - job: "get_version"
         steps:
           - template: azure-templates/chart-current-version.yml
 
   - stage: "tag_docker_release"
     displayName: 'Tag Docker image to be release'
-    dependsOn: Release
+    dependsOn: Get_Release_Version
     condition:
       and(
       succeeded(),
-      ne('${{parameters.RELEASE_SEMVER}}', 'none')
+      eq(${{parameters.SKIP_BUILD}}, False)
       )
     variables:
       app_version: perf
@@ -312,7 +277,7 @@ stages:
 
   - stage: "Deploy_UAT_Green"
     displayName: 'UAT green deployment'
-    dependsOn: [tag_docker_release,Release]
+    dependsOn: [ tag_docker_release,Get_Release_Version ]
     condition: |
       and(
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),

@@ -4,7 +4,8 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.*;
+import it.pagopa.ecommerce.commons.domain.Confidential;
+import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -12,6 +13,7 @@ import it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler;
 import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.WispDeprecation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -79,6 +81,7 @@ public class TransactionsService {
                                         null,
                                         null,
                                         false,
+                                        null,
                                         null
                                 )
                         ).toList()
@@ -134,6 +137,12 @@ public class TransactionsService {
                                                         .rptId(paymentNotice.rptId().value())
                                                         .paymentToken(paymentNotice.paymentToken().value())
                                                         .isAllCCP(paymentNotice.isAllCCP())
+                                                        .creditorReferenceId(
+                                                                WispDeprecation.extractCreditorReferenceId(
+                                                                        transaction,
+                                                                        paymentNotice
+                                                                ).orElse(null)
+                                                        )
                                                         .transferList(
                                                                 paymentNotice.transferList().stream().map(
                                                                         paymentTransferInfo -> new TransferDto()
