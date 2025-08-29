@@ -112,7 +112,7 @@ stages:
           - task: Maven@4
             inputs:
               mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m -e $(MAVEN_OPTS)'
+              mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '21'
               jdkArchitectureOption: 'x64'
