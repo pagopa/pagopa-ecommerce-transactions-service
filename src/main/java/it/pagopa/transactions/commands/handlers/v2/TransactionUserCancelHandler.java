@@ -2,12 +2,14 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +50,13 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
         return transaction
                 .filter(tx -> tx.getStatus().equals(TransactionStatusDto.ACTIVATED))
                 .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getData())))
+                .cast(TransactionActivated.class)
+                .filter(
+                        tx -> ((command.getXUserId() == null && tx.getTransactionActivatedData().getUserId() == null) ||
+                                (command.getXUserId() != null && command.getXUserId().toString()
+                                        .equals(tx.getTransactionActivatedData().getUserId())))
+                )
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(command.getData().value())))
                 .flatMap(
                         t -> {
                             it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent userCanceledEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent(

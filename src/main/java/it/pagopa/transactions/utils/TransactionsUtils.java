@@ -3,6 +3,7 @@ package it.pagopa.transactions.utils;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.Email;
@@ -458,11 +459,27 @@ public class TransactionsUtils {
                 ).sum();
     }
 
+    public Integer getTransactionTotalAmountFromEvent(TransactionActivatedEvent transactionActivatedEvent) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
+        return paymentNotices.stream()
+                .mapToInt(
+                        PaymentNotice::getAmount
+                ).sum();
+    }
+
     public Boolean isAllCcp(
                             BaseTransactionView baseTransactionView,
                             int idx
     ) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+        return paymentNotices.get(idx).isAllCCP();
+    }
+
+    public Boolean isAllCcp(
+                            TransactionActivatedEvent transactionActivatedEvent,
+                            int idx
+    ) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
         return paymentNotices.get(idx).isAllCCP();
     }
 
@@ -474,9 +491,26 @@ public class TransactionsUtils {
         return paymentNotices.get(idx).getRptId();
     }
 
+    public String getRptId(
+                           TransactionActivatedEvent transactionActivatedEvent,
+                           int idx
+    ) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
+        return paymentNotices.get(idx).getRptId();
+    }
+
     public List<String> getRptIds(BaseTransactionView baseTransactionView) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.stream().map(PaymentNotice::getRptId).toList();
+    }
+
+    public List<String> getRptIds(TransactionActivatedEvent transactionActivatedEvent) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
+        return paymentNotices.stream().map(PaymentNotice::getRptId).toList();
+    }
+
+    public List<PaymentNotice> getPaymentNotices(TransactionActivatedEvent transactionActivatedEvent) {
+        return transactionActivatedEvent.getData().getPaymentNotices();
     }
 
     public List<PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
@@ -497,6 +531,10 @@ public class TransactionsUtils {
         };
     }
 
+    public String getEffectiveClientId(TransactionActivatedEvent transaction) {
+        return transaction.getData().getClientId().getEffectiveClient().toString();
+    }
+
     public String getClientId(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
@@ -506,6 +544,10 @@ public class TransactionsUtils {
         };
     }
 
+    public String getClientId(TransactionActivatedEvent transaction) {
+        return transaction.getData().getClientId().toString();
+    }
+
     public Confidential<Email> getEmail(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> convertEmailFromV1ToV2(t.getEmail());
@@ -513,6 +555,10 @@ public class TransactionsUtils {
             default ->
                     throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
+    }
+
+    public Confidential<Email> getEmail(TransactionActivatedEvent transactionActivatedEvent) {
+        return transactionActivatedEvent.getData().getEmail();
     }
 
     private Confidential<Email> convertEmailFromV1ToV2(
