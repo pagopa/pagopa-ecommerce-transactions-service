@@ -108,6 +108,7 @@ These are all environment variables needed by the application:
 | SECURITY_API_KEYS_PRIMARY                       |      | Secured api primary key                                                                                                                                                         | string  |         |
 | SECURITY_API_KEYS_SECONDARY                     |      | Secured api secondary key                                                                                                                                                       | string  |         |
 | TRANSACTIONSVIEW_UPDATE_ENABLED                 |      | Feature flag to enable/disable view writing                                                                                                                                     | boolean | true    |
+| GITHUB_TOKEN                                    |      | GitHub Personal Access Token with packages:read permission for accessing pagopa-ecommerce-commons from GitHub Packages                                                          | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
@@ -116,6 +117,18 @@ see [docs](https://www.mongodb.com/docs/drivers/java/sync/v4.3/fundamentals/conn
 
 ## Run the application with `Docker`
 
+### Prerequisites
+Set up GitHub authentication for packages:
+```sh
+export GITHUB_TOKEN=your_github_token_with_packages_read_permission
+```
+
+### Build Docker Image
+```sh
+docker build --secret id=GITHUB_TOKEN,env=GITHUB_TOKEN -t pagopa-ecommerce-transactions-service .
+```
+
+### Run with Docker Compose
 Create your environment typing :
 
 ```sh
@@ -170,31 +183,19 @@ Create your environment:
 export $(grep -v '^#' .env.local | xargs)
 ```
 
+Set up GitHub authentication for packages:
+
+```sh
+export GITHUB_TOKEN=your_github_token_with_packages_read_permission
+```
+
 Then from current project directory run :
 
 ```sh
-mvn validate # --> used to perform ecommerce-commons library checkout from git repo and install throught maven plugin
 mvn spring-boot:run
 ```
 
-For testing purpose the commons reference can be change from a specific release to a branch by changing the following
-configurations tags:
-
-FROM:
-
-```sh
-<scmVersionType>tag</scmVersionType>
-<scmVersion>${pagopa-ecommerce-commons.version}</scmVersion>
-```
-
-TO:
-
-```sh
-<scmVersionType>branch</scmVersionType>
-<scmVersion>name-of-a-specific-branch-to-link</scmVersion>
-```
-
-updating also the commons library version to the one of the specific branch
+**Note:** The application now uses pagopa-ecommerce-commons library directly from GitHub Packages. Make sure your GitHub token has `packages:read` permission for the `pagopa/pagopa-ecommerce-commons` repository.
 
 ## Code formatting
 
