@@ -112,13 +112,13 @@ stages:
           - task: Maven@4
             inputs:
               mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+              mavenOptions: '-Xmx3072m $(MAVEN_OPTS) -X'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '21'
               jdkArchitectureOption: 'x64'
               publishJUnitResults: false
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
-              goals: 'clean verify'
+              goals: 'clean verify -U'
               sonarQubeRunAnalysis: true
             env:
               GITHUB_TOKEN: $(GITHUB_TOKEN)
