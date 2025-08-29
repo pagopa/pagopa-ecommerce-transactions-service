@@ -104,7 +104,7 @@ stages:
               jdkArchitectureOption: 'x64'
               publishJUnitResults: false
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
-              goals: 'clean validate'
+              goals: 'clean validate -U'
               sonarQubeRunAnalysis: false
             env:
               GITHUB_TOKEN: $(GITHUB_TOKEN)
