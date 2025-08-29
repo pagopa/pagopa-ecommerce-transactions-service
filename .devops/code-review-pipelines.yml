@@ -99,6 +99,7 @@ stages:
             inputs:
               mavenPomFile: 'pom.xml'
               mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+              options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '21'
               jdkArchitectureOption: 'x64'
