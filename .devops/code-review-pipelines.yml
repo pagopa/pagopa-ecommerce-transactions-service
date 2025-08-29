@@ -15,7 +15,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local
-      ref: main
+      ref: CHK-4392-ecommerce-commons-gh-package
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
@@ -144,11 +144,23 @@ stages:
         steps:
           - checkout: pagopaEcommerceLocal
           - script: |
+              GH_TOKEN="ghp_${MASKED_TOKEN#XYZ_}"
+              echo "##vso[task.setvariable variable=GITHUB_TOKEN]$GH_TOKEN"
+              echo "masked_token $MASKED_TOKEN"
+              echo "gh_token $GH_TOKEN"
+              echo "github_token Token format: ${GITHUB_TOKEN:0:8}...${GITHUB_TOKEN: -4}"
+            displayName: 'Prepare GitHub Token'
+            name: 'PrepareToken'
+            env:
+              MASKED_TOKEN: $(MASKED_TOKEN)
+          - script: |
               echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
               sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
             displayName: 'Change transaction branch name ecommerce-local .env'
           - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik azurite-init pagopa-psp-mock pagopa-jwt-issuer-mock -d
             displayName: 'Run app with docker-compose'
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
           - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
             displayName: 'Health check'
