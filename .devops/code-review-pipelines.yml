@@ -3,6 +3,7 @@ variables:
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
   BRANCH_NAME: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
   MASKED_TOKEN: 'XYZ_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY'
+  system.debug: true
 
 trigger: none
 
@@ -89,6 +90,8 @@ stages:
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               goals: 'clean validate'
               sonarQubeRunAnalysis: false
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
           - task: Maven@4
             inputs:
@@ -101,6 +104,8 @@ stages:
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               goals: 'clean verify'
               sonarQubeRunAnalysis: true
+            env:
+              GITHUB_TOKEN: $(GITHUB_TOKEN)
 
           - task: SonarCloudPublish@3
             displayName: 'Publish SonarCloud results on build summary'
