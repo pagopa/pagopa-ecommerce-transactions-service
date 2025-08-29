@@ -48,24 +48,35 @@ stages:
               docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite &
             displayName: Run azurite to test Service - Storage integration
 
-#          - script: |
-#              GITHUB_TOKEN="ghp_${MASKED_TOKEN#XYZ_}"
-#              echo "##vso[task.setvariable variable=GH_TOKEN;isOutput=true]$GITHUB_TOKEN"
-#              echo "masked_token $MASKED_TOKEN"
-#              echo "github_token $GITHUB_TOKEN"
-#              echo "github_token Token format: ${GITHUB_TOKEN:0:8}...${GITHUB_TOKEN: -4}"
-#            displayName: 'Prepare GitHub Token'
-#            name: 'PrepareToken'
-#            env:
-#              MASKED_TOKEN: $(MASKED_TOKEN)
-#
-#          - script: |
-#              echo "PrepareToken usage"
-#              echo "Final 4 GITHUB_TOKEN chars ${GITHUB_TOKEN: -4}"
-#              echo "First 4 GITHUB_TOKEN chars ${GITHUB_TOKEN:0:4}"
-#            displayName: 'Verify GitHub Token before Maven'
-#            env:
-#              GITHUB_TOKEN: $(PrepareToken.GH_TOKEN)
+          - script: |
+              GH_TOKEN="ghp_${MASKED_TOKEN#XYZ_}"
+              echo "##vso[task.setvariable variable=GITHUB_TOKEN]$GH_TOKEN"
+              echo "masked_token $MASKED_TOKEN"
+              echo "gh_token $GH_TOKEN"
+              echo "github_token Token format: ${GITHUB_TOKEN:0:8}...${GITHUB_TOKEN: -4}"
+            displayName: 'Prepare GitHub Token'
+            name: 'PrepareToken'
+            env:
+              MASKED_TOKEN: $(MASKED_TOKEN)
+
+          - script: |
+              echo "github_token $GITHUB_TOKEN"
+            displayName: 'Print temp Token 1'
+
+          - script: |
+              echo "github_token $TEMP_1"
+            displayName: 'Print temp Token 2'
+            env:
+              TEMP_1: $(GITHUB_TOKEN)
+
+          - script: |
+              echo "github_token $GITHUB_TOKEN"
+            displayName: 'Print temp Token 3'
+
+          - script: |
+              echo "github_token $GITHUB_TOKEN"
+            displayName: 'Print temp Token 4'
+            dependsOn: 'PrepareToken'
 
           - task: Maven@4
             inputs:
@@ -78,8 +89,6 @@ stages:
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               goals: 'clean validate'
               sonarQubeRunAnalysis: false
-            env:
-              GITHUB_TOKEN: "ghp_$(MASKED_TOKEN.substring(4))"
 
           - task: Maven@4
             inputs:
@@ -92,8 +101,6 @@ stages:
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               goals: 'clean verify'
               sonarQubeRunAnalysis: true
-            env:
-              GITHUB_TOKEN: "ghp_$(MASKED_TOKEN.substring(4))"
 
           - task: SonarCloudPublish@3
             displayName: 'Publish SonarCloud results on build summary'
