@@ -71,7 +71,8 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                null
         );
 
         /* PRECONDITION */
@@ -110,7 +111,8 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                null
         );
 
         /* PRECONDITION */
@@ -134,7 +136,8 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                null
         );
 
         /* PRECONDITION */
@@ -165,7 +168,8 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                null
         );
 
         /* PRECONDITION */
@@ -186,7 +190,8 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                null
         );
 
         /* PRECONDITION */
