@@ -73,10 +73,10 @@ stages:
               echo "github_token $GITHUB_TOKEN"
             displayName: 'Print temp Token 3'
 
-          - script: |
-              echo "github_token $GITHUB_TOKEN"
-            displayName: 'Print temp Token 4'
-            dependsOn: 'PrepareToken'
+#          - script: |
+#              echo "github_token $GITHUB_TOKEN"
+#            displayName: 'Print temp Token 4'
+#            dependsOn: 'PrepareToken'
 
           - task: Maven@4
             inputs:
