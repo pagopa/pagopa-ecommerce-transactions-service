@@ -2,9 +2,6 @@ variables:
   MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
   BRANCH_NAME: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
-  MASKED_TOKEN: 'XYZ_yeF8JOQkBz9ESSijdziSBFMOIQmL1Y3WZWoY'
-  system.debug: true
-
 trigger: none
 
 pool:
@@ -20,169 +17,135 @@ resources:
 
 stages:
   - stage: BuildEndUnitTest
-    jobs:
-      - job: make_buildEndUnitTest
+    jobs: 
+      - job: make_buildEndUnitTest 
         steps:
-          - task: Cache@2
-            inputs:
-              key: 'maven | "$(Agent.OS)" | pom.xml'
-              restoreKeys: |
-                maven | "$(Agent.OS)"
-                maven
-              path: $(MAVEN_CACHE_FOLDER)
-            displayName: Cache Maven local repo
+        - task: Cache@2
+          inputs:
+            key: 'maven | "$(Agent.OS)" | pom.xml'
+            restoreKeys: |
+              maven | "$(Agent.OS)"
+              maven
+            path: $(MAVEN_CACHE_FOLDER)
+          displayName: Cache Maven local repo
 
-          - task: SonarCloudPrepare@3
-            displayName: 'Prepare SonarCloud analysis configuration'
-            inputs:
-              SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
-              organization: '$(SONARCLOUD_ORG)'
-              scannerMode: Other
-              extraProperties: |
-                sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
-                sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
-                sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*,**/utils/soap/*,**/mdcutilities/*,**/PagopaEcommerceTransactionsApplication.java
-                sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
-                sonar.junit.reportPaths=target/surefire-reports/
+        - task: SonarCloudPrepare@3
+          displayName: 'Prepare SonarCloud analysis configuration'
+          inputs:
+            SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
+            organization: '$(SONARCLOUD_ORG)'
+            scannerMode: Other
+            extraProperties: |
+              sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
+              sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
+              sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*,**/utils/soap/*,**/mdcutilities/*,**/PagopaEcommerceTransactionsApplication.java
+              sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
+              sonar.junit.reportPaths=target/surefire-reports/
 
-          - bash: |
+        - bash: |
               docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite &
-            displayName: Run azurite to test Service - Storage integration
+          displayName: Run azurite to test Service - Storage integration
 
-          - script: |
-              GH_TOKEN="ghp_${MASKED_TOKEN#XYZ_}"
-              echo "##vso[task.setvariable variable=GITHUB_TOKEN]$GH_TOKEN"
-              echo "masked_token $MASKED_TOKEN"
-              echo "gh_token $GH_TOKEN"
-              echo "github_token Token format: ${GITHUB_TOKEN:0:8}...${GITHUB_TOKEN: -4}"
-            displayName: 'Prepare GitHub Token'
-            name: 'PrepareToken'
-            env:
-              MASKED_TOKEN: $(MASKED_TOKEN)
+        - task: Bash@3
+          displayName: 'Create Maven settings.xml'
+          inputs:
+            targetType: 'inline'
+            script: |
+              mkdir -p $(Pipeline.Workspace)/.m2
+              cat > $(Pipeline.Workspace)/.m2/settings.xml << EOF
+              <?xml version="1.0" encoding="UTF-8"?>
+              <settings>
+                <servers>
+                  <server>
+                    <id>github</id>
+                    <username>token</username>
+                    <password>${GITHUB_RO_TOKEN}</password>
+                  </server>
+                </servers>
+              </settings>
+              EOF
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
-          - script: |
-              echo "github_token $GITHUB_TOKEN"
-            displayName: 'Print temp Token 1'
+        - task: Maven@4
+          inputs:
+            mavenPomFile: 'pom.xml'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '21'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: false
+            testResultsFiles: '**/surefire-reports/TEST-*.xml'
+            goals: 'clean validate'
+            sonarQubeRunAnalysis: false
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
-          - script: |
-              echo "github_token $TEMP_1"
-            displayName: 'Print temp Token 2'
-            env:
-              TEMP_1: $(GITHUB_TOKEN)
+        - task: Maven@4
+          inputs:
+            mavenPomFile: 'pom.xml'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '21'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: false
+            testResultsFiles: '**/surefire-reports/TEST-*.xml'
+            goals: 'clean verify'
+            sonarQubeRunAnalysis: true
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
-          - script: |
-              echo "github_token $GITHUB_TOKEN"
-            displayName: 'Print temp Token 3'
+        - task: SonarCloudPublish@3
+          displayName: 'Publish SonarCloud results on build summary'
+          inputs:
+            pollingTimeoutSec: '300'
 
-          - task: Bash@3
-            displayName: 'Create Maven settings.xml'
-            inputs:
-              targetType: 'inline'
-              script: |
-                mkdir -p $(Pipeline.Workspace)/.m2
-                cat > $(Pipeline.Workspace)/.m2/settings.xml << EOF
-                <?xml version="1.0" encoding="UTF-8"?>
-                <settings>
-                  <servers>
-                    <server>
-                      <id>github</id>
-                      <username>token</username>
-                      <password>${GITHUB_TOKEN}</password>
-                    </server>
-                  </servers>
-                </settings>
-                EOF
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
-              options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '21'
-              jdkArchitectureOption: 'x64'
-              publishJUnitResults: false
-              testResultsFiles: '**/surefire-reports/TEST-*.xml'
-              goals: 'clean validate -U'
-              sonarQubeRunAnalysis: false
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'pom.xml'
-              mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
-              options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '21'
-              jdkArchitectureOption: 'x64'
-              publishJUnitResults: false
-              testResultsFiles: '**/surefire-reports/TEST-*.xml'
-              goals: 'clean verify -U'
-              sonarQubeRunAnalysis: true
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
-
-          - task: SonarCloudPublish@3
-            displayName: 'Publish SonarCloud results on build summary'
-            inputs:
-              pollingTimeoutSec: '300'
-
-          - task: PublishCodeCoverageResults@2
-            inputs:
-              codeCoverageTool: 'JaCoCo'
-              summaryFileLocation: 'target/site/jacoco/jacoco.xml'
-              reportDirectory: 'target/site/jacoco'
-            displayName: 'Publish Code Coverage on Azure Devops'
+        - task: PublishCodeCoverageResults@2
+          inputs:
+            codeCoverageTool: 'JaCoCo'
+            summaryFileLocation: 'target/site/jacoco/jacoco.xml'
+            reportDirectory: 'target/site/jacoco'
+          displayName: 'Publish Code Coverage on Azure Devops'
 
   - stage: IntegrationTest
     dependsOn: []
-    jobs:
-      - job: make_integration_test
+    jobs: 
+      - job: make_integration_test  
         steps:
-          - checkout: pagopaEcommerceLocal
-          - script: |
-              GH_TOKEN="ghp_${MASKED_TOKEN#XYZ_}"
-              echo "##vso[task.setvariable variable=GITHUB_TOKEN]$GH_TOKEN"
-              echo "masked_token $MASKED_TOKEN"
-              echo "gh_token $GH_TOKEN"
-              echo "github_token Token format: ${GITHUB_TOKEN:0:8}...${GITHUB_TOKEN: -4}"
-            displayName: 'Prepare GitHub Token'
-            name: 'PrepareToken'
-            env:
-              MASKED_TOKEN: $(MASKED_TOKEN)
-          - script: |
-              echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
-              sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
-            displayName: 'Change transaction branch name ecommerce-local .env'
-          - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik azurite-init pagopa-psp-mock pagopa-jwt-issuer-mock -d
-            displayName: 'Run app with docker-compose'
-            env:
-              GITHUB_TOKEN: $(GITHUB_TOKEN)
-          - script: |
+        - checkout: pagopaEcommerceLocal
+        - script: | 
+            echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
+            sed -i "s/^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$/ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)/" .env
+          displayName: 'Change transaction branch name ecommerce-local .env'
+        - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik azurite-init pagopa-psp-mock pagopa-jwt-issuer-mock -d
+          displayName: 'Run app with docker-compose'
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
+        - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
-            displayName: 'Health check'
-          - script: yarn global add newman
-            displayName: 'newman installation'
-          - script: newman run api-tests/transaction-service/npg/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/npg/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/NPG-api-TEST.xml
-            displayName: 'Run api test for NPG integration'
-          - script: newman run api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
-            displayName: 'Run api test for REDIRECT integration'
-            continueOnError: false
-          - task: PublishTestResults@2
-            inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: '**/*-TEST.xml'
-              searchFolder: '$(System.DefaultWorkingDirectory)'
-          - script: |
-              echo "Printing logs for all running containers:"
-              for container in $(docker ps -q); do
-                name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\/\(.*\)/\1/')
-                echo "===== Logs for $name ====="
-                docker logs $container
-                echo "===== End of logs for $name ====="
-              done
-            condition: always()
-            displayName: 'Print Docker container logs'
+          displayName: 'Health check'
+        - script: yarn global add newman
+          displayName: 'newman installation'
+        - script: newman run api-tests/transaction-service/npg/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/npg/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/NPG-api-TEST.xml
+          displayName: 'Run api test for NPG integration'
+        - script: newman run api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
+          displayName: 'Run api test for REDIRECT integration'
+          continueOnError: false
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/*-TEST.xml' 
+            searchFolder: '$(System.DefaultWorkingDirectory)'
+        - script: |
+            echo "Printing logs for all running containers:"
+            for container in $(docker ps -q); do
+              name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\/\(.*\)/\1/')
+              echo "===== Logs for $name ====="
+              docker logs $container
+              echo "===== End of logs for $name ====="
+            done
+          condition: always()
+          displayName: 'Print Docker container logs'
+
