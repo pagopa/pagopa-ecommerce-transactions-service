@@ -52,9 +52,11 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                 .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getData())))
                 .cast(TransactionActivated.class)
                 .filter(
-                        tx -> ((command.getXUserId() == null && tx.getTransactionActivatedData().getUserId() == null) ||
+                        tx -> (
+                                (command.getXUserId() == null && tx.getTransactionActivatedData().getUserId() == null) ||
                                 (command.getXUserId() != null && command.getXUserId().toString()
-                                        .equals(tx.getTransactionActivatedData().getUserId())))
+                                        .equals(tx.getTransactionActivatedData().getUserId()))
+                        )
                 )
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(command.getData().value())))
                 .flatMap(
