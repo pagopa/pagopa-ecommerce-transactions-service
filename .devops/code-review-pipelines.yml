@@ -79,6 +79,7 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean validate -U'
             sonarQubeRunAnalysis: false
+          displayName: 'Maven clean validate'
           env:
             GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
@@ -94,6 +95,7 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean verify -U'
             sonarQubeRunAnalysis: true
+          displayName: 'Maven clean verify'
           env:
             GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
