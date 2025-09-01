@@ -65,6 +65,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode.TRANSACTION_ACTIVATED_EVENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -425,6 +426,15 @@ class TransactionServiceTests {
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
                 ZonedDateTime.now()
         );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+
+        Mockito.when(
+                transactionsEventStoreRepository.findByTransactionIdAndEventCode(
+                        TRANSACTION_ID,
+                        it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode.TRANSACTION_ACTIVATED_EVENT
+                                .toString()
+                )
+        ).thenReturn(Mono.just(transactionActivatedEvent));
 
         /* preconditions */
         CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
@@ -493,9 +503,9 @@ class TransactionServiceTests {
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-        Mockito.when(transactionsUtils.getPaymentNotices(any(BaseTransactionView.class))).thenCallRealMethod();
-        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
-        Mockito.when(transactionsUtils.getRptId(any(BaseTransactionView.class), anyInt())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getPaymentNotices(any(TransactionActivatedEvent.class))).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmountFromEvent(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(TransactionActivatedEvent.class), anyInt())).thenCallRealMethod();
 
         Mockito.when(
                 transactionRequestAuthorizationHandlerV2
@@ -542,8 +552,13 @@ class TransactionServiceTests {
                 .pspId("pspId");
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
-                .thenReturn(Mono.empty());
+        Mockito.when(
+                transactionsEventStoreRepository.findByTransactionIdAndEventCode(
+                        TRANSACTION_ID,
+                        it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode.TRANSACTION_ACTIVATED_EVENT
+                                .toString()
+                )
+        ).thenReturn(Mono.empty());
 
         /* test */
         Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsServiceV1
@@ -897,6 +912,11 @@ class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        transactionActivatedEvent.setTransactionId(transaction.getTransactionId());
+        transactionActivatedEvent.getData().setUserId(transaction.getUserId());
+        transactionActivatedEvent.getData().setPaymentNotices(transaction.getPaymentNotices());
+
         /* preconditions */
         CalculateFeeResponseDto calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
@@ -934,6 +954,14 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
+        Mockito.when(
+                transactionsEventStoreRepository.findByTransactionIdAndEventCode(
+                        TRANSACTION_ID,
+                        it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode.TRANSACTION_ACTIVATED_EVENT
+                                .toString()
+                )
+        ).thenReturn(Mono.just(transactionActivatedEvent));
+
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
@@ -942,9 +970,9 @@ class TransactionServiceTests {
 
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
-        Mockito.when(transactionsUtils.getPaymentNotices(any(BaseTransactionView.class))).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getPaymentNotices(any(TransactionActivatedEvent.class))).thenCallRealMethod();
 
-        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmountFromEvent(any())).thenCallRealMethod();
 
         Mockito.when(transactionRequestAuthorizationHandlerV2.handle(any()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
@@ -1000,8 +1028,16 @@ class TransactionServiceTests {
 
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
-        String transactionId = UUID.randomUUID().toString();
-        when(repository.findById(transactionId)).thenReturn(Mono.empty());
+        String transactionId = UUID.randomUUID().toString().replace("-", "");
+        when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
+        ).thenReturn(Mono.empty());
+        when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
+        ).thenReturn(Mono.empty());
+
         StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
                 .expectError(TransactionNotFoundException.class).verify();
 
@@ -1205,6 +1241,9 @@ class TransactionServiceTests {
         );
         transaction.setClientId(clientId);
 
+        final var transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        transactionActivatedEvent.getData().setClientId(clientId);
+
         /* preconditions */
         final var calculateFeeResponseDto = new CalculateFeeResponseDto()
                 .belowThreshold(true)
@@ -1260,8 +1299,11 @@ class TransactionServiceTests {
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
-                .thenReturn(Mono.just(transaction));
+        Mockito.when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(TRANSACTION_ID, TRANSACTION_ACTIVATED_EVENT.toString())
+        )
+                .thenReturn(Mono.just(transactionActivatedEvent));
 
         Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(any(), any()))
                 .thenReturn(Mono.just(gatewayResponse));
@@ -1281,11 +1323,11 @@ class TransactionServiceTests {
                         )
                 );
 
-        Mockito.when(transactionsUtils.getPaymentNotices(any(BaseTransactionView.class))).thenCallRealMethod();
-        Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
-        Mockito.when(transactionsUtils.getRptId(any(BaseTransactionView.class), anyInt())).thenCallRealMethod();
-        Mockito.when(transactionsUtils.getClientId(any(BaseTransactionView.class))).thenCallRealMethod();
-        Mockito.when(transactionsUtils.getEffectiveClientId(any(BaseTransactionView.class))).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getPaymentNotices(any(TransactionActivatedEvent.class))).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmountFromEvent(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getRptId(any(TransactionActivatedEvent.class), anyInt())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getClientId(any(TransactionActivatedEvent.class))).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getEffectiveClientId(any(TransactionActivatedEvent.class))).thenCallRealMethod();
 
         /* test */
         transactionsServiceV1

@@ -189,9 +189,9 @@ class TransactionUserCancelHandlerTest {
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(
-                        transactionUserCancelQueueClient
-                                .sendMessageWithResponse(any(), any(), durationCaptor.capture())
-                )
+                transactionUserCancelQueueClient
+                        .sendMessageWithResponse(any(), any(), durationCaptor.capture())
+        )
                 .thenReturn(queueSuccessfulResponse());
         /*
          * TEST EXECUTION
@@ -260,9 +260,9 @@ class TransactionUserCancelHandlerTest {
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(
-                        transactionUserCancelQueueClient
-                                .sendMessageWithResponse(any(), any(), durationCaptor.capture())
-                )
+                transactionUserCancelQueueClient
+                        .sendMessageWithResponse(any(), any(), durationCaptor.capture())
+        )
                 .thenReturn(Mono.error(new RuntimeException()));
 
         /* TEST EXECUTION */

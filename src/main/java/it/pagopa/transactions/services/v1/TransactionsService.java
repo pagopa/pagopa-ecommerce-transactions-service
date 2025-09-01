@@ -731,18 +731,6 @@ public class TransactionsService {
     /**
      * Maps a transaction view document to a list of V2 payment notices
      *
-     * @param transactionDocument The transaction view document to map
-     * @return A list of V2 payment notices
-     */
-    private List<PaymentNotice> mapTransactionViewToV2PaymentNoticeList(BaseTransactionView transactionDocument) {
-        return transactionsUtils.getPaymentNotices(transactionDocument).stream()
-                .map(this::mapPaymentNoticeToV2)
-                .toList();
-    }
-
-    /**
-     * Maps a transaction view document to a list of V2 payment notices
-     *
      * @param transactionActivatedEvent The transaction view document to map
      * @return A list of V2 payment notices
      */
@@ -1097,26 +1085,6 @@ public class TransactionsService {
                 new TransactionAmountMismatchException(
                         authRequest.getAmount(),
                         transactionsUtils.getTransactionTotalAmountFromEvent(transactionActivatedEvent)
-                )
-        );
-    }
-
-    /**
-     * Creates an error for allCCP mismatch
-     *
-     * @param authRequest The authorization request
-     * @param transaction The transaction
-     * @return A Mono error with appropriate exception
-     */
-    private <T> Mono<T> createAllCCPMismatchError(
-                                                  RequestAuthorizationRequestDto authRequest,
-                                                  BaseTransactionView transaction
-    ) {
-        return Mono.error(
-                new PaymentNoticeAllCCPMismatchException(
-                        transactionsUtils.getRptId(transaction, 0),
-                        authRequest.getIsAllCCP(),
-                        transactionsUtils.isAllCcp(transaction, 0)
                 )
         );
     }

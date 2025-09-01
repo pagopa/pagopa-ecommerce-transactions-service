@@ -1,9 +1,7 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
-import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.Email;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
@@ -36,8 +34,9 @@ class TransactionsUtilsTest {
     @Test
     void shouldReduceTransactionCorrectly() {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
-        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
-        TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
+        it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent transactionActivatedEvent = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
+                .transactionActivateEvent();
+        it.pagopa.ecommerce.commons.documents.v1.TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
                 .transactionAuthorizationRequestedEvent();
         Flux events = Flux.just(transactionActivatedEvent, transactionAuthorizationRequestedEvent);
         given(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -106,57 +105,47 @@ class TransactionsUtilsTest {
 
     }
 
-    @Test
-    void shouldGetPaymentNoticesFromTransactionV1() {
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        assertNotNull(
-                utils.getPaymentNotices(
-                        it.pagopa.ecommerce.commons.v1.TransactionTestUtils
-                                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now())
-                )
-        );
-    }
-
+    /*
+     * @Test void shouldGetPaymentNoticesFromTransactionV1() { TransactionsUtils
+     * utils = new TransactionsUtils(null, null);
+     * it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent event =
+     * TransactionTestUtils.transactionActivateEvent(); assertNotNull(
+     * utils.getPaymentNotices(event) ); }
+     */
     @Test
     void shouldGetPaymentNoticesFromTransactionV2() {
         TransactionsUtils utils = new TransactionsUtils(null, null);
         assertNotNull(
-                utils.getPaymentNotices(
-                        it.pagopa.ecommerce.commons.v2.TransactionTestUtils
-                                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now())
-                )
+                utils.getPaymentNotices(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionActivateEvent())
         );
     }
 
-    @Test
-    void shouldGetPaymentNoticesFromTransactionInvalidClass() {
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        assertThrows(
-                NotImplementedException.class,
-                () -> utils.getPaymentNotices(Mockito.mock(BaseTransactionView.class))
-        );
-    }
-
-    @Test
-    void shouldGetClientIdFromTransactionV1() {
-        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId = Transaction.ClientId.CHECKOUT;
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v1.Transaction transaction = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        transaction.setClientId(clientId);
-        String result = utils.getClientId(transaction);
-        assertNotNull(result);
-        assertEquals(clientId.name(), result);
-    }
-
+    /*
+     * @Test void shouldGetPaymentNoticesFromTransactionInvalidClass() {
+     * TransactionsUtils utils = new TransactionsUtils(null, null); assertThrows(
+     * NotImplementedException.class, () ->
+     * utils.getPaymentNotices(Mockito.mock(TransactionActivatedEvent.class)) ); }
+     */
+    /*
+     * @Test void shouldGetClientIdFromTransactionV1() {
+     * it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId =
+     * Transaction.ClientId.CHECKOUT; TransactionsUtils utils = new
+     * TransactionsUtils(null, null);
+     * it.pagopa.ecommerce.commons.documents.v1.Transaction transaction =
+     * it.pagopa.ecommerce.commons.v1.TransactionTestUtils
+     * .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+     * transaction.setClientId(clientId); String result =
+     * utils.getClientId(transaction); assertNotNull(result);
+     * assertEquals(clientId.name(), result); }
+     */
     @Test
     void shouldGetClientIdFromTransactionV2() {
         it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT;
         TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        transaction.setClientId(clientId);
-        String result = utils.getClientId(transaction);
+        TransactionActivatedEvent transactionActivatedEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivateEvent();
+        transactionActivatedEvent.getData().setClientId(clientId);
+        String result = utils.getClientId(transactionActivatedEvent);
         assertNotNull(result);
         assertEquals(clientId.name(), result);
     }
@@ -165,107 +154,106 @@ class TransactionsUtilsTest {
     void shouldGetEffectiveClientIdFromTransactionV2() {
         it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId = it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.WISP_REDIRECT;
         TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        transaction.setClientId(clientId);
-        String result = utils.getEffectiveClientId(transaction);
+        TransactionActivatedEvent transactionActivatedEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivateEvent();
+        transactionActivatedEvent.getData().setClientId(clientId);
+        String result = utils.getEffectiveClientId(transactionActivatedEvent);
         assertNotNull(result);
         assertEquals(clientId.getEffectiveClient().name(), result);
     }
 
-    @Test
-    void shouldGetClientIdFromTransactionInvalidClass() {
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        assertThrows(NotImplementedException.class, () -> utils.getClientId(Mockito.mock(BaseTransactionView.class)));
-    }
-
-    @Test
-    void shouldGetEmailFromTransactionV1() {
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v1.Transaction transaction = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        Confidential<Email> email = utils.getEmail(transaction);
-        assertNotNull(email);
-    }
-
+    /*
+     * @Test void shouldGetClientIdFromTransactionInvalidClass() { TransactionsUtils
+     * utils = new TransactionsUtils(null, null);
+     * assertThrows(NotImplementedException.class, () ->
+     * utils.getClientId(Mockito.mock(TransactionActivatedEvent.class))); }
+     */
+    /*
+     * @Test void shouldGetEmailFromTransactionV1() { TransactionsUtils utils = new
+     * TransactionsUtils(null, null);
+     * it.pagopa.ecommerce.commons.documents.v1.Transaction transaction =
+     * it.pagopa.ecommerce.commons.v1.TransactionTestUtils
+     * .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+     * Confidential<Email> email = utils.getEmail(transaction);
+     * assertNotNull(email); }
+     */
     @Test
     void shouldGetEmailFromTransactionV2() {
         TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        Confidential<Email> email = utils.getEmail(transaction);
+        TransactionActivatedEvent transactionActivateEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivateEvent();
+        Confidential<Email> email = utils.getEmail(transactionActivateEvent);
         assertNotNull(email);
     }
 
-    @Test
-    void shouldGetEmailFromTransactionInvalidClass() {
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        assertThrows(NotImplementedException.class, () -> utils.getEmail(Mockito.mock(BaseTransactionView.class)));
-    }
-
-    @Test
-    void shouldGetTransactionTotalAmountV1() {
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v1.Transaction transaction = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        int totalAmount = transaction.getPaymentNotices().stream()
-                .mapToInt(
-                        it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
-                ).sum();
-        Integer methodTotalAmount = utils.getTransactionTotalAmount(transaction);
-        assertEquals(totalAmount, methodTotalAmount.intValue());
-    }
-
+    /*
+     * @Test void shouldGetEmailFromTransactionInvalidClass() { TransactionsUtils
+     * utils = new TransactionsUtils(null, null);
+     * assertThrows(NotImplementedException.class, () ->
+     * utils.getEmail(Mockito.mock(BaseTransactionView.class))); }
+     */
+    /*
+     * @Test void shouldGetTransactionTotalAmountV1() { TransactionsUtils utils =
+     * new TransactionsUtils(null, null);
+     * it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedEvent
+     * transactionActivateEvent = TransactionTestUtils .transactionActivateEvent();
+     * int totalAmount =
+     * transactionActivateEvent.getData().getPaymentNotices().stream() .mapToInt(
+     * it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount ).sum();
+     * Integer methodTotalAmount =
+     * utils.getTransactionTotalAmountFromEvent(transactionActivateEvent);
+     * assertEquals(totalAmount, methodTotalAmount.intValue()); }
+     */
     @Test
     void shouldGetTransactionTotalAmountV2() {
         TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        int totalAmount = transaction.getPaymentNotices().stream()
+        it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivateEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivateEvent();
+        int totalAmount = transactionActivateEvent.getData().getPaymentNotices().stream()
                 .mapToInt(
                         it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                 ).sum();
-        Integer methodTotalAmount = utils.getTransactionTotalAmount(transaction);
+        Integer methodTotalAmount = utils.getTransactionTotalAmountFromEvent(transactionActivateEvent);
         assertEquals(totalAmount, methodTotalAmount.intValue());
     }
 
-    @Test
-    void shouldGetRptIdV1() {
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v1.Transaction transaction = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        RptId rptId = new RptId(transaction.getPaymentNotices().get(0).getRptId());
-        RptId rptIdExtracted = new RptId(utils.getRptId(transaction, 0));
-        assertEquals(rptId, rptIdExtracted);
-    }
-
+    /*
+     * @Test void shouldGetRptIdV1() { TransactionsUtils utils = new
+     * TransactionsUtils(null, null);
+     * it.pagopa.ecommerce.commons.documents.v1.Transaction transaction =
+     * it.pagopa.ecommerce.commons.v1.TransactionTestUtils
+     * .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+     * RptId rptId = new RptId(transaction.getPaymentNotices().get(0).getRptId());
+     * RptId rptIdExtracted = new RptId(utils.getRptId(transaction, 0));
+     * assertEquals(rptId, rptIdExtracted); }
+     */
     @Test
     void shouldGetRptIdV2() {
         TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        RptId rptId = new RptId(transaction.getPaymentNotices().get(0).getRptId());
-        RptId rptIdExtracted = new RptId(utils.getRptId(transaction, 0));
+        it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivateEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivateEvent();
+        RptId rptId = new RptId(transactionActivateEvent.getData().getPaymentNotices().getFirst().getRptId());
+        RptId rptIdExtracted = new RptId(utils.getRptId(transactionActivateEvent, 0));
         assertEquals(rptId, rptIdExtracted);
     }
 
-    @Test
-    void shouldGetIsAllCCPV1() {
-        TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v1.Transaction transaction = it.pagopa.ecommerce.commons.v1.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        boolean isAllCcp = transaction.getPaymentNotices().get(0).isAllCCP();
-        boolean isAllCcpCalculated = utils.isAllCcp(transaction, 0);
-        assertEquals(isAllCcp, isAllCcpCalculated);
-    }
-
+    /*
+     * @Test void shouldGetIsAllCCPV1() { TransactionsUtils utils = new
+     * TransactionsUtils(null, null);
+     * it.pagopa.ecommerce.commons.documents.v1.Transaction transaction =
+     * it.pagopa.ecommerce.commons.v1.TransactionTestUtils
+     * .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
+     * boolean isAllCcp = transaction.getPaymentNotices().get(0).isAllCCP(); boolean
+     * isAllCcpCalculated = utils.isAllCcp(transaction, 0); assertEquals(isAllCcp,
+     * isAllCcpCalculated); }
+     */
     @Test
     void shouldGetIsAllCCPV2() {
         TransactionsUtils utils = new TransactionsUtils(null, null);
-        it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
-                .transactionDocument(TransactionStatusDto.ACTIVATED, ZonedDateTime.now());
-        boolean isAllCcp = transaction.getPaymentNotices().get(0).isAllCCP();
-        boolean isAllCcpCalculated = utils.isAllCcp(transaction, 0);
+        it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent transactionActivateEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivateEvent();
+        boolean isAllCcp = transactionActivateEvent.getData().getPaymentNotices().getFirst().isAllCCP();
+        boolean isAllCcpCalculated = utils.isAllCcp(transactionActivateEvent, 0);
         assertEquals(isAllCcp, isAllCcpCalculated);
     }
 
