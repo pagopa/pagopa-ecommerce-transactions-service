@@ -77,7 +77,7 @@ stages:
             jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
-            goals: 'clean validate -U'
+            goals: 'clean validate'
             sonarQubeRunAnalysis: false
           displayName: 'Maven clean validate'
           env:
@@ -93,7 +93,7 @@ stages:
             jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
-            goals: 'clean verify -U'
+            goals: 'clean verify'
             sonarQubeRunAnalysis: true
           displayName: 'Maven clean verify'
           env:
