@@ -200,6 +200,7 @@ class TransactionServiceTests {
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
     final String USER_ID = TransactionTestUtils.USER_ID;
+    private static final Long MOCK_AMOUNT = 100L;
 
     private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
 
@@ -412,7 +413,7 @@ class TransactionServiceTests {
     void shouldRedirectToAuthorizationURIForValidRequestWithNPGCardsDetailFor() {
         String orderId = "orderId";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
@@ -535,7 +536,7 @@ class TransactionServiceTests {
     @Test
     void shouldReturnNotFoundForNonExistingRequest() {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(0)
                 .paymentInstrumentId("paymentInstrumentId")
                 .isAllCCP(false)
@@ -886,7 +887,7 @@ class TransactionServiceTests {
     @Test
     void shouldReturnBadRequestForMismatchingFlagAllCCP() {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
@@ -1189,7 +1190,7 @@ class TransactionServiceTests {
                                                  it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
         final var authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")

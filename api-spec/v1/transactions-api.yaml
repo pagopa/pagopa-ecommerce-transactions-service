@@ -518,7 +518,7 @@ components:
         amount:
           $ref: "#/components/schemas/AmountEuroCents"
         fee:
-          $ref: "#/components/schemas/AmountEuroCents"
+          $ref: "#/components/schemas/FeeEuroCents"
         paymentInstrumentId:
           type: string
           description: Payment instrument id
@@ -720,7 +720,7 @@ components:
         - type: object
           properties:
             feeTotal:
-              $ref: "#/components/schemas/AmountEuroCents"
+              $ref: "#/components/schemas/FeeEuroCents"
             gateway:
               type: string
               example: 'NPG'
@@ -773,7 +773,7 @@ components:
           $ref: '#/components/schemas/AmountEuroCents'
           description: "The total amount paid for the transaction in eurocents. Fees are not included"
         fees:
-          $ref: '#/components/schemas/AmountEuroCents'
+          $ref: '#/components/schemas/FeeEuroCents'
           description: "The total fees paid for the transaction in eurocents"
         isFinalStatus:
           type: boolean
@@ -784,8 +784,13 @@ components:
     AmountEuroCents:
       description: Amount for payments, in euro cents
       type: integer
+      format: int64
       minimum: 0
-      maximum: 999999999
+      maximum: 99999999999
+    FeeEuroCents:
+      description: Fee for payments, in euro cents
+      type: integer
+      format: int32
     AuthorizationResult:
       description: Authorization result
       type: string

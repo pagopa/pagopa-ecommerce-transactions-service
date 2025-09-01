@@ -70,7 +70,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -168,7 +168,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -269,7 +269,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -370,7 +370,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -450,7 +450,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -541,7 +541,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -621,7 +621,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -714,7 +714,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -815,7 +815,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -916,7 +916,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -1017,7 +1017,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -1118,7 +1118,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -1219,7 +1219,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -1316,7 +1316,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -1413,7 +1413,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
         String fiscalCode = "77777777777";
@@ -1497,7 +1497,7 @@ class NodoOperationsTest {
         RptId rptId = new RptId("77777777777302016723749670035");
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String transactionId = UUID.randomUUID().toString();
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -1550,7 +1550,7 @@ class NodoOperationsTest {
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String transactionId = UUID.randomUUID().toString();
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -1602,7 +1602,7 @@ class NodoOperationsTest {
     void shouldTrasformNodoAmountWithCentInEuroCent() {
         instantiateNodoOperations(false);
         BigDecimal amountFromNodo = BigDecimal.valueOf(19.91);
-        Integer amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
+        Long amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
         assertEquals(1991, amount);
     }
 
@@ -1610,7 +1610,7 @@ class NodoOperationsTest {
     void shouldTrasformNodoAmountWithoutCentInEuroCent() {
         instantiateNodoOperations(false);
         BigDecimal amountFromNodo = BigDecimal.valueOf(19.00);
-        Integer amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
+        Long amount = nodoOperations.getEuroCentsFromNodoAmount(amountFromNodo);
         assertEquals(1900, amount);
     }
 
@@ -1624,7 +1624,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        Integer amount = 1234;
+        Long amount = 1234L;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
 
@@ -1726,7 +1726,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal outdatedAmount = BigDecimal.valueOf(amount);
@@ -1817,7 +1817,7 @@ class NodoOperationsTest {
         String transactionId = UUID.randomUUID().toString();
         String paTaxCode = "77777777777";
         String description = "Description";
-        int amount = 1000;
+        long amount = 1000;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal outdatedAmount = BigDecimal.valueOf(amount);
@@ -1908,7 +1908,7 @@ class NodoOperationsTest {
         final var rptId = new RptId("77777777777302016723749670035");
         final var idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         final var transactionId = UUID.randomUUID().toString();
-        final var amount = 1234;
+        final var amount = 1234L;
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
 
         BigDecimal amountBigDec = BigDecimal.valueOf(amount / 100d)
@@ -1966,7 +1966,7 @@ class NodoOperationsTest {
         final var rptId = new RptId("77777777777302016723749670035");
         final var idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         final var transactionId = UUID.randomUUID().toString();
-        final var amount = 1234;
+        final var amount = 1234L;
         final var idCart = "idCart";
         final var codiceConvenzioneValue = "TEST-codice-convenzione";
         final var codiceConvenzioneKey = "codiceConvenzione";
@@ -2029,7 +2029,7 @@ class NodoOperationsTest {
         assert response != null;
         assert response.transferList() != null;
         assert Objects.equals(response.transferList().get(0).transferCategory(), codiceConvenzioneValue);
-        assert Objects.equals(response.transferList().get(0).transferAmount(), 0);
+        assert Objects.equals(response.transferList().get(0).transferAmount(), 0L);
         assert Objects.equals(response.transferList().get(0).paFiscalCode(), "77777777777");
     }
 }

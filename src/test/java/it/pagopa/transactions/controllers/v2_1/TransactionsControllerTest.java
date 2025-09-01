@@ -108,7 +108,7 @@ class TransactionsControllerTest {
             newTransactionRequestDto.orderId("orderId");
             NewTransactionResponseDto response = new NewTransactionResponseDto();
             PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-            paymentInfoDto.setAmount(10);
+            paymentInfoDto.setAmount(10L);
             paymentInfoDto.setReason("Reason");
             paymentInfoDto.setPaymentToken("payment_token");
             paymentInfoDto.setRptId(RPTID);
@@ -717,7 +717,7 @@ class TransactionsControllerTest {
     @Test
     void shouldCreateNewTransactionWithHugeAmount() {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
-        Integer hugeAmount = 999999999;
+        Long hugeAmount = 99999999999L;
         try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
             uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
             String RPTID = "77777777777302016723749670035";

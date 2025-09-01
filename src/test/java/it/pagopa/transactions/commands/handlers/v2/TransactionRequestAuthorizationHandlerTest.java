@@ -77,6 +77,7 @@ class TransactionRequestAuthorizationHandlerTest {
     private static final String NPG_GDI_FRAGMENT = "#gdiIframeUrl=";
     private static final String NPG_WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
     private static final String NPG_WALLET_ESITO_PATH = "/ecommerce-fe/esito#";
+    private static final Long MOCK_AMOUNT = 100L;
     private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthorizationHandler;
 
     @Mock
@@ -149,7 +150,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -181,7 +182,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -290,7 +291,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -322,7 +323,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -436,7 +437,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -468,7 +469,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -593,7 +594,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -625,7 +626,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -747,7 +748,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -779,7 +780,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -862,7 +863,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
@@ -895,7 +896,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -951,7 +952,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         String faultCode = "faultCode";
         String faultCodeString = "faultCodeString";
@@ -984,7 +985,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("VPOS")
@@ -1054,7 +1055,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -1086,7 +1087,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -1173,7 +1174,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -1205,7 +1206,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -1295,7 +1296,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -1327,7 +1328,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -1418,7 +1419,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -1450,7 +1451,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -1541,7 +1542,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -1573,7 +1574,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -1663,7 +1664,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -1695,7 +1696,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -1805,7 +1806,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -1837,7 +1838,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -1954,7 +1955,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -1986,7 +1987,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -2109,7 +2110,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         Transaction.ClientId clientId = Transaction.ClientId.IO;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
@@ -2143,7 +2144,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -2306,7 +2307,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -2336,7 +2337,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -2415,7 +2416,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -2447,7 +2448,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -2565,7 +2566,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -2596,7 +2597,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -2716,7 +2717,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -2748,7 +2749,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -2841,7 +2842,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -2871,7 +2872,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -2973,7 +2974,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -3005,7 +3006,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -3117,7 +3118,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -3149,7 +3150,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -3260,7 +3261,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -3292,7 +3293,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -3403,7 +3404,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -3435,7 +3436,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -3547,7 +3548,7 @@ class TransactionRequestAuthorizationHandlerTest {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
-        TransactionAmount amount = new TransactionAmount(100);
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
         Confidential<Email> email = TransactionTestUtils.EMAIL;
         PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
         String idCart = "idCart";
@@ -3578,7 +3579,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")

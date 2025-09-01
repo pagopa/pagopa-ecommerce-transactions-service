@@ -251,8 +251,9 @@ components:
     AmountEuroCents:
       description: Amount for payments, in euro cents
       type: integer
+      format: int64
       minimum: 0
-      maximum: 999999999
+      maximum: 99999999999
     TransactionStatus:
       type: string
       description: Possible statuses a transaction can be in

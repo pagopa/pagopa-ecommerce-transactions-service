@@ -64,7 +64,7 @@ public class NodoOperations {
     public Mono<PaymentRequestInfo> activatePaymentRequest(
                                                            RptId rptId,
                                                            IdempotencyKey idempotencyKey,
-                                                           Integer amount,
+                                                           Long amount,
                                                            String transactionId,
                                                            Integer paymentTokenTimeout,
                                                            String idCart,
@@ -100,7 +100,7 @@ public class NodoOperations {
     private Mono<PaymentRequestInfo> activatePaymentRequest(
                                                             RptId rptId,
                                                             IdempotencyKey idempotencyKey,
-                                                            Integer amount,
+                                                            Long amount,
                                                             String transactionId,
                                                             Integer paymentTokenTimeout,
                                                             String idCart,
@@ -245,8 +245,8 @@ public class NodoOperations {
 
     }
 
-    public Integer getEuroCentsFromNodoAmount(BigDecimal amountFromNodo) {
-        return amountFromNodo.multiply(BigDecimal.valueOf(100)).intValue();
+    public Long getEuroCentsFromNodoAmount(BigDecimal amountFromNodo) {
+        return amountFromNodo.multiply(BigDecimal.valueOf(100)).longValue();
     }
 
     public String generateRandomStringToIdempotencyKey() {
@@ -319,7 +319,7 @@ public class NodoOperations {
                                         new PaymentTransferInfo(
                                                 primaryFiscalCode,
                                                 false,
-                                                0,
+                                                0L,
                                                 value
                                         )
                                 )
