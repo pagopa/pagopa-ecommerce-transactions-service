@@ -12,7 +12,7 @@
       "artifactId": "spring-boot-starter",
       "groupId": "org.springframework.boot",
       "version": "3.4.5",
-      "sha256": "L3xxixCmRkd2cF1P6oMgTw0g257rcST4hX_0KxScTz"
+      "sha256": "L3xxixCmRkd2cF1P6oMgTw0g257rcST4hX_0KxScTzc="
     },
     {
       "id": "org.springframework.boot:spring-boot-starter-logging:jar:3.4.5",
