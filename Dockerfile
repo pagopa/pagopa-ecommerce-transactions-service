@@ -31,22 +31,13 @@ RUN mkdir extracted && java -Djarmode=layertools -jar target/*.jar extract --des
 # generate Class Data Sharing archive
 WORKDIR /workspace/app/cds
 
-RUN if [ -z "$(ls -A ../extracted/dependencies)" ];\
-then echo "Skipped empty folder"; \
-else cp -R ../extracted/dependencies/* ./; \
-fi
-RUN if [ -z "$(ls -A ../extracted/spring-boot-loader)" ];\
-then echo "Skipped empty folder"; \
-else cp -R ../extracted/spring-boot-loader/* ./; \
-fi
-RUN if [ -z "$(ls -A ../extracted/snapshot-dependencies)" ]; \
-then echo "Skipped empty folder"; \
-else cp -R ../extracted/snapshot-dependencies/* ./; \
-fi
-RUN if [ -z "$(ls -A ../extracted/application)" ]; \
-then echo "Skipped empty folder"; \
-else cp -R ../extracted/application/* ./; \
-fi
+RUN for dir in dependencies spring-boot-loader snapshot-dependencies application; \
+do \
+if [ -z "$(ls -A ../extracted/$dir)" ]; \
+then echo "Skipped empty folder: [$dir]"; \
+else cp -R ../extracted/"$dir"/* ./; \
+fi \
+done
 
 RUN java \
 -Dspring.aot.enabled=true \
@@ -67,15 +58,10 @@ ARG EXTRACTED=/workspace/app/extracted
 ADD --chown=user https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.1.0/opentelemetry-javaagent.jar .
 
 COPY --from=optimizer --chown=user ${EXTRACTED}/dependencies/ ./
-RUN true
 COPY --from=optimizer --chown=user ${EXTRACTED}/spring-boot-loader/ ./
-RUN true
 COPY --from=optimizer --chown=user ${EXTRACTED}/snapshot-dependencies/ ./
-RUN true
 COPY --from=optimizer --chown=user ${EXTRACTED}/application/ ./
-RUN true
 COPY --from=optimizer --chown=user /workspace/app/cds.jsa cds.jsa
-RUN true
 
 ENTRYPOINT ["java", \
     "-javaagent:opentelemetry-javaagent.jar", \
