@@ -625,7 +625,7 @@
                 </executions>
                 <configuration>
                     <fileName>dep-sha256.json</fileName>
-                    <includePlugins>false</includePlugins>
+                    <includePlugins>true</includePlugins>
                     <includeParent>false</includeParent>
                 </configuration>
             </plugin>
