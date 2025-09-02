@@ -52,6 +52,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode.TRANSACTION_ACTIVATED_EVENT;
 import static it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED;
 
 @Service(TransactionsService.QUALIFIER_NAME)
@@ -525,16 +526,23 @@ public class TransactionsService {
                                         String transactionId,
                                         UUID xUserId
     ) {
-        return transactionCancelHandlerV2
-                .handle(
-                        new TransactionUserCancelCommand(
-                                null,
-                                new TransactionId((transactionId)),
-                                xUserId
-                        )
-                ).flatMap(
-                        event -> cancellationRequestProjectionHandlerV2
-                                .handle((TransactionUserCanceledEvent) event)
+        return eventsRepository.findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .cast(TransactionActivatedEvent.class)
+                .flatMap(
+                        transactionActivatedEvent -> {
+                            TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
+                                    null,
+                                    new TransactionId(transactionId),
+                                    xUserId
+                            );
+
+                            return transactionCancelHandlerV2
+                                    .handle(transactionCancelCommand).flatMap(
+                                            event -> cancellationRequestProjectionHandlerV2
+                                                    .handle((TransactionUserCanceledEvent) event)
+                                    );
+                        }
                 )
                 .then();
 

@@ -47,6 +47,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -1005,10 +1006,7 @@ class TransactionServiceTests {
     @Test
     void shouldExecuteTransactionUserCancelOk() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
-        final Transaction transaction = TransactionTestUtils.transactionDocument(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                ZonedDateTime.now()
-        );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
                 transactionId
         );
@@ -1017,7 +1015,11 @@ class TransactionServiceTests {
                 new TransactionId(transactionId),
                 null
         );
-        when(repository.findById(transactionId)).thenReturn(Mono.just(transaction));
+        when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
+        )
+                .thenReturn(Mono.just(transactionActivatedEvent));
         when(transactionCancelHandlerV2.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
         when(cancellationRequestProjectionHandlerV2.handle(any())).thenReturn(Mono.empty());
         StepVerifier
@@ -1028,15 +1030,10 @@ class TransactionServiceTests {
 
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
-        String transactionId = UUID.randomUUID().toString().replace("-", "");
-        when(
-                transactionsEventStoreRepository
-                        .findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
-        ).thenReturn(Mono.empty());
-        when(
-                transactionsEventStoreRepository
-                        .findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
-        ).thenReturn(Mono.empty());
+        String transactionId = UUID.randomUUID().toString();
+
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdAndEventCode(any(), any()))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
                 .expectError(TransactionNotFoundException.class).verify();
