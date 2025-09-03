@@ -526,23 +526,17 @@ public class TransactionsService {
                                         String transactionId,
                                         UUID xUserId
     ) {
-        return eventsRepository.findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .cast(TransactionActivatedEvent.class)
-                .flatMap(
-                        transactionActivatedEvent -> {
-                            TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
-                                    null,
-                                    new TransactionId(transactionId),
-                                    xUserId
-                            );
+        TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
+                null,
+                new TransactionId(transactionId),
+                xUserId
+        );
 
-                            return transactionCancelHandlerV2
-                                    .handle(transactionCancelCommand).flatMap(
-                                            event -> cancellationRequestProjectionHandlerV2
-                                                    .handle((TransactionUserCanceledEvent) event)
-                                    );
-                        }
+        return transactionCancelHandlerV2
+                .handle(transactionCancelCommand)
+                .flatMap(
+                        event -> cancellationRequestProjectionHandlerV2
+                                .handle((TransactionUserCanceledEvent) event)
                 )
                 .then();
 

@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
@@ -20,6 +21,7 @@ import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -457,11 +459,14 @@ class TransactionServiceTests {
 
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
-        String transactionId = UUID.randomUUID().toString().replaceAll("-", "");
+        TransactionId transactionId = new TransactionId(
+                it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID
+        );
 
-        when(transactionsEventStoreRepository.findByTransactionIdAndEventCode(any(), any())).thenReturn(Mono.empty());
+        when(transactionCancelHandlerV2.handle(any(TransactionUserCancelCommand.class)))
+                .thenReturn(Mono.error(new TransactionNotFoundException(transactionId.value())));
 
-        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
+        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId.value(), null))
                 .expectError(TransactionNotFoundException.class).verify();
 
     }

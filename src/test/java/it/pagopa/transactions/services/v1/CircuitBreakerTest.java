@@ -14,6 +14,7 @@ import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -68,6 +69,8 @@ class CircuitBreakerTest {
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
     @MockitoBean
     private TransactionsUtils transactionsUtils;
+    @MockitoBean
+    private TransactionUserCancelHandler transactionCancelHandlerV2;
 
     @Autowired
     private CircuitBreakerRegistry circuitBreakerRegistry;
@@ -306,12 +309,12 @@ class CircuitBreakerTest {
          * Preconditions
          */
         Mockito.when(
-                transactionsEventStoreRepository.findByTransactionIdAndEventCode(any(String.class), any(String.class))
+                transactionCancelHandlerV2.handle(any())
         ).thenReturn(Mono.error(thrownException));
 
         StepVerifier
                 .create(
-                        transactionsService.cancelTransaction("", null)
+                        transactionsService.cancelTransaction(UUID.randomUUID().toString().replaceAll("-", ""), null)
                 )
                 .expectError(thrownException.getClass())
                 .verify();

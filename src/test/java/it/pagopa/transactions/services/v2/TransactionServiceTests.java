@@ -1030,12 +1030,12 @@ class TransactionServiceTests {
 
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
-        String transactionId = UUID.randomUUID().toString();
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdAndEventCode(any(), any()))
-                .thenReturn(Mono.empty());
+        when(transactionCancelHandlerV2.handle(any(TransactionUserCancelCommand.class)))
+                .thenReturn(Mono.error(new TransactionNotFoundException(transactionId.value())));
 
-        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
+        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId.value(), null))
                 .expectError(TransactionNotFoundException.class).verify();
 
     }
