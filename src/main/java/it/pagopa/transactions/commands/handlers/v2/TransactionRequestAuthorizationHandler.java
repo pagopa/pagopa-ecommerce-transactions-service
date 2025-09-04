@@ -17,7 +17,7 @@ import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -71,7 +71,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
-    private final ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+    private final ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper;
 
     @Autowired
     public TransactionRequestAuthorizationHandler(
@@ -93,7 +93,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             JwtTokenIssuerClient jwtTokenIssuerClient,
             @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
-            ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper
+            ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapperr
     ) {
         super(
                 paymentGatewayClient,
@@ -113,7 +113,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.authRequestEventVisibilityTimeoutSeconds = authRequestEventVisibilityTimeoutSeconds;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
-        this.exclusiveLockDocumentWrapper = exclusiveLockDocumentWrapper;
+        this.reactiveExclusiveLockDocumentWrapper = reactiveExclusiveLockDocumentWrapperr;
     }
 
     @Override
@@ -194,7 +194,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     ).thenReturn(t);
                     default -> Mono.just(t);
                 })
-                .map(t -> {
+                .flatMap(t -> {
                     TransactionId transactionId = t.getTransactionId();
                     ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
                             "POST-auth-request-%s".formatted(transactionId.value()),
@@ -206,20 +206,21 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     // the payment token validity time in order to make this API call performable
                     // only once per transaction (further attempts will find the transaction in an
                     // expired status and return an error)
-                    boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
-                            lockDocument,
-                            Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds())
-                    );
-                    log.info(
-                            "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
-                            transactionId,
-                            lockDocument.id(),
-                            lockAcquired
-                    );
-                    if (!lockAcquired) {
-                        throw new LockNotAcquiredException(transactionId, lockDocument);
-                    }
-                    return t;
+                    return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
+                            .doOnNext(lockAcquired ->
+                                    log.info(
+                                            "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
+                                            transactionId,
+                                            lockDocument.id(),
+                                            lockAcquired
+                                    )
+                            )
+                            .flatMap(lockAcquired -> {
+                                if (!lockAcquired) {
+                                    return Mono.error(new LockNotAcquiredException(transactionId, lockDocument))
+                                }
+                                return Mono.just(t);
+                            });
                 })
                 .flatMap(
                         t -> gatewayAttempts.switchIfEmpty(Mono.error(new InvalidRequestException("No gateway matched")))

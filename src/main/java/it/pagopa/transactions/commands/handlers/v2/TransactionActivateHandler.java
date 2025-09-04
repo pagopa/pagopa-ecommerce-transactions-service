@@ -16,7 +16,7 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequest
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
@@ -48,14 +48,14 @@ import java.util.*;
 public class TransactionActivateHandler extends TransactionActivateHandlerCommon {
 
     public static final String QUALIFIER_NAME = "transactionActivateHandlerV2";
-    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
+    private final ReactivePaymentRequestInfoRedisTemplateWrapper reactivePaymentRequestInfoRedisTemplateWrapper;
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository;
     private final NodoOperations nodoOperations;
     private final QueueAsyncClient transactionActivatedQueueAsyncClientV2;
 
     @Autowired
     public TransactionActivateHandler(
-            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
+            ReactivePaymentRequestInfoRedisTemplateWrapper reactivePaymentRequestInfoRedisTemplateWrapper,
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData> transactionEventActivatedStoreRepository,
             NodoOperations nodoOperations,
             @Qualifier(
@@ -80,7 +80,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 openTelemetryUtils,
                 jwtEcommerceValidityTimeInSeconds
         );
-        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
+        this.reactivePaymentRequestInfoRedisTemplateWrapper = reactivePaymentRequestInfoRedisTemplateWrapper;
         this.transactionEventActivatedStoreRepository = transactionEventActivatedStoreRepository;
         this.nodoOperations = nodoOperations;
         this.transactionActivatedQueueAsyncClientV2 = transactionActivatedQueueAsyncClientV2;
@@ -208,7 +208,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                                 p.id(),
                                                                                 p.paymentToken()
                                                                         );
-                                                                        paymentRequestInfoRedisTemplateWrapper.save(p);
+                                                                        reactivePaymentRequestInfoRedisTemplateWrapper.save(p);
                                                                     }
                                                             )
                                             );
@@ -324,11 +324,15 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
 
     }
 
-    private Optional<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
-        Optional<PaymentRequestInfo> paymentInfofromCache = paymentRequestInfoRedisTemplateWrapper
-                .findById(rptId.value());
-        log.info("PaymentRequestInfo cache hit for {}: {}", rptId, paymentInfofromCache.isPresent());
-        return paymentInfofromCache;
+    private Mono<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
+        return reactivePaymentRequestInfoRedisTemplateWrapper
+                .findById(rptId.value())
+                .doOnNext(info ->
+                    log.info("PaymentRequestInfo cache hit for {}: found={}", rptId, true)
+                )
+                .switchIfEmpty(Mono.fromRunnable(() ->
+                    log.info("PaymentRequestInfo cache hit for {}: found={}", rptId, false)
+                ));
     }
 
     private boolean isValidPaymentToken(String paymentToken) {

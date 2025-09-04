@@ -4,7 +4,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -61,7 +61,7 @@ public class TransactionsController implements TransactionsApi {
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Autowired
-    private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+    private ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper;
 
     @Value("${security.apiKey.primary}")
     private String primaryKey;
@@ -247,49 +247,47 @@ public class TransactionsController implements TransactionsApi {
     }
 
     public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
-                                                                     TransactionId domainTransactionId,
-                                                                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-                                                                     ServerWebExchange exchange
+            TransactionId domainTransactionId,
+            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
+            ServerWebExchange exchange
     ) {
-        return Mono.just(updateAuthorizationRequestDto)
-                .map(updateAuthorizationRequest -> {
-                    ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
-                            "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
-                            "transactions-service"
+        return Mono.defer(() -> {
+            ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                    "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
+                    "transactions-service"
+            );
+
+            return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument)
+                    .flatMap(lockAcquired -> {
+                        log.info(
+                                "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
+                                domainTransactionId.value(),
+                                lockDocument.id(),
+                                lockAcquired
+                        );
+                        if (!lockAcquired) {
+                            return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
+                        }
+
+                        return transactionsService.updateTransactionAuthorization(
+                                domainTransactionId.uuid(),
+                                updateAuthorizationRequestDto
+                        );
+                    })
+                    .contextWrite(ctx ->
+                            TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                                    new TransactionTracingUtils.TransactionInfo(
+                                            domainTransactionId,
+                                            new HashSet<>(),
+                                            exchange.getRequest().getMethod().name(),
+                                            exchange.getRequest().getURI().getPath()
+                                    ),
+                                    ctx
+                            )
                     );
-                    boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
-                            lockDocument
-                    );
-                    log.info(
-                            "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
-                            domainTransactionId.value(),
-                            lockDocument.id(),
-                            lockAcquired
-                    );
-                    if (!lockAcquired) {
-                        throw new LockNotAcquiredException(domainTransactionId, lockDocument);
-                    }
-                    return updateAuthorizationRequest;
-                })
-                .flatMap(
-                        updateAuthorizationRequest -> transactionsService
-                                .updateTransactionAuthorization(
-                                        domainTransactionId.uuid(),
-                                        updateAuthorizationRequest
-                                )
-                )
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        domainTransactionId,
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+        });
     }
+
 
     @Override
     public Mono<ResponseEntity<AddUserReceiptResponseDto>> addUserReceipt(

@@ -1,7 +1,6 @@
 package it.pagopa.transactions.repositories;
 
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveRedisTemplateWrapper;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.RedisTemplateWrapper;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 
