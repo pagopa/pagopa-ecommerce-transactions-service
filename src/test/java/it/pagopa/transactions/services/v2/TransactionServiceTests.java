@@ -763,8 +763,13 @@ class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
+                transactionId.value(),
+                TransactionTestUtils.npgTransactionGatewayActivationData()
+        );
+
         TransactionUserReceiptRequestedEvent event = new TransactionUserReceiptRequestedEvent(
-                transactionDocument.getTransactionId(),
+                transactionId.value(),
                 TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
         );
 
@@ -783,9 +788,9 @@ class TransactionServiceTests {
                 );
 
         TransactionInfoDto expectedResponse = new TransactionInfoDto()
-                .transactionId(transactionDocument.getTransactionId())
+                .transactionId(transactionId.value())
                 .payments(
-                        transactionDocument.getPaymentNotices().stream().map(
+                        transactionActivatedEvent.getData().getPaymentNotices().stream().map(
                                 paymentNotice -> new PaymentInfoDto()
                                         .amount(paymentNotice.getAmount())
                                         .reason(paymentNotice.getDescription())
@@ -796,8 +801,13 @@ class TransactionServiceTests {
                 .status(TransactionStatusDto.NOTIFIED_OK);
 
         /* preconditions */
-        Mockito.when(repository.findById(transactionId.value()))
-                .thenReturn(Mono.just(transactionDocument));
+
+        Mockito.when(
+                transactionsEventStoreRepository.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TRANSACTION_ACTIVATED_EVENT.toString()
+                )
+        ).thenReturn(Mono.just(transactionActivatedEvent));
 
         Mockito.when(transactionUpdateStatusHandlerV2.handle(any()))
                 .thenReturn(Mono.just(event));
@@ -819,6 +829,11 @@ class TransactionServiceTests {
         Transaction transactionDocument = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
                 ZonedDateTime.now()
+        );
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
+                transactionDocument.getTransactionId(),
+                TransactionTestUtils.npgTransactionGatewayActivationData()
         );
 
         TransactionUserReceiptRequestedEvent event = new TransactionUserReceiptRequestedEvent(
@@ -856,8 +871,16 @@ class TransactionServiceTests {
                 .status(TransactionStatusDto.NOTIFIED_KO);
 
         /* preconditions */
-        Mockito.when(repository.findById(transactionId.value()))
-                .thenReturn(Mono.just(transactionDocument));
+        /*
+         * Mockito.when(repository.findById(transactionId.value()))
+         * .thenReturn(Mono.just(transactionDocument));
+         */
+
+        Mockito.when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(transactionId.value(), TRANSACTION_ACTIVATED_EVENT.toString())
+        )
+                .thenReturn(Mono.just(transactionActivatedEvent));
 
         Mockito.when(transactionUpdateStatusHandlerV2.handle(any()))
                 .thenReturn(Mono.just(event));
@@ -890,7 +913,10 @@ class TransactionServiceTests {
                 );
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(TRANSACTION_ID, TRANSACTION_ACTIVATED_EVENT.toString())
+        )
                 .thenReturn(Mono.empty());
 
         /* test */

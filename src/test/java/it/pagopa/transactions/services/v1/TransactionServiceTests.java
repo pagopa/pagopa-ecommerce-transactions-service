@@ -362,7 +362,10 @@ class TransactionServiceTests {
                 );
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(TRANSACTION_ID, TRANSACTION_ACTIVATED_EVENT.toString())
+        )
                 .thenReturn(Mono.empty());
 
         /* test */

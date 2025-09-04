@@ -47,8 +47,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode.TRANSACTION_ACTIVATED_EVENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @SpringBootTest
 @TestPropertySource(
@@ -338,8 +340,12 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionsViewRepository.findById(any(String.class))).thenReturn(Mono.error(thrownException));
-
+        Mockito.when(
+                transactionsEventStoreRepository.findByTransactionIdAndEventCode(
+                        any(String.class),
+                        eq(TRANSACTION_ACTIVATED_EVENT.toString())
+                )
+        ).thenReturn(Mono.error(thrownException));
         StepVerifier
                 .create(
                         transactionsService.addUserReceipt("", new AddUserReceiptRequestDto())
@@ -362,7 +368,9 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionsViewRepository.findById(any(String.class)))
+        Mockito.when(
+                transactionsEventStoreRepository.findByTransactionIdAndEventCode(any(String.class), any(String.class))
+        )
                 .thenReturn(Mono.error(new InvalidStatusException("Error processing request")));
 
         StepVerifier

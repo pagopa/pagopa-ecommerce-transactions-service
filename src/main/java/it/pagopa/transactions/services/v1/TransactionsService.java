@@ -1456,44 +1456,45 @@ public class TransactionsService {
 
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
-            String transactionId,
-            AddUserReceiptRequestDto addUserReceiptRequest
+                                                   String transactionId,
+                                                   AddUserReceiptRequestDto addUserReceiptRequest
     ) {
-        return transactionsViewRepository
-                .findById(transactionId)
+        return eventsRepository
+                .findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .cast(TransactionActivatedEvent.class)
                 .flatMap(
-                        transactionView -> switch (transactionView) {
-                            case Transaction t -> transactionRequestUserReceiptHandlerV2
-                                    .handle(new TransactionAddUserReceiptCommand(
-                                            t.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
-                                            new AddUserReceiptData(
-                                                    new TransactionId(transactionId),
-                                                    addUserReceiptRequest
-                                            )
-                                    ))
-                                    .doOnNext(
-                                            transactionUserReceiptRequestedEvent -> log.info(
-                                                    "AddUserReceipt [{}] for transactionId: [{}]",
-                                                    TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
-                                                    transactionUserReceiptRequestedEvent.getTransactionId()
-                                            )
-                                    )
-                                    .flatMap(event -> transactionUserReceiptProjectionHandlerV2
-                                            .handle((TransactionUserReceiptRequestedEvent) event))
-                                    .doOnNext(
-                                            transaction -> log.info(
-                                                    "AddUserReceipt transaction status updated [{}] for transactionId: [{}]",
-                                                    transaction.getStatus(),
-                                                    transaction.getTransactionId()
-                                            )
-                                    )
-                                    .map(this::buildTransactionInfoDtoV2);
-                            default ->
-                                    Mono.error(new BadGatewayException("Error while processing request unexpected transaction version type", HttpStatus.BAD_GATEWAY));
-                        }
+                        transactionActivatedEvent -> transactionRequestUserReceiptHandlerV2
+                                .handle(
+                                        new TransactionAddUserReceiptCommand(
+                                                transactionActivatedEvent.getData().getPaymentNotices().stream()
+                                                        .map(p -> new RptId(p.getRptId())).toList(),
+                                                new AddUserReceiptData(
+                                                        new TransactionId(transactionId),
+                                                        addUserReceiptRequest
+                                                )
+                                        )
+                                )
+                                .doOnNext(
+                                        transactionUserReceiptRequestedEvent -> log.info(
+                                                "AddUserReceipt [{}] for transactionId: [{}]",
+                                                TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
+                                                transactionUserReceiptRequestedEvent.getTransactionId()
+                                        )
+                                )
+                                .flatMap(
+                                        event -> transactionUserReceiptProjectionHandlerV2
+                                                .handle((TransactionUserReceiptRequestedEvent) event)
+                                )
+                                .doOnNext(
+                                        transaction -> log.info(
+                                                "AddUserReceipt transaction status updated [{}] for transactionId: [{}]",
+                                                transaction.getStatus(),
+                                                transaction.getTransactionId()
+                                        )
+                                )
+                                .map(this::buildTransactionInfoDtoV2)
                 );
-
 
     }
 
