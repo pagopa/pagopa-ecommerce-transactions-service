@@ -578,26 +578,26 @@ public class TransactionsService {
                                                                       RequestAuthorizationRequestDto authRequest,
                                                                       String paymentGatewayId
     ) {
-        TransactionActivatedEvent transactionDocument = args.getT1();
+        TransactionActivatedEvent transactionActivatedEvent = args.getT1();
         AuthorizationRequestSessionData authRequestSessionData = args.getT2();
 
-        log.info("Requesting authorization for transactionId: {}", transactionDocument.getTransactionId());
+        log.info("Requesting authorization for transactionId: {}", transactionActivatedEvent.getTransactionId());
 
         AuthorizationRequestData authData = createAuthRequestData(
-                transactionDocument,
+                transactionActivatedEvent,
                 authRequestSessionData,
                 authRequest,
                 paymentGatewayId
         );
 
         TransactionRequestAuthorizationCommand transactionRequestAuthCommand = new TransactionRequestAuthorizationCommand(
-                transactionsUtils.getRptIds(transactionDocument).stream().map(RptId::new).toList(),
+                transactionsUtils.getRptIds(transactionActivatedEvent).stream().map(RptId::new).toList(),
                 lang,
                 authData
         );
 
-        return executeHandlerBasedOnTransactionType(transactionDocument, transactionRequestAuthCommand, authData)
-                .doOnSuccess(invalidateCacheFor(transactionDocument));
+        return executeHandlerBasedOnTransactionType(transactionActivatedEvent, transactionRequestAuthCommand, authData)
+                .doOnSuccess(invalidateCacheFor(transactionActivatedEvent));
     }
 
     /**
