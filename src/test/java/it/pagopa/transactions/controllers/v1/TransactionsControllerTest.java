@@ -7,9 +7,9 @@ import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
+import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
@@ -86,7 +86,7 @@ class TransactionsControllerTest {
     private UUIDUtils uuidUtils;
 
     @MockitoBean
-    private UniqueIdUtils uniqueIdUtils;
+    private ReactiveUniqueIdUtils uniqueIdUtils;
 
     @MockitoBean
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
@@ -108,7 +108,7 @@ class TransactionsControllerTest {
     HttpHeaders mockHeaders;
 
     @MockitoBean
-    private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+    private ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
     private final Integer paymentTokenValidityTime = 120;
 
     @Test

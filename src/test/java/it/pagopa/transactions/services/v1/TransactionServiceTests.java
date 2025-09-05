@@ -7,9 +7,9 @@ import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveUniqueIdTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -163,10 +163,10 @@ class TransactionServiceTests {
     private TracingUtils tracingUtils;
 
     @MockitoBean
-    private PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
+    private ReactivePaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
 
     @MockitoBean
-    private UniqueIdTemplateWrapper uniqueIdTemplateWrapper;
+    private ReactiveUniqueIdTemplateWrapper uniqueIdTemplateWrapper;
 
     @MockitoBean
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
@@ -178,7 +178,7 @@ class TransactionServiceTests {
     private ConfidentialMailUtils confidentialMailUtils;
 
     @MockitoBean
-    private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+    private ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
 

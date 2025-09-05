@@ -16,7 +16,7 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRespons
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
@@ -58,8 +58,8 @@ import static org.mockito.ArgumentMatchers.*;
 @ExtendWith(MockitoExtension.class)
 class TransactionActivateHandlerTest {
 
-    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper = Mockito
-            .mock(PaymentRequestInfoRedisTemplateWrapper.class);
+    private final ReactivePaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper = Mockito
+            .mock(ReactivePaymentRequestInfoRedisTemplateWrapper.class);
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
@@ -209,7 +209,7 @@ class TransactionActivateHandlerTest {
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.of(paymentRequestInfoCached));
+                .thenReturn(Mono.just(paymentRequestInfoCached));
 
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
@@ -384,7 +384,7 @@ class TransactionActivateHandlerTest {
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.of(paymentRequestInfoCached));
+                .thenReturn(Mono.just(paymentRequestInfoCached));
 
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
@@ -524,7 +524,7 @@ class TransactionActivateHandlerTest {
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.of(paymentRequestInfoCached));
+                .thenReturn(Mono.just(paymentRequestInfoCached));
 
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
@@ -743,7 +743,7 @@ class TransactionActivateHandlerTest {
 
         /* preconditions */
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.of(paymentRequestInfoCached));
+                .thenReturn(Mono.just(paymentRequestInfoCached));
         Mockito.when(
                 nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate), any())
         )
@@ -840,7 +840,7 @@ class TransactionActivateHandlerTest {
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.of(paymentRequestInfoBeforeActivation));
+                .thenReturn(Mono.just(paymentRequestInfoBeforeActivation));
 
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
@@ -954,7 +954,7 @@ class TransactionActivateHandlerTest {
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.of(paymentRequestInfoBeforeActivation));
+                .thenReturn(Mono.just(paymentRequestInfoBeforeActivation));
 
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
@@ -1060,7 +1060,7 @@ class TransactionActivateHandlerTest {
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.empty());
+                .thenReturn(Mono.empty());
 
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
@@ -1169,7 +1169,7 @@ class TransactionActivateHandlerTest {
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
-                .thenReturn(Optional.empty());
+                .thenReturn(Mono.empty());
         Mockito.doNothing().when(paymentRequestInfoRedisTemplateWrapper)
                 .save(paymentRequestInfoArgumentCaptor.capture());
         Mockito.when(

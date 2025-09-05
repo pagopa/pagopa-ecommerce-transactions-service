@@ -217,7 +217,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                             )
                             .flatMap(lockAcquired -> {
                                 if (!lockAcquired) {
-                                    return Mono.error(new LockNotAcquiredException(transactionId, lockDocument))
+                                    return Mono.error(new LockNotAcquiredException(transactionId, lockDocument));
                                 }
                                 return Mono.just(t);
                             });

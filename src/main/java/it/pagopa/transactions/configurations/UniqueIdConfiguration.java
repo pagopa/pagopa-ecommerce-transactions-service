@@ -1,9 +1,8 @@
 package it.pagopa.transactions.configurations;
 
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveUniqueIdTemplateWrapper;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.UniqueIdDocument;
-import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
+import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
@@ -44,7 +43,7 @@ public class UniqueIdConfiguration {
     }
 
     @Bean
-    public UniqueIdUtils uniqueIdUtils(ReactiveUniqueIdTemplateWrapper uniqueIdTemplateWrapper) {
+    public ReactiveUniqueIdUtils uniqueIdUtils(ReactiveUniqueIdTemplateWrapper uniqueIdTemplateWrapper) {
         return new ReactiveUniqueIdUtils(uniqueIdTemplateWrapper);
     }
 }

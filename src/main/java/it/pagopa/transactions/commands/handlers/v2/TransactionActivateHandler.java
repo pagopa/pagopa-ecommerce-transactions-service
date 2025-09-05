@@ -105,62 +105,58 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 () -> Flux.fromIterable(paymentNotices)
                         .parallel(nodoParallelRequests)
                         .runOn(Schedulers.parallel())
-                        .flatMap(
-                                paymentNotice -> Mono.just(
-                                        Tuples.of(
-                                                paymentNotice,
-                                                getPaymentRequestInfoFromCache(paymentNotice.rptId())
-                                        )
+                        .map(
+                                paymentNotice -> Tuples.of(
+                                        paymentNotice,
+                                        getPaymentRequestInfoFromCache(paymentNotice.rptId())
                                 )
                         ).flatMap(
                                 paymentRequest -> {
                                     final it.pagopa.ecommerce.commons.domain.v2.PaymentNotice paymentNotice = paymentRequest
                                             .getT1();
-                                    final Optional<PaymentRequestInfo> maybePaymentRequestInfo = paymentRequest
+                                    final Mono<PaymentRequestInfo> maybePaymentRequestInfo = paymentRequest
                                             .getT2();
-                                    final String dueDate = maybePaymentRequestInfo.map(PaymentRequestInfo::dueDate)
-                                            .orElse(null);
-                                    return Mono.just(
-                                            Tuples.of(
-                                                    paymentNotice,
-                                                    maybePaymentRequestInfo
-                                                            .filter(
-                                                                    requestInfo -> isValidIdempotencyKey(
-                                                                            requestInfo.idempotencyKey()
-                                                                    )
-                                                            )
-                                                            .orElseGet(
-                                                                    () -> {
-                                                                        PaymentRequestInfo paymentRequestWithOnlyIdempotencyKey = new PaymentRequestInfo(
-
-                                                                                paymentNotice.rptId(),
-
-                                                                                null,
-                                                                                null,
-                                                                                null,
-                                                                                null,
-                                                                                dueDate,
-                                                                                null,
-                                                                                null,
-                                                                                new IdempotencyKey(
-                                                                                        nodoOperations
-                                                                                                .getEcommerceFiscalCode(),
-                                                                                        nodoOperations
-                                                                                                .generateRandomStringToIdempotencyKey()
-                                                                                ),
-                                                                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
-                                                                                null,
-                                                                                paymentNotice.creditorReferenceId()
-                                                                        );
-                                                                        paymentRequestInfoRedisTemplateWrapper
-                                                                                .save(
-                                                                                        paymentRequestWithOnlyIdempotencyKey
-                                                                                );
-                                                                        return paymentRequestWithOnlyIdempotencyKey;
-                                                                    }
-                                                            )
+                                    return maybePaymentRequestInfo
+                                            .filter(
+                                                    requestInfo -> isValidIdempotencyKey(
+                                                            requestInfo.idempotencyKey()
+                                                    )
                                             )
-                                    );
+                                            .doOnNext(
+                                                    paymentRequestInfo -> log.info(
+                                                            "PaymentRequestInfo cache hit for {}",
+                                                            paymentNotice.rptId()
+                                                    )
+                                            )
+                                            .switchIfEmpty(
+                                                    Mono.just(
+                                                            new PaymentRequestInfo(
+                                                                    paymentNotice.rptId(),
+                                                                    null,
+                                                                    null,
+                                                                    null,
+                                                                    null,
+                                                                    null,
+                                                                    null,
+                                                                    null,
+                                                                    new IdempotencyKey(
+                                                                            nodoOperations
+                                                                                    .getEcommerceFiscalCode(),
+                                                                            nodoOperations
+                                                                                    .generateRandomStringToIdempotencyKey()
+                                                                    ),
+                                                                    new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                                                    null,
+                                                                    paymentNotice.creditorReferenceId()
+                                                            )
+                                                    ).flatMap(
+                                                            paymentRequestWithOnlyIdempotencyKey -> reactivePaymentRequestInfoRedisTemplateWrapper
+                                                                    .save(
+                                                                            paymentRequestWithOnlyIdempotencyKey
+                                                                    ).thenReturn(paymentRequestWithOnlyIdempotencyKey)
+                                                    )
+                                            ).map(paymentRequestInfo -> Tuples.of(paymentNotice, paymentRequestInfo));
+
                                 }
                         ).flatMap(
                                 cacheResult -> {
@@ -201,15 +197,15 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                     Transaction.ClientId
                                                                             .fromString(command.getClientId())
                                                             )
-                                                            .doOnSuccess(
+                                                            .flatMap(
                                                                     p -> {
                                                                         log.info(
                                                                                 "PaymentRequestInfo cache update for [{}] with paymentToken [{}]",
                                                                                 p.id(),
                                                                                 p.paymentToken()
                                                                         );
-                                                                        reactivePaymentRequestInfoRedisTemplateWrapper
-                                                                                .save(p);
+                                                                        return reactivePaymentRequestInfoRedisTemplateWrapper
+                                                                                .save(p).thenReturn(p);
                                                                     }
                                                             )
                                             );
@@ -327,15 +323,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
 
     private Mono<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
         return reactivePaymentRequestInfoRedisTemplateWrapper
-                .findById(rptId.value())
-                .doOnNext(
-                        info -> log.info("PaymentRequestInfo cache hit for {}: found={}", rptId, true)
-                )
-                .switchIfEmpty(
-                        Mono.fromRunnable(
-                                () -> log.info("PaymentRequestInfo cache hit for {}: found={}", rptId, false)
-                        )
-                );
+                .findById(rptId.value());
     }
 
     private boolean isValidPaymentToken(String paymentToken) {

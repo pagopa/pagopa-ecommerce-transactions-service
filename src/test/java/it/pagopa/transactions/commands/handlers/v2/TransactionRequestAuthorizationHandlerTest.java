@@ -19,7 +19,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
@@ -118,8 +118,8 @@ class TransactionRequestAuthorizationHandlerTest {
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
             .mock(UpdateTransactionStatusTracerUtils.class);
 
-    private final ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper = Mockito
-            .mock(ExclusiveLockDocumentWrapper.class);
+    private final ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper = Mockito
+            .mock(ReactiveExclusiveLockDocumentWrapper.class);
 
     @BeforeEach
     public void init() {
@@ -249,7 +249,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -394,7 +394,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -546,7 +546,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -706,7 +706,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                         .getBytes(StandardCharsets.UTF_8)
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         Hooks.onOperatorDebug();
         /* test */
@@ -836,7 +836,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1027,7 +1027,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), eq(null)))
                 .thenReturn(Mono.empty());
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1142,7 +1142,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1262,7 +1262,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1385,7 +1385,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1508,7 +1508,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1630,7 +1630,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1764,7 +1764,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -1914,7 +1914,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(CHECKOUT_OUTCOME_PATH);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -2059,7 +2059,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -2266,7 +2266,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
@@ -2371,7 +2371,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 authorizationData
         );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
         /* preconditions */
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
@@ -2522,7 +2522,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
@@ -2671,7 +2671,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
@@ -2813,7 +2813,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -2922,7 +2922,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
         when(
                 transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),
@@ -3077,7 +3077,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(NPG_URL_IFRAME);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -3217,7 +3217,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -3360,7 +3360,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -3503,7 +3503,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -3626,7 +3626,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         )
                 );
 
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(false);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
