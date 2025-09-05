@@ -10,7 +10,6 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGate
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.*;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
@@ -3626,7 +3625,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         )
                 );
 
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(false));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))

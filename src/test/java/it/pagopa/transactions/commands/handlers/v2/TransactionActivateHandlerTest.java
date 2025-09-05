@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
@@ -10,7 +11,6 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.v2.*;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -21,7 +21,6 @@ import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionResponseDto;
 import it.pagopa.generated.transactions.server.model.PaymentInfoDto;
@@ -32,7 +31,10 @@ import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
-import it.pagopa.transactions.utils.*;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.NodoOperations;
+import it.pagopa.transactions.utils.Queues;
+import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.util.function.Tuple2;
@@ -222,7 +225,14 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn("77700000000");
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn("aabbccddee");
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
                 .handle(command).block();
@@ -400,7 +410,14 @@ class TransactionActivateHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn("77700000000");
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn("aabbccddee");
         /* run test */
         Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
                 .handle(command).block();
@@ -527,6 +544,14 @@ class TransactionActivateHandlerTest {
                         any(CreateTokenRequestDto.class)
                 )
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn("77700000000");
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn("aabbccddee");
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Mono.just(paymentRequestInfoCached));
 
@@ -616,14 +641,14 @@ class TransactionActivateHandlerTest {
         );
 
         /* preconditions */
-
-        /* preconditions */
         Mockito.when(
                 nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
         )
                 .thenReturn(Mono.just(nodoActivateResponse));
         Mockito.when(nodoOperations.getEcommerceFiscalCode()).thenReturn("00000000000");
         Mockito.when(nodoOperations.generateRandomStringToIdempotencyKey()).thenReturn("abcdeFGHIJ");
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(any()))
+                .thenReturn(Mono.just(nodoActivateResponse));
 
         Mockito.when(
                 jwtTokenIssuerClient.createJWTToken(
@@ -746,21 +771,40 @@ class TransactionActivateHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(any()))
                 .thenReturn(Mono.just(paymentRequestInfoCached));
         Mockito.when(
                 nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(dueDate), any())
         )
                 .thenReturn(Mono.error(new InvalidNodoResponseException("Invalid payment token received")));
-
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn("77700000000");
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn("aabbccddee");
+        Hooks.onOperatorDebug();
         /* run test */
-        Mono<Tuple2<Mono<BaseTransactionEvent<?>>, String>> response = handler
-                .handle(command);
+        StepVerifier.create(handler.handle(command))
+                .expectErrorMatches(exception -> {
+                    assertInstanceOf(InvalidNodoResponseException.class, exception);
+                    assertEquals(
+                            "Invalid payment token received",
+                            ((InvalidNodoResponseException) exception).getErrorDescription()
+                    );
+                    return true;
+                })
+                .verify();
         /* Assertions */
-        InvalidNodoResponseException exception = assertThrows(InvalidNodoResponseException.class, response::block);
-        assertEquals("Invalid payment token received", exception.getErrorDescription());
-
         Mockito.verify(jwtTokenIssuerClient, Mockito.times(0)).createJWTToken(any());
+        Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
+        Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(0)).save(any());
+        Mockito.verify(
+                nodoOperations,
+                Mockito.times(1)
+        ).activatePaymentRequest(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -845,7 +889,14 @@ class TransactionActivateHandlerTest {
         ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
                 .thenReturn(Mono.just(paymentRequestInfoBeforeActivation));
-
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn("77700000000");
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn("aabbccddee");
         Mockito.when(
                 paymentRequestInfoRedisTemplateWrapper
                         .save(paymentRequestInfoArgumentCaptor.capture())
@@ -972,6 +1023,14 @@ class TransactionActivateHandlerTest {
                 nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
         )
                 .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn("77700000000");
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn("aabbccddee");
         Mockito.when(
                 transactionActivatedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),

@@ -1545,6 +1545,7 @@ class TransactionsControllerTest {
                 ).timestampOperation(OffsetDateTime.now());
 
         Mockito.when(uuidUtils.uuidFromBase64(b64TransactionId)).thenReturn(Either.right(transactionId.uuid()));
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(Mono.just(false));
         /* test */
         webTestClient.patch()
                 .uri("/transactions/{transactionId}/auth-requests", b64TransactionId)

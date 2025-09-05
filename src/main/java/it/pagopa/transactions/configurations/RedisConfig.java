@@ -4,8 +4,8 @@ import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclus
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactiveRedisTemplateWrapperBuilder;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
-import it.pagopa.transactions.repositories.ReactiveTransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionCacheInfo;
+import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,11 +34,11 @@ public class RedisConfig {
     }
 
     @Bean
-    public ReactiveTransactionTemplateWrapper transactionTemplateWrapper(
-                                                                         ReactiveRedisConnectionFactory reactiveRedisConnectionFactory,
-                                                                         @Value(
-                                                                             "${transactionDocument.ttl}"
-                                                                         ) int transactionDocumentTtl
+    public TransactionTemplateWrapper transactionTemplateWrapper(
+                                                                 ReactiveRedisConnectionFactory reactiveRedisConnectionFactory,
+                                                                 @Value(
+                                                                     "${transactionDocument.ttl}"
+                                                                 ) int transactionDocumentTtl
     ) {
         // serializer
         StringRedisSerializer keySer = new StringRedisSerializer();
@@ -61,7 +61,7 @@ public class RedisConfig {
                 ctx
         );
 
-        return new ReactiveTransactionTemplateWrapper(
+        return new TransactionTemplateWrapper(
                 reactiveTemplate,
                 "transaction",
                 Duration.ofSeconds(transactionDocumentTtl)
