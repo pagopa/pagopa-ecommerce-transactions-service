@@ -247,9 +247,9 @@ public class TransactionsController implements TransactionsApi {
     }
 
     public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
-            TransactionId domainTransactionId,
-            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-            ServerWebExchange exchange
+                                                                     TransactionId domainTransactionId,
+                                                                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
+                                                                     ServerWebExchange exchange
     ) {
         return Mono.defer(() -> {
             ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
@@ -274,8 +274,8 @@ public class TransactionsController implements TransactionsApi {
                                 updateAuthorizationRequestDto
                         );
                     })
-                    .contextWrite(ctx ->
-                            TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                    .contextWrite(
+                            ctx -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                     new TransactionTracingUtils.TransactionInfo(
                                             domainTransactionId,
                                             new HashSet<>(),
@@ -287,7 +287,6 @@ public class TransactionsController implements TransactionsApi {
                     );
         });
     }
-
 
     @Override
     public Mono<ResponseEntity<AddUserReceiptResponseDto>> addUserReceipt(

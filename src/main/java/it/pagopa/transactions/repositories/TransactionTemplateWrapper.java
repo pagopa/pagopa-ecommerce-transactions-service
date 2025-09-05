@@ -10,8 +10,8 @@ public class TransactionTemplateWrapper extends ReactiveRedisTemplateWrapper<Tra
      * Primary constructor
      *
      * @param reactiveRedisTemplate inner reactive redis template
-     * @param keyspace      keyspace associated to this wrapper
-     * @param ttl           time to live for keys
+     * @param keyspace              keyspace associated to this wrapper
+     * @param ttl                   time to live for keys
      */
     public TransactionTemplateWrapper(
             ReactiveRedisTemplate<String, TransactionCacheInfo> reactiveRedisTemplate,

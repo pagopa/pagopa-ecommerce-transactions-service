@@ -208,7 +208,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                                 p.id(),
                                                                                 p.paymentToken()
                                                                         );
-                                                                        reactivePaymentRequestInfoRedisTemplateWrapper.save(p);
+                                                                        reactivePaymentRequestInfoRedisTemplateWrapper
+                                                                                .save(p);
                                                                     }
                                                             )
                                             );
@@ -327,12 +328,14 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     private Mono<PaymentRequestInfo> getPaymentRequestInfoFromCache(RptId rptId) {
         return reactivePaymentRequestInfoRedisTemplateWrapper
                 .findById(rptId.value())
-                .doOnNext(info ->
-                    log.info("PaymentRequestInfo cache hit for {}: found={}", rptId, true)
+                .doOnNext(
+                        info -> log.info("PaymentRequestInfo cache hit for {}: found={}", rptId, true)
                 )
-                .switchIfEmpty(Mono.fromRunnable(() ->
-                    log.info("PaymentRequestInfo cache hit for {}: found={}", rptId, false)
-                ));
+                .switchIfEmpty(
+                        Mono.fromRunnable(
+                                () -> log.info("PaymentRequestInfo cache hit for {}: found={}", rptId, false)
+                        )
+                );
     }
 
     private boolean isValidPaymentToken(String paymentToken) {

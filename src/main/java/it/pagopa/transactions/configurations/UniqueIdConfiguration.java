@@ -19,18 +19,22 @@ public class UniqueIdConfiguration {
 
     @Bean
     public ReactiveUniqueIdTemplateWrapper reactiveUniqueIdTemplateWrapper(
-                                                           ReactiveRedisConnectionFactory reactiveRedisConnectionFactory
+                                                                           ReactiveRedisConnectionFactory reactiveRedisConnectionFactory
     ) {
         StringRedisSerializer keySerializer = new StringRedisSerializer();
-        Jackson2JsonRedisSerializer<UniqueIdDocument> valueSerializer =
-                new Jackson2JsonRedisSerializer<>(UniqueIdDocument.class);
+        Jackson2JsonRedisSerializer<UniqueIdDocument> valueSerializer = new Jackson2JsonRedisSerializer<>(
+                UniqueIdDocument.class
+        );
 
-        RedisSerializationContext<String, UniqueIdDocument> serializationContext =
-                RedisSerializationContext.<String, UniqueIdDocument>newSerializationContext(keySerializer)
-                        .value(valueSerializer)
-                        .build();
+        RedisSerializationContext<String, UniqueIdDocument> serializationContext = RedisSerializationContext
+                .<String, UniqueIdDocument>newSerializationContext(keySerializer)
+                .value(valueSerializer)
+                .build();
 
-        ReactiveRedisTemplate<String, UniqueIdDocument> reactiveRedisTemplate = new ReactiveRedisTemplate<>(reactiveRedisConnectionFactory, serializationContext);
+        ReactiveRedisTemplate<String, UniqueIdDocument> reactiveRedisTemplate = new ReactiveRedisTemplate<>(
+                reactiveRedisConnectionFactory,
+                serializationContext
+        );
         return new ReactiveUniqueIdTemplateWrapper(
                 reactiveRedisTemplate,
                 "uniqueId",
