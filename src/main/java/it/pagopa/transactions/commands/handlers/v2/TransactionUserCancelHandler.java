@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Objects;
 
 @Component(TransactionUserCancelHandler.QUALIFIER_NAME)
 @Slf4j
@@ -52,9 +53,10 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                 .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getData())))
                 .cast(TransactionActivated.class)
                 .filter(
-                        tx -> ((command.getXUserId() == null && tx.getTransactionActivatedData().getUserId() == null) ||
-                                (command.getXUserId() != null && command.getXUserId().toString()
-                                        .equals(tx.getTransactionActivatedData().getUserId())))
+                        tx -> Objects.equals(
+                                Objects.toString(command.getXUserId()),
+                                Objects.toString(tx.getTransactionActivatedData().getUserId())
+                        )
                 )
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(command.getData().value())))
                 .flatMap(
