@@ -118,16 +118,18 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     @Override
     public Mono<RequestAuthorizationResponseDto> handle(TransactionRequestAuthorizationCommand command) {
-        return handleWithCreationDate(command).map(Tuple2::getT1);
+        return transactionsUtils.reduceEventsV2(command.getData().transactionId())
+                        .filter(t -> t.getStatus().equals(TransactionStatusDto.ACTIVATED))
+                        .cast(TransactionActivated.class)
+                .flatMap(transactionActivated -> handleWithCreationDate(command, transactionActivated))
+                .map(Tuple2::getT1);
     }
 
-    public Mono<Tuple2<RequestAuthorizationResponseDto, TransactionAuthorizationRequestedEvent>> handleWithCreationDate(TransactionRequestAuthorizationCommand command) {
+    public Mono<Tuple2<RequestAuthorizationResponseDto, TransactionAuthorizationRequestedEvent>> handleWithCreationDate(TransactionRequestAuthorizationCommand command, TransactionActivated transaction) {
         AuthorizationRequestData authorizationRequestData = command.getData();
         URI logo = getLogo(command.getData());
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
-                command.getData().transactionId()
-        );
-        Mono<? extends BaseTransaction> alreadyProcessedError = transaction
+
+        Mono<? extends BaseTransaction> alreadyProcessedError = Mono.just(transaction)
                 .cast(BaseTransaction.class)
                 .doOnNext(
                         t -> log.warn(
@@ -136,8 +138,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                 t.getStatus()
                         )
                 ).flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
-        Mono<TransactionActivated> transactionActivated = transaction
-                .filter(t -> t.getStatus() == TransactionStatusDto.ACTIVATED)
+        Mono<TransactionActivated> transactionActivated = Mono.just(transaction)
+                .cast(BaseTransaction.class)
                 .switchIfEmpty(alreadyProcessedError)
                 .cast(TransactionActivated.class);
 

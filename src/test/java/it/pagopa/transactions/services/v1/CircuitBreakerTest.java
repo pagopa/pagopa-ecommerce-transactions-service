@@ -240,14 +240,14 @@ class CircuitBreakerTest {
          * Preconditions
          */
         Mockito.when(
-                transactionsEventStoreRepository.findByTransactionIdAndEventCode(any(String.class), any(String.class))
+                transactionsUtils.reduceEventsV2(any(TransactionId.class))
         )
                 .thenReturn(Mono.error(thrownException));
 
         StepVerifier
                 .create(
                         transactionsService.requestTransactionAuthorization(
-                                "transactionId",
+                                UUID.randomUUID().toString().replaceAll("-", ""),
                                 null,
                                 "",
                                 null,

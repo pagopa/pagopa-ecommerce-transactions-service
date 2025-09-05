@@ -2,10 +2,11 @@ package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.Email;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
@@ -449,8 +450,8 @@ public class TransactionsUtils {
                 );
     }
 
-    public Integer getTransactionTotalAmountFromEvent(TransactionActivatedEvent transactionActivatedEvent) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
+    public Integer getTransactionTotalAmountFromEvent(TransactionActivated transactionActivated) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivated);
         return paymentNotices.stream()
                 .mapToInt(
                         PaymentNotice::getAmount
@@ -458,40 +459,59 @@ public class TransactionsUtils {
     }
 
     public Boolean isAllCcp(
-                            TransactionActivatedEvent transactionActivatedEvent,
+                            TransactionActivated transactionActivated,
                             int idx
     ) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivated);
         return paymentNotices.get(idx).isAllCCP();
     }
 
     public String getRptId(
-                           TransactionActivatedEvent transactionActivatedEvent,
+                           TransactionActivated transactionActivated,
                            int idx
     ) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivated);
         return paymentNotices.get(idx).getRptId();
     }
 
-    public List<String> getRptIds(TransactionActivatedEvent transactionActivatedEvent) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
+    public List<String> getRptIds(TransactionActivated transactionActivated) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivated);
         return paymentNotices.stream().map(PaymentNotice::getRptId).toList();
     }
 
-    public List<PaymentNotice> getPaymentNotices(TransactionActivatedEvent transactionActivatedEvent) {
-        return transactionActivatedEvent.getData().getPaymentNotices();
+    public List<PaymentNotice> getPaymentNotices(TransactionActivated transactionActivated) {
+        return transactionActivated.getPaymentNotices().stream().map(
+                p -> new PaymentNotice(
+                        p.paymentToken().value(),
+                        p.rptId().value(),
+                        p.transactionDescription().value(),
+                        p.transactionAmount().value(),
+                        p.paymentContextCode().value(),
+                        p.transferList().stream().map(
+                                t -> new PaymentTransferInformation(
+                                        t.paFiscalCode(),
+                                        t.digitalStamp(),
+                                        t.transferAmount(),
+                                        t.transferCategory()
+                                )
+                        ).toList(),
+                        p.isAllCCP(),
+                        p.companyName().value(),
+                        p.creditorReferenceId()
+                )
+        ).toList();
     }
 
-    public String getEffectiveClientId(TransactionActivatedEvent transaction) {
-        return transaction.getData().getClientId().getEffectiveClient().toString();
+    public String getEffectiveClientId(TransactionActivated transactionActivated) {
+        return transactionActivated.getClientId().getEffectiveClient().toString();
     }
 
-    public String getClientId(TransactionActivatedEvent transaction) {
-        return transaction.getData().getClientId().toString();
+    public String getClientId(TransactionActivated transactionActivated) {
+        return transactionActivated.getClientId().toString();
     }
 
-    public Confidential<Email> getEmail(TransactionActivatedEvent transactionActivatedEvent) {
-        return transactionActivatedEvent.getData().getEmail();
+    public Confidential<Email> getEmail(TransactionActivated transactionActivated) {
+        return transactionActivated.getEmail();
     }
 
     public Optional<String> getPspId(BaseTransaction transaction) {
