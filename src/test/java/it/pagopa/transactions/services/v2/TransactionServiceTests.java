@@ -47,7 +47,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -871,10 +870,6 @@ class TransactionServiceTests {
                 .status(TransactionStatusDto.NOTIFIED_KO);
 
         /* preconditions */
-        /*
-         * Mockito.when(repository.findById(transactionId.value()))
-         * .thenReturn(Mono.just(transactionDocument));
-         */
 
         Mockito.when(
                 transactionsEventStoreRepository
@@ -1030,7 +1025,33 @@ class TransactionServiceTests {
     }
 
     @Test
-    void shouldExecuteTransactionUserCancelOk() {
+    void shouldExecuteTransactionUserCancelOkGuest() {
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        transactionActivatedEvent.getData().setUserId(null);
+        TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
+                transactionId
+        );
+        TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
+                null,
+                new TransactionId(transactionId),
+                null
+        );
+        when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(transactionId, TRANSACTION_ACTIVATED_EVENT.toString())
+        )
+                .thenReturn(Mono.just(transactionActivatedEvent));
+        when(transactionCancelHandlerV2.handle(transactionCancelCommand)).thenReturn(Mono.just(userCanceledEvent));
+        when(cancellationRequestProjectionHandlerV2.handle(any())).thenReturn(Mono.empty());
+        StepVerifier
+                .create(transactionsServiceV1.cancelTransaction(transactionId, null))
+                .expectNext().verifyComplete();
+
+    }
+
+    @Test
+    void shouldExecuteTransactionUserCancelOkWithUserIdSet() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionUserCanceledEvent userCanceledEvent = new TransactionUserCanceledEvent(
@@ -1039,7 +1060,7 @@ class TransactionServiceTests {
         TransactionUserCancelCommand transactionCancelCommand = new TransactionUserCancelCommand(
                 null,
                 new TransactionId(transactionId),
-                null
+                UUID.fromString(transactionActivatedEvent.getData().getUserId())
         );
         when(
                 transactionsEventStoreRepository
