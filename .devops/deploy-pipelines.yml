@@ -91,7 +91,7 @@ stages:
     displayName: 'UAT green deployment'
     dependsOn: [Build_release_candidate]
     variables:
-      app_version: cdctest-disablewrite
+      app_version: cdctestdisablewrite
     jobs:
       - deployment: "Green_deployment"
         displayName: "Green deployment"
