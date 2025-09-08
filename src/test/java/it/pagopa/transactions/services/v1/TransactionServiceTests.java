@@ -6,7 +6,7 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
@@ -47,6 +47,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -330,8 +331,8 @@ class TransactionServiceTests {
                 .pspId("pspId");
 
         /* preconditions */
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdAndEventCode(eq(TRANSACTION_ID), any()))
-                .thenReturn(Mono.empty());
+        Mockito.when(transactionsUtils.reduceEventsV2(any(TransactionId.class)))
+                .thenReturn(Mono.error(new TransactionNotFoundException(TRANSACTION_ID)));
 
         /* test */
         Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsServiceV1
@@ -422,8 +423,8 @@ class TransactionServiceTests {
 
     @Test
     void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFound() {
-        TransactionActivatedEvent transactionActivatedEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
-                .transactionActivateEvent();
+        TransactionActivated transactionActivated = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivated(ZonedDateTime.now().toString());
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(0)
@@ -442,12 +443,73 @@ class TransactionServiceTests {
         );
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
+        /*
+         * Mockito.when( transactionsEventStoreRepository
+         * .findByTransactionIdAndEventCode(TRANSACTION_ID,
+         * TRANSACTION_ACTIVATED_EVENT.toString()) )
+         * .thenReturn(Mono.just(transactionActivatedEvent));
+         */
+        Mockito.when(transactionsUtils.reduceEventsV2(any(TransactionId.class)))
+                .thenReturn(Mono.just(transactionActivated));
 
-        Mockito.when(
-                transactionsEventStoreRepository
-                        .findByTransactionIdAndEventCode(TRANSACTION_ID, TRANSACTION_ACTIVATED_EVENT.toString())
+        /* test */
+
+        StepVerifier.create(
+                transactionsServiceV1
+                        .requestTransactionAuthorization(
+                                TRANSACTION_ID,
+                                UUID.fromString(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.USER_ID),
+                                null,
+                                null,
+                                authorizationRequest
+                        )
         )
-                .thenReturn(Mono.just(transactionActivatedEvent));
+                .expectError(PaymentMethodNotFoundException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFoundForGuestTransaction() {
+        TransactionActivated transactionActivatedCopy = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivated(ZonedDateTime.now().toString());
+        TransactionActivated transactionActivated = new TransactionActivated(
+                new TransactionId(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID),
+                transactionActivatedCopy.getPaymentNotices(),
+                transactionActivatedCopy.getEmail(),
+                null,
+                null,
+                transactionActivatedCopy.getClientId(),
+                null,
+                150,
+                it.pagopa.ecommerce.commons.v2.TransactionTestUtils.npgTransactionGatewayActivationData(),
+                null
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(0)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .fee(0)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(new ApmAuthRequestDetailsDto().detailType("apm"));
+
+        /* preconditions */
+
+        PaymentMethodNotFoundException exception = new PaymentMethodNotFoundException(
+                UUID.randomUUID().toString(),
+                "CHECKOUT"
+        );
+
+        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
+        /*
+         * Mockito.when( transactionsEventStoreRepository
+         * .findByTransactionIdAndEventCode(TRANSACTION_ID,
+         * TRANSACTION_ACTIVATED_EVENT.toString()) )
+         * .thenReturn(Mono.just(transactionActivatedEvent));
+         */
+        Mockito.when(transactionsUtils.reduceEventsV2(any(TransactionId.class)))
+                .thenReturn(Mono.just(transactionActivated));
 
         /* test */
 

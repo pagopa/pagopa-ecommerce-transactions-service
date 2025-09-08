@@ -930,7 +930,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 authorizationData
         );
-        when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
+        when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
                         (Flux) Flux.just(
                                 TransactionTestUtils.transactionActivateEvent(),
