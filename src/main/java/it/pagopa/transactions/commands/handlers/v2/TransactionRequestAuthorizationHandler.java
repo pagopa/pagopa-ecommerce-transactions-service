@@ -138,6 +138,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                 t.getStatus()
                         )
                 ).flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
+
         Mono<TransactionActivated> transactionActivated = Mono.just(transaction)
                 .cast(BaseTransaction.class)
                 .switchIfEmpty(alreadyProcessedError)

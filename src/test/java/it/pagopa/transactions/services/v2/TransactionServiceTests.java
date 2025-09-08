@@ -172,6 +172,9 @@ class TransactionServiceTests {
     @Captor
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
 
+    @Captor
+    private ArgumentCaptor<TransactionActivated> transactionActivatedArgumentCaptor;
+
     @MockitoBean
     private TransactionsUtils transactionsUtils;
 
@@ -509,7 +512,7 @@ class TransactionServiceTests {
 
         Mockito.when(
                 transactionRequestAuthorizationHandlerV2
-                        .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class))
+                        .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class), any(TransactionActivated.class))
         )
                 .thenReturn(
                         Mono.just(
@@ -535,11 +538,14 @@ class TransactionServiceTests {
                 .expectNext(requestAuthorizationResponse)
                 .verifyComplete();
 
-        verify(transactionRequestAuthorizationHandlerV2).handleWithCreationDate(commandArgumentCaptor.capture());
+        verify(transactionRequestAuthorizationHandlerV2).handleWithCreationDate(commandArgumentCaptor.capture(),transactionActivatedArgumentCaptor.capture());
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+
+        TransactionActivated transactionActivatedCaptured = transactionActivatedArgumentCaptor.getValue();
+        assertEquals(transactionActivatedCaptured.getTransactionId().value(), TRANSACTION_ID);
     }
 
     @Test
@@ -1361,7 +1367,7 @@ class TransactionServiceTests {
 
         Mockito.when(
                 transactionRequestAuthorizationHandlerV2
-                        .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class))
+                        .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class), any(TransactionActivated.class))
         )
                 .thenReturn(
                         Mono.just(
@@ -1497,7 +1503,7 @@ class TransactionServiceTests {
 
         Mockito.when(
                 transactionRequestAuthorizationHandlerV2
-                        .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class))
+                        .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class), any(TransactionActivated.class))
         )
                 .thenReturn(
                         Mono.just(

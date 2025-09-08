@@ -670,7 +670,7 @@ public class TransactionsService {
     ) {
 
         return requestAuthHandlerV2
-                .handleWithCreationDate(transactionRequestAuthCommand)
+                .handleWithCreationDate(transactionRequestAuthCommand, transactionActivated)
                 .doOnNext(
                         responseAndDate -> logAuthRequestedFor(transactionActivated.getTransactionId().value())
                                 .accept(responseAndDate.getT1())
