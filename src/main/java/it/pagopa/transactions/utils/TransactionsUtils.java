@@ -449,7 +449,9 @@ public class TransactionsUtils {
                 );
     }
 
-    public Integer getTransactionTotalAmountFromEvent(TransactionActivatedEvent transactionActivatedEvent) {
+    public Integer getTransactionTotalAmountFromTransactionActivatedEvent(
+                                                                          TransactionActivatedEvent transactionActivatedEvent
+    ) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
         return paymentNotices.stream()
                 .mapToInt(

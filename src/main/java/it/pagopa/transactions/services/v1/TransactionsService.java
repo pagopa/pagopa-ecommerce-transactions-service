@@ -701,8 +701,8 @@ public class TransactionsService {
     /**
      * Creates a consumer that invalidates the cache for a transaction
      *
-     * @param transactionActivatedEvent the transaction document whose cache should
-     *                                  be invalidated
+     * @param transactionActivatedEvent the activation event of the transaction
+     *                                  whose cache should be invalidated
      * @return a consumer that invalidates the cache entry
      */
     private Consumer<RequestAuthorizationResponseDto> invalidateCacheFor(
@@ -1053,7 +1053,7 @@ public class TransactionsService {
                                       RequestAuthorizationRequestDto authRequest,
                                       TransactionActivatedEvent transaction
     ) {
-        return !transactionsUtils.getTransactionTotalAmountFromEvent(transaction)
+        return !transactionsUtils.getTransactionTotalAmountFromTransactionActivatedEvent(transaction)
                 .equals(authRequest.getAmount());
     }
 
@@ -1086,7 +1086,8 @@ public class TransactionsService {
         return Mono.error(
                 new TransactionAmountMismatchException(
                         authRequest.getAmount(),
-                        transactionsUtils.getTransactionTotalAmountFromEvent(transactionActivatedEvent)
+                        transactionsUtils
+                                .getTransactionTotalAmountFromTransactionActivatedEvent(transactionActivatedEvent)
                 )
         );
     }

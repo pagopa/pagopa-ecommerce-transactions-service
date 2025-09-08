@@ -504,7 +504,8 @@ class TransactionServiceTests {
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(transactionsUtils.getPaymentNotices(any(TransactionActivatedEvent.class))).thenCallRealMethod();
-        Mockito.when(transactionsUtils.getTransactionTotalAmountFromEvent(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmountFromTransactionActivatedEvent(any()))
+                .thenCallRealMethod();
         Mockito.when(transactionsUtils.getRptId(any(TransactionActivatedEvent.class), anyInt())).thenCallRealMethod();
 
         Mockito.when(
@@ -994,7 +995,8 @@ class TransactionServiceTests {
 
         Mockito.when(transactionsUtils.getPaymentNotices(any(TransactionActivatedEvent.class))).thenCallRealMethod();
 
-        Mockito.when(transactionsUtils.getTransactionTotalAmountFromEvent(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmountFromTransactionActivatedEvent(any()))
+                .thenCallRealMethod();
 
         Mockito.when(transactionRequestAuthorizationHandlerV2.handle(any()))
                 .thenReturn(Mono.just(requestAuthorizationResponse));
@@ -1368,7 +1370,8 @@ class TransactionServiceTests {
                 );
 
         Mockito.when(transactionsUtils.getPaymentNotices(any(TransactionActivatedEvent.class))).thenCallRealMethod();
-        Mockito.when(transactionsUtils.getTransactionTotalAmountFromEvent(any())).thenCallRealMethod();
+        Mockito.when(transactionsUtils.getTransactionTotalAmountFromTransactionActivatedEvent(any()))
+                .thenCallRealMethod();
         Mockito.when(transactionsUtils.getRptId(any(TransactionActivatedEvent.class), anyInt())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getClientId(any(TransactionActivatedEvent.class))).thenCallRealMethod();
         Mockito.when(transactionsUtils.getEffectiveClientId(any(TransactionActivatedEvent.class))).thenCallRealMethod();

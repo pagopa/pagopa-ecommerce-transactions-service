@@ -153,7 +153,8 @@ class TransactionsUtilsTest {
                 .mapToInt(
                         it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                 ).sum();
-        Integer methodTotalAmount = utils.getTransactionTotalAmountFromEvent(transactionActivateEvent);
+        Integer methodTotalAmount = utils
+                .getTransactionTotalAmountFromTransactionActivatedEvent(transactionActivateEvent);
         assertEquals(totalAmount, methodTotalAmount.intValue());
     }
 
