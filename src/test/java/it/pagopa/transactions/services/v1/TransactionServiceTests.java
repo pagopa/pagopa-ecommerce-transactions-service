@@ -6,6 +6,8 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
@@ -19,6 +21,7 @@ import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -52,6 +55,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode.TRANSACTION_ACTIVATED_EVENT;
 import static it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -326,7 +330,7 @@ class TransactionServiceTests {
                 .pspId("pspId");
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdAndEventCode(eq(TRANSACTION_ID), any()))
                 .thenReturn(Mono.empty());
 
         /* test */
@@ -357,7 +361,10 @@ class TransactionServiceTests {
                 );
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
+        Mockito.when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(TRANSACTION_ID, TRANSACTION_ACTIVATED_EVENT.toString())
+        )
                 .thenReturn(Mono.empty());
 
         /* test */
@@ -415,10 +422,8 @@ class TransactionServiceTests {
 
     @Test
     void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFound() {
-        Transaction transaction = TransactionTestUtils.transactionDocument(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                ZonedDateTime.now()
-        );
+        TransactionActivatedEvent transactionActivatedEvent = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
+                .transactionActivateEvent();
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(0)
@@ -438,8 +443,11 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
-                .thenReturn(Mono.just(transaction));
+        Mockito.when(
+                transactionsEventStoreRepository
+                        .findByTransactionIdAndEventCode(TRANSACTION_ID, TRANSACTION_ACTIVATED_EVENT.toString())
+        )
+                .thenReturn(Mono.just(transactionActivatedEvent));
 
         /* test */
 
@@ -453,9 +461,14 @@ class TransactionServiceTests {
 
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
-        String transactionId = UUID.randomUUID().toString();
-        when(repository.findById(transactionId)).thenReturn(Mono.empty());
-        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
+        TransactionId transactionId = new TransactionId(
+                it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID
+        );
+
+        when(transactionCancelHandlerV2.handle(any(TransactionUserCancelCommand.class)))
+                .thenReturn(Mono.error(new TransactionNotFoundException(transactionId.value())));
+
+        StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId.value(), null))
                 .expectError(TransactionNotFoundException.class).verify();
 
     }
