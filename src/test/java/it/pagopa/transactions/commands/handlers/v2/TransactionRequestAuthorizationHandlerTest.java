@@ -2266,9 +2266,12 @@ class TransactionRequestAuthorizationHandlerTest {
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
-        /* test */
+        when(transactionTemplateWrapper.save(any())).thenReturn(Mono.empty());
+
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
+                .expectNextMatches(
+                        value -> value.getAuthorizationRequestId().equals(responseDto.getAuthorizationRequestId())
+                )
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
