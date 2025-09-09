@@ -3543,7 +3543,6 @@ class TransactionRequestAuthorizationHandlerTest {
     @Test
     void shouldNotPerformGatewayCallForErrorAcquiringLock() {
         String orderId = "oderId";
-
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
