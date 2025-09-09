@@ -151,18 +151,11 @@ class AuthorizationRequestProjectionHandlerTest {
                 false
         );
 
-        when(transactionsViewRepository.findById(initialDocument.getTransactionId()))
-                .thenReturn(Mono.just(initialDocument));
-
         StepVerifier.create(authorizationRequestProjectionHandler.handle(authorizationData))
-                .expectNextMatches(
-                        transaction -> transaction.getStatus().equals(TransactionStatusDto.AUTHORIZATION_REQUESTED) &&
-                                transaction.getFeeTotal().equals(fee) &&
-                                transaction.getPspId().equals(TransactionTestUtils.PSP_ID)
-                )
                 .verifyComplete();
 
         verify(transactionsViewRepository, never()).save(any());
+        verify(transactionsViewRepository, never()).findByTransactionId(any());
     }
 
 }

@@ -41,17 +41,25 @@ public class AuthorizationRequestProjectionHandler
     public Mono<Transaction> handle(AuthorizationRequestedEventData authorizationRequestedEventData) {
         AuthorizationRequestData data = authorizationRequestedEventData.authorizationRequestData();
         String creationDate = authorizationRequestedEventData.event().getCreationDate();
-        return transactionsViewRepository.findById(data.transactionId().value())
-                .cast(Transaction.class)
-                .switchIfEmpty(
-                        Mono.error(
-                                new TransactionNotFoundException(
-                                        data.transactionId().value()
-                                )
-                        )
-                )
+        return Mono.just(transactionsviewUpdateEnabled)
+                .filter(t -> t)
                 .flatMap(
-                        transactionDocument -> conditionallySaveTransactionView(transactionDocument, data, creationDate)
+                        t -> transactionsViewRepository.findById(data.transactionId().value())
+                                .cast(Transaction.class)
+                                .switchIfEmpty(
+                                        Mono.error(
+                                                new TransactionNotFoundException(
+                                                        data.transactionId().value()
+                                                )
+                                        )
+                                )
+                                .flatMap(
+                                        transactionDocument -> conditionallySaveTransactionView(
+                                                transactionDocument,
+                                                data,
+                                                creationDate
+                                        )
+                                )
                 );
     }
 
