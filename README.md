@@ -108,7 +108,6 @@ These are all environment variables needed by the application:
 | SECURITY_API_KEYS_PRIMARY                       |      | Secured api primary key                                                                                                                                                         | string  |         |
 | SECURITY_API_KEYS_SECONDARY                     |      | Secured api secondary key                                                                                                                                                       | string  |         |
 | TRANSACTIONSVIEW_UPDATE_ENABLED                 |      | Feature flag to enable/disable view writing                                                                                                                                     | boolean | true    |
-| GITHUB_TOKEN                                    |      | GitHub Personal Access Token with packages:read permission for accessing pagopa-ecommerce-commons from GitHub Packages                                                          | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 
