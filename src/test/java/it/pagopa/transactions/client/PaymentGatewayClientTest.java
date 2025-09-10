@@ -18,8 +18,8 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
+import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
-import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
@@ -85,7 +85,7 @@ class PaymentGatewayClientTest {
     ConfidentialMailUtils confidentialMailUtils;
 
     @Mock
-    UniqueIdUtils uniqueIdUtils;
+    ReactiveUniqueIdUtils uniqueIdUtils;
 
     private final String npgDefaultApiKey = UUID.randomUUID().toString();
 

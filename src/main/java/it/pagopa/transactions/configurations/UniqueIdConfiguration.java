@@ -1,13 +1,14 @@
 package it.pagopa.transactions.configurations;
 
-import it.pagopa.ecommerce.commons.redis.templatewrappers.UniqueIdTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveUniqueIdTemplateWrapper;
 import it.pagopa.ecommerce.commons.repositories.UniqueIdDocument;
-import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
+import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
@@ -16,28 +17,33 @@ import java.time.Duration;
 public class UniqueIdConfiguration {
 
     @Bean
-    public UniqueIdTemplateWrapper uniqueIdTemplateWrapper(
-                                                           RedisConnectionFactory redisConnectionFactory
+    public ReactiveUniqueIdTemplateWrapper reactiveUniqueIdTemplateWrapper(
+                                                                           ReactiveRedisConnectionFactory reactiveRedisConnectionFactory
     ) {
-        RedisTemplate<String, UniqueIdDocument> redisTemplate = new RedisTemplate<>();
-        Jackson2JsonRedisSerializer<UniqueIdDocument> jacksonRedisSerializer = new Jackson2JsonRedisSerializer<>(
+        StringRedisSerializer keySerializer = new StringRedisSerializer();
+        Jackson2JsonRedisSerializer<UniqueIdDocument> valueSerializer = new Jackson2JsonRedisSerializer<>(
                 UniqueIdDocument.class
         );
 
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(jacksonRedisSerializer);
-        redisTemplate.afterPropertiesSet();
+        RedisSerializationContext<String, UniqueIdDocument> serializationContext = RedisSerializationContext
+                .<String, UniqueIdDocument>newSerializationContext(keySerializer)
+                .value(valueSerializer)
+                .build();
 
-        return new UniqueIdTemplateWrapper(
-                redisTemplate,
+        ReactiveRedisTemplate<String, UniqueIdDocument> reactiveRedisTemplate = new ReactiveRedisTemplate<>(
+                reactiveRedisConnectionFactory,
+                serializationContext
+        );
+        return new ReactiveUniqueIdTemplateWrapper(
+                reactiveRedisTemplate,
                 "uniqueId",
                 Duration.ofSeconds(60)
         );
+
     }
 
     @Bean
-    public UniqueIdUtils uniqueIdUtils(UniqueIdTemplateWrapper uniqueIdTemplateWrapper) {
-        return new UniqueIdUtils(uniqueIdTemplateWrapper);
+    public ReactiveUniqueIdUtils uniqueIdUtils(ReactiveUniqueIdTemplateWrapper uniqueIdTemplateWrapper) {
+        return new ReactiveUniqueIdUtils(uniqueIdTemplateWrapper);
     }
 }
