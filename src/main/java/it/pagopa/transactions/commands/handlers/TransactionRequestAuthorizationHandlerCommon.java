@@ -1,16 +1,15 @@
 package it.pagopa.transactions.commands.handlers;
 
 import io.vavr.control.Either;
+import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.v2.Claims;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JwtIssuerClientException;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
-import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
@@ -30,11 +29,13 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.crypto.SecretKey;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -94,7 +95,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                     yield npgApmPaymentFlow(authorizationData, correlationId, true, clientId, lang, userId);
                 }
             }
-            case ApmAuthRequestDetailsDto ignored -> npgApmPaymentFlow(authorizationData, correlationId, false, clientId, lang, userId);
+            case ApmAuthRequestDetailsDto ignored ->
+                    npgApmPaymentFlow(authorizationData, correlationId, false, clientId, lang, userId);
             default -> Mono.empty();
         });
 
@@ -117,19 +119,17 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     ) {
         return paymentGatewayClient
                 .requestNpgBuildSession(authorizationData, correlationId, true, clientId, lang, userId)
-                .map(orderIdAndFieldsDto -> {
-                    transactionTemplateWrapper.save(
-                            new TransactionCacheInfo(
-                                    authorizationData.transactionId(),
-                                    new WalletPaymentInfo(
-                                            orderIdAndFieldsDto.getT2().getSessionId(),
-                                            orderIdAndFieldsDto.getT2().getSecurityToken(),
-                                            orderIdAndFieldsDto.getT1()
-                                    )
-                            )
-                    );
-                    return orderIdAndFieldsDto;
-                }
+                .flatMap(
+                        orderIdAndFieldsDto -> transactionTemplateWrapper.save(
+                                new TransactionCacheInfo(
+                                        authorizationData.transactionId(),
+                                        new WalletPaymentInfo(
+                                                orderIdAndFieldsDto.getT2().getSessionId(),
+                                                orderIdAndFieldsDto.getT2().getSecurityToken(),
+                                                orderIdAndFieldsDto.getT1()
+                                        )
+                                )
+                        ).thenReturn(orderIdAndFieldsDto)
                 )
                 .flatMap(
                         orderIdAndFieldsDto -> invokeNpgConfirmPayment(

@@ -4,7 +4,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -16,7 +16,7 @@ import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
-import java.util.function.Consumer;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,14 +32,14 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
+import reactor.util.context.Context;
 
-import jakarta.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import reactor.util.context.Context;
 
 @RestController("TransactionsControllerV1")
 @Slf4j
@@ -61,7 +61,7 @@ public class TransactionsController implements TransactionsApi {
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Autowired
-    private ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
+    private ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper;
 
     @Value("${security.apiKey.primary}")
     private String primaryKey;
@@ -251,15 +251,12 @@ public class TransactionsController implements TransactionsApi {
                                                                      UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
                                                                      ServerWebExchange exchange
     ) {
-        return Mono.just(updateAuthorizationRequestDto)
-                .map(updateAuthorizationRequest -> {
-                    ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
-                            "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
-                            "transactions-service"
-                    );
-                    boolean lockAcquired = exclusiveLockDocumentWrapper.saveIfAbsent(
-                            lockDocument
-                    );
+        ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
+                "transactions-service"
+        );
+        return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument)
+                .flatMap(lockAcquired -> {
                     log.info(
                             "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
                             domainTransactionId.value(),
@@ -267,26 +264,23 @@ public class TransactionsController implements TransactionsApi {
                             lockAcquired
                     );
                     if (!lockAcquired) {
-                        throw new LockNotAcquiredException(domainTransactionId, lockDocument);
+                        return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
                     }
-                    return updateAuthorizationRequest;
+
+                    return transactionsService.updateTransactionAuthorization(
+                            domainTransactionId.uuid(),
+                            updateAuthorizationRequestDto
+                    );
                 })
-                .flatMap(
-                        updateAuthorizationRequest -> transactionsService
-                                .updateTransactionAuthorization(
-                                        domainTransactionId.uuid(),
-                                        updateAuthorizationRequest
-                                )
-                )
                 .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
+                        ctx -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
                                         domainTransactionId,
                                         new HashSet<>(),
                                         exchange.getRequest().getMethod().name(),
                                         exchange.getRequest().getURI().getPath()
                                 ),
-                                context
+                                ctx
                         )
                 );
     }
