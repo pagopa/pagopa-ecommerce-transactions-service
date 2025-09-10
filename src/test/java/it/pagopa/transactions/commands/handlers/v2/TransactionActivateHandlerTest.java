@@ -1296,7 +1296,6 @@ class TransactionActivateHandlerTest {
         String paTaxcode = rptId.getFiscalCode();
         String ecommerceFiscalCode = "77700000000";
         String keyIdentifier = "aabbccddee";
-        String idCart = transactionActivatedEvent.getData().getIdCart();
         Transaction.ClientId clientId = transactionActivatedEvent.getData().getClientId();
         IdempotencyKey expectedGeneratedIdempotencyKey = new IdempotencyKey(ecommerceFiscalCode, keyIdentifier);
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
