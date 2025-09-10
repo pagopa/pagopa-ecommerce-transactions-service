@@ -20,7 +20,7 @@ COPY src src
 COPY api-spec api-spec
 COPY eclipse-style.xml eclipse-style.xml
 RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
-    ./mvnw compile spring-boot:process-aot install -DskipTests --offline
+    ./mvnw compile spring-boot:process-aot install -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd AS optimizer
 
