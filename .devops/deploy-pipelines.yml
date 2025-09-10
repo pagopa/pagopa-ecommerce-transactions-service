@@ -86,7 +86,6 @@ stages:
               DOCKER_IMAGE_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
               DOCKER_IMAGE_TAG: $(Build.SourceVersion)
               FORCE_REPLACE_DOCKER_IMAGE: ${{ parameters.FORCE_REPLACE_DOCKER_IMAGE }}
-              DOCKERFILE: ${{ variables.DOCKER_FILE_NAME }}
               DOCKER_BUILD_ARGS: --secret id=GITHUB_TOKEN,src=./github_ro_token
 
   - stage: 'Deploy_for_DEV'
@@ -179,7 +178,6 @@ stages:
               DOCKER_IMAGE_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
               DOCKER_IMAGE_TAG: $(Build.SourceVersion)
               FORCE_REPLACE_DOCKER_IMAGE: ${{ parameters.FORCE_REPLACE_DOCKER_IMAGE }}
-              DOCKERFILE: ${{ variables.DOCKER_FILE_NAME }}
               DOCKER_BUILD_ARGS: --secret id=GITHUB_TOKEN,src=./github_ro_token
           - template: azure-templates/chart-current-version.yml
 
