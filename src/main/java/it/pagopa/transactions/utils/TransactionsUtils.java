@@ -1,8 +1,8 @@
 package it.pagopa.transactions.utils;
 
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.Email;
@@ -15,7 +15,6 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.generated.transactions.v2.server.model.*;
-import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -450,8 +449,10 @@ public class TransactionsUtils {
                 );
     }
 
-    public Integer getTransactionTotalAmount(BaseTransactionView baseTransactionView) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+    public Integer getTransactionTotalAmountFromTransactionActivatedEvent(
+                                                                          TransactionActivatedEvent transactionActivatedEvent
+    ) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
         return paymentNotices.stream()
                 .mapToInt(
                         PaymentNotice::getAmount
@@ -459,66 +460,40 @@ public class TransactionsUtils {
     }
 
     public Boolean isAllCcp(
-                            BaseTransactionView baseTransactionView,
+                            TransactionActivatedEvent transactionActivatedEvent,
                             int idx
     ) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
         return paymentNotices.get(idx).isAllCCP();
     }
 
     public String getRptId(
-                           BaseTransactionView baseTransactionView,
+                           TransactionActivatedEvent transactionActivatedEvent,
                            int idx
     ) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
         return paymentNotices.get(idx).getRptId();
     }
 
-    public List<String> getRptIds(BaseTransactionView baseTransactionView) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+    public List<String> getRptIds(TransactionActivatedEvent transactionActivatedEvent) {
+        List<PaymentNotice> paymentNotices = getPaymentNotices(transactionActivatedEvent);
         return paymentNotices.stream().map(PaymentNotice::getRptId).toList();
     }
 
-    public List<PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
-        return switch (baseTransactionView) {
-            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();
-            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getPaymentNotices();
-            default ->
-                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
-        };
+    public List<PaymentNotice> getPaymentNotices(TransactionActivatedEvent transactionActivatedEvent) {
+        return transactionActivatedEvent.getData().getPaymentNotices();
     }
 
-    public String getEffectiveClientId(BaseTransactionView baseTransactionView) {
-        return switch (baseTransactionView) {
-            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
-            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().getEffectiveClient().toString();
-            default ->
-                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
-        };
+    public String getEffectiveClientId(TransactionActivatedEvent transaction) {
+        return transaction.getData().getClientId().getEffectiveClient().toString();
     }
 
-    public String getClientId(BaseTransactionView baseTransactionView) {
-        return switch (baseTransactionView) {
-            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
-            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().toString();
-            default ->
-                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
-        };
+    public String getClientId(TransactionActivatedEvent transaction) {
+        return transaction.getData().getClientId().toString();
     }
 
-    public Confidential<Email> getEmail(BaseTransactionView baseTransactionView) {
-        return switch (baseTransactionView) {
-            case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> convertEmailFromV1ToV2(t.getEmail());
-            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getEmail();
-            default ->
-                    throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
-        };
-    }
-
-    private Confidential<Email> convertEmailFromV1ToV2(
-                                                       Confidential<it.pagopa.ecommerce.commons.domain.v1.Email> emailV1
-    ) {
-        return new Confidential<>(emailV1.opaqueData());
+    public Confidential<Email> getEmail(TransactionActivatedEvent transactionActivatedEvent) {
+        return transactionActivatedEvent.getData().getEmail();
     }
 
     public Optional<String> getPspId(BaseTransaction transaction) {
