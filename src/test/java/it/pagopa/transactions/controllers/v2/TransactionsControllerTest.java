@@ -5,7 +5,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
+import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.v2.server.model.*;
@@ -77,7 +77,7 @@ class TransactionsControllerTest {
     private UUIDUtils uuidUtils;
 
     @MockitoBean
-    private UniqueIdUtils uniqueIdUtils;
+    private ReactiveUniqueIdUtils uniqueIdUtils;
 
     @MockitoBean
     private OpenTelemetryUtils openTelemetryUtils;
