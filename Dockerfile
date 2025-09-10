@@ -1,21 +1,26 @@
 FROM eclipse-temurin:21-jdk-alpine@sha256:2f2f553ce09d25e2d2f0f521ab94cd73f70c9b21327a29149c23a2b63b8e29a0 AS build
 WORKDIR /workspace/app
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git gettext
 
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
+COPY settings.xml.template /tmp/
 
-#validate step will execute the scm plugin to perform checkout and installation of the pagopa-commons library
-RUN ./mvnw validate -DskipTests -Dmaven.site.skip=true
-RUN ./mvnw dependency:copy-dependencies
-RUN ./mvnw dependency:go-offline
+RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+      mkdir -p ~/.m2 && \
+      envsubst < /tmp/settings.xml.template > ~/.m2/settings.xml && \
+      ./mvnw dependency:copy-dependencies
+
+  RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+      ./mvnw dependency:go-offline
 
 COPY src src
 COPY api-spec api-spec
 COPY eclipse-style.xml eclipse-style.xml
-RUN ./mvnw compile spring-boot:process-aot install -DskipTests --offline
+RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+    ./mvnw compile spring-boot:process-aot install -DskipTests --offline
 
 FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd AS optimizer
 
