@@ -594,7 +594,11 @@ public class TransactionsService {
         );
 
         return executeHandlerBasedOnTransactionType(transactionDocument, transactionRequestAuthCommand, authData)
-                .doOnSuccess(invalidateCacheFor(transactionDocument));
+                .flatMap(
+                        authResponse -> invalidateCacheFor(transactionDocument)
+                                .collectList()
+                                .thenReturn(authResponse)
+                );
     }
 
     /**
@@ -710,27 +714,32 @@ public class TransactionsService {
      *                            invalidated
      * @return a consumer that invalidates the cache entry
      */
-    private Consumer<RequestAuthorizationResponseDto> invalidateCacheFor(BaseTransactionView transactionDocument) {
-        return response -> invalidatePaymentRequestCache(transactionDocument);
+    private Flux<Boolean> invalidateCacheFor(BaseTransactionView transactionDocument) {
+        return invalidatePaymentRequestCache(transactionDocument);
     }
 
     /**
      * Invalidates the payment request cache for a transaction
      *
      * @param transactionDocument The transaction document
+     * @return a Flux<Boolean> valued with true iff entities are deleted from cache
      */
-    private void invalidatePaymentRequestCache(BaseTransactionView transactionDocument) {
-        transactionsUtils.getPaymentNotices(transactionDocument).forEach(this::invalidateRptIdCache);
+    private Flux<Boolean> invalidatePaymentRequestCache(BaseTransactionView transactionDocument) {
+        return Flux.fromIterable(transactionsUtils.getPaymentNotices(transactionDocument))
+                .flatMap(this::invalidateRptIdCache);
     }
 
     /**
      * Invalidates the cache for a specific payment notice
      *
      * @param paymentNotice The payment notice to invalidate
+     * @return a Mono<Boolean> valued with true iff entity is deleted from cache
      */
-    private void invalidateRptIdCache(it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice) {
-        log.info("Invalidate cache for RptId : {}", paymentNotice.getRptId());
-        reactivePaymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.getRptId());
+    private Mono<Boolean> invalidateRptIdCache(it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice) {
+
+        return reactivePaymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.getRptId()).doOnNext(
+                outcome -> log.info("Invalidate cache for RptId : {} -> {}", paymentNotice.getRptId(), outcome)
+        );
     }
 
     /**

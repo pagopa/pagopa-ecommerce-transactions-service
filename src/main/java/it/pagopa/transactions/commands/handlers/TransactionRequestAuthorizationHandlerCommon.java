@@ -212,21 +212,19 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 )
                         )
                 )
-                .map(orderIdAndFieldsDto -> {
-                    transactionTemplateWrapper.save(
-                            new TransactionCacheInfo(
-                                    authorizationData.transactionId(),
-                                    new WalletPaymentInfo(
-                                            // safe here: session id and security token presence are checked in
-                                            // requestNpgBuildSession method
-                                            orderIdAndFieldsDto.getT2().getSessionId(),
-                                            orderIdAndFieldsDto.getT2().getSecurityToken(),
-                                            orderIdAndFieldsDto.getT1()
-                                    )
-                            )
-                    );
-                    return orderIdAndFieldsDto;
-                }
+                .flatMap(
+                        orderIdAndFieldsDto -> transactionTemplateWrapper.save(
+                                new TransactionCacheInfo(
+                                        authorizationData.transactionId(),
+                                        new WalletPaymentInfo(
+                                                // safe here: session id and security token presence are checked in
+                                                // requestNpgBuildSession method
+                                                orderIdAndFieldsDto.getT2().getSessionId(),
+                                                orderIdAndFieldsDto.getT2().getSecurityToken(),
+                                                orderIdAndFieldsDto.getT1()
+                                        )
+                                )
+                        ).thenReturn(orderIdAndFieldsDto)
                 ).map(
                         /*
                          * For APM payments eCommerce performs a single order/build api call to NPG.

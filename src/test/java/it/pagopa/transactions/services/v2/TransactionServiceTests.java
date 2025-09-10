@@ -59,6 +59,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import reactor.util.function.Tuples;
 
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -70,8 +71,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
-import reactor.util.function.Tuples;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 
 @WebFluxTest
 @TestPropertySource(locations = "classpath:application-tests.properties")
@@ -496,7 +495,7 @@ class TransactionServiceTests {
         Mockito.when(transactionsUtils.getPaymentNotices(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getTransactionTotalAmount(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
-
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.deleteById(any())).thenReturn(Mono.just(true));
         Mockito.when(
                 transactionRequestAuthorizationHandlerV2
                         .handleWithCreationDate(any(TransactionRequestAuthorizationCommand.class))
@@ -530,6 +529,10 @@ class TransactionServiceTests {
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
         assertEquals(calculateFeeResponseDto.getPaymentMethodName(), captureData.paymentMethodName());
+        transaction.getPaymentNotices().forEach(
+                p -> Mockito.verify(paymentRequestInfoRedisTemplateWrapper, times(1)).deleteById(p.getRptId())
+        );
+
     }
 
     @Test
@@ -1285,7 +1288,7 @@ class TransactionServiceTests {
         Mockito.when(transactionsUtils.getRptId(any(), anyInt())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getClientId(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getEffectiveClientId(any())).thenCallRealMethod();
-
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.deleteById(any())).thenReturn(Mono.just(true));
         /* test */
         transactionsServiceV1
                 .requestTransactionAuthorization(
@@ -1298,5 +1301,9 @@ class TransactionServiceTests {
 
         verify(ecommercePaymentMethodsClient).calculateFee(any(), any(), calculateFeeRequest.capture(), any());
         assertEquals(clientId.getEffectiveClient().name(), calculateFeeRequest.getValue().getTouchpoint());
+        transaction.getPaymentNotices().forEach(
+                p -> Mockito.verify(paymentRequestInfoRedisTemplateWrapper, times(1)).deleteById(p.getRptId())
+        );
+
     }
 }
