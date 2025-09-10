@@ -1284,4 +1284,144 @@ class TransactionActivateHandlerTest {
                         .anyMatch(it -> it.getCreditorReferenceId().equals(creditorReferenceId))
         );
     }
+
+    @Test
+    void shouldHandleCommandForInvalidIdempotencyKeyCachedPaymentRequest() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+        PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
+        RptId rptId = new RptId(paymentNotice.getRptId());
+        Integer amount = paymentNotice.getAmount();
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+        String ecommerceFiscalCode = "77700000000";
+        String keyIdentifier = "aabbccddee";
+        String idCart = transactionActivatedEvent.getData().getIdCart();
+        Transaction.ClientId clientId = transactionActivatedEvent.getData().getClientId();
+        IdempotencyKey expectedGeneratedIdempotencyKey = new IdempotencyKey(ecommerceFiscalCode, keyIdentifier);
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(paymentNotice.getAmount());
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(paymentNoticeInfoDto)
+                .email(EMAIL_STRING);
+
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                List.of(rptId),
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
+                        null,
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false,
+                                        null,
+                                        null
+                                )
+                        ).toList()
+                ),
+                Transaction.ClientId.CHECKOUT.name(),
+                transactionId,
+                userId
+        );
+
+        PaymentRequestInfo paymentRequestInfoBeforeActivation = new PaymentRequestInfo(
+                rptId,
+                null,
+                null,
+                null,
+                null,
+                dueDate,
+                null,
+                null,
+                null,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, null, null)),
+                false,
+                null
+        );
+
+        PaymentRequestInfo paymentRequestInfoAfterActivation = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                paymentNotice.getDescription(),
+                paymentNotice.getAmount(),
+                dueDate,
+                paymentNotice.getPaymentToken(),
+                ZonedDateTime.now().toString(),
+                expectedGeneratedIdempotencyKey,
+                List.of(new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null)),
+                false,
+                null
+        );
+
+        /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
+                .thenReturn(Mono.just(paymentRequestInfoBeforeActivation));
+        Mockito.when(
+                nodoOperations.getEcommerceFiscalCode()
+        )
+                .thenReturn(ecommerceFiscalCode);
+        Mockito.when(
+                nodoOperations.generateRandomStringToIdempotencyKey()
+        )
+                .thenReturn(keyIdentifier);
+        Mockito.when(
+                paymentRequestInfoRedisTemplateWrapper
+                        .save(paymentRequestInfoArgumentCaptor.capture())
+        )
+                .thenReturn(Mono.just(true));
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), any(), any())
+        )
+                .thenReturn(Mono.just(paymentRequestInfoAfterActivation));
+        Mockito.when(
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
+        /* run test */
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
+                .handle(command).block();
+
+        /* asserts */
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
+        Mockito.verify(paymentRequestInfoRedisTemplateWrapper, Mockito.times(1)).findById(rptId.value());
+        assertNotNull(event.getTransactionId());
+        assertNotNull(event.getEventCode());
+        assertNotNull(event.getCreationDate());
+        assertNotNull(event.getId());
+        assertEquals(paymentTokenTimeout, event.getData().getPaymentTokenValiditySeconds());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
+        assertEquals(dueDate, paymentRequestInfoArgumentCaptor.getValue().dueDate());
+
+        Mockito.verify(nodoOperations, Mockito.times(1)).activatePaymentRequest(
+                rptId,
+                expectedGeneratedIdempotencyKey,
+                amount,
+                transactionId.value(),
+                paymentTokenTimeout,
+                command.getData().idCard(),
+                dueDate,
+                clientId
+        );
+    }
+
 }

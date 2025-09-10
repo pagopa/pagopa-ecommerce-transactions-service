@@ -283,7 +283,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
     ) {
         return reactivePaymentRequestInfoRedisTemplateWrapper
                 .findById(rptId.value())
-                .filter(requestInfo -> {
+                .map(requestInfo -> {
                     boolean isIdempotencyKeyValid = isValidIdempotencyKey(
                             requestInfo.idempotencyKey()
                     );
@@ -292,38 +292,54 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                             requestInfo.id().value(),
                             isIdempotencyKeyValid
                     );
-                    return isIdempotencyKeyValid;
+                    if (isIdempotencyKeyValid) {
+                        return requestInfo;
+                    } else {
+                        // if idempotency key is not valid we return a payment request info with
+                        // idempotency key and due date valued
+                        return new PaymentRequestInfo(
+                                rptId,
+                                null,
+                                null,
+                                null,
+                                null,
+                                requestInfo.dueDate(),
+                                null,
+                                null,
+                                new IdempotencyKey(
+                                        nodoOperations
+                                                .getEcommerceFiscalCode(),
+                                        nodoOperations
+                                                .generateRandomStringToIdempotencyKey()
+                                ),
+                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                null,
+                                paymentNotice.creditorReferenceId()
+                        );
+                    }
                 }
                 )
-                .switchIfEmpty(
-                        Mono.just(
-                                new PaymentRequestInfo(
-                                        rptId,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        new IdempotencyKey(
-                                                nodoOperations
-                                                        .getEcommerceFiscalCode(),
-                                                nodoOperations
-                                                        .generateRandomStringToIdempotencyKey()
-                                        ),
-                                        new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
-                                        null,
-                                        paymentNotice.creditorReferenceId()
-                                )
-                        ).doOnNext(p -> log.info("PaymentRequestInfo cache miss for {}", p.id().value()))
-                                .flatMap(
-                                        paymentRequestWithOnlyIdempotencyKey -> reactivePaymentRequestInfoRedisTemplateWrapper
-                                                .save(
-                                                        paymentRequestWithOnlyIdempotencyKey
-                                                ).thenReturn(paymentRequestWithOnlyIdempotencyKey)
-                                )
-                );
+                .defaultIfEmpty(
+                        new PaymentRequestInfo(
+                                rptId,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                new IdempotencyKey(
+                                        nodoOperations
+                                                .getEcommerceFiscalCode(),
+                                        nodoOperations
+                                                .generateRandomStringToIdempotencyKey()
+                                ),
+                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                null,
+                                paymentNotice.creditorReferenceId()
+                        )
+                ).doOnNext(p -> log.info("PaymentRequestInfo cache miss for {}", p.id().value()));
     }
 
     private boolean isValidPaymentToken(String paymentToken) {
