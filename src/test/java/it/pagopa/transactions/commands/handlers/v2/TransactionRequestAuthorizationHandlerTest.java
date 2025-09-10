@@ -2484,11 +2484,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 authorizationData
         );
-
+        String securityToken = "securityToken";
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
-                .securityToken("securityToken")
-                .sessionId("sessionId")
+                .securityToken(securityToken)
+                .sessionId(sessionId)
                 .url("http://localhost/redirectionUrl");
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
@@ -2525,7 +2525,7 @@ class TransactionRequestAuthorizationHandlerTest {
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
-
+        when(transactionTemplateWrapper.save(any())).thenReturn(Mono.just(true));
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(npgBuildSessionResponse.getUrl());
@@ -2556,6 +2556,19 @@ class TransactionRequestAuthorizationHandlerTest {
                     return true;
                 }),
                 eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        );
+        verify(transactionTemplateWrapper, times(1)).save(
+                argThat(transactionCacheInfo -> {
+                    assertEquals(
+                            TransactionTestUtils.TRANSACTION_ID,
+                            transactionCacheInfo.transactionId().value()
+                    );
+                    assertNotNull(transactionCacheInfo.walletPaymentInfo());
+                    assertEquals(orderId, transactionCacheInfo.walletPaymentInfo().orderId());
+                    assertEquals(securityToken, transactionCacheInfo.walletPaymentInfo().securityToken());
+                    assertEquals(sessionId, transactionCacheInfo.walletPaymentInfo().sessionId());
+                    return true;
+                })
         );
     }
 
@@ -2633,11 +2646,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 authorizationData
         );
-
+        String securityToken = "securityToken";
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
-                .securityToken("securityToken")
-                .sessionId("sessionId")
+                .securityToken(securityToken)
+                .sessionId(sessionId)
                 .url("http://localhost/redirectionUrl");
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
@@ -2674,6 +2687,7 @@ class TransactionRequestAuthorizationHandlerTest {
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+        when(transactionTemplateWrapper.save(any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
@@ -2704,6 +2718,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 }),
                 eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
         );
+        verify(transactionTemplateWrapper, times(1)).save(
+                argThat(transactionCacheInfo -> {
+                    assertEquals(
+                            TransactionTestUtils.TRANSACTION_ID,
+                            transactionCacheInfo.transactionId().value()
+                    );
+                    assertNotNull(transactionCacheInfo.walletPaymentInfo());
+                    assertEquals(orderId, transactionCacheInfo.walletPaymentInfo().orderId());
+                    assertEquals(securityToken, transactionCacheInfo.walletPaymentInfo().securityToken());
+                    assertEquals(sessionId, transactionCacheInfo.walletPaymentInfo().sessionId());
+                    return true;
+                })
+        );
     }
 
     @ParameterizedTest
@@ -2713,7 +2740,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String walletId = UUID.randomUUID().toString();
         String contractId = "contractId";
         String sessionId = "sessionId";
-        String orderId = "oderId";
+        String orderId = "orderId";
 
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
