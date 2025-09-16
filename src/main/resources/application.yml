@@ -1,3 +1,12 @@
+management.metrics.enable:
+    all: false
+    application: false # reports startup time, useful for future comparison
+    http.server.requests: true # reports http request counts
+    resilience4j.circuitbreaker: true # reports circuit breaker status
+    jvm.memory: true # reports heap status
+    jvm.gc: true # reports garbage collector metrics, useful to detect too long pauses
+    mongodb.driver: true # reports useful mongo statistics, like waiting queue
+
 resilience4j.retry:
   instances:
     newTransaction:
