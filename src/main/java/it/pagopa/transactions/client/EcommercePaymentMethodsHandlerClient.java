@@ -17,7 +17,6 @@ public class EcommercePaymentMethodsHandlerClient {
 
     private final it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsApi ecommercePaymentMethodsHandlerWebClientV1;
 
-
     @Autowired
     public EcommercePaymentMethodsHandlerClient(
             @Qualifier(

@@ -14,10 +14,7 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
-import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.client.WalletClient;
+import it.pagopa.transactions.client.*;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
@@ -94,6 +91,9 @@ class TransactionServiceTests {
 
     @MockitoBean
     private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
+
+    @MockitoBean
+    private EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient;
 
     @MockitoBean
     private WalletClient walletClient;

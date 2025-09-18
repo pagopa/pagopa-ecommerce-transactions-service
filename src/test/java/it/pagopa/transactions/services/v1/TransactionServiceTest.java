@@ -19,10 +19,7 @@ import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
-import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.client.WalletClient;
+import it.pagopa.transactions.client.*;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.configurations.AzureStorageConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
@@ -67,6 +64,8 @@ class TransactionServiceTest {
     private UUIDUtils uuidUtils;
     private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient = Mockito
             .mock(EcommercePaymentMethodsClient.class);
+    private final EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient = Mockito
+            .mock(EcommercePaymentMethodsHandlerClient.class);
 
     private final WalletClient walletClient = Mockito
             .mock(WalletClient.class);
@@ -150,6 +149,8 @@ class TransactionServiceTest {
     private final Set<String> ecommercePossibleFinalStates = Set
             .of("AUTHORIZATION_COMPLETED", "CLOSURE_REQUESTED", "CLOSURE_ERROR");
 
+    private final boolean enablePaymentMethodsHandler = false;
+
     private final TransactionsService transactionsServiceV1 = new TransactionsService(
             transactionActivateHandlerV2,
             transactionRequestAuthorizationHandlerV2,
@@ -165,6 +166,7 @@ class TransactionServiceTest {
             transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
+            ecommercePaymentMethodsHandlerClient,
             walletClient,
             uuidUtils,
             transactionsUtils,
@@ -175,7 +177,8 @@ class TransactionServiceTest {
             updateTransactionStatusTracerUtils,
             npgAuthorizationErrorCodeMapping,
             ecommerceFinalStates,
-            ecommercePossibleFinalStates
+            ecommercePossibleFinalStates,
+            enablePaymentMethodsHandler
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
@@ -193,6 +196,7 @@ class TransactionServiceTest {
             transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
+            ecommercePaymentMethodsHandlerClient,
             walletClient,
             uuidUtils,
             transactionsUtils,
@@ -203,7 +207,8 @@ class TransactionServiceTest {
             updateTransactionStatusTracerUtils,
             npgAuthorizationErrorCodeMapping,
             ecommerceFinalStates,
-            ecommercePossibleFinalStates
+            ecommercePossibleFinalStates,
+            enablePaymentMethodsHandler
     );
 
     @Test
