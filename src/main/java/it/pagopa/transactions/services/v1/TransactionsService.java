@@ -16,10 +16,12 @@ import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentTok
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsHandlerClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.*;
@@ -88,6 +90,8 @@ public class TransactionsService {
 
     private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
+    private final EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient;
+
     private final WalletClient walletClient;
 
     private final TransactionsUtils transactionsUtils;
@@ -103,6 +107,7 @@ public class TransactionsService {
     private final Map<String, TransactionOutcomeInfoDto.OutcomeEnum> npgAuthorizationErrorCodeMapping;
     private final Set<TransactionStatusDto> ecommerceFinalStates;
     private final Set<TransactionStatusDto> ecommercePossibleFinalState;
+    private final boolean ecommercePaymentMethodsHandlerEnabled;
 
     @Autowired
     public TransactionsService(
@@ -138,6 +143,7 @@ public class TransactionsService {
             ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsViewRepository transactionsViewRepository,
             EcommercePaymentMethodsClient ecommercePaymentMethodsClient,
+            EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient,
             WalletClient walletClient,
             UUIDUtils uuidUtils,
             TransactionsUtils transactionsUtils,
@@ -148,7 +154,8 @@ public class TransactionsService {
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
             @Value("#{${npg.authorizationErrorCodeMapping}}") Map<String, String> npgAuthorizationErrorCodeMapping,
             @Value("${ecommerce.finalStates}") Set<String> ecommerceFinalStates,
-            @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates
+            @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates,
+            @Value("${ecommercePaymentMethodsHandler.enabled}") boolean ecommercePaymentMethodsHandlerEnabled
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.requestAuthHandlerV2 = requestAuthHandlerV2;
@@ -181,6 +188,8 @@ public class TransactionsService {
                 .collect(Collectors.toSet());
         this.ecommercePossibleFinalState = ecommercePossibleFinalStates.stream().map(TransactionStatusDto::valueOf)
                 .collect(Collectors.toSet());
+        this.ecommercePaymentMethodsHandlerClient = ecommercePaymentMethodsHandlerClient;
+        this.ecommercePaymentMethodsHandlerEnabled = ecommercePaymentMethodsHandlerEnabled;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -1605,8 +1614,13 @@ public class TransactionsService {
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId());
                     });
-            case ApmAuthRequestDetailsDto ignore ->
-                    ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(response -> new PaymentSessionData(null, null, response.getName(), null));
+            case ApmAuthRequestDetailsDto ignore -> {
+                 Mono<String> name =
+                        ecommercePaymentMethodsHandlerEnabled ?
+                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(requestAuthorizationRequestDto.getLanguage().getValue())) :
+                                ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName);
+                yield name.map(n -> new PaymentSessionData(null, null, n, null));
+            }
             case RedirectionAuthRequestDetailsDto ignored -> Mono.just(new PaymentSessionData(
                     null,
                     null,

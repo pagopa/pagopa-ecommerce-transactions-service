@@ -184,6 +184,10 @@ microservice-chart:
     JWT_ISSUER_CONNECTION_TIMEOUT: "10000"
     SECURITY_API_KEYS_SECURED_PATHS: "/transactions,/v2/transactions,/v2.1/transactions"
     TRANSACTIONSVIEW_UPDATE_ENABLED: "true"
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-service/v1
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_READ_TIMEOUT: "10000"
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_CONNECTION_TIMEOUT: "10000"
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "false"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
@@ -209,6 +213,7 @@ microservice-chart:
     SECURITY_API_KEYS_PRIMARY: ecommerce-transactions-service-primary-api-key
     SECURITY_API_KEYS_SECONDARY: ecommerce-transactions-service-secondary-api-key
     JWT_ISSUER_API_KEY: ecommerce-jwt-issuer-service-active-api-key
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_APY_KEY: payment-method-api-key
   keyvault:
     name: "pagopa-u-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"

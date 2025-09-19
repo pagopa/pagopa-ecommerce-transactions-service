@@ -220,4 +220,42 @@ public class WebClientsConfig {
         return new it.pagopa.generated.ecommerce.paymentmethods.v2.api.PaymentMethodsApi(apiClient);
     }
 
+    @Bean(name = "ecommercePaymentMethoHandlerdWebClientV1")
+    public it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi ecommercePaymentMethodHandlerWebClientV1(
+                                                                                                                                        @Value(
+                                                                                                                                            "${ecommercePaymentMethodsHandler.uri}"
+                                                                                                                                        ) String ecommercePaymentMethodsHandlerUri,
+                                                                                                                                        @Value(
+                                                                                                                                            "${ecommercePaymentMethodsHandler.readTimeout}"
+                                                                                                                                        ) int ecommercePaymentMethodsHandlerReadTimeout,
+                                                                                                                                        @Value(
+                                                                                                                                            "${ecommercePaymentMethodsHandler.connectionTimeout}"
+                                                                                                                                        ) int ecommercePaymentMethodsHandlerConnectionTimeout,
+                                                                                                                                        @Value(
+                                                                                                                                            "${ecommercePaymentMethodsHandler.apiKey}"
+                                                                                                                                        ) String apiKey
+    ) {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommercePaymentMethodsHandlerConnectionTimeout)
+                .doOnConnected(
+                        connection -> connection.addHandlerLast(
+                                new ReadTimeoutHandler(
+                                        ecommercePaymentMethodsHandlerReadTimeout,
+                                        TimeUnit.MILLISECONDS
+                                )
+                        )
+                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
+
+        WebClient webClient = it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient.buildWebClientBuilder()
+                .clientConnector(
+                        new ReactorClientHttpConnector(httpClient)
+                ).baseUrl(ecommercePaymentMethodsHandlerUri).build();
+
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.ApiClient(
+                webClient
+        ).setBasePath(ecommercePaymentMethodsHandlerUri);
+        apiClient.setApiKey(apiKey);
+        return new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi(apiClient);
+    }
+
 }

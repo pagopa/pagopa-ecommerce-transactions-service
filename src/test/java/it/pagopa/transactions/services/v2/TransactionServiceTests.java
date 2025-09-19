@@ -24,10 +24,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.BundleDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeRequestDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
-import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.client.WalletClient;
+import it.pagopa.transactions.client.*;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
@@ -109,6 +106,9 @@ class TransactionServiceTests {
 
     @MockitoBean
     private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
+
+    @MockitoBean
+    private EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient;
 
     @MockitoBean
     private WalletClient walletClient;
