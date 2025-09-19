@@ -15,13 +15,13 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class EcommercePaymentMethodsHandlerClient {
 
-    private final it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsApi ecommercePaymentMethodsHandlerWebClientV1;
+    private final it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1;
 
     @Autowired
     public EcommercePaymentMethodsHandlerClient(
             @Qualifier(
                 "ecommercePaymentMethoHandlerdWebClientV1"
-            ) it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsApi ecommercePaymentMethodsHandlerWebClientV1
+            ) it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1
     ) {
         this.ecommercePaymentMethodsHandlerWebClientV1 = ecommercePaymentMethodsHandlerWebClientV1;
     }

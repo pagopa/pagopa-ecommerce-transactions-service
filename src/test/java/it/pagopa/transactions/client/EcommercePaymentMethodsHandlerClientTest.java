@@ -26,8 +26,8 @@ import static org.mockito.Mockito.when;
 
 class EcommercePaymentMethodsHandlerClientTest {
 
-    private final it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsApi ecommercePaymentMethodsHandlerWebClientV1 = Mockito
-            .mock(it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsApi.class);
+    private final it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1 = Mockito
+            .mock(it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi.class);
 
     private final EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient = new EcommercePaymentMethodsHandlerClient(
             ecommercePaymentMethodsHandlerWebClientV1

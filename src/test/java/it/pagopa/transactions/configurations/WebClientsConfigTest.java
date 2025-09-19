@@ -138,7 +138,7 @@ class WebClientsConfigTest {
         String basePath = "http://paymentMethodHandler/base/path";
         String apiKey = "paymentMethodsHandlerApiKey";
         // test
-        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsApi paymentMethodsApi = webClientsConfig
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi paymentMethodsApi = webClientsConfig
                 .ecommercePaymentMethodHandlerWebClientV1(basePath, 1000, 1000, apiKey);
         // assertions
         assertEquals(basePath, paymentMethodsApi.getApiClient().getBasePath());
