@@ -1614,12 +1614,13 @@ public class TransactionsService {
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId());
                     });
-            case ApmAuthRequestDetailsDto ignore -> Mono.just(ecommercePaymentMethodsHandlerEnabled)
-                    .filter(Boolean.TRUE::equals)
-                    .flatMap(t -> ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId))
-                    .map(responseDto -> responseDto.getName().get(requestAuthorizationRequestDto.getLanguage().getValue()))
-                    .switchIfEmpty(ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName))
-                    .map(name -> new PaymentSessionData(null, null, name, null));
+            case ApmAuthRequestDetailsDto ignore -> {
+                 Mono<String> name =
+                        ecommercePaymentMethodsHandlerEnabled ?
+                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(requestAuthorizationRequestDto.getLanguage().getValue())) :
+                                ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName);
+                yield name.map(n -> new PaymentSessionData(null, null, n, null));
+            }
             case RedirectionAuthRequestDetailsDto ignored -> Mono.just(new PaymentSessionData(
                     null,
                     null,

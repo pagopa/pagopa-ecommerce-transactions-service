@@ -19,6 +19,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
+import it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
@@ -419,6 +420,7 @@ class TransactionServiceTests {
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
                 ZonedDateTime.now()
         );
+        transaction.setClientId(Transaction.ClientId.CHECKOUT);
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
                 .amount(0)
