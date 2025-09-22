@@ -16,10 +16,11 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.*;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
+import it.pagopa.transactions.commands.handlers.v2.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.projections.handlers.v2.AuthorizationRequestProjectionHandler;
+import it.pagopa.transactions.projections.handlers.v2.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
@@ -36,6 +37,7 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.context.annotation.Import;
@@ -449,6 +451,76 @@ class TransactionServiceTests {
                 transactionsServiceV1
                         .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest)
         )
+                .expectError(PaymentMethodNotFoundException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFoundWithPaymentMethodHandler() {
+        TransactionsService transactionsServiceV1_paymentMethodHandlerEnabled = new TransactionsService(
+                transactionActivateHandlerV2,
+                null, //requestAuthHandlerV2,
+                transactionUpdateAuthorizationHandlerV2,
+                null, // transactionSendClosureRequestHandler,
+                null, //transactionRequestUserReceiptHandlerV2,
+                transactionCancelHandlerV2,
+                null, //authorizationProjectionHandlerV2,
+                authorizationUpdateProjectionHandlerV2,
+                closureRequestedProjectionHandler,
+                cancellationRequestProjectionHandlerV2,
+                transactionUserReceiptProjectionHandlerV2,
+                null, // transactionsActivationProjectionHandlerV2,
+                repository,
+                ecommercePaymentMethodsClient,
+                ecommercePaymentMethodsHandlerClient,
+                walletClient,
+                uuidUtils,
+                transactionsUtils,
+                transactionsEventStoreRepository,
+                15, //paymentTokenValidity,
+                null, // reactivePaymentRequestInfoRedisTemplateWrapper,
+                confidentialMailUtils,
+                updateTransactionStatusTracerUtils,
+                new HashMap<>(),
+                new HashSet<>(),
+                new HashSet<>(),
+                true
+        );
+
+
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+        transaction.setClientId(Transaction.ClientId.CHECKOUT);
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(0)
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .fee(0)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(new ApmAuthRequestDetailsDto().detailType("apm"));
+
+        /* preconditions */
+
+        PaymentMethodNotFoundException exception = new PaymentMethodNotFoundException(
+                UUID.randomUUID().toString(),
+                "CHECKOUT"
+        );
+
+        Mockito.when(ecommercePaymentMethodsHandlerClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
+
+        Mockito.when(repository.findById(TRANSACTION_ID))
+                .thenReturn(Mono.just(transaction));
+
+        /* test */
+
+        StepVerifier.create(
+                        transactionsServiceV1_paymentMethodHandlerEnabled
+                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest)
+                )
                 .expectError(PaymentMethodNotFoundException.class)
                 .verify();
     }

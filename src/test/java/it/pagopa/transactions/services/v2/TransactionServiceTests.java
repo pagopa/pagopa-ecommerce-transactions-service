@@ -916,14 +916,6 @@ class TransactionServiceTests {
                         )
                 );
 
-        PaymentMethodResponseDto paymentMethod = new PaymentMethodResponseDto()
-                .name("paymentMethodName")
-                .description("desc")
-                .status(PaymentMethodStatusDto.ENABLED)
-                .id("id")
-                .paymentTypeCode("PO")
-                .addRangesItem(new RangeDto().min(0L).max(100L));
-
         // TODO: Check if this response is ok
         StateResponseDto stateResponseDto = new StateResponseDto().state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
                 .url("http://example.com");
@@ -934,9 +926,7 @@ class TransactionServiceTests {
         Mockito.when(ecommercePaymentMethodsClient.calculateFee(any(), any(), any(), any())).thenReturn(
                 Mono.just(calculateFeeResponseDto)
         );
-
-        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
-
+        
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
 
@@ -1221,14 +1211,6 @@ class TransactionServiceTests {
                         )
                 );
 
-        final var paymentMethod = new PaymentMethodResponseDto()
-                .name("paymentMethodName")
-                .description("desc")
-                .status(PaymentMethodStatusDto.ENABLED)
-                .id("id")
-                .paymentTypeCode("PO")
-                .addRangesItem(new RangeDto().min(0L).max(100L));
-
         StateResponseDto gatewayResponse = new StateResponseDto()
                 .state(WorkflowStateDto.GDI_VERIFICATION)
                 .fieldSet(
@@ -1256,8 +1238,6 @@ class TransactionServiceTests {
                                 .expiringDate("0226").lastFourDigits("1234")
                 )
         );
-
-        Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
