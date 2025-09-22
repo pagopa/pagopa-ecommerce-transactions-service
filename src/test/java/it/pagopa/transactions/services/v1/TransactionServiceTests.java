@@ -20,7 +20,6 @@ import it.pagopa.transactions.commands.handlers.v2.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
-import it.pagopa.transactions.projections.handlers.v2.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
@@ -37,7 +36,6 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.context.annotation.Import;
@@ -457,7 +455,7 @@ class TransactionServiceTests {
 
     @Test
     void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFoundWithPaymentMethodHandler() {
-        TransactionsService transactionsServiceV1_paymentMethodHandlerEnabled = new TransactionsService(
+        TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new TransactionsService(
                 transactionActivateHandlerV2,
                 null, // requestAuthHandlerV2,
                 transactionUpdateAuthorizationHandlerV2,
@@ -518,7 +516,7 @@ class TransactionServiceTests {
         /* test */
 
         StepVerifier.create(
-                transactionsServiceV1_paymentMethodHandlerEnabled
+                transactionsServiceV1paymentMethodHandlerEnabled
                         .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest)
         )
                 .expectError(PaymentMethodNotFoundException.class)

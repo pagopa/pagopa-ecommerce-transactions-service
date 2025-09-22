@@ -46,7 +46,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -443,7 +442,6 @@ class TransactionServiceTests {
                         )
                 );
 
-        // TODO Check if this response is ok
         StateResponseDto stateResponseDto = new StateResponseDto()
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
                 .url("http://example.com");
@@ -651,7 +649,7 @@ class TransactionServiceTests {
                 AuthorizationRequestProjectionHandler.class
         );
 
-        it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1_paymentMethodHandlerEnabled = new it.pagopa.transactions.services.v1.TransactionsService(
+        it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new it.pagopa.transactions.services.v1.TransactionsService(
                 transactionActivateHandlerV2,
                 transactionRequestAuthorizationHandlerV2, // requestAuthHandlerV2,
                 transactionUpdateAuthorizationHandlerV2,
@@ -724,7 +722,6 @@ class TransactionServiceTests {
                 )
                 .feeRange(new FeeRangeDto().min(1L).max(100L));
 
-        // TODO Check if this response is ok
         StateResponseDto stateResponseDto = new StateResponseDto()
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
                 .url("http://example.com");
@@ -781,7 +778,7 @@ class TransactionServiceTests {
         /* test */
         StepVerifier
                 .create(
-                        transactionsServiceV1_paymentMethodHandlerEnabled
+                        transactionsServiceV1paymentMethodHandlerEnabled
                                 .requestTransactionAuthorization(
                                         TRANSACTION_ID,
                                         UUID.fromString(USER_ID),

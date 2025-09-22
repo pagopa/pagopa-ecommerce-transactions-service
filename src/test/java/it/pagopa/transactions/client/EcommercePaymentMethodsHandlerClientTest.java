@@ -35,28 +35,28 @@ class EcommercePaymentMethodsHandlerClientTest {
 
     @Test
     void shouldReturnPaymentMethod() {
-        String TEST_ID = UUID.randomUUID().toString();
-        String CLIENT_ID = "CHECKOUT";
+        String testId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
         PaymentMethodResponseDto testPaymentMethodResponseDto = new PaymentMethodResponseDto();
         testPaymentMethodResponseDto
                 .description(Map.of("it", "itDesc", "en", "enDesc"))
                 .feeRange(new FeeRangeDto().min(1L).max(100L))
                 .addPaymentMethodTypesItem(PaymentMethodResponseDto.PaymentMethodTypesEnum.CONTO)
                 .status(PaymentMethodResponseDto.StatusEnum.ENABLED)
-                .id(TEST_ID)
+                .id(testId)
                 .name(Map.of("it", "itName", "en", "enName"));
 
         /**
          * preconditions
          */
-        when(ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(testId, clientId))
                 .thenReturn(Mono.just(testPaymentMethodResponseDto));
 
         /**
          * test
          */
         PaymentMethodResponseDto paymentMethodResponseDto = ecommercePaymentMethodsHandlerClient
-                .getPaymentMethod(TEST_ID, CLIENT_ID)
+                .getPaymentMethod(testId, clientId)
                 .block();
 
         /**
@@ -67,13 +67,13 @@ class EcommercePaymentMethodsHandlerClientTest {
 
     @Test
     void shouldThrowInvalidRequestExceptionOnGetPaymentMethodErroring() {
-        String TEST_ID = UUID.randomUUID().toString();
-        String CLIENT_ID = "CHECKOUT";
+        String testId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
 
         /**
          * preconditions
          */
-        when(ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(testId, clientId))
                 .thenReturn(
                         Mono.error(
                                 WebClientResponseException.create(
@@ -90,20 +90,20 @@ class EcommercePaymentMethodsHandlerClientTest {
         /**
          * test
          */
-        StepVerifier.create(ecommercePaymentMethodsHandlerClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+        StepVerifier.create(ecommercePaymentMethodsHandlerClient.getPaymentMethod(testId, clientId))
                 .expectError(InvalidRequestException.class)
                 .verify();
     }
 
     @Test
     void shouldThrowPaymentMethodNotFoundExceptionOnGetPaymentMethodWhenReturning404() {
-        String TEST_ID = UUID.randomUUID().toString();
-        String CLIENT_ID = "CHECKOUT";
+        String testId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
 
         /**
          * preconditions
          */
-        when(ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(TEST_ID, CLIENT_ID))
+        when(ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(testId, clientId))
                 .thenReturn(
                         Mono.error(
                                 WebClientResponseException.create(
@@ -120,7 +120,7 @@ class EcommercePaymentMethodsHandlerClientTest {
         /**
          * test
          */
-        StepVerifier.create(ecommercePaymentMethodsHandlerClient.getPaymentMethod(TEST_ID, CLIENT_ID))
+        StepVerifier.create(ecommercePaymentMethodsHandlerClient.getPaymentMethod(testId, clientId))
                 .expectError(PaymentMethodNotFoundException.class)
                 .verify();
     }
@@ -141,7 +141,7 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .thenReturn(Mono.just(testPaymentMethodResponseDto));
 
         assertThat(ecommercePaymentMethodsHandlerClient.getPaymentMethod(paymentMethodId, clientId.name()).block())
-                .satisfies((it) -> assertThat(it.getId()).isEqualTo(paymentMethodId));
+                .satisfies(it -> assertThat(it.getId()).isEqualTo(paymentMethodId));
 
         final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
         verify(ecommercePaymentMethodsHandlerWebClientV1)
