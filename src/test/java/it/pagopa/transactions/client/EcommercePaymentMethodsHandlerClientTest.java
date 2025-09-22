@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -148,9 +149,9 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .getPaymentMethod(eq(paymentMethodId), clientIdCaptor.capture());
 
         switch (clientId) {
-            case CHECKOUT -> assertThat(clientIdCaptor.getValue().equals("CHECKOUT")).isTrue();
-            case IO -> assertThat(clientIdCaptor.getValue().equals("IO")).isTrue();
-            case CHECKOUT_CART, WISP_REDIRECT -> assertThat(clientIdCaptor.getValue().equals("CHECKOUT_CART")).isTrue();
+            case CHECKOUT -> assertEquals("CHECKOUT", clientIdCaptor.getValue());
+            case IO -> assertEquals("IO", clientIdCaptor.getValue());
+            case CHECKOUT_CART, WISP_REDIRECT -> assertEquals("CHECKOUT_CART", clientIdCaptor.getValue());
         }
     }
 }
