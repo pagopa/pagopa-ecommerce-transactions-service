@@ -146,6 +146,11 @@ class EcommercePaymentMethodsHandlerClientTest {
         final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
         verify(ecommercePaymentMethodsHandlerWebClientV1)
                 .getPaymentMethod(eq(paymentMethodId), clientIdCaptor.capture());
-        assertThat(clientIdCaptor.getValue().equals("IO") || clientIdCaptor.getValue().equals("CHECKOUT")).isTrue();
+
+        switch (clientId) {
+            case CHECKOUT -> assertThat(clientIdCaptor.getValue().equals("CHECKOUT")).isTrue();
+            case IO -> assertThat(clientIdCaptor.getValue().equals("IO")).isTrue();
+            case CHECKOUT_CART, WISP_REDIRECT -> assertThat(clientIdCaptor.getValue().equals("CHECKOUT_CART")).isTrue();
+        }
     }
 }

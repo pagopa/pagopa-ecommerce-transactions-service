@@ -30,10 +30,10 @@ public class EcommercePaymentMethodsHandlerClient {
                                                            String paymentMethodId,
                                                            String xClientId
     ) {
-        // payment methods only support CHECKOUT and IO.
-        final var client = Transaction.ClientId.fromString(xClientId) == Transaction.ClientId.IO
-                ? Transaction.ClientId.IO
-                : Transaction.ClientId.CHECKOUT;
+        // payment methods handler only support CHECKOUT_CART, CHECKOUT and IO.
+        final var client = Transaction.ClientId.fromString(xClientId) == Transaction.ClientId.WISP_REDIRECT
+                ? Transaction.ClientId.CHECKOUT_CART
+                : Transaction.ClientId.fromString(xClientId);
 
         return ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(paymentMethodId, client.name())
                 .doOnError(
