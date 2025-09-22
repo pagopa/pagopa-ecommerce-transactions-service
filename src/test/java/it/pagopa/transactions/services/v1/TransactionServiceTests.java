@@ -487,7 +487,6 @@ class TransactionServiceTests {
                 true
         );
 
-
         Transaction transaction = TransactionTestUtils.transactionDocument(
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
                 ZonedDateTime.now()
