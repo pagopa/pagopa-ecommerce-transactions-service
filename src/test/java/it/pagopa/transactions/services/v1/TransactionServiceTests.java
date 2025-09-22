@@ -459,12 +459,12 @@ class TransactionServiceTests {
     void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFoundWithPaymentMethodHandler() {
         TransactionsService transactionsServiceV1_paymentMethodHandlerEnabled = new TransactionsService(
                 transactionActivateHandlerV2,
-                null, //requestAuthHandlerV2,
+                null, // requestAuthHandlerV2,
                 transactionUpdateAuthorizationHandlerV2,
                 null, // transactionSendClosureRequestHandler,
-                null, //transactionRequestUserReceiptHandlerV2,
+                null, // transactionRequestUserReceiptHandlerV2,
                 transactionCancelHandlerV2,
-                null, //authorizationProjectionHandlerV2,
+                null, // authorizationProjectionHandlerV2,
                 authorizationUpdateProjectionHandlerV2,
                 closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
@@ -477,7 +477,7 @@ class TransactionServiceTests {
                 uuidUtils,
                 transactionsUtils,
                 transactionsEventStoreRepository,
-                15, //paymentTokenValidity,
+                15, // paymentTokenValidity,
                 null, // reactivePaymentRequestInfoRedisTemplateWrapper,
                 confidentialMailUtils,
                 updateTransactionStatusTracerUtils,
@@ -510,7 +510,8 @@ class TransactionServiceTests {
                 "CHECKOUT"
         );
 
-        Mockito.when(ecommercePaymentMethodsHandlerClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
+        Mockito.when(ecommercePaymentMethodsHandlerClient.getPaymentMethod(any(), any()))
+                .thenReturn(Mono.error(exception));
 
         Mockito.when(repository.findById(TRANSACTION_ID))
                 .thenReturn(Mono.just(transaction));
@@ -518,9 +519,9 @@ class TransactionServiceTests {
         /* test */
 
         StepVerifier.create(
-                        transactionsServiceV1_paymentMethodHandlerEnabled
-                                .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest)
-                )
+                transactionsServiceV1_paymentMethodHandlerEnabled
+                        .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest)
+        )
                 .expectError(PaymentMethodNotFoundException.class)
                 .verify();
     }
