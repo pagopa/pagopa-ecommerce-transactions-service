@@ -191,7 +191,7 @@ microservice-chart:
     ECOMMERCE_PAYMENT_METHODS_HANDLER_URI: https://api.dev.platform.pagopa.it/ecommerce/payment-methods-handler/v1
     ECOMMERCE_PAYMENT_METHODS_HANDLER_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_HANDLER_CONNECTION_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "false"
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "true"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
