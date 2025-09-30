@@ -70,8 +70,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
     @Override
     public Mono<BaseTransactionEvent<?>> handle(TransactionAddUserReceiptCommand command) {
         Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> transaction = transactionsUtils
-                .reduceEventsV2(
-                        command.getData().transactionId()
+                .reduceV2Events(
+                        command.getEvents()
                 );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.TransactionClosed> alreadyProcessedError = transaction

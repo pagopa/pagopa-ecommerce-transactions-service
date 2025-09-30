@@ -213,7 +213,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -354,7 +359,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -497,12 +507,6 @@ class TransactionRequestAuthorizationHandlerTest {
                 UUID.randomUUID().toString()
         );
 
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                null,
-                authorizationData
-        );
-
         StateResponseDto stateResponseDto = new StateResponseDto()
                 .state(WorkflowStateDto.PAYMENT_COMPLETE)
                 .fieldSet(
@@ -523,7 +527,14 @@ class TransactionRequestAuthorizationHandlerTest {
                                 transactionActivatedEvent
                         )
                 );
-
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
+                authorizationData,
+                List.of(
+                        transactionActivatedEvent
+                )
+        );
         when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
@@ -554,6 +565,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 .append("&transactionId=").append(transactionId.value()).toString()
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
+        Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
@@ -657,7 +669,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -811,7 +828,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -927,7 +949,11 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(),
+                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                )
         );
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn(
@@ -1016,7 +1042,8 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
 
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -1118,7 +1145,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto();
@@ -1237,7 +1269,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1359,7 +1396,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1482,7 +1524,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1605,7 +1652,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1727,7 +1779,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1869,7 +1926,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -2018,7 +2080,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -2195,11 +2262,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 idBundle
         );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
+                new NpgTransactionGatewayActivationData(orderId, correlationId)
+        );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(transactionActivatedEvent)
         );
 
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -2230,9 +2301,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId)
         )
                 .thenReturn(Mono.just(stateResponseDto));
-        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
-                new NpgTransactionGatewayActivationData(orderId, correlationId)
-        );
+
         transactionActivatedEvent.getData().setClientId(clientId);
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
@@ -2371,7 +2440,8 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
         /* preconditions */
@@ -2482,7 +2552,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
         String securityToken = "securityToken";
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -2644,7 +2719,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
         String securityToken = "securityToken";
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -2810,7 +2890,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -2934,7 +3019,8 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
@@ -3067,7 +3153,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -3211,7 +3302,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -3354,7 +3450,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -3497,7 +3598,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -3640,7 +3746,12 @@ class TransactionRequestAuthorizationHandlerTest {
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         /* preconditions */

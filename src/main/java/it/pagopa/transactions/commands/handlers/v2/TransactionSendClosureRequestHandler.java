@@ -41,8 +41,8 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
 
     @Override
     public Mono<BaseTransactionEvent<?>> handle(TransactionClosureRequestCommand command) {
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
-                command.getData()
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceV2Events(
+                command.getEvents()
         );
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction

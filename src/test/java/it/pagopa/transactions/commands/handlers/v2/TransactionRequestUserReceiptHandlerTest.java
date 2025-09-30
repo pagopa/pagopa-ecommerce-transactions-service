@@ -138,23 +138,23 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
-        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
+        Flux<BaseTransactionEvent<Object>> events = (Flux) (Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
                 authorizationCompletedEvent,
                 closureRequestedEvent,
                 closureSentEvent
         ));
+
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -262,16 +262,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -279,6 +269,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureRequestedEvent,
                 closureSentEvent
         ));
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -383,16 +382,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -400,6 +389,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureRequestedEvent,
                 closureSentEvent
         ));
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -505,16 +503,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -522,6 +510,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureRequestedEvent,
                 closureSentEvent
         ));
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -612,16 +609,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -629,6 +616,16 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureRequestedEvent,
                 closureSentEvent
         ));
+
+        TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -702,16 +699,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -719,6 +706,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureRequestedEvent,
                 closureSentEvent
         ));
+        TransactionAddUserReceiptCommand transactionAddUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -789,11 +785,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 addUserReceiptRequest
         );
 
-        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(
                         transactionActivatedEvent,
@@ -801,6 +792,11 @@ class TransactionRequestUserReceiptHandlerTest {
                         authorizationCompletedEvent,
                         transactionClosureRequestedEvent
                 ));
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
 
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
@@ -849,14 +845,13 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent, authorizationCompletedEvent));
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
 
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
@@ -893,14 +888,14 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
+                .just(transactionActivatedEvent));
 
         TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
+                addUserReceiptData,
+                events.collectList().block()
         );
-
-        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
-                .just(transactionActivatedEvent));
 
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
@@ -958,12 +953,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(
                         transactionActivatedEvent,
@@ -971,6 +960,11 @@ class TransactionRequestUserReceiptHandlerTest {
                         authorizationCompletedEvent,
                         closureSentEvent
                 ));
+        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
 
         /* preconditions */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
@@ -1031,16 +1025,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -1049,6 +1033,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureSentEvent,
                 transactionExpiredEvent
         ));
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -1124,16 +1117,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -1142,6 +1125,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureSentEvent,
                 transactionExpiredEvent
         ));
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -1234,16 +1226,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -1251,6 +1233,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureRequestedEvent,
                 closureSentEvent
         ));
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
@@ -1334,16 +1325,6 @@ class TransactionRequestUserReceiptHandlerTest {
                 transaction.getTransactionId(),
                 addUserReceiptRequest
         );
-
-        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                addUserReceiptData
-        );
-
-        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
-                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
-        );
-
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux.just(
                 transactionActivatedEvent,
                 authorizationRequestedEvent,
@@ -1351,6 +1332,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 closureRequestedEvent,
                 closureSentEvent
         ));
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
 
         /* preconditions */
         Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));

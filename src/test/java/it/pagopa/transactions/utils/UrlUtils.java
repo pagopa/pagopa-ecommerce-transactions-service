@@ -3,9 +3,10 @@ package it.pagopa.transactions.utils;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UrlUtils {
 
@@ -17,17 +18,15 @@ public class UrlUtils {
         URI expectedUri = URI.create(expected);
 
         // Compare full path
-        if (!Objects.equals(actualUri.getHost(), expectedUri.getHost()) ||
-                actualUri.getPort() != expectedUri.getPort() ||
-                !actualUri.getPath().equals(expectedUri.getPath()))
-            return false;
+        assertEquals(actualUri.getHost(), expectedUri.getHost());
+        assertEquals(actualUri.getPort(), expectedUri.getPort());
+        assertEquals(actualUri.getPath(), expectedUri.getPath());
 
         // Compare fragments
-        if (!getParametersAsMap(actualUri.getFragment()).equals(getParametersAsMap(expectedUri.getFragment())))
-            return false;
-
+        assertEquals(getParametersAsMap(actualUri.getFragment()), getParametersAsMap(expectedUri.getFragment()));
         // Compare query params without random, if are equals complete url is equals
-        return getParametersAsMap(actualUri.getQuery(), true).equals(getParametersAsMap(expectedUri.getQuery(), true));
+        assertEquals(getParametersAsMap(actualUri.getQuery(), true), getParametersAsMap(expectedUri.getQuery(), true));
+        return true;
     }
 
     public static Map<String, String> getParametersAsMap(String query) {

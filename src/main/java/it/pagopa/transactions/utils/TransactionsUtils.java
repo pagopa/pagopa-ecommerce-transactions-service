@@ -5,12 +5,12 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.v2.Email;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedAuthorization;
+import it.pagopa.ecommerce.commons.domain.v2.Email;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
 import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
@@ -333,11 +333,11 @@ public class TransactionsUtils {
         );
     }
 
-    public Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> reduceEventsV2(
-                                                                                            TransactionId transactionId
+    public Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> reduceV2Events(
+                                                                                            List<? extends BaseTransactionEvent<?>> events
     ) {
-        return reduceEvent(
-                transactionId,
+        return reduceEvents(
+                Flux.fromIterable(events),
                 new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction(),
                 it.pagopa.ecommerce.commons.domain.v2.Transaction::applyEvent,
                 it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction.class
@@ -357,7 +357,7 @@ public class TransactionsUtils {
     }
 
     public <A, T> Mono<T> reduceEvents(
-                                       Flux<BaseTransactionEvent<Object>> events,
+                                       Flux<? extends BaseTransactionEvent<?>> events,
                                        A initialValue,
                                        BiFunction<A, ? super BaseTransactionEvent<?>, A> accumulator,
                                        Class<T> clazz
@@ -458,11 +458,29 @@ public class TransactionsUtils {
                 ).sum();
     }
 
+    public Integer getTransactionTotalAmount(
+                                             it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
+    ) {
+
+        return baseTransaction.getPaymentNotices().stream()
+                .mapToInt(
+                        p -> p.transactionAmount().value()
+                ).sum();
+    }
+
     public Boolean isAllCcp(
                             BaseTransactionView baseTransactionView,
                             int idx
     ) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
+        return paymentNotices.get(idx).isAllCCP();
+    }
+
+    public Boolean isAllCcp(
+                            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction,
+                            int idx
+    ) {
+        List<it.pagopa.ecommerce.commons.domain.v2.PaymentNotice> paymentNotices = baseTransaction.getPaymentNotices();
         return paymentNotices.get(idx).isAllCCP();
     }
 
@@ -472,6 +490,14 @@ public class TransactionsUtils {
     ) {
         List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
         return paymentNotices.get(idx).getRptId();
+    }
+
+    public String getRptId(
+                           it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction,
+                           int idx
+    ) {
+        List<it.pagopa.ecommerce.commons.domain.v2.PaymentNotice> paymentNotices = baseTransaction.getPaymentNotices();
+        return paymentNotices.get(idx).rptId().value();
     }
 
     public List<String> getRptIds(BaseTransactionView baseTransactionView) {
@@ -491,10 +517,18 @@ public class TransactionsUtils {
     public String getEffectiveClientId(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getClientId().toString();
-            case it.pagopa.ecommerce.commons.documents.v2.Transaction t -> t.getClientId().getEffectiveClient().toString();
+            case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->
+                    t.getClientId().getEffectiveClient().toString();
             default ->
                     throw new NotImplementedException("Handling for transaction document: [%s] not implemented yet".formatted(baseTransactionView.getClass()));
         };
+    }
+
+    public String getEffectiveClientId(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction) {
+        return it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.fromString(
+                baseTransaction.getClientId().toString()
+        ).getEffectiveClient()
+                .toString();
     }
 
     public String getClientId(BaseTransactionView baseTransactionView) {
