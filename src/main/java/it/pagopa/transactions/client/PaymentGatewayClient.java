@@ -17,7 +17,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
-import it.pagopa.ecommerce.commons.utils.UniqueIdUtils;
+import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
@@ -62,7 +62,7 @@ public class PaymentGatewayClient {
 
     private final NpgSessionUrlConfig npgSessionUrlConfig;
 
-    private final UniqueIdUtils uniqueIdUtils;
+    private final ReactiveUniqueIdUtils uniqueIdUtils;
     private final int npgJwtKeyValidityTime;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
@@ -84,7 +84,7 @@ public class PaymentGatewayClient {
             ConfidentialMailUtils confidentialMailUtils,
             NpgClient npgClient,
             NpgSessionUrlConfig npgSessionUrlConfig,
-            UniqueIdUtils uniqueIdUtils,
+            ReactiveUniqueIdUtils uniqueIdUtils,
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,

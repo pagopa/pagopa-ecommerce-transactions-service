@@ -17,7 +17,7 @@ import java.util.Optional;
 public class MDCFilter implements WebFilter {
 
     public static final String HEADER_TRANSACTION_ID = "x-transaction-id";
-    public static final String HEADER_RPT_ID = "x-rpt-id";
+    public static final String HEADER_RPT_ID = "x-rpt-ids";
     public static final String HEADER_NPG_CORRELATION_ID = "x-correlation-id";
 
     @Override

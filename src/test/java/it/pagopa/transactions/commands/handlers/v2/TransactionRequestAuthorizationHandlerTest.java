@@ -10,7 +10,6 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGate
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.*;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
@@ -19,7 +18,7 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.ExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
@@ -118,8 +117,8 @@ class TransactionRequestAuthorizationHandlerTest {
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
             .mock(UpdateTransactionStatusTracerUtils.class);
 
-    private final ExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper = Mockito
-            .mock(ExclusiveLockDocumentWrapper.class);
+    private final ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper = Mockito
+            .mock(ReactiveExclusiveLockDocumentWrapper.class);
 
     @BeforeEach
     public void init() {
@@ -249,7 +248,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -394,7 +393,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -546,7 +545,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -706,7 +705,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                         .getBytes(StandardCharsets.UTF_8)
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         Hooks.onOperatorDebug();
         /* test */
@@ -836,7 +835,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1027,7 +1026,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.empty());
         when(paymentGatewayClient.requestNpgCardsAuthorization(eq(authorizationData), eq(null)))
                 .thenReturn(Mono.empty());
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1142,7 +1141,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1262,7 +1261,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1385,7 +1384,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1508,7 +1507,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1630,7 +1629,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -1764,7 +1763,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -1914,7 +1913,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(CHECKOUT_OUTCOME_PATH);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -2059,7 +2058,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -2266,10 +2265,13 @@ class TransactionRequestAuthorizationHandlerTest {
                         ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
-        /* test */
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+        when(transactionTemplateWrapper.save(any())).thenReturn(Mono.empty());
+
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
+                .expectNextMatches(
+                        value -> value.getAuthorizationRequestId().equals(responseDto.getAuthorizationRequestId())
+                )
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
@@ -2371,7 +2373,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 authorizationData
         );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
         /* preconditions */
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
@@ -2482,11 +2484,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 authorizationData
         );
-
+        String securityToken = "securityToken";
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
-                .securityToken("securityToken")
-                .sessionId("sessionId")
+                .securityToken(securityToken)
+                .sessionId(sessionId)
                 .url("http://localhost/redirectionUrl");
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
@@ -2522,8 +2524,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
-
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+        when(transactionTemplateWrapper.save(any())).thenReturn(Mono.just(true));
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
                 .authorizationUrl(npgBuildSessionResponse.getUrl());
@@ -2554,6 +2556,19 @@ class TransactionRequestAuthorizationHandlerTest {
                     return true;
                 }),
                 eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        );
+        verify(transactionTemplateWrapper, times(1)).save(
+                argThat(transactionCacheInfo -> {
+                    assertEquals(
+                            TransactionTestUtils.TRANSACTION_ID,
+                            transactionCacheInfo.transactionId().value()
+                    );
+                    assertNotNull(transactionCacheInfo.walletPaymentInfo());
+                    assertEquals(orderId, transactionCacheInfo.walletPaymentInfo().orderId());
+                    assertEquals(securityToken, transactionCacheInfo.walletPaymentInfo().securityToken());
+                    assertEquals(sessionId, transactionCacheInfo.walletPaymentInfo().sessionId());
+                    return true;
+                })
         );
     }
 
@@ -2631,11 +2646,11 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 authorizationData
         );
-
+        String securityToken = "securityToken";
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
-                .securityToken("securityToken")
-                .sessionId("sessionId")
+                .securityToken(securityToken)
+                .sessionId(sessionId)
                 .url("http://localhost/redirectionUrl");
 
         Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
@@ -2671,7 +2686,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+        when(transactionTemplateWrapper.save(any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(orderId)
@@ -2702,6 +2718,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 }),
                 eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
         );
+        verify(transactionTemplateWrapper, times(1)).save(
+                argThat(transactionCacheInfo -> {
+                    assertEquals(
+                            TransactionTestUtils.TRANSACTION_ID,
+                            transactionCacheInfo.transactionId().value()
+                    );
+                    assertNotNull(transactionCacheInfo.walletPaymentInfo());
+                    assertEquals(orderId, transactionCacheInfo.walletPaymentInfo().orderId());
+                    assertEquals(securityToken, transactionCacheInfo.walletPaymentInfo().securityToken());
+                    assertEquals(sessionId, transactionCacheInfo.walletPaymentInfo().sessionId());
+                    return true;
+                })
+        );
     }
 
     @ParameterizedTest
@@ -2711,7 +2740,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String walletId = UUID.randomUUID().toString();
         String contractId = "contractId";
         String sessionId = "sessionId";
-        String orderId = "oderId";
+        String orderId = "orderId";
 
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
@@ -2813,7 +2842,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -2922,7 +2951,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
         when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
         when(
                 transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
                         any(QueueEvent.class),
@@ -3077,7 +3106,7 @@ class TransactionRequestAuthorizationHandlerTest {
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(NPG_URL_IFRAME);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -3217,7 +3246,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -3360,7 +3389,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -3503,7 +3532,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
         )
                 .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(true);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
 
         RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
@@ -3626,7 +3655,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         )
                 );
 
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(false);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(false));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))

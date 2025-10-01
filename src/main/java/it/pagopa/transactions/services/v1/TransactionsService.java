@@ -14,12 +14,14 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.ecommerce.commons.redis.templatewrappers.v2.PaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
+import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsHandlerClient;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.*;
 import it.pagopa.transactions.commands.data.*;
@@ -88,13 +90,15 @@ public class TransactionsService {
 
     private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
 
+    private final EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient;
+
     private final WalletClient walletClient;
 
     private final TransactionsUtils transactionsUtils;
 
     private final TransactionsEventStoreRepository<Object> eventsRepository;
 
-    private final PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper;
+    private final ReactivePaymentRequestInfoRedisTemplateWrapper reactivePaymentRequestInfoRedisTemplateWrapper;
 
     private final ConfidentialMailUtils confidentialMailUtils;
 
@@ -103,6 +107,7 @@ public class TransactionsService {
     private final Map<String, TransactionOutcomeInfoDto.OutcomeEnum> npgAuthorizationErrorCodeMapping;
     private final Set<TransactionStatusDto> ecommerceFinalStates;
     private final Set<TransactionStatusDto> ecommercePossibleFinalState;
+    private final boolean ecommercePaymentMethodsHandlerEnabled;
 
     @Autowired
     public TransactionsService(
@@ -138,17 +143,19 @@ public class TransactionsService {
             ) TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2,
             TransactionsViewRepository transactionsViewRepository,
             EcommercePaymentMethodsClient ecommercePaymentMethodsClient,
+            EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient,
             WalletClient walletClient,
             UUIDUtils uuidUtils,
             TransactionsUtils transactionsUtils,
             TransactionsEventStoreRepository<Object> eventsRepository,
             @Value("${payment.token.validity}") Integer paymentTokenValidity,
-            PaymentRequestInfoRedisTemplateWrapper paymentRequestInfoRedisTemplateWrapper,
+            ReactivePaymentRequestInfoRedisTemplateWrapper reactivePaymentRequestInfoRedisTemplateWrapper,
             ConfidentialMailUtils confidentialMailUtils,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
             @Value("#{${npg.authorizationErrorCodeMapping}}") Map<String, String> npgAuthorizationErrorCodeMapping,
             @Value("${ecommerce.finalStates}") Set<String> ecommerceFinalStates,
-            @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates
+            @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates,
+            @Value("${ecommercePaymentMethodsHandler.enabled}") boolean ecommercePaymentMethodsHandlerEnabled
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.requestAuthHandlerV2 = requestAuthHandlerV2;
@@ -167,7 +174,7 @@ public class TransactionsService {
         this.walletClient = walletClient;
         this.transactionsUtils = transactionsUtils;
         this.eventsRepository = eventsRepository;
-        this.paymentRequestInfoRedisTemplateWrapper = paymentRequestInfoRedisTemplateWrapper;
+        this.reactivePaymentRequestInfoRedisTemplateWrapper = reactivePaymentRequestInfoRedisTemplateWrapper;
         this.confidentialMailUtils = confidentialMailUtils;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
         this.npgAuthorizationErrorCodeMapping = npgAuthorizationErrorCodeMapping.entrySet().stream().collect(
@@ -181,6 +188,8 @@ public class TransactionsService {
                 .collect(Collectors.toSet());
         this.ecommercePossibleFinalState = ecommercePossibleFinalStates.stream().map(TransactionStatusDto::valueOf)
                 .collect(Collectors.toSet());
+        this.ecommercePaymentMethodsHandlerClient = ecommercePaymentMethodsHandlerClient;
+        this.ecommercePaymentMethodsHandlerEnabled = ecommercePaymentMethodsHandlerEnabled;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -594,7 +603,11 @@ public class TransactionsService {
         );
 
         return executeHandlerBasedOnTransactionType(transactionDocument, transactionRequestAuthCommand, authData)
-                .doOnSuccess(invalidateCacheFor(transactionDocument));
+                .flatMap(
+                        authResponse -> invalidateCacheFor(transactionDocument)
+                                .collectList()
+                                .thenReturn(authResponse)
+                );
     }
 
     /**
@@ -710,27 +723,32 @@ public class TransactionsService {
      *                            invalidated
      * @return a consumer that invalidates the cache entry
      */
-    private Consumer<RequestAuthorizationResponseDto> invalidateCacheFor(BaseTransactionView transactionDocument) {
-        return response -> invalidatePaymentRequestCache(transactionDocument);
+    private Flux<Boolean> invalidateCacheFor(BaseTransactionView transactionDocument) {
+        return invalidatePaymentRequestCache(transactionDocument);
     }
 
     /**
      * Invalidates the payment request cache for a transaction
      *
      * @param transactionDocument The transaction document
+     * @return a Flux<Boolean> valued with true iff entities are deleted from cache
      */
-    private void invalidatePaymentRequestCache(BaseTransactionView transactionDocument) {
-        transactionsUtils.getPaymentNotices(transactionDocument).forEach(this::invalidateRptIdCache);
+    private Flux<Boolean> invalidatePaymentRequestCache(BaseTransactionView transactionDocument) {
+        return Flux.fromIterable(transactionsUtils.getPaymentNotices(transactionDocument))
+                .flatMap(this::invalidateRptIdCache);
     }
 
     /**
      * Invalidates the cache for a specific payment notice
      *
      * @param paymentNotice The payment notice to invalidate
+     * @return a Mono<Boolean> valued with true iff entity is deleted from cache
      */
-    private void invalidateRptIdCache(it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice) {
-        log.info("Invalidate cache for RptId : {}", paymentNotice.getRptId());
-        paymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.getRptId());
+    private Mono<Boolean> invalidateRptIdCache(it.pagopa.ecommerce.commons.documents.PaymentNotice paymentNotice) {
+
+        return reactivePaymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.getRptId()).doOnNext(
+                outcome -> log.info("Invalidate cache for RptId : {} -> {}", paymentNotice.getRptId(), outcome)
+        );
     }
 
     /**
@@ -1596,8 +1614,13 @@ public class TransactionsService {
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId());
                     });
-            case ApmAuthRequestDetailsDto ignore ->
-                    ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(response -> new PaymentSessionData(null, null, response.getName(), null));
+            case ApmAuthRequestDetailsDto ignore -> {
+                 Mono<String> name =
+                        ecommercePaymentMethodsHandlerEnabled ?
+                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(requestAuthorizationRequestDto.getLanguage().getValue())) :
+                                ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName);
+                yield name.map(n -> new PaymentSessionData(null, null, n, null));
+            }
             case RedirectionAuthRequestDetailsDto ignored -> Mono.just(new PaymentSessionData(
                     null,
                     null,
