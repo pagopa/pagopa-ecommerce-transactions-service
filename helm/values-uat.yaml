@@ -184,10 +184,10 @@ microservice-chart:
     JWT_ISSUER_CONNECTION_TIMEOUT: "10000"
     SECURITY_API_KEYS_SECURED_PATHS: ""
     TRANSACTIONSVIEW_UPDATE_ENABLED: "true"
-    ECOMMERCE_PAYMENT_METHODS_HANDLER_URI: https://api.uat.platform.pagopa.it/ecommerce/payment-methods-handler/v1
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_URI: https://weuuat.ecommerce.internal.uat.platform.pagopa.it/beta/pagopa-ecommerce-payment-methods-handler
     ECOMMERCE_PAYMENT_METHODS_HANDLER_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_HANDLER_CONNECTION_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "true"
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "false"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
