@@ -5,14 +5,13 @@ import com.azure.core.http.HttpRequest;
 import com.azure.core.http.rest.Response;
 import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +27,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -71,7 +71,8 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
 
         /* PRECONDITION */
@@ -110,7 +111,8 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
 
         /* PRECONDITION */
@@ -134,7 +136,8 @@ class TransactionUserCancelHandlerTest {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
 
         /* PRECONDITION */
@@ -161,32 +164,15 @@ class TransactionUserCancelHandlerTest {
     }
 
     @Test
-    void shouldSaveCancelEventWithErrorTransactionNotFound() {
-        String transactionId = TransactionTestUtils.TRANSACTION_ID;
-        TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
-                null,
-                new TransactionId(transactionId)
-        );
-
-        /* PRECONDITION */
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
-                .thenReturn(Flux.empty());
-
-        /* TEST EXECUTION */
-        StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
-                .expectError(TransactionNotFoundException.class)
-                .verify();
-
-        verify(transactionEventUserCancelStoreRepository, times(0)).save(any());
-        verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
-    }
-
-    @Test
     void shouldSaveCancelEventWithErrorAlreadyProcessedException() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
-                new TransactionId(transactionId)
+                new TransactionId(transactionId),
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(),
+                        TransactionTestUtils.transactionUserCanceledEvent()
+                )
         );
 
         /* PRECONDITION */

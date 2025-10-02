@@ -26,7 +26,7 @@ public final class TransactionActivateCommand extends TransactionsCommand<NewTra
             TransactionId transactionId,
             UUID userId
     ) {
-        super(rptIds, TransactionsCommandCode.ACTIVATE, data);
+        super(rptIds, TransactionsCommandCode.ACTIVATE, data, List.of());
         this.clientId = clientId;
         this.transactionId = transactionId;
         this.userId = userId;

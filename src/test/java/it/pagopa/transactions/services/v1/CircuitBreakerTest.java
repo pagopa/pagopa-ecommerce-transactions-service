@@ -15,6 +15,7 @@ import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.exceptions.*;
+import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.MethodOrderer;
@@ -32,6 +33,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -63,6 +65,9 @@ class CircuitBreakerTest {
     private TransactionsViewRepository transactionsViewRepository;
     @MockitoBean
     private TransactionsUtils transactionsUtils;
+
+    @MockitoBean
+    private TransactionsEventStoreRepository<Object> eventsRepository;
 
     @Autowired
     private CircuitBreakerRegistry circuitBreakerRegistry;
@@ -230,8 +235,8 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionsViewRepository.findById(any(String.class)))
-                .thenReturn(Mono.error(thrownException));
+        Mockito.when(eventsRepository.findByTransactionIdOrderByCreationDateAsc(any(String.class)))
+                .thenReturn(Flux.error(thrownException));
 
         StepVerifier
                 .create(
@@ -265,6 +270,9 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
+        Mockito.when(eventsRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+                .thenReturn(Flux.empty());
+
         Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any()))
                 .thenReturn(Mono.error(thrownException));
 
@@ -295,7 +303,8 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionsViewRepository.findById(any(String.class))).thenReturn(Mono.error(thrownException));
+        Mockito.when(eventsRepository.findByTransactionIdOrderByCreationDateAsc(any(String.class)))
+                .thenReturn(Flux.error(thrownException));
 
         StepVerifier
                 .create(
@@ -323,7 +332,8 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionsViewRepository.findById(any(String.class))).thenReturn(Mono.error(thrownException));
+        Mockito.when(eventsRepository.findByTransactionIdOrderByCreationDateAsc(any(String.class)))
+                .thenReturn(Flux.error(thrownException));
 
         StepVerifier
                 .create(
@@ -347,8 +357,8 @@ class CircuitBreakerTest {
         /*
          * Preconditions
          */
-        Mockito.when(transactionsViewRepository.findById(any(String.class)))
-                .thenReturn(Mono.error(new InvalidStatusException("Error processing request")));
+        Mockito.when(eventsRepository.findByTransactionIdOrderByCreationDateAsc(any(String.class)))
+                .thenReturn(Flux.error(new InvalidStatusException("Error processing request")));
 
         StepVerifier
                 .create(

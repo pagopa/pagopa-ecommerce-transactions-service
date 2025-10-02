@@ -3,8 +3,9 @@ package it.pagopa.transactions.commands.handlers.v2;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.domain.v2.*;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
@@ -100,7 +101,8 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                updateAuthorizationStatusData
+                updateAuthorizationStatusData,
+                List.of(activatedEvent, authorizationRequestedEvent)
         );
 
         /* preconditions */
@@ -168,7 +170,8 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                updateAuthorizationStatusData
+                updateAuthorizationStatusData,
+                List.of(activatedEvent, authorizationRequestedEvent)
         );
 
         /* preconditions */
@@ -230,7 +233,8 @@ class TransactionUpdateAuthorizationHandlerTest {
 
         TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                updateAuthorizationStatusData
+                updateAuthorizationStatusData,
+                List.of(activatedEvent, authorizationRequestedEvent)
         );
 
         /* preconditions */

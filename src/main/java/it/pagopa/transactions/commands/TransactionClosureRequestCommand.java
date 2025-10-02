@@ -1,5 +1,6 @@
 package it.pagopa.transactions.commands;
 
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 
@@ -9,8 +10,9 @@ public final class TransactionClosureRequestCommand extends TransactionsCommand<
 
     public TransactionClosureRequestCommand(
             List<RptId> rptIds,
-            TransactionId data
+            TransactionId data,
+            List<? extends BaseTransactionEvent<?>> events
     ) {
-        super(rptIds, TransactionsCommandCode.SEND_CLOSURE_REQUEST, data);
+        super(rptIds, TransactionsCommandCode.SEND_CLOSURE_REQUEST, data, events);
     }
 }
