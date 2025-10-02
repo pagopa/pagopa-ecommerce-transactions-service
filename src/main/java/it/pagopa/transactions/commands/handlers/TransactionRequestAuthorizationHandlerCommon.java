@@ -154,7 +154,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         authorizationData.authDetails(),
                                         authorizationData.asset(),
                                         authorizationData.brandAssets(),
-                                        authorizationData.idBundle()
+                                        authorizationData.idBundle(),
+                                        authorizationData.contextualOnboardDetails()
                                 ),
                                 orderIdAndFieldsDto.getT1(),
                                 correlationId,

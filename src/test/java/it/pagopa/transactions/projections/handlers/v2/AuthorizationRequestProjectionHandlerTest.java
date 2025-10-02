@@ -9,6 +9,8 @@ import it.pagopa.transactions.commands.data.AuthorizationRequestedEventData;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import java.time.ZoneId;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import it.pagopa.transactions.utils.PaymentSessionData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +32,10 @@ class AuthorizationRequestProjectionHandlerTest {
 
     @Mock
     private TransactionsViewRepository transactionsViewRepository;
+    private final PaymentSessionData.ContextualOnboardDetails contextualOnboardDetails = new PaymentSessionData.ContextualOnboardDetails(
+            UUID.randomUUID().toString(),
+            100L
+    );
 
     @Test
     void shouldUpdateTransactionWithAuthorizationRequestedStatus() {
@@ -68,7 +74,8 @@ class AuthorizationRequestProjectionHandlerTest {
                         null,
                         "http://asset",
                         Optional.of(Map.of("VISA", "http://visaAsset")),
-                        UUID.randomUUID().toString()
+                        UUID.randomUUID().toString(),
+                        Optional.of(contextualOnboardDetails)
                 ),
                 TransactionTestUtils.transactionAuthorizationRequestedEvent()
         );
@@ -117,7 +124,6 @@ class AuthorizationRequestProjectionHandlerTest {
                 ZonedDateTime.now()
         );
         Integer fee = 50;
-        ZonedDateTime fixedEventTime = ZonedDateTime.of(2025, 7, 25, 14, 47, 31, 0, ZoneId.of("Europe/Rome"));
 
         AuthorizationRequestedEventData authorizationData = new AuthorizationRequestedEventData(
                 new AuthorizationRequestData(
@@ -141,7 +147,8 @@ class AuthorizationRequestProjectionHandlerTest {
                         null,
                         "http://asset",
                         Optional.of(Map.of("VISA", "http://visaAsset")),
-                        UUID.randomUUID().toString()
+                        UUID.randomUUID().toString(),
+                        Optional.empty()
                 ),
                 TransactionTestUtils.transactionAuthorizationRequestedEvent()
         );
