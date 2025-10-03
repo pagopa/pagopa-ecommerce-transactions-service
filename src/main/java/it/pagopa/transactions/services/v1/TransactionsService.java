@@ -567,52 +567,26 @@ public class TransactionsService {
                 .flatMap(
                         events -> transactionsUtils
                                 .reduceV2Events(events)
-                                .map(
-                                        tx -> Tuples.of(events, tx)
-                                )
+                                .map(tx -> Tuples.of(events, tx))
                 )
-                .flatMap(
-                        TupleUtils.function(
-                                (
-                                 events,
-                                 tx
-                                ) -> validateTransactionDetails(tx, authRequest)
-                                        .map(
-                                                trx -> Tuples.of(events, trx)
-                                        )
-                        )
-                )
-                .flatMap(
-                        TupleUtils.function(
-                                (
-                                 events,
-                                 tx
-                                ) -> processAuthRequest(tx, authRequest)
-                                        .map(
-                                                TupleUtils.function(
-                                                        (
-                                                         trx,
-                                                         authData
-                                                        ) -> Tuples.of(
-                                                                trx,
-                                                                authData,
-                                                                events
-                                                        )
-                                                )
-                                        )
-                        )
-                )
-
-                .flatMap(
-                        TupleUtils.function(
-                                (
-                                 tx,
-                                 authData,
-                                 events
-                                ) -> executeAuthPipeline(tx, events, authData, lang, authRequest, paymentGatewayId)
-                        )
-                );
-    }
+                .flatMap(tuple -> {
+                    List<BaseTransactionEvent<Object>> events = tuple.getT1();
+                    var tx = tuple.getT2();
+                    return validateTransactionDetails(tx, authRequest)
+                            .map(validatedTx -> Tuples.of(events, validatedTx));
+                })
+                .flatMap(tuple -> {
+                    List<BaseTransactionEvent<Object>> events = tuple.getT1();
+                    var tx = tuple.getT2();
+                    return processAuthRequest(tx, authRequest)
+                            .map(authData -> Tuples.of(tx, authData.getT2(), events));
+                })
+                .flatMap(tuple -> {
+                    var tx = tuple.getT1();
+                    var authData = tuple.getT2();
+                    List<BaseTransactionEvent<Object>> events = tuple.getT3();
+                    return executeAuthPipeline(tx, events, authData, lang, authRequest, paymentGatewayId);
+                });
 
     /**
      * Executes the authorization pipeline
