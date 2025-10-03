@@ -313,7 +313,7 @@
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
       "version": "3.2.0",
-      "sha256": "eczhT09LENzsD5BeFX25grGXcSD4owCcecsiW9yv1KA="
+      "sha256": "lUEK-AnOb8BaaiHaKdKSFUH0BL_2hkzxneUAhjR-x88="
     },
     {
       "id": "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.18.3",
