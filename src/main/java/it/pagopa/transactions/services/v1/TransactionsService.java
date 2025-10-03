@@ -587,6 +587,7 @@ public class TransactionsService {
                     List<BaseTransactionEvent<Object>> events = tuple.getT3();
                     return executeAuthPipeline(tx, events, authData, lang, authRequest, paymentGatewayId);
                 });
+    }
 
     /**
      * Executes the authorization pipeline
@@ -1265,21 +1266,21 @@ public class TransactionsService {
 
         Mono<TransactionInfoDto> v2Info =
                 events
-                .collectList()
-                .zipWith(transactionV2)
-                .flatMap(tuple -> {
-                    var eventList = tuple.getT1();
-                    var transactionTuple = tuple.getT2();
-                    var baseTransaction = transactionTuple.getT1();
-                    var authorizationRequestedTime = transactionTuple.getT2();
+                        .collectList()
+                        .zipWith(transactionV2)
+                        .flatMap(tuple -> {
+                            var eventList = tuple.getT1();
+                            var transactionTuple = tuple.getT2();
+                            var baseTransaction = transactionTuple.getT1();
+                            var authorizationRequestedTime = transactionTuple.getT2();
 
-                    return updateTransactionAuthorizationStatusV2(
-                            baseTransaction,
-                            updateAuthorizationRequestDto,
-                            authorizationRequestedTime,
-                            eventList
-                    );
-                });
+                            return updateTransactionAuthorizationStatusV2(
+                                    baseTransaction,
+                                    updateAuthorizationRequestDto,
+                                    authorizationRequestedTime,
+                                    eventList
+                            );
+                        });
 
 
         return v2Info
