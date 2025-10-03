@@ -124,8 +124,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     public Mono<Tuple2<RequestAuthorizationResponseDto, TransactionAuthorizationRequestedEvent>> handleWithCreationDate(TransactionRequestAuthorizationCommand command) {
         AuthorizationRequestData authorizationRequestData = command.getData();
         URI logo = getLogo(command.getData());
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
-                command.getData().transactionId()
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceV2Events(
+                command.getEvents()
         );
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
