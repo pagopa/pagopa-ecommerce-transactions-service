@@ -26,7 +26,10 @@ import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.*;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -51,7 +54,6 @@ import java.util.stream.Stream;
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -414,19 +416,11 @@ class TransactionServiceTest {
         Mockito.when(
                 transactionsUtils.reduceEvents(
                         any(),
-                        eq(new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction()),
+                        any(),
                         any(),
                         any()
                 )
-        ).thenReturn(Mono.just(new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction()));
-        Mockito.when(
-                transactionsUtils.reduceEvents(
-                        any(),
-                        eq(new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction()),
-                        any(),
-                        any()
-                )
-        ).thenReturn(Mono.just(transactionWithRequestedAuthorization));
+        ).thenCallRealMethod();
 
         Mockito.when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getPspId(any(BaseTransaction.class))).thenCallRealMethod();
@@ -449,7 +443,7 @@ class TransactionServiceTest {
         Mockito.when(transactionsUtils.getPspId(any(BaseTransaction.class))).thenCallRealMethod();
         Mockito.when(transactionsUtils.getPaymentMethodTypeCode(any(BaseTransaction.class))).thenCallRealMethod();
         Mockito.when(transactionsUtils.isWalletPayment(any(BaseTransaction.class))).thenCallRealMethod();
-
+        Mockito.when(transactionsUtils.reduceV2Events(any())).thenCallRealMethod();
         /* test */
         StepVerifier.create(
                 transactionsServiceV1
