@@ -548,6 +548,8 @@ public class TransactionsService {
                                     .handle(transactionCancelCommand).flatMap(
                                             event -> cancellationRequestProjectionHandlerV2
                                                     .handle((TransactionUserCanceledEvent) event)
+                                                    .thenReturn(event)
+
                                     );
                         }
                 )
@@ -564,55 +566,29 @@ public class TransactionsService {
                                                                                  RequestAuthorizationRequestDto authRequest
     ) {
         return getTransactionEventsForUserId(transactionId, xUserId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         events -> transactionsUtils
                                 .reduceV2Events(events)
-                                .map(
-                                        tx -> Tuples.of(events, tx)
-                                )
+                                .map(tx -> Tuples.of(events, tx))
                 )
-                .flatMap(
-                        TupleUtils.function(
-                                (
-                                 events,
-                                 tx
-                                ) -> validateTransactionDetails(tx, authRequest)
-                                        .map(
-                                                trx -> Tuples.of(events, trx)
-                                        )
-                        )
-                )
-                .flatMap(
-                        TupleUtils.function(
-                                (
-                                 events,
-                                 tx
-                                ) -> processAuthRequest(tx, authRequest)
-                                        .map(
-                                                TupleUtils.function(
-                                                        (
-                                                         trx,
-                                                         authData
-                                                        ) -> Tuples.of(
-                                                                trx,
-                                                                authData,
-                                                                events
-                                                        )
-                                                )
-                                        )
-                        )
-                )
-
-                .flatMap(
-                        TupleUtils.function(
-                                (
-                                 tx,
-                                 authData,
-                                 events
-                                ) -> executeAuthPipeline(tx, events, authData, lang, authRequest, paymentGatewayId)
-                        )
-                );
+                .flatMap(tuple -> {
+                    List<BaseTransactionEvent<Object>> events = tuple.getT1();
+                    var tx = tuple.getT2();
+                    return validateTransactionDetails(tx, authRequest)
+                            .map(validatedTx -> Tuples.of(events, validatedTx));
+                })
+                .flatMap(tuple -> {
+                    List<BaseTransactionEvent<Object>> events = tuple.getT1();
+                    var tx = tuple.getT2();
+                    return processAuthRequest(tx, authRequest)
+                            .map(authData -> Tuples.of(tx, authData.getT2(), events));
+                })
+                .flatMap(tuple -> {
+                    var tx = tuple.getT1();
+                    var authData = tuple.getT2();
+                    List<BaseTransactionEvent<Object>> events = tuple.getT3();
+                    return executeAuthPipeline(tx, events, authData, lang, authRequest, paymentGatewayId);
+                });
     }
 
     /**
@@ -1290,20 +1266,23 @@ public class TransactionsService {
                             throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
                 }));
 
-        Mono<TransactionInfoDto> v2Info = events
-                .collectList()
-                .flatMap(eventList -> transactionV2.map(
-                        TupleUtils.function((baseTransaction, authorizationRequestedTime) -> Tuples.of(baseTransaction, authorizationRequestedTime, eventList))
-                ))
-                .flatMap(TupleUtils.function((baseTransaction, authorizationRequestedTime, eventList) ->
-                                this.updateTransactionAuthorizationStatusV2(
-                                        baseTransaction,
-                                        updateAuthorizationRequestDto,
-                                        authorizationRequestedTime,
-                                        eventList
-                                )
-                        )
-                );
+        Mono<TransactionInfoDto> v2Info =
+                events
+                        .collectList()
+                        .zipWith(transactionV2)
+                        .flatMap(tuple -> {
+                            var eventList = tuple.getT1();
+                            var transactionTuple = tuple.getT2();
+                            var baseTransaction = transactionTuple.getT1();
+                            var authorizationRequestedTime = transactionTuple.getT2();
+
+                            return updateTransactionAuthorizationStatusV2(
+                                    baseTransaction,
+                                    updateAuthorizationRequestDto,
+                                    authorizationRequestedTime,
+                                    eventList
+                            );
+                        });
 
 
         return v2Info
@@ -1412,38 +1391,31 @@ public class TransactionsService {
                                                                         t.getStatus()
                                                                 )
                                                         )
-                                                        .cast(
-                                                                TransactionAuthorizationCompletedEvent.class
-                                                        )
-                                                        .flatMap(
-                                                                authCompletedEvent -> authorizationUpdateProjectionHandlerV2
-                                                                        .handle(authCompletedEvent)
-                                                                        .map(updatedView -> {
-                                                                            List<BaseTransactionEvent<?>> eventList = Stream
-                                                                                    .concat(
-                                                                                            transactionUpdateAuthorizationCommand
-                                                                                                    .getEvents()
-                                                                                                    .stream(),
-                                                                                            Stream.of(
-                                                                                                    authCompletedEvent
-                                                                                            )
-                                                                                    ).toList();
-                                                                            return Tuples.of(
-                                                                                    updatedView,
-                                                                                    Stream.concat(
-                                                                                            transactionUpdateAuthorizationCommand
-                                                                                                    .getEvents()
-                                                                                                    .stream(),
-                                                                                            Stream.of(
-                                                                                                    authCompletedEvent
-                                                                                            )
-                                                                                    ).toList()
-
-                                                                            );
-                                                                        }
-
-                                                                        )
-                                                        )
+                                        )
+                                        .cast(TransactionAuthorizationCompletedEvent.class)
+                                        .flatMap(
+                                                authCompletedEvent -> {
+                                                    List<BaseTransactionEvent<?>> concatenatedEvents = Stream.concat(
+                                                            transactionUpdateAuthorizationCommand
+                                                                    .getEvents()
+                                                                    .stream(),
+                                                            Stream.of(
+                                                                    authCompletedEvent
+                                                            )
+                                                    ).toList();
+                                                    return authorizationUpdateProjectionHandlerV2
+                                                            .handle(authCompletedEvent)
+                                                            .then(
+                                                                    transactionsUtils.reduceV2Events(concatenatedEvents)
+                                                                            .cast(BaseTransactionWithPaymentToken.class)
+                                                                            .map(
+                                                                                    authorizationUpdated -> Tuples.of(
+                                                                                            authorizationUpdated,
+                                                                                            concatenatedEvents
+                                                                                    )
+                                                                            )
+                                                            );
+                                                }
                                         )
                                         .flatMap(
                                                 TupleUtils.function(this::closePaymentV2)
@@ -1454,9 +1426,9 @@ public class TransactionsService {
                 );
     }
 
-    private Mono<Transaction> closePaymentV2(
-                                             BaseTransactionWithPaymentToken transaction,
-                                             List<BaseTransactionEvent<?>> events
+    private Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> closePaymentV2(
+                                                                                             BaseTransactionWithPaymentToken transaction,
+                                                                                             List<BaseTransactionEvent<?>> events
     ) {
 
         TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
@@ -1477,6 +1449,13 @@ public class TransactionsService {
                         closureRequestedEvent -> closureRequestedProjectionHandler.handle(
                                 (TransactionClosureRequestedEvent) closureRequestedEvent
 
+                        ).then(
+                                transactionsUtils.reduceV2Events(
+                                        Stream.concat(
+                                                events.stream(),
+                                                Stream.of(closureRequestedEvent)
+                                        ).toList()
+                                )
                         )
                 );
     }
@@ -1594,6 +1573,14 @@ public class TransactionsService {
                                         .flatMap(
                                                 event -> transactionUserReceiptProjectionHandlerV2
                                                         .handle((TransactionUserReceiptRequestedEvent) event)
+                                                        .then(
+                                                                transactionsUtils.reduceV2Events(
+                                                                        Stream.concat(
+                                                                                events.stream(),
+                                                                                Stream.of(event)
+                                                                        ).toList()
+                                                                )
+                                                        )
                                         )
                                         .doOnNext(
                                                 transaction -> log.info(
@@ -1742,4 +1729,5 @@ public class TransactionsService {
         log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcome);
         return outcome;
     }
+
 }

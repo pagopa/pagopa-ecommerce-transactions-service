@@ -7,21 +7,22 @@ import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.data.AuthorizationRequestedEventData;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import java.time.ZoneId;
-import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthorizationRequestProjectionHandlerTest {
@@ -111,7 +112,7 @@ class AuthorizationRequestProjectionHandlerTest {
     }
 
     @Test
-    void shouldReturnUpdatedTransactionWithoutSavingWhenUpdateDisabled() {
+    void shouldReturnUpdatedTransactionWithoutSavingWhenUpdateDisabledReturningMonoEmpty() {
         Transaction initialDocument = TransactionTestUtils.transactionDocument(
                 TransactionStatusDto.ACTIVATED,
                 ZonedDateTime.now()
@@ -151,15 +152,7 @@ class AuthorizationRequestProjectionHandlerTest {
                 false
         );
 
-        when(transactionsViewRepository.findById(initialDocument.getTransactionId()))
-                .thenReturn(Mono.just(initialDocument));
-
         StepVerifier.create(authorizationRequestProjectionHandler.handle(authorizationData))
-                .expectNextMatches(
-                        transaction -> transaction.getStatus().equals(TransactionStatusDto.AUTHORIZATION_REQUESTED) &&
-                                transaction.getFeeTotal().equals(fee) &&
-                                transaction.getPspId().equals(TransactionTestUtils.PSP_ID)
-                )
                 .verifyComplete();
 
         verify(transactionsViewRepository, never()).save(any());
