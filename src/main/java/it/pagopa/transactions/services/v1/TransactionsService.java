@@ -564,7 +564,6 @@ public class TransactionsService {
                                                                                  RequestAuthorizationRequestDto authRequest
     ) {
         return getTransactionEventsForUserId(transactionId, xUserId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .flatMap(
                         events -> transactionsUtils
                                 .reduceV2Events(events)
@@ -1418,29 +1417,19 @@ public class TransactionsService {
                                                         .flatMap(
                                                                 authCompletedEvent -> authorizationUpdateProjectionHandlerV2
                                                                         .handle(authCompletedEvent)
-                                                                        .map(updatedView -> {
-                                                                            List<BaseTransactionEvent<?>> eventList = Stream
-                                                                                    .concat(
-                                                                                            transactionUpdateAuthorizationCommand
-                                                                                                    .getEvents()
-                                                                                                    .stream(),
-                                                                                            Stream.of(
-                                                                                                    authCompletedEvent
-                                                                                            )
-                                                                                    ).toList();
-                                                                            return Tuples.of(
-                                                                                    updatedView,
-                                                                                    Stream.concat(
-                                                                                            transactionUpdateAuthorizationCommand
-                                                                                                    .getEvents()
-                                                                                                    .stream(),
-                                                                                            Stream.of(
-                                                                                                    authCompletedEvent
-                                                                                            )
-                                                                                    ).toList()
+                                                                        .map(
+                                                                                updatedView -> Tuples.of(
+                                                                                        updatedView,
+                                                                                        Stream.concat(
+                                                                                                transactionUpdateAuthorizationCommand
+                                                                                                        .getEvents()
+                                                                                                        .stream(),
+                                                                                                Stream.of(
+                                                                                                        authCompletedEvent
+                                                                                                )
+                                                                                        ).toList()
 
-                                                                            );
-                                                                        }
+                                                                                )
 
                                                                         )
                                                         )
