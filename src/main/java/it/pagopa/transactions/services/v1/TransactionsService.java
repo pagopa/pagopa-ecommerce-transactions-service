@@ -1263,20 +1263,23 @@ public class TransactionsService {
                             throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
                 }));
 
-        Mono<TransactionInfoDto> v2Info = events
+        Mono<TransactionInfoDto> v2Info =
+                events
                 .collectList()
-                .flatMap(eventList -> transactionV2.map(
-                        TupleUtils.function((baseTransaction, authorizationRequestedTime) -> Tuples.of(baseTransaction, authorizationRequestedTime, eventList))
-                ))
-                .flatMap(TupleUtils.function((baseTransaction, authorizationRequestedTime, eventList) ->
-                                this.updateTransactionAuthorizationStatusV2(
-                                        baseTransaction,
-                                        updateAuthorizationRequestDto,
-                                        authorizationRequestedTime,
-                                        eventList
-                                )
-                        )
-                );
+                .zipWith(transactionV2)
+                .flatMap(tuple -> {
+                    var eventList = tuple.getT1();
+                    var transactionTuple = tuple.getT2();
+                    var baseTransaction = transactionTuple.getT1();
+                    var authorizationRequestedTime = transactionTuple.getT2();
+
+                    return updateTransactionAuthorizationStatusV2(
+                            baseTransaction,
+                            updateAuthorizationRequestDto,
+                            authorizationRequestedTime,
+                            eventList
+                    );
+                });
 
 
         return v2Info
