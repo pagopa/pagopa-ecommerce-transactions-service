@@ -10,14 +10,13 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
-import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,10 +73,6 @@ class TransactionSendClosureRequestedHandlerTest {
     @Test
     void shouldSaveClosureRequestedEvent() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
-        TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
-                null,
-                new TransactionId(transactionId)
-        );
 
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent1 = TransactionTestUtils
@@ -87,6 +82,11 @@ class TransactionSendClosureRequestedHandlerTest {
 
         Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
                 .just(transactionActivatedEvent, authorizationRequestedEvent1, authorizationCompletedEvent));
+        TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
+                null,
+                new TransactionId(transactionId),
+                events.collectList().block()
+        );
 
         /* PRECONDITION */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
@@ -120,47 +120,27 @@ class TransactionSendClosureRequestedHandlerTest {
     }
 
     @Test
-    void shouldNotSaveClosureRequestedEventWithErrorTransactionNotFound() {
-        String transactionId = TransactionTestUtils.TRANSACTION_ID;
-        TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
-                null,
-                new TransactionId(transactionId)
-        );
-
-        /* PRECONDITION */
-        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
-                .thenReturn(Flux.empty());
-
-        /* TEST EXECUTION */
-        StepVerifier.create(transactionSendClosureRequestHandler.handle(transactionClosureRequestCommand))
-                .expectError(TransactionNotFoundException.class)
-                .verify();
-
-        verify(transactionEventClosureRequestedRepository, times(0)).save(any());
-        verify(transactionSendClosureRequestQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
-    }
-
-    @Test
     void shouldNotSaveClosureRequestedEventWithErrorAlreadyProcessedException() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
-        TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
-                null,
-                new TransactionId(transactionId)
-        );
 
+        Flux<BaseTransactionEvent<Object>> events = (Flux) Flux.just(
+                TransactionTestUtils.transactionActivateEvent(),
+                TransactionTestUtils.transactionAuthorizationRequestedEvent(),
+                TransactionTestUtils.transactionAuthorizationCompletedEvent(
+                        new NpgTransactionGatewayAuthorizationData()
+                ),
+                TransactionTestUtils.transactionClosureRequestedEvent()
+        );
         /* PRECONDITION */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn(
-                        (Flux) Flux.just(
-                                TransactionTestUtils.transactionActivateEvent(),
-                                TransactionTestUtils.transactionAuthorizationRequestedEvent(),
-                                TransactionTestUtils.transactionAuthorizationCompletedEvent(
-                                        new NpgTransactionGatewayAuthorizationData()
-                                ),
-                                TransactionTestUtils.transactionClosureRequestedEvent()
-                        )
+                        events
                 );
-
+        TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
+                null,
+                new TransactionId(transactionId),
+                events.collectList().block()
+        );
         /* TEST EXECUTION */
         StepVerifier.create(transactionSendClosureRequestHandler.handle(transactionClosureRequestCommand))
                 .expectError(AlreadyProcessedException.class)
