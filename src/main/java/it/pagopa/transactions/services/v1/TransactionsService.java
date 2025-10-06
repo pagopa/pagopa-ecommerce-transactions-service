@@ -1668,7 +1668,7 @@ public class TransactionsService {
                         }
                         return PaymentSessionData.create(
                                 bin,
-                                null,
+                                walletAuthDataDto.getContextualOnboardDetails() != null ? walletAuthDataDto.getContextualOnboardDetails().getSessionId() : null,
                                 walletAuthDataDto.getBrand(),
                                 walletAuthDataDto.getContractId(),
                                 walletAuthDataDto.getContextualOnboardDetails());

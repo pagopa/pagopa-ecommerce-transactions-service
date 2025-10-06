@@ -34,7 +34,8 @@ class AuthorizationRequestProjectionHandlerTest {
     private TransactionsViewRepository transactionsViewRepository;
     private final PaymentSessionData.ContextualOnboardDetails contextualOnboardDetails = new PaymentSessionData.ContextualOnboardDetails(
             UUID.randomUUID().toString(),
-            100L
+            100L,
+            "orderId"
     );
 
     @Test

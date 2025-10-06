@@ -109,7 +109,8 @@ class TransactionRequestAuthorizationHandlerTest {
     private final int authRequestEventVisibilityTimeoutSeconds = 0;
     private final PaymentSessionData.ContextualOnboardDetails contextualOnboardDetails = new PaymentSessionData.ContextualOnboardDetails(
             UUID.randomUUID().toString(),
-            100L
+            100L,
+            "orderId"
     );
 
     private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);

@@ -117,22 +117,30 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                 String lang,
                                                                 UUID userId
     ) {
-        return paymentGatewayClient
-                .requestNpgBuildSession(authorizationData, correlationId, true, clientId, lang, userId)
-                .flatMap(
-                        orderIdAndFieldsDto -> transactionTemplateWrapper.save(
-                                new TransactionCacheInfo(
-                                        authorizationData.transactionId(),
-                                        new WalletPaymentInfo(
-                                                orderIdAndFieldsDto.getT2().getSessionId(),
-                                                orderIdAndFieldsDto.getT2().getSecurityToken(),
-                                                orderIdAndFieldsDto.getT1()
+        return Mono.justOrEmpty(authorizationData.contextualOnboardDetails())
+                .map(details -> Tuples.of(details.orderId(), authorizationData.sessionId().orElseThrow()))
+                .switchIfEmpty(
+                        Mono.defer(
+                                () -> paymentGatewayClient
+                                        .requestNpgBuildSession(
+                                                authorizationData,
+                                                correlationId,
+                                                true,
+                                                clientId,
+                                                lang,
+                                                userId
                                         )
-                                )
-                        ).thenReturn(orderIdAndFieldsDto)
+                                        .flatMap(
+                                                orderIdAndFields -> cacheTransaction(
+                                                        authorizationData,
+                                                        orderIdAndFields
+                                                )
+                                                        .thenReturn(extractOrderIdAndSession(orderIdAndFields))
+                                        )
+                        )
                 )
                 .flatMap(
-                        orderIdAndFieldsDto -> invokeNpgConfirmPayment(
+                        orderIdAndSessionId -> invokeNpgConfirmPayment(
                                 new AuthorizationRequestData(
                                         authorizationData.transactionId(),
                                         authorizationData.paymentNotices(),
@@ -148,7 +156,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         authorizationData.pspBusinessName(),
                                         authorizationData.pspOnUs(),
                                         authorizationData.paymentGatewayId(),
-                                        Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
+                                        Optional.of(orderIdAndSessionId.getT2()),
                                         authorizationData.contractId(),
                                         authorizationData.brand(),
                                         authorizationData.authDetails(),
@@ -157,7 +165,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         authorizationData.idBundle(),
                                         authorizationData.contextualOnboardDetails()
                                 ),
-                                orderIdAndFieldsDto.getT1(),
+                                orderIdAndSessionId.getT1(),
                                 correlationId,
                                 clientId,
                                 Optional.of(userId)
@@ -166,12 +174,37 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         authorizationOutput -> new AuthorizationOutput(
                                                 authorizationOutput.authorizationId(),
                                                 authorizationOutput.authorizationUrl(),
-                                                Optional.of(orderIdAndFieldsDto.getT2().getSessionId()),
+                                                Optional.of(orderIdAndSessionId.getT2()),
                                                 authorizationOutput.npgConfirmSessionId(),
                                                 authorizationOutput.authorizationTimeoutMillis()
                                         )
                                 )
                 );
+    }
+
+    private Mono<Void> cacheTransaction(
+                                        AuthorizationRequestData authorizationData,
+                                        Tuple2<String, FieldsDto> orderIdAndFields
+    ) {
+        return transactionTemplateWrapper.save(
+                new TransactionCacheInfo(
+                        authorizationData.transactionId(),
+                        new WalletPaymentInfo(
+                                orderIdAndFields.getT2().getSessionId(),
+                                orderIdAndFields.getT2().getSecurityToken(),
+                                orderIdAndFields.getT1()
+                        )
+                )
+        ).then();
+    }
+
+    private Tuple2<String, String> extractOrderIdAndSession(
+                                                            Tuple2<String, FieldsDto> orderIdAndFields
+    ) {
+        return Tuples.of(
+                orderIdAndFields.getT1(),
+                orderIdAndFields.getT2().getSessionId()
+        );
     }
 
     /**

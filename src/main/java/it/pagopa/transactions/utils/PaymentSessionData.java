@@ -11,7 +11,8 @@ public record PaymentSessionData(
 ) {
     public record ContextualOnboardDetails(
             String transactionId,
-            Long amount
+            Long amount,
+            String orderId
     ) {
     }
 
@@ -23,7 +24,7 @@ public record PaymentSessionData(
                                             ContextualOnboardDetailsDto source
     ) {
         ContextualOnboardDetails details = source != null
-                ? new ContextualOnboardDetails(source.getTransactionId(), source.getAmount())
+                ? new ContextualOnboardDetails(source.getTransactionId(), source.getAmount(), source.getOrderId())
                 : null;
 
         return new PaymentSessionData(cardBin, sessionId, brand, contractId, details);

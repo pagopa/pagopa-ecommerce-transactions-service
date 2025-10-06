@@ -87,7 +87,8 @@ class PaymentGatewayClientTest {
     private final String npgDefaultApiKey = UUID.randomUUID().toString();
     private final PaymentSessionData.ContextualOnboardDetails contextualOnboardDetails = new PaymentSessionData.ContextualOnboardDetails(
             UUID.randomUUID().toString(),
-            100L
+            100L,
+            "orderId"
     );
 
     private final NpgSessionUrlConfig sessionUrlConfig = new NpgSessionUrlConfig(
