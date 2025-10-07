@@ -4,12 +4,13 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
+import java.time.ZonedDateTime;
 
 @Component(CancellationRequestProjectionHandler.QUALIFIER_NAME)
 @Slf4j
@@ -36,6 +37,9 @@ public class CancellationRequestProjectionHandler
     public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
                                                                              it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent transactionUserCanceledEvent
     ) {
+        if (!transactionsviewUpdateEnabled) {
+            return Mono.empty();
+        }
         return transactionsViewRepository.findById(transactionUserCanceledEvent.getTransactionId())
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
                 .switchIfEmpty(
@@ -46,26 +50,23 @@ public class CancellationRequestProjectionHandler
                         )
                 )
                 .flatMap(
-                        transactionDocument -> conditionallySaveTransactionView(
+                        transactionDocument -> updateAndSaveTransactionView(
                                 transactionDocument,
                                 transactionUserCanceledEvent
                         )
                 );
     }
 
-    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
-                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
-                                                                                                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent transactionUserCanceledEvent
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> updateAndSaveTransactionView(
+                                                                                                    it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
+                                                                                                    it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent transactionUserCanceledEvent
     ) {
         transactionDocument.setStatus(TransactionStatusDto.CANCELLATION_REQUESTED);
         transactionDocument.setLastProcessedEventAt(
                 ZonedDateTime.parse(transactionUserCanceledEvent.getCreationDate()).toInstant()
                         .toEpochMilli()
         );
-        if (transactionsviewUpdateEnabled) {
-            return transactionsViewRepository.save(transactionDocument);
-        } else {
-            return Mono.just(transactionDocument);
-        }
+
+        return transactionsViewRepository.save(transactionDocument);
     }
 }

@@ -6,7 +6,6 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -73,7 +73,7 @@ public class CancellationRequestProjectionHandlerTests {
     }
 
     @Test
-    void shouldNotSaveWhenViewUpdateDisabled() {
+    void shouldNotSaveWhenViewUpdateDisabledReturningMonoEmpty() {
         cancellationRequestProjectionHandler = new CancellationRequestProjectionHandler(
                 transactionsViewRepository,
                 false
@@ -89,27 +89,7 @@ public class CancellationRequestProjectionHandlerTests {
         );
         transactionUserCanceledEvent.setCreationDate(fixedEventTime.toString());
 
-        Transaction expected = new Transaction(
-                transaction.getTransactionId(),
-                transaction.getPaymentNotices(),
-                transaction.getFeeTotal(),
-                transaction.getEmail(),
-                TransactionStatusDto.CANCELLATION_REQUESTED,
-                Transaction.ClientId.CHECKOUT,
-                transaction.getCreationDate(),
-                transaction.getIdCart(),
-                transaction.getRrn(),
-                TransactionTestUtils.USER_ID,
-                transaction.getPaymentTypeCode(),
-                transaction.getPspId(),
-                fixedEventTime.toInstant().toEpochMilli()
-        );
-
-        Mockito.when(transactionsViewRepository.findById(transaction.getTransactionId()))
-                .thenReturn(Mono.just(transaction));
-
         StepVerifier.create(cancellationRequestProjectionHandler.handle(transactionUserCanceledEvent))
-                .expectNext(expected)
                 .verifyComplete();
 
         Mockito.verify(transactionsViewRepository, Mockito.never()).save(Mockito.any());

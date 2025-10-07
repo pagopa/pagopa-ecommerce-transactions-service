@@ -7,7 +7,6 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGate
 import it.pagopa.ecommerce.commons.documents.v2.authorization.PgsTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.v2.*;
-import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
@@ -49,12 +48,15 @@ public class AuthorizationUpdateProjectionHandler
 
     @Override
     public Mono<TransactionActivated> handle(TransactionAuthorizationCompletedEvent data) {
+        if (!transactionsviewUpdateEnabled) {
+            return Mono.empty();
+        }
         return transactionsViewRepository.findById(data.getTransactionId())
                 .switchIfEmpty(
                         Mono.error(new TransactionNotFoundException(data.getTransactionId()))
                 )
                 .cast(Transaction.class)
-                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, data))
+                .flatMap(transactionDocument -> updateAndSaveTransactionView(transactionDocument, data))
                 .map(
                         transactionDocument -> new TransactionActivated(
                                 new TransactionId(transactionDocument.getTransactionId()),
@@ -93,7 +95,7 @@ public class AuthorizationUpdateProjectionHandler
                 );
     }
 
-    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument, TransactionAuthorizationCompletedEvent data) {
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> updateAndSaveTransactionView(it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument, TransactionAuthorizationCompletedEvent data) {
         transactionDocument.setRrn(data.getData().getRrn());
         transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_COMPLETED);
         transactionDocument.setAuthorizationCode(data.getData().getAuthorizationCode());
@@ -107,20 +109,15 @@ public class AuthorizationUpdateProjectionHandler
                     redirectData.getOutcome().toString(),
                     Optional.ofNullable(redirectData.getErrorCode())
             );
-            case PgsTransactionGatewayAuthorizationData pgsData -> throw new IllegalArgumentException("Pgs authorization complete data not handled!");
+            case PgsTransactionGatewayAuthorizationData pgsData ->
+                    throw new IllegalArgumentException("Pgs authorization complete data not handled!");
         };
         transactionDocument.setAuthorizationErrorCode(gatewayStatusAndErrorCode.getT2().orElse(null));
         transactionDocument.setGatewayAuthorizationStatus(gatewayStatusAndErrorCode.getT1());
         transactionDocument.setLastProcessedEventAt(ZonedDateTime.parse(data.getCreationDate()).toInstant().toEpochMilli());
 
+        return transactionsViewRepository.save(transactionDocument);
 
-
-        if(transactionsviewUpdateEnabled){
-            return transactionsViewRepository.save(transactionDocument);
-        }
-        else{
-            return Mono.just(transactionDocument);
-        }
     }
 
 }
