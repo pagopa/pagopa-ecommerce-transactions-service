@@ -474,9 +474,6 @@ class TransactionServiceTests {
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID))
                 .thenReturn(Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
-        Mockito.when(paymentGatewayClient.requestNpgCardsAuthorization(any(), any()))
-                .thenReturn(Mono.just(stateResponseDto));
-
         Mockito.when(repository.save(any())).thenReturn(Mono.just(transaction));
 
         Mockito.when(paymentRequestInfoRedisTemplateWrapper.deleteById(any())).thenReturn(Mono.just(true));
@@ -509,6 +506,7 @@ class TransactionServiceTests {
                 .verifyComplete();
 
         verify(transactionRequestAuthorizationHandlerV2).handleWithCreationDate(commandArgumentCaptor.capture());
+        verify(paymentGatewayClient, times(0)).requestNpgCardsAuthorization(any(), any());
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
