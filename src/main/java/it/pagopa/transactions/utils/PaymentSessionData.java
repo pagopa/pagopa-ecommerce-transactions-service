@@ -2,6 +2,8 @@ package it.pagopa.transactions.utils;
 
 import it.pagopa.generated.wallet.v1.dto.ContextualOnboardDetailsDto;
 
+import java.util.Optional;
+
 public record PaymentSessionData(
         String cardBin,
         String sessionId,
@@ -23,10 +25,9 @@ public record PaymentSessionData(
                                             String contractId,
                                             ContextualOnboardDetailsDto source
     ) {
-        ContextualOnboardDetails details = source != null
-                ? new ContextualOnboardDetails(source.getTransactionId(), source.getAmount(), source.getOrderId())
-                : null;
-
-        return new PaymentSessionData(cardBin, sessionId, brand, contractId, details);
+        Optional<ContextualOnboardDetails> details = Optional
+                .ofNullable(source)
+                .map(s -> new ContextualOnboardDetails(s.getTransactionId(), s.getAmount(), s.getOrderId()));
+        return new PaymentSessionData(cardBin, sessionId, brand, contractId, details.orElse(null));
     }
 }

@@ -21,7 +21,7 @@ import java.time.ZonedDateTime;
 @Slf4j
 public class AuthorizationRequestProjectionHandler
         implements
-        ProjectionHandler<AuthorizationRequestedEventData, Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction>> {
+        ProjectionHandler<AuthorizationRequestedEventData, Mono<Transaction>> {
 
     public static final String QUALIFIER_NAME = "authorizationRequestProjectionHandlerV2";
 
@@ -41,6 +41,9 @@ public class AuthorizationRequestProjectionHandler
     public Mono<Transaction> handle(AuthorizationRequestedEventData authorizationRequestedEventData) {
         AuthorizationRequestData data = authorizationRequestedEventData.authorizationRequestData();
         String creationDate = authorizationRequestedEventData.event().getCreationDate();
+        if (!transactionsviewUpdateEnabled) {
+            return Mono.empty();
+        }
         return transactionsViewRepository.findById(data.transactionId().value())
                 .cast(Transaction.class)
                 .switchIfEmpty(
@@ -51,14 +54,15 @@ public class AuthorizationRequestProjectionHandler
                         )
                 )
                 .flatMap(
-                        transactionDocument -> conditionallySaveTransactionView(transactionDocument, data, creationDate)
+                        transactionDocument -> updateAndSaveTransactionView(transactionDocument, data, creationDate)
                 );
+
     }
 
-    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
-                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
-                                                                                                        AuthorizationRequestData data,
-                                                                                                        String creationDate
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> updateAndSaveTransactionView(
+                                                                                                    it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
+                                                                                                    AuthorizationRequestData data,
+                                                                                                    String creationDate
     ) {
         transactionDocument.setStatus(TransactionStatusDto.AUTHORIZATION_REQUESTED);
         transactionDocument.setPaymentGateway(data.paymentGatewayId());
@@ -69,10 +73,7 @@ public class AuthorizationRequestProjectionHandler
                 ZonedDateTime.parse(creationDate).toInstant().toEpochMilli()
         );
 
-        if (transactionsviewUpdateEnabled) {
-            return transactionsViewRepository.save(transactionDocument);
-        } else {
-            return Mono.just(transactionDocument);
-        }
+        return transactionsViewRepository.save(transactionDocument);
+
     }
 }

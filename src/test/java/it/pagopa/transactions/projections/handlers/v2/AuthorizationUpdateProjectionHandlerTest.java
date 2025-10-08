@@ -11,14 +11,15 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mockito;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
 class AuthorizationUpdateProjectionHandlerTest {
@@ -242,7 +243,7 @@ class AuthorizationUpdateProjectionHandlerTest {
     }
 
     @Test
-    void shouldNotSaveErrorCodeForNpgKOAuthorizationRequestWhenUpdateDisabled() {
+    void shouldNotSaveErrorCodeForNpgKOAuthorizationRequestWhenUpdateDisabledReturningMonoEmpty() {
         AuthorizationUpdateProjectionHandler handler = new AuthorizationUpdateProjectionHandler(
                 viewRepository,
                 paymentTokenValidity,
@@ -282,7 +283,6 @@ class AuthorizationUpdateProjectionHandlerTest {
                 .thenReturn(Mono.just(Transaction.from(transaction)));
 
         StepVerifier.create(handler.handle(event))
-                .expectNext(expected)
                 .verifyComplete();
 
         Mockito.verify(viewRepository, Mockito.never()).save(Mockito.any());
