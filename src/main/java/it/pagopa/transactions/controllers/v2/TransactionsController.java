@@ -170,7 +170,9 @@ public class TransactionsController implements V2Api {
                     .errorCode(o.getErrorCode())
                     .paymentEndToEndId(o.getPaymentEndToEndId())
                     .rrn(o.getRrn())
-                    .validationServiceId(o.getValidationServiceId());
+                    .validationServiceId(o.getValidationServiceId())
+                    .cardId4(o.getCardId4())
+                    .securityToken(o.getSecurityToken());
             case OutcomeRedirectGatewayDto o ->
                     new it.pagopa.generated.transactions.server.model.OutcomeRedirectGatewayDto()
                             .paymentGatewayType(o.getPaymentGatewayType())
