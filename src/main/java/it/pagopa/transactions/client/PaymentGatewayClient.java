@@ -350,18 +350,15 @@ public class PaymentGatewayClient {
         return npgApiKeyConfiguration.getApiKeyForPaymentMethod(NpgClient.PaymentMethod.CARDS, data.pspId())
                 .fold(
                         Mono::error,
-                        apiKey -> {
-                            log.info("Auth data {}", data); // TODO remove
-                            return npgClient.confirmPayment(
-                                    UUID.fromString(correlationId),
-                                    data.sessionId().get(),
-                                    grandTotal,
-                                    apiKey
-                            ).onErrorMap(
-                                    NpgResponseException.class,
-                                    exception -> handleNpgResponseException(exception, data, correlationId)
-                            );
-                        }
+                        apiKey -> npgClient.confirmPayment(
+                                UUID.fromString(correlationId),
+                                data.sessionId().get(),
+                                grandTotal,
+                                apiKey
+                        ).onErrorMap(
+                                NpgResponseException.class,
+                                exception -> handleNpgResponseException(exception, data, correlationId)
+                        )
                 );
     }
 
