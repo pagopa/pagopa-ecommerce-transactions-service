@@ -2,6 +2,7 @@ package it.pagopa.transactions.client;
 
 import it.pagopa.generated.wallet.v1.api.WalletsApi;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
+import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,34 @@ public class WalletClient {
     ) {
         return walletWebClient
                 .getWalletAuthDataById(UUID.fromString(walletId))
+                .doOnError(
+                        WebClientResponseException.class,
+                        WalletClient::logWebClientException
+                )
+                .onErrorMap(
+                        err -> new BadGatewayException(
+                                "Error while invoke method for retrieve wallet info",
+                                HttpStatus.BAD_GATEWAY
+                        )
+                );
+    }
+
+    public Mono<Void> notifyWallet(
+                                   String walletId,
+                                   String orderId,
+                                   String securityToken,
+                                   WalletNotificationRequestDto walletNotificationRequestDto
+    ) {
+        log.info(
+                "Performing wallet POST notification for walletId: [{}] with operation result: [{}]",
+                walletId,
+                walletNotificationRequestDto.getOperationResult()
+        );
+        return walletWebClient
+                .notifyWallet(UUID.fromString(walletId), orderId, securityToken, walletNotificationRequestDto)
+                .doOnNext(
+                        (ignored) -> log.info("POST notification performed successfully for walletId: [{}]", walletId)
+                )
                 .doOnError(
                         WebClientResponseException.class,
                         WalletClient::logWebClientException
