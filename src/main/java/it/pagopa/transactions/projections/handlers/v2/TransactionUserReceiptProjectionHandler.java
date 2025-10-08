@@ -4,12 +4,13 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
+import java.time.ZonedDateTime;
 
 @Component(TransactionUserReceiptProjectionHandler.QUALIFIER_NAME)
 @Slf4j
@@ -35,15 +36,18 @@ public class TransactionUserReceiptProjectionHandler
     public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
                                                                              it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent data
     ) {
+        if (!transactionsviewUpdateEnabled) {
+            return Mono.empty();
+        }
         return transactionsViewRepository.findById(data.getTransactionId())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getTransactionId())))
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
-                .flatMap(transactionDocument -> conditionallySaveTransactionView(transactionDocument, data));
+                .flatMap(transactionDocument -> updateAndSaveTransactionView(transactionDocument, data));
     }
 
-    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> conditionallySaveTransactionView(
-                                                                                                        it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
-                                                                                                        it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent data
+    private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> updateAndSaveTransactionView(
+                                                                                                    it.pagopa.ecommerce.commons.documents.v2.Transaction transactionDocument,
+                                                                                                    it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptRequestedEvent data
     ) {
         TransactionStatusDto newStatus = TransactionStatusDto.NOTIFICATION_REQUESTED;
         transactionDocument.setStatus(newStatus);
@@ -51,10 +55,7 @@ public class TransactionUserReceiptProjectionHandler
         transactionDocument.setLastProcessedEventAt(
                 ZonedDateTime.parse(data.getCreationDate()).toInstant().toEpochMilli()
         );
-        if (transactionsviewUpdateEnabled) {
-            return transactionsViewRepository.save(transactionDocument);
-        } else {
-            return Mono.just(transactionDocument);
-        }
+        return transactionsViewRepository.save(transactionDocument);
+
     }
 }

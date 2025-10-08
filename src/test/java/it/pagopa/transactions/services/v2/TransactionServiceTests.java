@@ -1012,14 +1012,14 @@ class TransactionServiceTests {
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.CLOSED);
+                .status(TransactionStatusDto.CLOSURE_REQUESTED);
 
         Transaction closedTransactionDocument = new Transaction(
                 transactionDocument.getTransactionId(),
                 transactionDocument.getPaymentNotices(),
                 null,
                 transactionDocument.getEmail(),
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSED,
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
                 Transaction.ClientId.CHECKOUT,
                 ZonedDateTime.now().toString(),
                 transactionDocument.getIdCart(),
@@ -1049,14 +1049,6 @@ class TransactionServiceTests {
                 )
         )
                 .thenReturn(Mono.empty());
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
-                .thenReturn(Flux.empty()).thenReturn(
-                        Flux.just(
-                                TransactionTestUtils.transactionAuthorizationRequestedEvent(),
-                                TransactionTestUtils.transactionActivated(ZonedDateTime.now().toString())
-
-                        )
-                );
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
                         Flux.fromIterable(
@@ -1146,7 +1138,7 @@ class TransactionServiceTests {
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.NOTIFIED_OK);
+                .status(TransactionStatusDto.NOTIFICATION_REQUESTED);
 
         /* preconditions */
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -1216,7 +1208,7 @@ class TransactionServiceTests {
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.NOTIFIED_KO);
+                .status(TransactionStatusDto.NOTIFICATION_REQUESTED);
 
         /* preconditions */
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))

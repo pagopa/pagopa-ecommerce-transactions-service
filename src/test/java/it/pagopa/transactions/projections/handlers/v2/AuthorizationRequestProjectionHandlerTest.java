@@ -13,17 +13,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import it.pagopa.transactions.utils.PaymentSessionData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthorizationRequestProjectionHandlerTest {
@@ -119,7 +120,7 @@ class AuthorizationRequestProjectionHandlerTest {
     }
 
     @Test
-    void shouldReturnUpdatedTransactionWithoutSavingWhenUpdateDisabled() {
+    void shouldReturnUpdatedTransactionWithoutSavingWhenUpdateDisabledReturningMonoEmpty() {
         Transaction initialDocument = TransactionTestUtils.transactionDocument(
                 TransactionStatusDto.ACTIVATED,
                 ZonedDateTime.now()
@@ -159,15 +160,7 @@ class AuthorizationRequestProjectionHandlerTest {
                 false
         );
 
-        when(transactionsViewRepository.findById(initialDocument.getTransactionId()))
-                .thenReturn(Mono.just(initialDocument));
-
         StepVerifier.create(authorizationRequestProjectionHandler.handle(authorizationData))
-                .expectNextMatches(
-                        transaction -> transaction.getStatus().equals(TransactionStatusDto.AUTHORIZATION_REQUESTED) &&
-                                transaction.getFeeTotal().equals(fee) &&
-                                transaction.getPspId().equals(TransactionTestUtils.PSP_ID)
-                )
                 .verifyComplete();
 
         verify(transactionsViewRepository, never()).save(any());
