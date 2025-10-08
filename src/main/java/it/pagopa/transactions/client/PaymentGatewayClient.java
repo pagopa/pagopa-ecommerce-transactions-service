@@ -351,7 +351,7 @@ public class PaymentGatewayClient {
                 .fold(
                         Mono::error,
                         apiKey -> {
-                            log.info("Auth data {}", data); //TODO remove
+                            log.info("Auth data {}", data); // TODO remove
                             return npgClient.confirmPayment(
                                     UUID.fromString(correlationId),
                                     data.sessionId().get(),
