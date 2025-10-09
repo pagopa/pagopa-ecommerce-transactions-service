@@ -522,7 +522,13 @@ class TransactionRequestAuthorizationHandlerTest {
                                 .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
                 );
 
+        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId("sessionId")
+                .state(WorkflowStateDto.READY_FOR_PAYMENT).securityToken("securityToken");
+        Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
+
         /* preconditions */
+        when(paymentGatewayClient.requestNpgBuildSession(any(), any(), anyBoolean(), any(), any(), any()))
+                .thenReturn(Mono.just(responseRequestNpgBuildSession));
         when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
                 .thenReturn(Mono.just(stateResponseDto));
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
@@ -573,7 +579,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
-        verify(paymentGatewayClient, times(0)).requestNpgBuildSession(any(), any(), anyBoolean(), any(), any(), any());
+        verify(paymentGatewayClient, times(1)).requestNpgBuildSession(any(), any(), anyBoolean(), any(), any(), any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
