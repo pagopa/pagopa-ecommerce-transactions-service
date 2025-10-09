@@ -60,7 +60,7 @@ public class WalletClientTest {
     @Test
     void shouldReturnErrorFromRetrieveWalletInfo() {
         UUID WALLET_ID = UUID.randomUUID();
-        /**
+        /*
          * preconditions
          */
         when(walletsApi.getWalletAuthDataById(WALLET_ID))
@@ -76,7 +76,7 @@ public class WalletClientTest {
                         )
                 );
 
-        /**
+        /*
          * test
          */
         StepVerifier.create(walletClient.getWalletInfo(WALLET_ID.toString()))
@@ -90,7 +90,6 @@ public class WalletClientTest {
     void shouldPerformWalletNotifyOperationSuccessfully() {
         String walletId = TransactionTestUtils.NPG_WALLET_ID;
         String orderId = TransactionTestUtils.NPG_ORDER_ID;
-        String securityToken = "securityToken";
         WalletNotificationRequestDto request = new WalletNotificationRequestDto()
                 .operationId("operationId")
                 .timestampOperation(OffsetDateTime.now())
@@ -102,7 +101,7 @@ public class WalletClientTest {
                                 .paymentInstrumentGatewayId("cardId4")
                 );
 
-        when(walletsApi.notifyWallet(any(), any(), any(), any()))
+        when(walletsApi.notifyWallet(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
         StepVerifier
@@ -110,19 +109,17 @@ public class WalletClientTest {
                         walletClient.notifyWallet(
                                 walletId,
                                 orderId,
-                                securityToken,
                                 request
                         )
                 )
                 .verifyComplete();
-        verify(walletsApi, times(1)).notifyWallet(UUID.fromString(walletId), orderId, securityToken, request);
+        verify(walletsApi, times(1)).notifyWallet(UUID.fromString(walletId), orderId, request);
     }
 
     @Test
     void shouldHandlerErrorPerformingWalletNotificationRequest() {
         String walletId = TransactionTestUtils.NPG_WALLET_ID;
         String orderId = TransactionTestUtils.NPG_ORDER_ID;
-        String securityToken = "securityToken";
         WalletNotificationRequestDto request = new WalletNotificationRequestDto()
                 .operationId("operationId")
                 .timestampOperation(OffsetDateTime.now())
@@ -134,7 +131,7 @@ public class WalletClientTest {
                                 .paymentInstrumentGatewayId("cardId4")
                 );
 
-        when(walletsApi.notifyWallet(any(), any(), any(), any()))
+        when(walletsApi.notifyWallet(any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException("error communicating with wallet")));
 
         StepVerifier
@@ -142,11 +139,10 @@ public class WalletClientTest {
                         walletClient.notifyWallet(
                                 walletId,
                                 orderId,
-                                securityToken,
                                 request
                         )
                 ).expectError(BadGatewayException.class)
                 .verify();
-        verify(walletsApi, times(1)).notifyWallet(UUID.fromString(walletId), orderId, securityToken, request);
+        verify(walletsApi, times(1)).notifyWallet(UUID.fromString(walletId), orderId, request);
     }
 }

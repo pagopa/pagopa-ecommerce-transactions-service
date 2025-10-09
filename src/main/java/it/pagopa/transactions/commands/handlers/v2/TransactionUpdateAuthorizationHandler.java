@@ -182,7 +182,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                     OutcomeNpgGatewayDto outcomeNpgGatewayDto = (OutcomeNpgGatewayDto) updateAuthRequest
                             .getOutcomeGateway();
                     String orderId = outcomeNpgGatewayDto.getOrderId();
-                    String securityToken = outcomeNpgGatewayDto.getSecurityToken();
                     WalletNotificationRequestDto request = new WalletNotificationRequestDto()
                             .timestampOperation(updateAuthRequest.getTimestampOperation())
                             .operationId(outcomeNpgGatewayDto.getOperationId())
@@ -205,7 +204,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                     return walletClient.notifyWallet(
                             walletId,
                             orderId,
-                            securityToken,
                             request
                     ).thenReturn(Tuples.of(walletInfo, request));
                 });

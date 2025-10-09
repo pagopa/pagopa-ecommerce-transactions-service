@@ -45,10 +45,10 @@ import static org.mockito.ArgumentMatchers.argThat;
 @ExtendWith(MockitoExtension.class)
 class TransactionUpdateAuthorizationHandlerTest {
 
-    private TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository = Mockito
+    private final TransactionsEventStoreRepository<TransactionAuthorizationCompletedData> transactionEventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
 
-    private TransactionsEventStoreRepository eventStoreRepository = Mockito
+    private final TransactionsEventStoreRepository eventStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
     private TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
@@ -150,7 +150,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                                 }
                         )
                 );
-        Mockito.verify(walletClient, Mockito.timeout(2000).times(0)).notifyWallet(any(), any(), any(), any());
+        Mockito.verify(walletClient, Mockito.timeout(2000).times(0)).notifyWallet(any(), any(), any());
     }
 
     @Test
@@ -160,15 +160,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .transactionAuthorizationRequestedEvent(
                         TransactionAuthorizationRequestData.PaymentGateway.REDIRECT,
                         TransactionTestUtils.redirectTransactionGatewayAuthorizationRequestedData()
-                );
-        RedirectTransactionGatewayAuthorizationData.Outcome authOutcome = RedirectTransactionGatewayAuthorizationData.Outcome.OK;
-        String errorCode = "errorCode";
-        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
-                .transactionAuthorizationCompletedEvent(
-                        TransactionTestUtils.redirectTransactionGatewayAuthorizationData(
-                                authOutcome,
-                                errorCode
-                        )
                 );
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
 
@@ -298,7 +289,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                         )
                 );
 
-        Mockito.verify(walletClient, Mockito.timeout(2000).times(0)).notifyWallet(any(), any(), any(), any());
+        Mockito.verify(walletClient, Mockito.timeout(2000).times(0)).notifyWallet(any(), any(), any());
     }
 
     @Test
@@ -362,7 +353,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
-        Mockito.when(walletClient.notifyWallet(any(), any(), any(), any())).thenReturn(Mono.empty());
+        Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(Mono.empty());
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
@@ -390,7 +381,6 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.verify(walletClient, Mockito.timeout(2000).times(1)).notifyWallet(
                 TransactionTestUtils.NPG_WALLET_ID,
                 outcomeNpgGatewayDto.getOrderId(),
-                securityToken,
                 expectedWalletNotificationRequest
         );
     }
@@ -456,7 +446,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
-        Mockito.when(walletClient.notifyWallet(any(), any(), any(), any())).thenReturn(
+        Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(
                 Mono.error(new RuntimeException("Exception communicating with wallet first attempt")),
                 Mono.error(new RuntimeException("Exception communicating with wallet second attempt")),
                 Mono.empty()
@@ -489,7 +479,6 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.verify(walletClient, Mockito.timeout(5000).times(3)).notifyWallet(
                 TransactionTestUtils.NPG_WALLET_ID,
                 outcomeNpgGatewayDto.getOrderId(),
-                securityToken,
                 expectedWalletNotificationRequest
         );
     }
@@ -555,7 +544,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
-        Mockito.when(walletClient.notifyWallet(any(), any(), any(), any())).thenReturn(
+        Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(
                 Mono.error(new RuntimeException("Exception communicating with wallet"))
         );
         Hooks.onOperatorDebug();
@@ -586,7 +575,6 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.verify(walletClient, Mockito.timeout(5000).times(3)).notifyWallet(
                 TransactionTestUtils.NPG_WALLET_ID,
                 outcomeNpgGatewayDto.getOrderId(),
-                securityToken,
                 expectedWalletNotificationRequest
         );
     }

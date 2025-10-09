@@ -46,7 +46,6 @@ public class WalletClient {
     public Mono<Void> notifyWallet(
                                    String walletId,
                                    String orderId,
-                                   String securityToken,
                                    WalletNotificationRequestDto walletNotificationRequestDto
     ) {
         log.info(
@@ -55,7 +54,7 @@ public class WalletClient {
                 walletNotificationRequestDto.getOperationResult()
         );
         return walletWebClient
-                .notifyWallet(UUID.fromString(walletId), orderId, securityToken, walletNotificationRequestDto)
+                .notifyWallet(UUID.fromString(walletId), orderId, walletNotificationRequestDto)
                 .doOnNext(
                         (ignored) -> log.info("POST notification performed successfully for walletId: [{}]", walletId)
                 )
