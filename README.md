@@ -153,11 +153,12 @@ Create your environment typing :
 cp .env.example .env
 ```
 
-Then from current project directory run :
+Then start [ecommerce-local](https://github.com/pagopa/pagopa-ecommerce-local) project with:
 
 ```sh
-docker-compose up
+docker compose up --scale pagopa-ecommerce-transactions-service=0
 ```
+This way you can use the locally build service version with ecommerce local project, otherwise see ecommerce local project README to start all services using docker builds
 
 if all right you'll see something like that :
 
