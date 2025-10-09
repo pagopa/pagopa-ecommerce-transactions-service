@@ -121,24 +121,23 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 .doOnNext(ignored -> log.info("Contextual Onboard Authorization"))
                 .map(details -> Tuples.of(details.orderId(), authorizationData.sessionId().orElseThrow()))
                 .switchIfEmpty(
-                        Mono.defer(
-                                () -> paymentGatewayClient
-                                        .requestNpgBuildSession(
+                        paymentGatewayClient
+                                .requestNpgBuildSession(
+                                        authorizationData,
+                                        correlationId,
+                                        true,
+                                        clientId,
+                                        lang,
+                                        userId
+                                )
+                                .flatMap(
+                                        orderIdAndFields -> cacheTransaction(
                                                 authorizationData,
-                                                correlationId,
-                                                true,
-                                                clientId,
-                                                lang,
-                                                userId
+                                                orderIdAndFields
                                         )
-                                        .flatMap(
-                                                orderIdAndFields -> cacheTransaction(
-                                                        authorizationData,
-                                                        orderIdAndFields
-                                                )
-                                                        .thenReturn(extractOrderIdAndSession(orderIdAndFields))
-                                        )
-                        )
+                                                .thenReturn(extractOrderIdAndSession(orderIdAndFields))
+                                )
+
                 )
                 .flatMap(
                         orderIdAndSessionId -> invokeNpgConfirmPayment(
