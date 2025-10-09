@@ -16,11 +16,13 @@ import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
 import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.data.UpdateAuthorizationStatusData;
+import it.pagopa.transactions.configurations.WalletConfig;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -59,12 +61,29 @@ class TransactionUpdateAuthorizationHandlerTest {
 
     private final WalletClient walletClient = Mockito.mock(WalletClient.class);
 
-    private it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
+    private final WalletConfig walletConfig = new WalletConfig(
+            "http://localhost",
+            1000,
+            1000,
+            "api-key",
+            new WalletConfig.NotificationConf(
+                    3,
+                    1
+            )
+    );
+
+    private final it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
             transactionEventStoreRepository,
             new AuthRequestDataUtils(mockUuidUtils),
             transactionsUtils,
-            walletClient
+            walletClient,
+            walletConfig
     );
+
+    @BeforeEach
+    public void initializeTests() {
+        updateAuthorizationHandler.subscribeToAuthorizationCommandSink();
+    }
 
     @Test
     void shouldSaveSuccessfulUpdateNpg() {
@@ -182,7 +201,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transactionEventStoreRepository,
                 authRequestDataUtilsMock,
                 transactionsUtils,
-                walletClient
+                walletClient,
+                walletConfig
         );
         /* test */
         assertThrows(InvalidRequestException.class, () -> updateAuthHandler.handle(requestAuthorizationCommand));
@@ -368,6 +388,202 @@ class TransactionUpdateAuthorizationHandlerTest {
                         )
                 );
         Mockito.verify(walletClient, Mockito.timeout(2000).times(1)).notifyWallet(
+                TransactionTestUtils.NPG_WALLET_ID,
+                outcomeNpgGatewayDto.getOrderId(),
+                securityToken,
+                expectedWalletNotificationRequest
+        );
+    }
+
+    @Test
+    void shouldPerformPostWalletNotificationCallForPaymentWithContextualOnboardingWithRetryInCaseOfErrors() {
+        WalletInfo walletInfo = new WalletInfo(TransactionTestUtils.NPG_WALLET_ID, null);
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        // authorization performed with a card wallet
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent(
+                        TransactionTestUtils.npgTransactionGatewayAuthorizationRequestedData(walletInfo)
+                );
+        authorizationRequestedEvent.getData().setPaymentTypeCode("CP");
+        NpgTransactionGatewayAuthorizationData npgTransactionGatewayAuthorizationData = (NpgTransactionGatewayAuthorizationData) TransactionTestUtils
+                .npgTransactionGatewayAuthorizationData(OperationResultDto.EXECUTED);
+        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        npgTransactionGatewayAuthorizationData
+                );
+        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
+        String cardId4 = "cardId4";
+        String securityToken = "securityToken";
+        OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
+                .paymentGatewayType("NPG")
+                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                .authorizationCode("1234")
+                .paymentEndToEndId("paymentEndToEndId")
+                .cardId4(cardId4)
+                .securityToken(securityToken);
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(outcomeNpgGatewayDto)
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.of(transaction)
+        );
+
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                updateAuthorizationStatusData,
+                List.of(activatedEvent, authorizationRequestedEvent)
+        );
+        WalletNotificationRequestDto expectedWalletNotificationRequest = new WalletNotificationRequestDto()
+                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                .operationId(outcomeNpgGatewayDto.getOperationId())
+                .operationResult(
+                        WalletNotificationRequestDto.OperationResultEnum
+                                .valueOf(outcomeNpgGatewayDto.getOperationResult().toString())
+                )
+                .errorCode(outcomeNpgGatewayDto.getErrorCode())
+                .details(
+                        new WalletNotificationRequestCardDetailsDto()
+                                .paymentInstrumentGatewayId(cardId4)
+                                .type("CARD")
+                );
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
+                .thenReturn(transactionId.uuid().toString());
+        Mockito.when(walletClient.notifyWallet(any(), any(), any(), any())).thenReturn(
+                Mono.error(new RuntimeException("Exception communicating with wallet first attempt")),
+                Mono.error(new RuntimeException("Exception communicating with wallet second attempt")),
+                Mono.empty()
+        );
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                eventArg -> {
+                                    NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
+                                            .getData().getTransactionGatewayAuthorizationData();
+                                    return TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
+                                            .equals(eventArg.getEventCode())
+                                            && npgData.getOperationResult()
+                                                    .equals(
+                                                            OperationResultDto.valueOf(
+                                                                    ((OutcomeNpgGatewayDto) updateAuthorizationRequest
+                                                                            .getOutcomeGateway())
+                                                                                    .getOperationResult().getValue()
+                                                            )
+                                                    );
+                                }
+                        )
+                );
+        Mockito.verify(walletClient, Mockito.timeout(5000).times(3)).notifyWallet(
+                TransactionTestUtils.NPG_WALLET_ID,
+                outcomeNpgGatewayDto.getOrderId(),
+                securityToken,
+                expectedWalletNotificationRequest
+        );
+    }
+
+    @Test
+    void shouldHandleWalletNotificationErrorWithoutBlockingPaymentFlow() {
+        WalletInfo walletInfo = new WalletInfo(TransactionTestUtils.NPG_WALLET_ID, null);
+        TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
+        // authorization performed with a card wallet
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent(
+                        TransactionTestUtils.npgTransactionGatewayAuthorizationRequestedData(walletInfo)
+                );
+        authorizationRequestedEvent.getData().setPaymentTypeCode("CP");
+        NpgTransactionGatewayAuthorizationData npgTransactionGatewayAuthorizationData = (NpgTransactionGatewayAuthorizationData) TransactionTestUtils
+                .npgTransactionGatewayAuthorizationData(OperationResultDto.EXECUTED);
+        TransactionAuthorizationCompletedEvent event = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        npgTransactionGatewayAuthorizationData
+                );
+        BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
+        String cardId4 = "cardId4";
+        String securityToken = "securityToken";
+        OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
+                .paymentGatewayType("NPG")
+                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                .authorizationCode("1234")
+                .paymentEndToEndId("paymentEndToEndId")
+                .cardId4(cardId4)
+                .securityToken(securityToken);
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(outcomeNpgGatewayDto)
+                .timestampOperation(OffsetDateTime.now());
+
+        UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
+                transaction.getTransactionId(),
+                transaction.getStatus().toString(),
+                updateAuthorizationRequest,
+                ZonedDateTime.now(),
+                Optional.of(transaction)
+        );
+
+        TransactionUpdateAuthorizationCommand requestAuthorizationCommand = new TransactionUpdateAuthorizationCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                updateAuthorizationStatusData,
+                List.of(activatedEvent, authorizationRequestedEvent)
+        );
+        WalletNotificationRequestDto expectedWalletNotificationRequest = new WalletNotificationRequestDto()
+                .timestampOperation(updateAuthorizationRequest.getTimestampOperation())
+                .operationId(outcomeNpgGatewayDto.getOperationId())
+                .operationResult(
+                        WalletNotificationRequestDto.OperationResultEnum
+                                .valueOf(outcomeNpgGatewayDto.getOperationResult().toString())
+                )
+                .errorCode(outcomeNpgGatewayDto.getErrorCode())
+                .details(
+                        new WalletNotificationRequestCardDetailsDto()
+                                .paymentInstrumentGatewayId(cardId4)
+                                .type("CARD")
+                );
+
+        /* preconditions */
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
+                .thenReturn(transactionId.uuid().toString());
+        Mockito.when(walletClient.notifyWallet(any(), any(), any(), any())).thenReturn(
+                Mono.error(new RuntimeException("Exception communicating with wallet"))
+        );
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
+                .verifyComplete();
+
+        Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
+                .save(
+                        argThat(
+                                eventArg -> {
+                                    NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
+                                            .getData().getTransactionGatewayAuthorizationData();
+                                    return TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
+                                            .equals(eventArg.getEventCode())
+                                            && npgData.getOperationResult()
+                                                    .equals(
+                                                            OperationResultDto.valueOf(
+                                                                    ((OutcomeNpgGatewayDto) updateAuthorizationRequest
+                                                                            .getOutcomeGateway())
+                                                                                    .getOperationResult().getValue()
+                                                            )
+                                                    );
+                                }
+                        )
+                );
+        Mockito.verify(walletClient, Mockito.timeout(5000).times(3)).notifyWallet(
                 TransactionTestUtils.NPG_WALLET_ID,
                 outcomeNpgGatewayDto.getOrderId(),
                 securityToken,
