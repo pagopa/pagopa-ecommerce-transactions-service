@@ -223,8 +223,7 @@ public class PaymentGatewayClient {
                                                             )
                                                     ),
                                                     lang
-                                            ).map(fieldsDto -> Tuples.of(orderId, fieldsDto))
-                                                    .doOnNext(ignored -> log.info("Requested build form"));
+                                            ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                                         }
                                     }
                             );
