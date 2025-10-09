@@ -310,14 +310,12 @@ class TransactionUpdateAuthorizationHandlerTest {
                 );
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
         String cardId4 = "cardId4";
-        String securityToken = "securityToken";
         OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
                 .paymentGatewayType("NPG")
                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                 .authorizationCode("1234")
                 .paymentEndToEndId("paymentEndToEndId")
-                .cardId4(cardId4)
-                .securityToken(securityToken);
+                .cardId4(cardId4);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeNpgGatewayDto)
                 .timestampOperation(OffsetDateTime.now());
@@ -403,14 +401,12 @@ class TransactionUpdateAuthorizationHandlerTest {
                 );
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
         String cardId4 = "cardId4";
-        String securityToken = "securityToken";
         OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
                 .paymentGatewayType("NPG")
                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                 .authorizationCode("1234")
                 .paymentEndToEndId("paymentEndToEndId")
-                .cardId4(cardId4)
-                .securityToken(securityToken);
+                .cardId4(cardId4);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeNpgGatewayDto)
                 .timestampOperation(OffsetDateTime.now());
@@ -501,14 +497,12 @@ class TransactionUpdateAuthorizationHandlerTest {
                 );
         BaseTransaction transaction = TransactionTestUtils.reduceEvents(activatedEvent, authorizationRequestedEvent);
         String cardId4 = "cardId4";
-        String securityToken = "securityToken";
         OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
                 .paymentGatewayType("NPG")
                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                 .authorizationCode("1234")
                 .paymentEndToEndId("paymentEndToEndId")
-                .cardId4(cardId4)
-                .securityToken(securityToken);
+                .cardId4(cardId4);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeNpgGatewayDto)
                 .timestampOperation(OffsetDateTime.now());
