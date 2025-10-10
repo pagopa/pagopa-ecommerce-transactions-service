@@ -2,6 +2,7 @@ package it.pagopa.transactions;
 
 import it.pagopa.ecommerce.commons.ConfigScan;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
+import it.pagopa.transactions.configurations.WalletConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,7 +14,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync(proxyTargetClass = true)
 @SpringBootApplication
 @EnableRedisRepositories(basePackages = "it.pagopa.ecommerce.commons.repositories")
-@EnableConfigurationProperties(NpgSessionUrlConfig.class)
+@EnableConfigurationProperties(
+    {
+            NpgSessionUrlConfig.class,
+            WalletConfig.class
+    }
+)
 @Import(ConfigScan.class)
 @Slf4j
 public class PagopaEcommerceTransactionsApplication {

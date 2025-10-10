@@ -1,8 +1,11 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.wallet.v1.api.WalletsApi;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthCardDataDto;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
+import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestCardDetailsDto;
+import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +17,11 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class WalletClientTest {
@@ -55,7 +60,7 @@ public class WalletClientTest {
     @Test
     void shouldReturnErrorFromRetrieveWalletInfo() {
         UUID WALLET_ID = UUID.randomUUID();
-        /**
+        /*
          * preconditions
          */
         when(walletsApi.getWalletAuthDataById(WALLET_ID))
@@ -71,7 +76,7 @@ public class WalletClientTest {
                         )
                 );
 
-        /**
+        /*
          * test
          */
         StepVerifier.create(walletClient.getWalletInfo(WALLET_ID.toString()))
@@ -79,5 +84,65 @@ public class WalletClientTest {
                         e -> e instanceof BadGatewayException
                 )
                 .verify();
+    }
+
+    @Test
+    void shouldPerformWalletNotifyOperationSuccessfully() {
+        String walletId = TransactionTestUtils.NPG_WALLET_ID;
+        String orderId = TransactionTestUtils.NPG_ORDER_ID;
+        WalletNotificationRequestDto request = new WalletNotificationRequestDto()
+                .operationId("operationId")
+                .timestampOperation(OffsetDateTime.now())
+                .operationResult(WalletNotificationRequestDto.OperationResultEnum.FAILED)
+                .errorCode("errorCode")
+                .details(
+                        new WalletNotificationRequestCardDetailsDto()
+                                .type("CARDS")
+                                .paymentInstrumentGatewayId("cardId4")
+                );
+
+        when(walletsApi.notifyWalletInternal(any(), any(), any()))
+                .thenReturn(Mono.empty());
+
+        StepVerifier
+                .create(
+                        walletClient.notifyWallet(
+                                walletId,
+                                orderId,
+                                request
+                        )
+                )
+                .verifyComplete();
+        verify(walletsApi, times(1)).notifyWalletInternal(UUID.fromString(walletId), orderId, request);
+    }
+
+    @Test
+    void shouldHandlerErrorPerformingWalletNotificationRequest() {
+        String walletId = TransactionTestUtils.NPG_WALLET_ID;
+        String orderId = TransactionTestUtils.NPG_ORDER_ID;
+        WalletNotificationRequestDto request = new WalletNotificationRequestDto()
+                .operationId("operationId")
+                .timestampOperation(OffsetDateTime.now())
+                .operationResult(WalletNotificationRequestDto.OperationResultEnum.FAILED)
+                .errorCode("errorCode")
+                .details(
+                        new WalletNotificationRequestCardDetailsDto()
+                                .type("CARDS")
+                                .paymentInstrumentGatewayId("cardId4")
+                );
+
+        when(walletsApi.notifyWalletInternal(any(), any(), any()))
+                .thenReturn(Mono.error(new RuntimeException("error communicating with wallet")));
+
+        StepVerifier
+                .create(
+                        walletClient.notifyWallet(
+                                walletId,
+                                orderId,
+                                request
+                        )
+                ).expectError(BadGatewayException.class)
+                .verify();
+        verify(walletsApi, times(1)).notifyWalletInternal(UUID.fromString(walletId), orderId, request);
     }
 }
