@@ -33,7 +33,7 @@
         <java.version>21</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.13</jacoco.version>
-        <pagopa-ecommerce-commons.version>3.2.0</pagopa-ecommerce-commons.version>
+        <pagopa-ecommerce-commons.version>3.2.1</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
         <ecs-logging-version>1.7.0</ecs-logging-version>
         <mock-web-server.version>4.11.0</mock-web-server.version>
@@ -457,7 +457,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/v1.327.0/src/domains/pay-wallet-app/api/payment-wallet-for-ecommerce/v1/_openapi.json.tpl</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/v1.683.0/src/domains/pay-wallet-app/api/payment-wallet-for-ecommerce/v1/_openapi.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>

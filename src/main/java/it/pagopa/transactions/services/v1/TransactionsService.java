@@ -30,10 +30,7 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.v2.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.PaymentSessionData;
-import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -680,7 +677,8 @@ public class TransactionsService {
                 authRequest.getDetails(),
                 asset,
                 Optional.ofNullable(brandAssets),
-                bundle.getIdBundle()
+                bundle.getIdBundle(),
+                authRequestSessionData.contextualOnboardDetails()
         );
     }
 
@@ -985,7 +983,8 @@ public class TransactionsService {
                 Optional.ofNullable(paymentSessionData.sessionId()),
                 Optional.ofNullable(paymentSessionData.contractId()),
                 calculateFeeResponse.getAsset(),
-                calculateFeeResponse.getBrandAssets()
+                calculateFeeResponse.getBrandAssets(),
+                Optional.ofNullable(paymentSessionData.contextualOnboardDetails())
         );
     }
 
@@ -1679,7 +1678,7 @@ public class TransactionsService {
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> new PaymentSessionData(response.getBin(), response.getSessionId(), response.getBrand(), null));
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null));
             case WalletAuthRequestDetailsDto wallet -> walletClient
                     .getWalletInfo(wallet.getWalletId())
                     .map(walletAuthDataDto -> {
@@ -1687,26 +1686,28 @@ public class TransactionsService {
                         if (walletAuthDataDto.getPaymentMethodData() instanceof WalletAuthCardDataDto cardsData) {
                             bin = cardsData.getBin();
                         }
-                        return new PaymentSessionData(
+                        return PaymentSessionData.create(
                                 bin,
-                                null,
+                                walletAuthDataDto.getContextualOnboardDetails() != null ? walletAuthDataDto.getContextualOnboardDetails().getSessionId() : null,
                                 walletAuthDataDto.getBrand(),
-                                walletAuthDataDto.getContractId());
+                                walletAuthDataDto.getContractId(),
+                                walletAuthDataDto.getContextualOnboardDetails());
                     });
             case ApmAuthRequestDetailsDto ignore -> {
                 Mono<String> name =
                         ecommercePaymentMethodsHandlerEnabled ?
                                 ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(requestAuthorizationRequestDto.getLanguage().getValue())) :
                                 ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName);
-                yield name.map(n -> new PaymentSessionData(null, null, n, null));
+                yield name.map(n -> PaymentSessionData.create(null, null, n, null, null));
             }
-            case RedirectionAuthRequestDetailsDto ignored -> Mono.just(new PaymentSessionData(
+            case RedirectionAuthRequestDetailsDto ignored -> Mono.just(PaymentSessionData.create(
                     null,
                     null,
                     "N/A",//TODO handle this value for Nodo close payment
+                    null,
                     null
             ));
-            default -> Mono.just(new PaymentSessionData(null, null, null, null));
+            default -> Mono.just(PaymentSessionData.create(null, null, null, null, null));
         };
     }
 

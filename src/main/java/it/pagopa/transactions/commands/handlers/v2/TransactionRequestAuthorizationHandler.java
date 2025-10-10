@@ -310,7 +310,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     paymentGateway,
                                                     command.getData().paymentMethodDescription(),
                                                     transactionGatewayAuthorizationRequestedData,
-                                                    command.getData().idBundle()
+                                                    command.getData().idBundle(),
+                                                    command.getData().contextualOnboardDetails().isPresent()
                                             )
                                     );
 
