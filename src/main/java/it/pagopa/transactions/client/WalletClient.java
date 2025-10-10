@@ -56,7 +56,7 @@ public class WalletClient {
         return walletWebClient
                 .notifyWalletInternal(UUID.fromString(walletId), orderId, walletNotificationRequestDto)
                 .doOnNext(
-                        (ignored) -> log.info("POST notification performed successfully for walletId: [{}]", walletId)
+                        ignored -> log.info("POST notification performed successfully for walletId: [{}]", walletId)
                 )
                 .doOnError(
                         WebClientResponseException.class,

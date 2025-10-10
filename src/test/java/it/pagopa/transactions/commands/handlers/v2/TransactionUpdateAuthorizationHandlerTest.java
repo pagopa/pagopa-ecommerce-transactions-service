@@ -81,7 +81,7 @@ class TransactionUpdateAuthorizationHandlerTest {
     );
 
     @BeforeEach
-    public void initializeTests() {
+    void initializeTests() {
         updateAuthorizationHandler.subscribeToAuthorizationCommandSink();
     }
 
