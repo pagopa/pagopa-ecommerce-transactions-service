@@ -101,7 +101,7 @@ public class WalletClientTest {
                                 .paymentInstrumentGatewayId("cardId4")
                 );
 
-        when(walletsApi.notifyWallet(any(), any(), any()))
+        when(walletsApi.notifyWalletInternal(any(), any(), any()))
                 .thenReturn(Mono.empty());
 
         StepVerifier
@@ -113,7 +113,7 @@ public class WalletClientTest {
                         )
                 )
                 .verifyComplete();
-        verify(walletsApi, times(1)).notifyWallet(UUID.fromString(walletId), orderId, request);
+        verify(walletsApi, times(1)).notifyWalletInternal(UUID.fromString(walletId), orderId, request);
     }
 
     @Test
@@ -131,7 +131,7 @@ public class WalletClientTest {
                                 .paymentInstrumentGatewayId("cardId4")
                 );
 
-        when(walletsApi.notifyWallet(any(), any(), any()))
+        when(walletsApi.notifyWalletInternal(any(), any(), any()))
                 .thenReturn(Mono.error(new RuntimeException("error communicating with wallet")));
 
         StepVerifier
@@ -143,6 +143,6 @@ public class WalletClientTest {
                         )
                 ).expectError(BadGatewayException.class)
                 .verify();
-        verify(walletsApi, times(1)).notifyWallet(UUID.fromString(walletId), orderId, request);
+        verify(walletsApi, times(1)).notifyWalletInternal(UUID.fromString(walletId), orderId, request);
     }
 }
