@@ -108,7 +108,7 @@ class TransactionRequestAuthorizationHandlerTest {
     private final int transientQueueEventsTtlSeconds = 30;
     private final int authRequestEventVisibilityTimeoutSeconds = 0;
     private final PaymentSessionData.ContextualOnboardDetails contextualOnboardDetails = new PaymentSessionData.ContextualOnboardDetails(
-            UUID.randomUUID().toString(),
+            TransactionTestUtils.TRANSACTION_ID,
             100L,
             "orderId"
     );
@@ -3982,7 +3982,6 @@ class TransactionRequestAuthorizationHandlerTest {
 
     @Test
     void shouldSetContextualOnboardFalseWhenDetailsTransactionIdDiffers() {
-        TransactionId missmatchTransactionId = new TransactionId(UUID.randomUUID());
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3993,7 +3992,7 @@ class TransactionRequestAuthorizationHandlerTest {
         String orderId = "orderId";
         String correlationId = UUID.randomUUID().toString();
         TransactionActivated transaction = new TransactionActivated(
-                missmatchTransactionId,
+                transactionId,
                 List.of(
                         new PaymentNotice(
                                 paymentToken,
@@ -4023,7 +4022,13 @@ class TransactionRequestAuthorizationHandlerTest {
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
-
+        // generate a contextual onboard details with transaction id that does not match
+        // request transaction id
+        PaymentSessionData.ContextualOnboardDetails onboardingContextualDetails = new PaymentSessionData.ContextualOnboardDetails(
+                new TransactionId(UUID.randomUUID()).value(),
+                100L,
+                "orderId"
+        );
         AuthorizationRequestData authorizationData = new AuthorizationRequestData(
                 transaction.getTransactionId(),
                 transaction.getPaymentNotices(),
@@ -4046,7 +4051,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString(),
-                Optional.of(contextualOnboardDetails)
+                Optional.of(onboardingContextualDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -4102,31 +4107,25 @@ class TransactionRequestAuthorizationHandlerTest {
                 .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
                 .authorizationUrl(CHECKOUT_OUTCOME_PATH);
         /* test */
-//        when(transactionEventStoreRepository.save(any()))
-//                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
-        verify(transactionEventStoreRepository).save(eventStoreCaptor.capture());
-        // StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-        // .expectNextMatches(value -> requestAuthResponseDtoComparator(value,
-        // responseDto))
-        // .verifyComplete();
 
-        // verify(transactionEventStoreRepository, times(1)).save(any());
-//        verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
-//                any(QueueEvent.class),
-//                any(),
-//                durationArgumentCaptor.capture()
-//        );
+        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
+                any(QueueEvent.class),
+                any(),
+                durationArgumentCaptor.capture()
+        );
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
-        assertEquals(Boolean.FALSE, savedEvent.getData().getIsContextualOnboard());
         assertEquals(
                 authorizationData.sessionId().get(),
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        assertEquals(Boolean.FALSE, savedEvent.getData().getIsContextualOnboard());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
                     assertEquals(
