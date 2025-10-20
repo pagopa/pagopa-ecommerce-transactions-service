@@ -216,7 +216,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     )
                             )
                             .flatMap(lockAcquired -> {
-                                if (!lockAcquired) {
+                                if (Boolean.FALSE.equals(lockAcquired)) {
                                     return Mono.error(new LockNotAcquiredException(transactionId, lockDocument));
                                 }
                                 return Mono.just(t);
@@ -311,7 +311,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     command.getData().paymentMethodDescription(),
                                                     transactionGatewayAuthorizationRequestedData,
                                                     command.getData().idBundle(),
-                                                    command.getData().contextualOnboardDetails().isPresent()
+                                                    command.getData().contextualOnboardDetails().map(ctx -> ctx.transactionId().equals(t.getTransactionId().value())).orElse(false)
                                             )
                                     );
 
