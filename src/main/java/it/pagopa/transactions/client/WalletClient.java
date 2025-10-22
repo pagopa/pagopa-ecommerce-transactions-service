@@ -4,14 +4,17 @@ import it.pagopa.generated.wallet.v1.api.WalletsApi;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.WalletErrorResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -63,10 +66,21 @@ public class WalletClient {
                         WalletClient::logWebClientException
                 )
                 .onErrorMap(
-                        err -> new BadGatewayException(
-                                "Error while invoke method for retrieve wallet info",
-                                HttpStatus.BAD_GATEWAY
-                        )
+                        exception -> {
+                            Optional<HttpStatusCode> errorResponseCode = Optional
+                                    .of(exception)
+                                    .map(e -> {
+                                        if (e instanceof WebClientResponseException webClientResponseException) {
+                                            return webClientResponseException.getStatusCode();
+                                        }
+                                        return null;
+                                    });
+                            return new WalletErrorResponseException(
+                                    "Error while invoke method for retrieve wallet info",
+                                    errorResponseCode.orElse(null),
+                                    exception
+                            );
+                        }
                 );
     }
 
