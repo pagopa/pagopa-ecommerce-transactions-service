@@ -115,9 +115,9 @@ These are all environment variables needed by the application:
 | ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED                    |      | Payment methods handler enabling feature flag                                                                                                                                   | boolean | false   |
 | WALLET_NOTIFICATION_MAX_RETRY_ATTEMPTS                       |      | Wallet POST notification max retry attempts to be done                                                                                                                          | number  | 3       |
 | WALLET_NOTIFICATION_EXPONENTIAL_BACKOFF_RETRY_OFFSET_SECONDS |      | Wallet POST notification exponential backoff retry offset in seconds (ex. is set to 10, retries are done after 10, 20, 30,... seconds up to the max configured attempts         | number  | 10      |
-| PAYMENT_WALLET_NPG_GDI_URL                                   |      | GDI check url for payment wallet f.e. used in payment with contextual onboarding to perform GDI checks in payment wallet fe                                                     | string  |         |
+| PAYMENT_WALLET_FE_BASE_PATH                                   |      | GDI check url for payment wallet f.e. used in payment with contextual onboarding to perform GDI checks in payment wallet fe                                                     | string  |         |
 
-PAYMENT_WALLET_NPG_GDI_URL
+PAYMENT_WALLET_FE_BASE_PATH
 An example configuration of these environment variables is in the `.env.example` file.
 
 (*): for Mongo connection string options

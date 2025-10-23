@@ -43,13 +43,14 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
     private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check";
     private static final String WALLET_ESITO_PATH = "/ecommerce-fe/esito";
+    private static final String WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH = "/gdi-check-ctx-onboarding";
 
     private final PaymentGatewayClient paymentGatewayClient;
 
     private final String checkoutBasePath;
     private final String checkoutNpgGdiUrl;
     private final String checkoutOutcomeUrl;
-    private final String paymentWalletNpgGdiUrl;
+    private final String paymentWalletFeBasePath;
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
@@ -65,7 +66,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             TransactionTemplateWrapper transactionTemplateWrapper,
             JwtTokenIssuerClient jwtTokenIssuerClient,
             int jwtWebviewValidityTimeInSeconds,
-            String paymentWalletNpgGdiUrl
+            String paymentWalletFeBasePath
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
@@ -74,7 +75,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.transactionTemplateWrapper = transactionTemplateWrapper;
         this.jwtTokenIssuerClient = jwtTokenIssuerClient;
         this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
-        this.paymentWalletNpgGdiUrl = paymentWalletNpgGdiUrl;
+        this.paymentWalletFeBasePath = paymentWalletFeBasePath;
     }
 
     /**
@@ -342,7 +343,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     userId.orElseThrow()
                                             ).map(
                                                     webViewSessionToken -> encodeURIWithFragmentParams(
-                                                            URI.create(WALLET_GDI_CHECK_PATH),
+                                                            URI.create(
+                                                                    isContextualOnboarding
+                                                                            ? WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH
+                                                                            : WALLET_GDI_CHECK_PATH
+                                                            ),
                                                             List.of(
                                                                     Tuples.of("gdiIframeUrl", base64redirectionUrl),
                                                                     Tuples.of("clientId", clientId),
@@ -369,7 +374,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             yield gdiCheckPathWithFragment.map(
                                                     path -> URI
                                                             .create(
-                                                                    isContextualOnboarding ? paymentWalletNpgGdiUrl
+                                                                    isContextualOnboarding ? paymentWalletFeBasePath
                                                                             : checkoutBasePath
                                                             )
                                                             .resolve(path).toString()
