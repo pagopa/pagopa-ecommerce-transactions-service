@@ -72,7 +72,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final String CHECKOUT_NPG_GDI_PATH = "http://checkout.pagopa.it/gdi-check";
-    private static final String PAYMENT_WALLET_NPG_GDI_PATH = "http://pay-wallet.pagopa.it/gdi-check";
+    private static final String PAYMENT_WALLET_NPG_GDI_PATH = "http://payment-wallet.pagopa.it/gdi-check";
     private static final String CHECKOUT_OUTCOME_PATH = "http://checkout.pagopa.it/esito";
     private static final String NPG_URL_IFRAME = "http://iframe";
     private static final String NPG_GDI_FRAGMENT = "#gdiIframeUrl=";
@@ -2512,9 +2512,9 @@ class TransactionRequestAuthorizationHandlerTest {
                 .authorizationRequestId(orderId)
                 .authorizationUrl(
                         NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
-                                NPG_URL_IFRAME
-                                        .getBytes(StandardCharsets.UTF_8)
-                        ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
+                                        NPG_URL_IFRAME
+                                                .getBytes(StandardCharsets.UTF_8)
+                                ).concat("&clientId=IO&transactionId=").concat(authorizationData.transactionId().value())
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
