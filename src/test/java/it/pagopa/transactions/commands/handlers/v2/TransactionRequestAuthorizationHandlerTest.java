@@ -72,6 +72,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
     private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final String CHECKOUT_NPG_GDI_PATH = "http://checkout.pagopa.it/gdi-check";
+    private static final String PAYMENT_WALLET_NPG_GDI_PATH = "http://pay-wallet.pagopa.it/gdi-check";
     private static final String CHECKOUT_OUTCOME_PATH = "http://checkout.pagopa.it/esito";
     private static final String NPG_URL_IFRAME = "http://iframe";
     private static final String NPG_GDI_FRAGMENT = "#gdiIframeUrl=";
@@ -145,7 +146,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 jwtTokenIssuerClient,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 updateTransactionStatusTracerUtils,
-                exclusiveLockDocumentWrapper
+                exclusiveLockDocumentWrapper,
+                PAYMENT_WALLET_NPG_GDI_PATH
         );
     }
 
@@ -831,7 +833,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString(),
-                Optional.of(contextualOnboardDetails)
+                Optional.empty()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
@@ -2253,7 +2255,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 UUID.randomUUID().toString(),
-                Optional.of(contextualOnboardDetails)
+                Optional.empty()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(

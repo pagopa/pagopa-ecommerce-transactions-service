@@ -49,6 +49,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     private final String checkoutBasePath;
     private final String checkoutNpgGdiUrl;
     private final String checkoutOutcomeUrl;
+    private final String paymentWalletNpgGdiUrl;
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
@@ -63,7 +64,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             String checkoutOutcomeUrl,
             TransactionTemplateWrapper transactionTemplateWrapper,
             JwtTokenIssuerClient jwtTokenIssuerClient,
-            int jwtWebviewValidityTimeInSeconds
+            int jwtWebviewValidityTimeInSeconds,
+            String paymentWalletNpgGdiUrl
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
@@ -72,6 +74,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.transactionTemplateWrapper = transactionTemplateWrapper;
         this.jwtTokenIssuerClient = jwtTokenIssuerClient;
         this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
+        this.paymentWalletNpgGdiUrl = paymentWalletNpgGdiUrl;
     }
 
     /**
@@ -328,7 +331,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                     StandardCharsets.UTF_8
                                                             )
                                             );
-
+                                            boolean isContextualOnboarding = authorizationData
+                                                    .isWalletPaymentWithContextualOnboarding();
                                             Mono<URI> gdiCheckPathWithFragment = clientId.equals(
                                                     Transaction.ClientId.IO.toString()
                                             ) ? generateWebviewToken(
@@ -352,7 +356,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             )
                                                     : Mono.just(
                                                             encodeURIWithFragmentParams(
-                                                                    URI.create(this.checkoutNpgGdiUrl),
+                                                                    URI.create(
+                                                                            isContextualOnboarding
+                                                                                    ? this.paymentWalletNpgGdiUrl
+                                                                                    : this.checkoutNpgGdiUrl
+                                                                    ),
                                                                     List.of(
                                                                             Tuples.of(
                                                                                     "gdiIframeUrl",
