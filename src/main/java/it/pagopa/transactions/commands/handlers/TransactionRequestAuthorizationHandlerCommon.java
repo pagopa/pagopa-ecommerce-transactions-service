@@ -356,11 +356,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             )
                                                     : Mono.just(
                                                             encodeURIWithFragmentParams(
-                                                                    URI.create(
-                                                                            isContextualOnboarding
-                                                                                    ? this.paymentWalletNpgGdiUrl
-                                                                                    : this.checkoutNpgGdiUrl
-                                                                    ),
+                                                                    URI.create(this.checkoutNpgGdiUrl),
                                                                     List.of(
                                                                             Tuples.of(
                                                                                     "gdiIframeUrl",
@@ -371,7 +367,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     );
 
                                             yield gdiCheckPathWithFragment.map(
-                                                    path -> URI.create(checkoutBasePath)
+                                                    path -> URI
+                                                            .create(
+                                                                    isContextualOnboarding ? paymentWalletNpgGdiUrl
+                                                                            : checkoutBasePath
+                                                            )
                                                             .resolve(path).toString()
                                             );
 
