@@ -43,12 +43,14 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
     private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check";
     private static final String WALLET_ESITO_PATH = "/ecommerce-fe/esito";
+    private static final String WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH = "/gdi-check-ctx-onboarding";
 
     private final PaymentGatewayClient paymentGatewayClient;
 
     private final String checkoutBasePath;
     private final String checkoutNpgGdiUrl;
     private final String checkoutOutcomeUrl;
+    private final String paymentWalletFeBasePath;
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
@@ -63,7 +65,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             String checkoutOutcomeUrl,
             TransactionTemplateWrapper transactionTemplateWrapper,
             JwtTokenIssuerClient jwtTokenIssuerClient,
-            int jwtWebviewValidityTimeInSeconds
+            int jwtWebviewValidityTimeInSeconds,
+            String paymentWalletFeBasePath
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
@@ -72,6 +75,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.transactionTemplateWrapper = transactionTemplateWrapper;
         this.jwtTokenIssuerClient = jwtTokenIssuerClient;
         this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
+        this.paymentWalletFeBasePath = paymentWalletFeBasePath;
     }
 
     /**
@@ -328,7 +332,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                     StandardCharsets.UTF_8
                                                             )
                                             );
-
+                                            boolean isContextualOnboarding = authorizationData
+                                                    .isWalletPaymentWithContextualOnboarding();
                                             Mono<URI> gdiCheckPathWithFragment = clientId.equals(
                                                     Transaction.ClientId.IO.toString()
                                             ) ? generateWebviewToken(
@@ -338,7 +343,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     userId.orElseThrow()
                                             ).map(
                                                     webViewSessionToken -> encodeURIWithFragmentParams(
-                                                            URI.create(WALLET_GDI_CHECK_PATH),
+                                                            URI.create(
+                                                                    isContextualOnboarding
+                                                                            ? WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH
+                                                                            : WALLET_GDI_CHECK_PATH
+                                                            ),
                                                             List.of(
                                                                     Tuples.of("gdiIframeUrl", base64redirectionUrl),
                                                                     Tuples.of("clientId", clientId),
@@ -363,7 +372,11 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     );
 
                                             yield gdiCheckPathWithFragment.map(
-                                                    path -> URI.create(checkoutBasePath)
+                                                    path -> URI
+                                                            .create(
+                                                                    isContextualOnboarding ? paymentWalletFeBasePath
+                                                                            : checkoutBasePath
+                                                            )
                                                             .resolve(path).toString()
                                             );
 

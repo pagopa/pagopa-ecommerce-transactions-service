@@ -35,4 +35,8 @@ public record AuthorizationRequestData(
         String idBundle,
         Optional<PaymentSessionData.ContextualOnboardDetails> contextualOnboardDetails
 ) {
+
+    public boolean isWalletPaymentWithContextualOnboarding() {
+        return contextualOnboardDetails.map(ctx -> transactionId.value().equals(ctx.transactionId())).orElse(false);
+    }
 }
