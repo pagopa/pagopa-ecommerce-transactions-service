@@ -7,6 +7,7 @@ import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestCardDetailsDto;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
 import it.pagopa.transactions.exceptions.BadGatewayException;
+import it.pagopa.transactions.exceptions.WalletErrorResponseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -141,7 +142,7 @@ public class WalletClientTest {
                                 orderId,
                                 request
                         )
-                ).expectError(BadGatewayException.class)
+                ).expectError(WalletErrorResponseException.class)
                 .verify();
         verify(walletsApi, times(1)).notifyWalletInternal(UUID.fromString(walletId), orderId, request);
     }
