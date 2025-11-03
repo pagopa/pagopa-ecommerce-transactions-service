@@ -132,4 +132,19 @@ class WebClientsConfigTest {
         assertEquals(apiKey, apiKeyAuth.getApiKey());
     }
 
+    @Test
+    void shouldValueApiKeyForEcommercePaymentMethodHandlerClient() {
+        // pre-conditions
+        String basePath = "http://paymentMethodHandler/base/path";
+        String apiKey = "paymentMethodsHandlerApiKey";
+        // test
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi paymentMethodsApi = webClientsConfig
+                .ecommercePaymentMethodHandlerWebClientV1(basePath, 1000, 1000, apiKey);
+        // assertions
+        assertEquals(basePath, paymentMethodsApi.getApiClient().getBasePath());
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.auth.ApiKeyAuth apiKeyAuth = (it.pagopa.generated.ecommerce.paymentmethodshandler.v1.auth.ApiKeyAuth) paymentMethodsApi
+                .getApiClient().getAuthentication("ApiKeyAuth");
+        assertEquals(apiKey, apiKeyAuth.getApiKey());
+    }
+
 }

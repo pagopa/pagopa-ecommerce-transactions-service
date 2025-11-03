@@ -14,10 +14,7 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
-import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.client.WalletClient;
+import it.pagopa.transactions.client.*;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
@@ -44,6 +41,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -77,7 +76,8 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.class,
             it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class,
             TransactionsEventStoreRepository.class,
-            UUIDUtils.class
+            UUIDUtils.class,
+            TransactionsUtils.class
     }
 )
 @AutoConfigureDataRedis
@@ -94,6 +94,9 @@ class TransactionServiceTests {
 
     @MockitoBean
     private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
+
+    @MockitoBean
+    private EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient;
 
     @MockitoBean
     private WalletClient walletClient;
@@ -153,7 +156,7 @@ class TransactionServiceTests {
     @Captor
     private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
 
-    @MockitoBean
+    @MockitoSpyBean
     private TransactionsUtils transactionsUtils;
 
     @MockitoBean
@@ -228,14 +231,10 @@ class TransactionServiceTests {
                 .errorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
-        assertEquals(
-                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
-                expected
-        );
-
         StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
-                .expectNext(expected)
+                .assertNext(
+                        result -> assertEquals(expected, result)
+                )
                 .verifyComplete();
     }
 
@@ -283,7 +282,6 @@ class TransactionServiceTests {
                 .errorCode(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         assertEquals(
                 transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
                 expected
@@ -326,8 +324,8 @@ class TransactionServiceTests {
                 .pspId("pspId");
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
-                .thenReturn(Mono.empty());
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+                .thenReturn(Flux.empty());
 
         /* test */
         Mono<RequestAuthorizationResponseDto> requestAuthorizationResponseDtoMono = transactionsServiceV1
@@ -357,8 +355,8 @@ class TransactionServiceTests {
                 );
 
         /* preconditions */
-        Mockito.when(repository.findById(TRANSACTION_ID))
-                .thenReturn(Mono.empty());
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+                .thenReturn(Flux.empty());
 
         /* test */
         StepVerifier.create(transactionsServiceV1.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
@@ -419,9 +417,10 @@ class TransactionServiceTests {
                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
                 ZonedDateTime.now()
         );
+        transaction.setClientId(Transaction.ClientId.CHECKOUT);
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(0)
+                .amount(transaction.getPaymentNotices().stream().mapToInt(PaymentNotice::getAmount).sum())
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
                 .fee(0)
@@ -438,14 +437,96 @@ class TransactionServiceTests {
 
         Mockito.when(ecommercePaymentMethodsClient.getPaymentMethod(any(), any())).thenReturn(Mono.error(exception));
 
-        Mockito.when(repository.findById(TRANSACTION_ID))
-                .thenReturn(Mono.just(transaction));
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+                .thenReturn(Flux.just(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionActivateEvent()));
 
         /* test */
 
         StepVerifier.create(
                 transactionsServiceV1
-                        .requestTransactionAuthorization(TRANSACTION_ID, null, null, null, authorizationRequest)
+                        .requestTransactionAuthorization(
+                                TRANSACTION_ID,
+                                UUID.fromString(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.USER_ID),
+                                null,
+                                null,
+                                authorizationRequest
+                        )
+        )
+                .expectError(PaymentMethodNotFoundException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFoundWithPaymentMethodHandler() {
+        TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new TransactionsService(
+                transactionActivateHandlerV2,
+                null, // requestAuthHandlerV2,
+                transactionUpdateAuthorizationHandlerV2,
+                null, // transactionSendClosureRequestHandler,
+                null, // transactionRequestUserReceiptHandlerV2,
+                transactionCancelHandlerV2,
+                null, // authorizationProjectionHandlerV2,
+                authorizationUpdateProjectionHandlerV2,
+                closureRequestedProjectionHandler,
+                cancellationRequestProjectionHandlerV2,
+                transactionUserReceiptProjectionHandlerV2,
+                null, // transactionsActivationProjectionHandlerV2,
+                repository,
+                ecommercePaymentMethodsClient,
+                ecommercePaymentMethodsHandlerClient,
+                walletClient,
+                uuidUtils,
+                transactionsUtils,
+                transactionsEventStoreRepository,
+                15, // paymentTokenValidity,
+                null, // reactivePaymentRequestInfoRedisTemplateWrapper,
+                confidentialMailUtils,
+                updateTransactionStatusTracerUtils,
+                new HashMap<>(),
+                new HashSet<>(),
+                new HashSet<>(),
+                true
+        );
+
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+        transaction.setClientId(Transaction.ClientId.CHECKOUT);
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(transaction.getPaymentNotices().stream().mapToInt(PaymentNotice::getAmount).sum())
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .fee(0)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(new ApmAuthRequestDetailsDto().detailType("apm"));
+
+        /* preconditions */
+
+        PaymentMethodNotFoundException exception = new PaymentMethodNotFoundException(
+                UUID.randomUUID().toString(),
+                "CHECKOUT"
+        );
+
+        Mockito.when(ecommercePaymentMethodsHandlerClient.getPaymentMethod(any(), any()))
+                .thenReturn(Mono.error(exception));
+
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+                .thenReturn(Flux.just(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionActivateEvent()));
+
+        /* test */
+
+        StepVerifier.create(
+                transactionsServiceV1paymentMethodHandlerEnabled
+                        .requestTransactionAuthorization(
+                                TRANSACTION_ID,
+                                UUID.fromString(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.USER_ID),
+                                null,
+                                null,
+                                authorizationRequest
+                        )
         )
                 .expectError(PaymentMethodNotFoundException.class)
                 .verify();
@@ -454,7 +535,8 @@ class TransactionServiceTests {
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
         String transactionId = UUID.randomUUID().toString();
-        when(repository.findById(transactionId)).thenReturn(Mono.empty());
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+                .thenReturn(Flux.empty());
         StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
                 .expectError(TransactionNotFoundException.class).verify();
 

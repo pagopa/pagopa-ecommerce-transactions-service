@@ -41,8 +41,8 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
     @Override
     public Mono<BaseTransactionEvent<?>> handle(TransactionUserCancelCommand command) {
         Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> transaction = transactionsUtils
-                .reduceEventsV2(
-                        command.getData()
+                .reduceV2Events(
+                        command.getEvents()
                 );
 
         return transaction

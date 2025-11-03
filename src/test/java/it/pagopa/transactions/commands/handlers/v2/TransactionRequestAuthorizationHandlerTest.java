@@ -35,6 +35,7 @@ import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.LockNotAcquiredException;
 import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
+import it.pagopa.transactions.utils.PaymentSessionData;
 import it.pagopa.transactions.utils.Queues;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.apache.commons.codec.binary.Base64;
@@ -106,6 +107,11 @@ class TransactionRequestAuthorizationHandlerTest {
 
     private final int transientQueueEventsTtlSeconds = 30;
     private final int authRequestEventVisibilityTimeoutSeconds = 0;
+    private final PaymentSessionData.ContextualOnboardDetails contextualOnboardDetails = new PaymentSessionData.ContextualOnboardDetails(
+            TransactionTestUtils.TRANSACTION_ID,
+            100L,
+            "orderId"
+    );
 
     private final OpenTelemetryUtils openTelemetryUtils = Mockito.mock(OpenTelemetryUtils.class);
 
@@ -207,13 +213,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.empty()
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -348,13 +360,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -404,6 +422,164 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verifyComplete();
 
         verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
+                any(QueueEvent.class),
+                any(),
+                durationArgumentCaptor.capture()
+        );
+        TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
+        NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
+                .getData().getTransactionGatewayAuthorizationRequestedData();
+        assertEquals(
+                authorizationData.sessionId().get(),
+                npgTransactionGatewayAuthorizationRequestedData.getSessionId()
+        );
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(lockDocument -> {
+                    assertEquals(
+                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                            lockDocument.id()
+                    );
+                    assertEquals("transactions-service", lockDocument.holderName());
+                    return true;
+                }),
+                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        );
+    }
+
+    @Test
+    void shouldSaveAuthorizationEventNpgCardsContextualPaymentCompleteIOClient() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String walletId = "walletId";
+        String orderId = "orderId";
+        String correlationId = UUID.randomUUID().toString();
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>(),
+                                false,
+                                new CompanyName(null),
+                                null
+                        )
+                ),
+                email,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.IO,
+                null,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
+                "VISA",
+                new WalletAuthRequestDetailsDto().walletId(walletId),
+                "http://asset",
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
+        );
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(WorkflowStateDto.PAYMENT_COMPLETE)
+                .fieldSet(
+                        new FieldsDto()
+                                .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
+                );
+
+        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId("sessionId")
+                .state(WorkflowStateDto.READY_FOR_PAYMENT).securityToken("securityToken");
+        Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
+
+        /* preconditions */
+        when(paymentGatewayClient.requestNpgBuildSession(any(), any(), anyBoolean(), any(), any(), any()))
+                .thenReturn(Mono.just(responseRequestNpgBuildSession));
+        when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
+                .thenReturn(Mono.just(stateResponseDto));
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
+                new NpgTransactionGatewayActivationData(orderId, correlationId)
+        );
+        transactionActivatedEvent.getData().setClientId(Transaction.ClientId.IO);
+        when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(
+                        (Flux) Flux.just(
+                                transactionActivatedEvent
+                        )
+                );
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
+                authorizationData,
+                List.of(
+                        transactionActivatedEvent
+                )
+        );
+        when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(createTokenResponseDto));
+
+        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
+        when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+
+        RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
+                .authorizationRequestId("orderId")
+                .authorizationUrl(
+                        new StringBuilder(NPG_WALLET_ESITO_PATH).append("clientId=").append(Transaction.ClientId.IO)
+                                .append("&transactionId=").append(transactionId.value()).toString()
+                                .concat("&sessionToken=").concat(MOCK_JWT)
+                );
+        Hooks.onOperatorDebug();
+        /* test */
+        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
+                .verifyComplete();
+
+        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(paymentGatewayClient, times(1)).requestNpgBuildSession(any(), any(), anyBoolean(), any(), any(), any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -494,13 +670,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
-        );
-
-        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
-                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-                null,
-                authorizationData
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -523,7 +694,14 @@ class TransactionRequestAuthorizationHandlerTest {
                                 transactionActivatedEvent
                         )
                 );
-
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
+                authorizationData,
+                List.of(
+                        transactionActivatedEvent
+                )
+        );
         when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
@@ -554,6 +732,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 .append("&transactionId=").append(transactionId.value()).toString()
                                 .concat("&sessionToken=").concat(MOCK_JWT)
                 );
+        Hooks.onOperatorDebug();
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
@@ -651,13 +830,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -805,13 +990,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -921,13 +1112,18 @@ class TransactionRequestAuthorizationHandlerTest {
                 null,
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(),
+                        TransactionTestUtils.transactionAuthorizationRequestedEvent()
+                )
         );
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn(
@@ -1010,13 +1206,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto(),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
 
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
@@ -1112,13 +1310,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto();
@@ -1231,13 +1435,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1353,13 +1563,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1476,13 +1692,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1599,13 +1821,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1721,13 +1949,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId("orderId"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -1863,13 +2097,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -2012,13 +2252,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -2169,7 +2415,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                idBundle
+                idBundle,
+                Optional.empty()
         );
 
         AuthorizationRequestData authorizationDataAfterBuildSession = new AuthorizationRequestData(
@@ -2193,13 +2440,18 @@ class TransactionRequestAuthorizationHandlerTest {
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                idBundle
+                idBundle,
+                Optional.empty()
+        );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
+                new NpgTransactionGatewayActivationData(orderId, correlationId)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(transactionActivatedEvent)
         );
 
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -2230,9 +2482,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId)
         )
                 .thenReturn(Mono.just(stateResponseDto));
-        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
-                new NpgTransactionGatewayActivationData(orderId, correlationId)
-        );
+
         transactionActivatedEvent.getData().setClientId(clientId);
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
@@ -2365,13 +2615,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 Mockito.mock(RequestAuthorizationRequestDetailsDto.class),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
         /* preconditions */
@@ -2476,13 +2728,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
         String securityToken = "securityToken";
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -2638,13 +2896,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new ApmAuthRequestDetailsDto().detailType("apm"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
         String securityToken = "securityToken";
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -2804,13 +3068,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
@@ -2928,13 +3198,15 @@ class TransactionRequestAuthorizationHandlerTest {
                 new RedirectionAuthRequestDetailsDto(),
                 expectedLogo,
                 Optional.empty(),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(TransactionTestUtils.transactionActivateEvent())
         );
 
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto()
@@ -3061,13 +3333,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 expectedLogo,
                 Optional.of(Map.of("VISA", "http://visa")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -3205,13 +3483,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 expectedLogo,
                 Optional.empty(),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -3348,13 +3632,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 "http//defaultLogo",
                 Optional.of(Map.of("VISA", expectedLogo)),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -3491,13 +3781,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new CardsAuthRequestDetailsDto().orderId(orderId),
                 expectedLogo,
                 Optional.of(Map.of("VISA", "http://visaLogo")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         StateResponseDto stateResponseDto = new StateResponseDto()
@@ -3634,13 +3930,19 @@ class TransactionRequestAuthorizationHandlerTest {
                 new ApmAuthRequestDetailsDto().detailType("apm"),
                 "http://asset",
                 Optional.of(Map.of("VISA", "http://visaAsset")),
-                UUID.randomUUID().toString()
+                UUID.randomUUID().toString(),
+                Optional.of(contextualOnboardDetails)
         );
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 null,
-                authorizationData
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
         );
 
         /* preconditions */
@@ -3677,4 +3979,164 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         verifyNoInteractions(paymentGatewayClient);
     }
+
+    @Test
+    void shouldSetContextualOnboardFalseWhenDetailsTransactionIdDiffers() {
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
+        String orderId = "orderId";
+        String correlationId = UUID.randomUUID().toString();
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>(),
+                                false,
+                                new CompanyName(null),
+                                null
+                        )
+                ),
+                email,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+        // generate a contextual onboard details with transaction id that does not match
+        // request transaction id
+        PaymentSessionData.ContextualOnboardDetails onboardingContextualDetails = new PaymentSessionData.ContextualOnboardDetails(
+                new TransactionId(UUID.randomUUID()).value(),
+                100L,
+                "orderId"
+        );
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
+                "VISA",
+                new CardsAuthRequestDetailsDto().orderId(orderId),
+                "http://asset",
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString(),
+                Optional.of(onboardingContextualDetails)
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
+        );
+
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(WorkflowStateDto.PAYMENT_COMPLETE)
+                .fieldSet(
+                        new FieldsDto()
+                                .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
+                );
+
+        /* preconditions */
+        when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
+                .thenReturn(Mono.just(stateResponseDto));
+        when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(
+                        (Flux) Flux.just(
+                                TransactionTestUtils.transactionActivateEvent(
+                                        new NpgTransactionGatewayActivationData(orderId, correlationId)
+                                )
+                        )
+                );
+        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        when(
+                paymentMethodsClient.updateSession(
+                        authorizationData.paymentInstrumentId(),
+                        ((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId(),
+                        transactionId.value()
+                )
+        ).thenReturn(Mono.empty());
+
+        when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+
+        RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
+                .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
+                .authorizationUrl(CHECKOUT_OUTCOME_PATH);
+        /* test */
+        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
+                .verifyComplete();
+
+        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
+                any(QueueEvent.class),
+                any(),
+                durationArgumentCaptor.capture()
+        );
+        TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
+        NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
+                .getData().getTransactionGatewayAuthorizationRequestedData();
+        assertEquals(
+                authorizationData.sessionId().get(),
+                npgTransactionGatewayAuthorizationRequestedData.getSessionId()
+        );
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        assertEquals(Boolean.FALSE, savedEvent.getData().getIsContextualOnboard());
+        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(lockDocument -> {
+                    assertEquals(
+                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                            lockDocument.id()
+                    );
+                    assertEquals("transactions-service", lockDocument.holderName());
+                    return true;
+                }),
+                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        );
+    }
+
 }

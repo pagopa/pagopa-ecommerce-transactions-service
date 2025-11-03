@@ -124,8 +124,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     public Mono<Tuple2<RequestAuthorizationResponseDto, TransactionAuthorizationRequestedEvent>> handleWithCreationDate(TransactionRequestAuthorizationCommand command) {
         AuthorizationRequestData authorizationRequestData = command.getData();
         URI logo = getLogo(command.getData());
-        Mono<BaseTransaction> transaction = transactionsUtils.reduceEventsV2(
-                command.getData().transactionId()
+        Mono<BaseTransaction> transaction = transactionsUtils.reduceV2Events(
+                command.getEvents()
         );
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
@@ -216,7 +216,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                     )
                             )
                             .flatMap(lockAcquired -> {
-                                if (!lockAcquired) {
+                                if (Boolean.FALSE.equals(lockAcquired)) {
                                     return Mono.error(new LockNotAcquiredException(transactionId, lockDocument));
                                 }
                                 return Mono.just(t);
@@ -310,7 +310,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     paymentGateway,
                                                     command.getData().paymentMethodDescription(),
                                                     transactionGatewayAuthorizationRequestedData,
-                                                    command.getData().idBundle()
+                                                    command.getData().idBundle(),
+                                                    command.getData().contextualOnboardDetails().map(ctx -> ctx.transactionId().equals(t.getTransactionId().value())).orElse(false)
                                             )
                                     );
 

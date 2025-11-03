@@ -19,17 +19,17 @@ import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
-import it.pagopa.transactions.client.NodeForPspClient;
-import it.pagopa.transactions.client.PaymentGatewayClient;
-import it.pagopa.transactions.client.WalletClient;
+import it.pagopa.transactions.client.*;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.configurations.AzureStorageConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.*;
+import it.pagopa.transactions.utils.AuthRequestDataUtils;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -54,7 +54,6 @@ import java.util.stream.Stream;
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -67,6 +66,8 @@ class TransactionServiceTest {
     private UUIDUtils uuidUtils;
     private final EcommercePaymentMethodsClient ecommercePaymentMethodsClient = Mockito
             .mock(EcommercePaymentMethodsClient.class);
+    private final EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient = Mockito
+            .mock(EcommercePaymentMethodsHandlerClient.class);
 
     private final WalletClient walletClient = Mockito
             .mock(WalletClient.class);
@@ -150,6 +151,8 @@ class TransactionServiceTest {
     private final Set<String> ecommercePossibleFinalStates = Set
             .of("AUTHORIZATION_COMPLETED", "CLOSURE_REQUESTED", "CLOSURE_ERROR");
 
+    private final boolean enablePaymentMethodsHandler = false;
+
     private final TransactionsService transactionsServiceV1 = new TransactionsService(
             transactionActivateHandlerV2,
             transactionRequestAuthorizationHandlerV2,
@@ -165,6 +168,7 @@ class TransactionServiceTest {
             transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
+            ecommercePaymentMethodsHandlerClient,
             walletClient,
             uuidUtils,
             transactionsUtils,
@@ -175,7 +179,8 @@ class TransactionServiceTest {
             updateTransactionStatusTracerUtils,
             npgAuthorizationErrorCodeMapping,
             ecommerceFinalStates,
-            ecommercePossibleFinalStates
+            ecommercePossibleFinalStates,
+            enablePaymentMethodsHandler
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
@@ -193,6 +198,7 @@ class TransactionServiceTest {
             transactionsActivationProjectionHandlerV2,
             transactionsViewRepository,
             ecommercePaymentMethodsClient,
+            ecommercePaymentMethodsHandlerClient,
             walletClient,
             uuidUtils,
             transactionsUtils,
@@ -203,7 +209,8 @@ class TransactionServiceTest {
             updateTransactionStatusTracerUtils,
             npgAuthorizationErrorCodeMapping,
             ecommerceFinalStates,
-            ecommercePossibleFinalStates
+            ecommercePossibleFinalStates,
+            enablePaymentMethodsHandler
     );
 
     @Test
@@ -409,19 +416,11 @@ class TransactionServiceTest {
         Mockito.when(
                 transactionsUtils.reduceEvents(
                         any(),
-                        eq(new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction()),
+                        any(),
                         any(),
                         any()
                 )
-        ).thenReturn(Mono.just(new it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction()));
-        Mockito.when(
-                transactionsUtils.reduceEvents(
-                        any(),
-                        eq(new it.pagopa.ecommerce.commons.domain.v2.EmptyTransaction()),
-                        any(),
-                        any()
-                )
-        ).thenReturn(Mono.just(transactionWithRequestedAuthorization));
+        ).thenCallRealMethod();
 
         Mockito.when(transactionsUtils.convertEnumerationV1(any())).thenCallRealMethod();
         Mockito.when(transactionsUtils.getPspId(any(BaseTransaction.class))).thenCallRealMethod();
@@ -444,7 +443,7 @@ class TransactionServiceTest {
         Mockito.when(transactionsUtils.getPspId(any(BaseTransaction.class))).thenCallRealMethod();
         Mockito.when(transactionsUtils.getPaymentMethodTypeCode(any(BaseTransaction.class))).thenCallRealMethod();
         Mockito.when(transactionsUtils.isWalletPayment(any(BaseTransaction.class))).thenCallRealMethod();
-
+        Mockito.when(transactionsUtils.reduceV2Events(any())).thenCallRealMethod();
         /* test */
         StepVerifier.create(
                 transactionsServiceV1
