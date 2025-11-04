@@ -32,6 +32,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.context.Context;
 
 import java.time.Duration;
@@ -271,6 +272,21 @@ public class TransactionsController implements TransactionsApi {
                             domainTransactionId.uuid(),
                             updateAuthorizationRequestDto
                     );
+                })
+                .doFinally(s -> {
+                    reactiveExclusiveLockDocumentWrapper
+                            .deleteById(lockDocument.id())
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .doOnNext(
+                                    deleted -> log.info("Lock with id: [{}], deleted: [{}]", lockDocument.id(), deleted)
+                            )
+                            .doOnError(
+                                    error -> log.error(
+                                            "Error deleting lock with id: [%s]".formatted(lockDocument.id()),
+                                            error
+                                    )
+                            )
+                            .subscribe();
                 })
                 .contextWrite(
                         ctx -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
