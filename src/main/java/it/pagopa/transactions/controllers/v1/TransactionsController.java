@@ -273,21 +273,22 @@ public class TransactionsController implements TransactionsApi {
                             updateAuthorizationRequestDto
                     );
                 })
-                .doFinally(s -> {
-                    reactiveExclusiveLockDocumentWrapper
-                            .deleteById(lockDocument.id())
-                            .subscribeOn(Schedulers.boundedElastic())
-                            .doOnNext(
-                                    deleted -> log.info("Lock with id: [{}], deleted: [{}]", lockDocument.id(), deleted)
-                            )
-                            .doOnError(
-                                    error -> log.error(
-                                            "Error deleting lock with id: [%s]".formatted(lockDocument.id()),
-                                            error
-                                    )
-                            )
-                            .subscribe();
-                })
+                .doFinally(
+                        s -> reactiveExclusiveLockDocumentWrapper
+                                .deleteById(lockDocument.id())
+                                .subscribeOn(Schedulers.boundedElastic())
+                                .doOnNext(
+                                        deleted -> log
+                                                .info("Lock with id: [{}], deleted: [{}]", lockDocument.id(), deleted)
+                                )
+                                .doOnError(
+                                        error -> log.error(
+                                                "Error deleting lock with id: [%s]".formatted(lockDocument.id()),
+                                                error
+                                        )
+                                )
+                                .subscribe()
+                )
                 .contextWrite(
                         ctx -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
                                 new TransactionTracingUtils.TransactionInfo(
