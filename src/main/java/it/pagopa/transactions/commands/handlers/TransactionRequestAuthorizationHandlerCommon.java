@@ -23,6 +23,7 @@ import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.WalletPaymentInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -344,9 +345,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             ).map(
                                                     webViewSessionToken -> encodeURIWithFragmentParams(
                                                             URI.create(
-                                                                    isContextualOnboarding
-                                                                            ? WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH
-                                                                            : WALLET_GDI_CHECK_PATH
+                                                                    getFragmentUri(isContextualOnboarding)
                                                             ),
                                                             List.of(
                                                                     Tuples.of("gdiIframeUrl", base64redirectionUrl),
@@ -435,6 +434,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 }
                         )
                 );
+    }
+
+    private String getFragmentUri(boolean isContextualOnboarding) {
+        return isContextualOnboarding
+                ? WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH
+                : WALLET_GDI_CHECK_PATH;
     }
 
     /**
