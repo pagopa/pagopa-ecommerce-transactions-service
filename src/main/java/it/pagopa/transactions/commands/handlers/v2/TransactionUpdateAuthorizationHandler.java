@@ -17,6 +17,7 @@ import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHa
 import it.pagopa.transactions.configurations.WalletConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.WalletErrorResponseException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -82,6 +83,11 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                                 .exponentialBackoffRetryOffsetSeconds()
                                                 )
                                         )
+                                                .filter(
+                                                        exception -> !(exception instanceof WalletErrorResponseException walletErrorResponseException
+                                                                && walletErrorResponseException.getHttpStatus()
+                                                                        .is4xxClientError())
+                                                )
                                                 .doBeforeRetry(
                                                         signal -> log.warn(
                                                                 "Exception performing POST wallet notification",

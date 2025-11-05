@@ -1,5 +1,8 @@
 # pagopa-ecommerce-transactions-service
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pagopa_pagopa-ecommerce-transactions-service&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=pagopa_pagopa-ecommerce-transactions-service)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pagopa_pagopa-ecommerce-transactions-service&metric=coverage)](https://sonarcloud.io/summary/new_code?id=pagopa_pagopa-ecommerce-transactions-service)
+
 ## What is this?
 
 This is a PagoPA microservice that handles eCommerce transactions' lifecycle and workflow.
