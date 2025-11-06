@@ -15,7 +15,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local
-      ref: CHK-4555-update-transaction-env
+      ref: main
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
