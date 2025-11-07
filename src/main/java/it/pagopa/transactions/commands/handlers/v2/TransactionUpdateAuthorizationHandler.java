@@ -77,16 +77,16 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                         command -> notifyWalletForContextualOnboarding(command)
                                 .retryWhen(
                                         Retry.backoff(
-                                                walletConfig.notification().maxRetryAttempts(),
-                                                Duration.ofSeconds(
-                                                        walletConfig.notification()
-                                                                .exponentialBackoffRetryOffsetSeconds()
+                                                        walletConfig.notification().maxRetryAttempts(),
+                                                        Duration.ofSeconds(
+                                                                walletConfig.notification()
+                                                                        .exponentialBackoffRetryOffsetSeconds()
+                                                        )
                                                 )
-                                        )
                                                 .filter(
                                                         exception -> !(exception instanceof WalletErrorResponseException walletErrorResponseException
                                                                 && walletErrorResponseException.getHttpStatus()
-                                                                        .is4xxClientError())
+                                                                .is4xxClientError())
                                                 )
                                                 .doBeforeRetry(
                                                         signal -> log.warn(
@@ -100,8 +100,8 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                 .doOnNext(
                         TupleUtils.consumer(
                                 (
-                                 walletInfo,
-                                 walletNotificationRequest
+                                        walletInfo,
+                                        walletNotificationRequest
                                 ) -> log.info(
                                         "Post wallet performed successfully for walletId: [{}], with NPG operationResult: [{}]",
                                         walletInfo.getWalletId(),
@@ -115,6 +115,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 exception
                         )
                 )
+                .doOnComplete(() -> log.info("ON COMPLETE"))
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe();
     }
@@ -129,8 +130,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         TransactionStatusDto transactionStatus = TransactionStatusDto.valueOf(command.getData().transactionStatus());
 
         if (transactionStatus.equals(TransactionStatusDto.AUTHORIZATION_REQUESTED)) {
-            Sinks.EmitResult result = authorizationCommandsSink.tryEmitNext(command);
-            log.debug("Emit command result -> [{}]", result);
             UpdateAuthorizationRequestOutcomeGatewayDto outcomeGateway = command.getData().updateAuthorizationRequest()
                     .getOutcomeGateway();
 
@@ -151,7 +150,19 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 );
                         default -> throw new InvalidRequestException("Unexpected value: " + outcomeGateway);
                     };
-            return Mono.just(
+            return Mono.just(command)
+                    .flatMap(authCommand ->
+                            Mono.fromRunnable(() -> authorizationCommandsSink
+                                            .emitNext(
+                                                    authCommand,
+                                                    Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(500))
+                                            )
+                                    ).thenReturn(authCommand)
+                                    .doOnNext(ignored -> log.info("POST wallet notification event emitted successfully for transaction with contextual onboarding with id: [{}]", authCommand.getData().transactionId().value()))
+                                    .doOnError(exception -> log.error("Exception emitting event for POST wallet notification for transaction with contextual onboarding with id: [%s]".formatted(authCommand.getData().transactionId().value()), exception))
+                                    .onErrorReturn(authCommand)
+                    )
+                    .thenReturn(
                             new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent(
                                     transactionId.value(),
                                     new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData(
@@ -170,7 +181,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     }
 
     private Mono<Tuple2<WalletInfo, WalletNotificationRequestDto>> notifyWalletForContextualOnboarding(
-                                                                                                       TransactionUpdateAuthorizationCommand command
+            TransactionUpdateAuthorizationCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceV2Events(command.getEvents());
         UpdateAuthorizationRequestDto updateAuthRequest = command.getData().updateAuthorizationRequest();
@@ -234,7 +245,15 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                 isWalletPayment,
                 isCardPayment
         );
-        return isContextualOnboarding && isWalletPayment && isCardPayment;
+        boolean isNpgWithContextualOnboarding = isContextualOnboarding && isWalletPayment && isCardPayment;
+        log.info(
+                "is NPG card with contextual onboarding payment verification -> isNpgWithContextualOnboarding: [{}],  isContextualOnboarding: [{}], isWalletPayment: [{}],  isCardPayment: [{}]",
+                isNpgWithContextualOnboarding,
+                isContextualOnboarding,
+                isWalletPayment,
+                isCardPayment
+        );
+        return isNpgWithContextualOnboarding;
     }
 
 }
