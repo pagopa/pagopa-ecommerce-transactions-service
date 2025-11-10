@@ -115,7 +115,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 exception
                         )
                 )
-                .doOnComplete(() -> log.info("ON COMPLETE"))
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe();
     }
