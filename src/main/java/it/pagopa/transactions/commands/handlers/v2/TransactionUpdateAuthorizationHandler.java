@@ -109,12 +109,14 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 )
                         )
                 )
-                .doOnError(
-                        exception -> log.error(
-                                "Error performing POST wallet notification, wallet status may have not been updated correctly!",
-                                exception
-                        )
-                )
+                .then()
+                .onErrorResume(exception -> {
+                    log.error(
+                            "Error performing POST wallet notification, wallet status may have not been updated correctly!",
+                            exception
+                    );
+                    return Mono.empty();
+                })
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe();
     }
