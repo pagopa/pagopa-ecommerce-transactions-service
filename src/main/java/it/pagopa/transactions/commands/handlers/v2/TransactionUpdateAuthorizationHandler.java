@@ -77,16 +77,16 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                         command -> notifyWalletForContextualOnboarding(command)
                                 .retryWhen(
                                         Retry.backoff(
-                                                walletConfig.notification().maxRetryAttempts(),
-                                                Duration.ofSeconds(
-                                                        walletConfig.notification()
-                                                                .exponentialBackoffRetryOffsetSeconds()
+                                                        walletConfig.notification().maxRetryAttempts(),
+                                                        Duration.ofSeconds(
+                                                                walletConfig.notification()
+                                                                        .exponentialBackoffRetryOffsetSeconds()
+                                                        )
                                                 )
-                                        )
                                                 .filter(
                                                         exception -> !(exception instanceof WalletErrorResponseException walletErrorResponseException
                                                                 && walletErrorResponseException.getHttpStatus()
-                                                                        .is4xxClientError())
+                                                                .is4xxClientError())
                                                 )
                                                 .doBeforeRetry(
                                                         signal -> log.warn(
@@ -94,13 +94,19 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                                 signal.failure()
                                                         )
                                                 )
-                                )
+                                ).onErrorResume(exception -> {
+                                    log.error(
+                                            "Error performing POST wallet notification, wallet status may have not been updated correctly!",
+                                            exception
+                                    );
+                                    return Mono.empty();
+                                })
                 )
                 .doOnNext(
                         TupleUtils.consumer(
                                 (
-                                 walletInfo,
-                                 walletNotificationRequest
+                                        walletInfo,
+                                        walletNotificationRequest
                                 ) -> log.info(
                                         "Post wallet performed successfully for walletId: [{}], with NPG operationResult: [{}]",
                                         walletInfo.getWalletId(),
@@ -108,13 +114,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 )
                         )
                 )
-                .onErrorResume(exception -> {
-                    log.error(
-                            "Error performing POST wallet notification, wallet status may have not been updated correctly!",
-                            exception
-                    );
-                    return Mono.empty();
-                })
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe();
     }
@@ -180,7 +179,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     }
 
     private Mono<Tuple2<WalletInfo, WalletNotificationRequestDto>> notifyWalletForContextualOnboarding(
-                                                                                                       TransactionUpdateAuthorizationCommand command
+            TransactionUpdateAuthorizationCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceV2Events(command.getEvents());
         UpdateAuthorizationRequestDto updateAuthRequest = command.getData().updateAuthorizationRequest();
@@ -254,5 +253,4 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         );
         return isNpgWithContextualOnboarding;
     }
-
 }
