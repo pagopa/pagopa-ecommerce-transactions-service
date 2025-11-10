@@ -96,7 +96,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                 )
                                 )
                 )
-
                 .doOnNext(
                         TupleUtils.consumer(
                                 (
@@ -109,7 +108,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 )
                         )
                 )
-                .then()
                 .onErrorResume(exception -> {
                     log.error(
                             "Error performing POST wallet notification, wallet status may have not been updated correctly!",
