@@ -237,12 +237,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         boolean isWalletPayment = isNpgTransaction
                 && ((NpgTransactionGatewayAuthorizationRequestedData) gatewayData).getWalletInfo() != null;
         boolean isCardPayment = authorizationRequestedData.getPaymentTypeCode().equals("CP");
-        log.info(
-                "Notify contextual onboarding: isContextualOnboarding: [{}] isWalletPayment; [{}] isCardPayment: [{}]",
-                isContextualOnboarding,
-                isWalletPayment,
-                isCardPayment
-        );
         boolean isNpgWithContextualOnboarding = isContextualOnboarding && isWalletPayment && isCardPayment;
         log.info(
                 "is NPG card with contextual onboarding payment verification -> isNpgWithContextualOnboarding: [{}],  isContextualOnboarding: [{}], isWalletPayment: [{}],  isCardPayment: [{}]",
