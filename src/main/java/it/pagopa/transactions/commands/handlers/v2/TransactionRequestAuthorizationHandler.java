@@ -94,7 +94,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
             ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper,
-            @Value("${payment-wallet.fe.basepath}") String paymentWalletFeBasePath
+            @Value("${payment-wallet.fe.basepath}") String paymentWalletFeBasePath,
+            @Value("${ecommerce.fe.basepath}") String ecommerceFeBasePath
     ) {
         super(
                 paymentGatewayClient,
@@ -104,7 +105,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 transactionTemplateWrapper,
                 jwtTokenIssuerClient,
                 jwtWebviewValidityTimeInSeconds,
-                paymentWalletFeBasePath
+                paymentWalletFeBasePath,
+                ecommerceFeBasePath
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;

@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
-    private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check";
-    private static final String WALLET_ESITO_PATH = "/ecommerce-fe/esito";
+    private static final String WALLET_GDI_CHECK_PATH = "/gdi-check";
+    private static final String WALLET_ESITO_PATH = "/esito";
     private static final String WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH = "/gdi-check-ctx-onboarding";
 
     private final PaymentGatewayClient paymentGatewayClient;
@@ -52,6 +52,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     private final String checkoutNpgGdiUrl;
     private final String checkoutOutcomeUrl;
     private final String paymentWalletFeBasePath;
+    private final String ecommerceFeBaseBath;
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
@@ -67,7 +68,8 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             TransactionTemplateWrapper transactionTemplateWrapper,
             JwtTokenIssuerClient jwtTokenIssuerClient,
             int jwtWebviewValidityTimeInSeconds,
-            String paymentWalletFeBasePath
+            String paymentWalletFeBasePath,
+            String ecommerceFeBaseBath
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
@@ -77,6 +79,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.jwtTokenIssuerClient = jwtTokenIssuerClient;
         this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
         this.paymentWalletFeBasePath = paymentWalletFeBasePath;
+        this.ecommerceFeBaseBath = ecommerceFeBaseBath;
     }
 
     /**
@@ -374,7 +377,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     path -> URI
                                                             .create(
                                                                     isContextualOnboarding ? paymentWalletFeBasePath
-                                                                            : checkoutBasePath
+                                                                            : getFeBasePath(clientId)
                                                             )
                                                             .resolve(path).toString()
                                             );
@@ -399,7 +402,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                 userId.orElseThrow()
                                         ).map(
                                                 webViewSessionToken -> encodeURIWithFragmentParams(
-                                                        URI.create(checkoutBasePath).resolve(WALLET_ESITO_PATH),
+                                                        URI.create(ecommerceFeBaseBath).resolve(WALLET_ESITO_PATH),
                                                         List.of(
                                                                 Tuples.of("clientId", clientId),
                                                                 Tuples.of(
@@ -434,6 +437,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                 }
                         )
                 );
+    }
+
+    private String getFeBasePath(String clientId) {
+        return clientId.equals(Transaction.ClientId.IO.toString()) ? ecommerceFeBaseBath : checkoutBasePath;
     }
 
     private String getFragmentUri(boolean isContextualOnboarding) {

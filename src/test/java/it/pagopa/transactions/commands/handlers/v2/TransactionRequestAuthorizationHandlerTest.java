@@ -72,13 +72,14 @@ class TransactionRequestAuthorizationHandlerTest {
 
     private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final String CHECKOUT_NPG_GDI_PATH = "http://checkout.pagopa.it/gdi-check";
+    private static final String ECOMMERCE_NPG_GDI_PATH = "http://ecommerce.pagopa.it/gdi-check";
     private static final String PAYMENT_WALLET_NPG_GDI_PATH = "http://payment-wallet.pagopa.it/gdi-check";
     private static final String CHECKOUT_OUTCOME_PATH = "http://checkout.pagopa.it/esito";
     private static final String NPG_URL_IFRAME = "http://iframe";
     private static final String NPG_GDI_FRAGMENT = "#gdiIframeUrl=";
-    private static final String NPG_WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check#gdiIframeUrl=";
+    private static final String NPG_WALLET_GDI_CHECK_PATH = "http://ecommerce.pagopa.it/gdi-check#gdiIframeUrl=";
     private static final String NPG_WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH = "/wallet-fe/ctx-onboarding-gdi-check#gdiIframeUrl=";
-    private static final String NPG_WALLET_ESITO_PATH = "/ecommerce-fe/esito#";
+    private static final String NPG_WALLET_ESITO_PATH = "http://ecommerce.pagopa.it/esito#";
     private it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler requestAuthorizationHandler;
 
     @Mock
@@ -148,7 +149,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 updateTransactionStatusTracerUtils,
                 exclusiveLockDocumentWrapper,
-                PAYMENT_WALLET_NPG_GDI_PATH
+                PAYMENT_WALLET_NPG_GDI_PATH,
+                ECOMMERCE_NPG_GDI_PATH
         );
     }
 

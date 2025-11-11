@@ -175,6 +175,7 @@ microservice-chart:
     NODE_FORWARDER_CONNECTION_TIMEOUT: "29000"
     CHECKOUT_NPG_GDI_URL: "https://uat.checkout.pagopa.it/gdi-check"
     PAYMENT_WALLET_FE_BASE_PATH: "https://uat.payment-wallet.pagopa.it"
+    ECOMMERCE_FE_BASE_PATH: "https://uat.ecommerce.pagopa.it"
     CHECKOUT_OUTCOME_URL: "https://uat.checkout.pagopa.it/esito"
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
     EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "30"
