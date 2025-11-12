@@ -406,7 +406,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                 Tuples.of("sessionToken", webViewSessionToken)
                                                         )
                                                 ).toString()
-                                        )
+                                        ).doOnNext(uri -> log.info("ESITO URI " + uri))
                                                 : Mono.just(
                                                         appendTimestampAsQueryParam(
                                                                 URI.create(checkoutBasePath)
