@@ -372,7 +372,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                                     );
 
-                                            yield gdiCheckPathWithFragment.map(
+                                            yield gdiCheckPathWithFragment.doOnNext(u -> log.info("URL " + u)).map(
                                                     URI::toString
                                             );
 
@@ -419,7 +419,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         );
                                     };
 
-                                    return authUrl.map(
+                                    return authUrl.doOnNext(url -> log.info("AUTH URL " + url)).map(
                                             url -> new AuthorizationOutput(
                                                     orderId,
                                                     url,
