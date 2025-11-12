@@ -73,6 +73,7 @@ class TransactionRequestAuthorizationHandlerTest {
     private static final String CHECKOUT_BASE_PATH = "checkoutUri";
     private static final String CHECKOUT_NPG_GDI_PATH = "http://checkout.pagopa.it/gdi-check";
     private static final String ECOMMERCE_NPG_GDI_PATH = "http://ecommerce.pagopa.it/gdi-check";
+    private static final String ECOMMERCE_ESITO_PATH = "http://ecommerce.pagopa.it/esito";
     private static final String PAYMENT_WALLET_NPG_GDI_PATH = "http://payment-wallet.pagopa.it/gdi-check";
     private static final String CHECKOUT_OUTCOME_PATH = "http://checkout.pagopa.it/esito";
     private static final String NPG_URL_IFRAME = "http://iframe";
@@ -149,8 +150,9 @@ class TransactionRequestAuthorizationHandlerTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 updateTransactionStatusTracerUtils,
                 exclusiveLockDocumentWrapper,
-                PAYMENT_WALLET_NPG_GDI_PATH,
-                ECOMMERCE_NPG_GDI_PATH
+                ECOMMERCE_ESITO_PATH,
+                ECOMMERCE_NPG_GDI_PATH,
+                PAYMENT_WALLET_NPG_GDI_PATH
         );
     }
 
