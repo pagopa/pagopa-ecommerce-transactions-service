@@ -15,7 +15,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local
-      ref: update-env-ecommerce-basepath
+      ref: main
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
