@@ -372,7 +372,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                             )
                                                     );
 
-                                            yield gdiCheckPathWithFragment.doOnNext(u -> log.info("URL " + u)).map(
+                                            yield gdiCheckPathWithFragment.map(
                                                     URI::toString
                                             );
 
@@ -406,7 +406,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                 Tuples.of("sessionToken", webViewSessionToken)
                                                         )
                                                 ).toString()
-                                        ).doOnNext(uri -> log.info("ESITO URI " + uri))
+                                        )
                                                 : Mono.just(
                                                         appendTimestampAsQueryParam(
                                                                 URI.create(checkoutBasePath)
@@ -419,7 +419,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         );
                                     };
 
-                                    return authUrl.doOnNext(url -> log.info("AUTH URL " + url)).map(
+                                    return authUrl.map(
                                             url -> new AuthorizationOutput(
                                                     orderId,
                                                     url,

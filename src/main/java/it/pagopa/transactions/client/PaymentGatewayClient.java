@@ -206,10 +206,6 @@ public class PaymentGatewayClient {
                                                     lang
                                             ).map(fieldsDto -> Tuples.of(orderId, fieldsDto));
                                         } else {
-                                            log.info(
-                                                    "BUILD FORM FOR TRANSACTION " + authorizationData.transactionId()
-                                                            + " URL " + outcomeResultUrl
-                                            );
                                             return npgClient.buildForm(
                                                     UUID.fromString(correlationId),
                                                     merchantUrl,
