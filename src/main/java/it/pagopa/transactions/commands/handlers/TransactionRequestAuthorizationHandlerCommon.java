@@ -23,7 +23,6 @@ import it.pagopa.transactions.repositories.TransactionTemplateWrapper;
 import it.pagopa.transactions.repositories.WalletPaymentInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -42,16 +41,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class TransactionRequestAuthorizationHandlerCommon
         implements CommandHandler<TransactionRequestAuthorizationCommand, Mono<RequestAuthorizationResponseDto>> {
-    private static final String WALLET_GDI_CHECK_PATH = "/ecommerce-fe/gdi-check";
-    private static final String WALLET_ESITO_PATH = "/ecommerce-fe/esito";
-    private static final String WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH = "/gdi-check-ctx-onboarding";
-
     private final PaymentGatewayClient paymentGatewayClient;
 
     private final String checkoutBasePath;
     private final String checkoutNpgGdiUrl;
     private final String checkoutOutcomeUrl;
-    private final String paymentWalletFeBasePath;
+    private final String ecommerceFeEsitoPath;
+    private final String ecommerceFeGdiCheckPath;
+    private final String walletFeContextualOnboardingGdiCheckPath;
 
     private final TransactionTemplateWrapper transactionTemplateWrapper;
 
@@ -67,7 +64,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
             TransactionTemplateWrapper transactionTemplateWrapper,
             JwtTokenIssuerClient jwtTokenIssuerClient,
             int jwtWebviewValidityTimeInSeconds,
-            String paymentWalletFeBasePath
+            String ecommerceFeEsitoPath,
+            String ecommerceFeGdiCheckPath,
+            String walletFeContextualOnboardingGdiCheckPath
+
     ) {
         this.paymentGatewayClient = paymentGatewayClient;
         this.checkoutBasePath = checkoutBasePath;
@@ -76,7 +76,9 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         this.transactionTemplateWrapper = transactionTemplateWrapper;
         this.jwtTokenIssuerClient = jwtTokenIssuerClient;
         this.jwtWebviewValidityTimeInSeconds = jwtWebviewValidityTimeInSeconds;
-        this.paymentWalletFeBasePath = paymentWalletFeBasePath;
+        this.ecommerceFeEsitoPath = ecommerceFeEsitoPath;
+        this.ecommerceFeGdiCheckPath = ecommerceFeGdiCheckPath;
+        this.walletFeContextualOnboardingGdiCheckPath = walletFeContextualOnboardingGdiCheckPath;
     }
 
     /**
@@ -345,7 +347,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             ).map(
                                                     webViewSessionToken -> encodeURIWithFragmentParams(
                                                             URI.create(
-                                                                    getFragmentUri(isContextualOnboarding)
+                                                                    getGdiCheckUri(isContextualOnboarding)
                                                             ),
                                                             List.of(
                                                                     Tuples.of("gdiIframeUrl", base64redirectionUrl),
@@ -371,12 +373,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     );
 
                                             yield gdiCheckPathWithFragment.map(
-                                                    path -> URI
-                                                            .create(
-                                                                    isContextualOnboarding ? paymentWalletFeBasePath
-                                                                            : checkoutBasePath
-                                                            )
-                                                            .resolve(path).toString()
+                                                    URI::toString
                                             );
 
                                         }
@@ -399,7 +396,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                 userId.orElseThrow()
                                         ).map(
                                                 webViewSessionToken -> encodeURIWithFragmentParams(
-                                                        URI.create(checkoutBasePath).resolve(WALLET_ESITO_PATH),
+                                                        URI.create(ecommerceFeEsitoPath),
                                                         List.of(
                                                                 Tuples.of("clientId", clientId),
                                                                 Tuples.of(
@@ -436,10 +433,10 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                 );
     }
 
-    private String getFragmentUri(boolean isContextualOnboarding) {
+    private String getGdiCheckUri(boolean isContextualOnboarding) {
         return isContextualOnboarding
-                ? WALLET_CONTEXTUAL_ONBOARDING_GDI_CHECK_PATH
-                : WALLET_GDI_CHECK_PATH;
+                ? walletFeContextualOnboardingGdiCheckPath
+                : ecommerceFeGdiCheckPath;
     }
 
     /**
