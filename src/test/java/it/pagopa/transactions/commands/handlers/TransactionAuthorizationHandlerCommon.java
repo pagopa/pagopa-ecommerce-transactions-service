@@ -16,7 +16,7 @@ public class TransactionAuthorizationHandlerCommon {
                                                            RequestAuthorizationResponseDto actual,
                                                            RequestAuthorizationResponseDto expected
     ) {
-        assertEquals(actual.getAuthorizationRequestId(), expected.getAuthorizationRequestId());
+        assertEquals(expected.getAuthorizationRequestId(), actual.getAuthorizationRequestId());
         return urlsEqualsWithRandomParam(actual.getAuthorizationUrl(), expected.getAuthorizationUrl());
     }
 }
