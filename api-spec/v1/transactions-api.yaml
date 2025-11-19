@@ -19,7 +19,6 @@ servers:
           enum:
             - api.dev.platform.pagopa.it
             - api.uat.platform.pagopa.it
-
 tags:
   - name: transactions
     description: Api's for performing a transaction

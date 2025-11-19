@@ -23,7 +23,6 @@ servers:
           enum:
             - api.dev.platform.pagopa.it
             - api.uat.platform.pagopa.it
-
 tags:
   - name: b2b - PSP side
     description: Api's to initialize and refund a transaction
