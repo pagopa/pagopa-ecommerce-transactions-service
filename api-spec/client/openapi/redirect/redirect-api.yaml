@@ -28,8 +28,6 @@ tags:
     description: Api's to initialize and refund a transaction
   - name: b2b - pagoPA side
     description: Api's to notify transaction outcome
-servers:
-  - url: https://${host}
 externalDocs:
   url: https://docs.pagopa.it/sanp/prestatore-di-servizi-di-pagamento/modalita-di-integrazione/integrazione-per-strumento-di-pagamento-tramite-redirect
   description: SANP
