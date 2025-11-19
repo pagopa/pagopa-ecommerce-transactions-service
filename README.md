@@ -1,5 +1,8 @@
 # pagopa-ecommerce-transactions-service
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pagopa_pagopa-ecommerce-transactions-service&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=pagopa_pagopa-ecommerce-transactions-service)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pagopa_pagopa-ecommerce-transactions-service&metric=coverage)](https://sonarcloud.io/summary/new_code?id=pagopa_pagopa-ecommerce-transactions-service)
+
 ## What is this?
 
 This is a PagoPA microservice that handles eCommerce transactions' lifecycle and workflow.
@@ -115,6 +118,7 @@ These are all environment variables needed by the application:
 | ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED                    |      | Payment methods handler enabling feature flag                                                                                                                                   | boolean | false   |
 | WALLET_NOTIFICATION_MAX_RETRY_ATTEMPTS                       |      | Wallet POST notification max retry attempts to be done                                                                                                                          | number  | 3       |
 | WALLET_NOTIFICATION_EXPONENTIAL_BACKOFF_RETRY_OFFSET_SECONDS |      | Wallet POST notification exponential backoff retry offset in seconds (ex. is set to 10, retries are done after 10, 20, 30,... seconds up to the max configured attempts         | number  | 10      |
+| PAYMENT_WALLET_FE_BASE_PATH                                  |      | Payment wallet f.e. base path, used in payment with contextual onboarding to perform NPG GDI checks in payment wallet fe domain                                                 | string  |         |
 
 An example configuration of these environment variables is in the `.env.example` file.
 

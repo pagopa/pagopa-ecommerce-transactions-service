@@ -30,7 +30,10 @@ import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.projections.handlers.v2.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.*;
+import it.pagopa.transactions.utils.ConfidentialMailUtils;
+import it.pagopa.transactions.utils.PaymentSessionData;
+import it.pagopa.transactions.utils.TransactionsUtils;
+import it.pagopa.transactions.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -412,7 +415,9 @@ public class TransactionsService {
                     ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18
                     : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
 
-            case BAD_REQUEST, NOT_FOUND -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
+            case BAD_REQUEST ->
+                    "Invalid token".equals(errorDescription) ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17 : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
+            case NOT_FOUND -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
             case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
 
         };

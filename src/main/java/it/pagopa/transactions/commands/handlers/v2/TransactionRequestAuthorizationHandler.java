@@ -93,7 +93,12 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             JwtTokenIssuerClient jwtTokenIssuerClient,
             @Value("${npg.notification.jwt.validity.time}") int jwtWebviewValidityTimeInSeconds,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
-            ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapperr
+            ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper,
+            @Value("${ecommerce.fe.esito.path}") String ecommerceFeEsitoPath,
+            @Value("${ecommerce.fe.gdicheck.path}") String ecommerceFeGdiCheckPath,
+            @Value(
+                "${payment-wallet.fe.contextualonboarding.gdicheck.path}"
+            ) String walletFeContextualOnboardingGdiCheckPath
     ) {
         super(
                 paymentGatewayClient,
@@ -102,7 +107,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 checkoutOutcomeUrl,
                 transactionTemplateWrapper,
                 jwtTokenIssuerClient,
-                jwtWebviewValidityTimeInSeconds
+                jwtWebviewValidityTimeInSeconds,
+                ecommerceFeEsitoPath,
+                ecommerceFeGdiCheckPath,
+                walletFeContextualOnboardingGdiCheckPath
         );
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
@@ -113,7 +121,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.authRequestEventVisibilityTimeoutSeconds = authRequestEventVisibilityTimeoutSeconds;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
-        this.reactiveExclusiveLockDocumentWrapper = reactiveExclusiveLockDocumentWrapperr;
+        this.reactiveExclusiveLockDocumentWrapper = reactiveExclusiveLockDocumentWrapper;
     }
 
     @Override
