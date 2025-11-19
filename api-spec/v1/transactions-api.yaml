@@ -5,6 +5,21 @@ info:
   description: This microservice handles transaction's lifecycle and workflow.
   contact:
     name: pagoPA - Touchpoints team
+    url: https://www.pagopa.it/
+    email: info@pagopa.it
+  license:
+    name: EUPL-1.2
+    url: https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+servers:
+  - url: https://${host}
+    variables:
+      host:
+          description: The hostname of the API server
+          default: api.dev.platform.pagopa.it
+          enum:
+            - api.dev.platform.pagopa.it
+            - api.uat.platform.pagopa.it
+
 tags:
   - name: transactions
     description: Api's for performing a transaction
