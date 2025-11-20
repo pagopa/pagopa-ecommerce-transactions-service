@@ -84,8 +84,8 @@ stages:
               ENV_FILE: "api-tests/dev.envs.json"
               TEST_FILE_PREFIX: "dev"
 
-  - stage: "API_DEV_test_IO: pay cards guest"
-    displayName: 'Running API test for IO on dev app'
+  - stage: "API_DEV_test_IO_pay_cards_guest"
+    displayName: 'Running API test for IO on dev app: pay cards guest'
     dependsOn: []
     jobs:
       - job: newman_api_test
@@ -97,8 +97,8 @@ stages:
               ENV_FILE: "src/api-tests/envs/ecommerce-for-io-dev-payguest-cards.envs.json"
               TEST_FILE_PREFIX: "dev"
 
-  - stage: "API_DEV_test_IO: pay by wallet CARDS"
-    displayName: 'Running API test for IO on dev app'
+  - stage: "API_DEV_test_IO_pay_by_wallet_CARDS"
+    displayName: 'Running API test for IO on dev app: pay by card wallet'
     dependsOn: [ ]
     jobs:
       - job: newman_api_test
@@ -110,8 +110,8 @@ stages:
               ENV_FILE: "src/api-tests/envs/ecommerce-for-io-dev-paywallet-cards.envs.json"
               TEST_FILE_PREFIX: "dev"
 
-  - stage: "API_DEV_test_IO: pay by wallet PAYPAL"
-    displayName: 'Running API test for IO on dev app'
+  - stage: "API_DEV_test_IO_pay_by_wallet_PAYPAL"
+    displayName: 'Running API test for IO on dev app: pay by paypal wallet'
     dependsOn: [ ]
     jobs:
       - job: newman_api_test
@@ -123,8 +123,8 @@ stages:
               ENV_FILE: "src/api-tests/envs/ecommerce-for-io-dev-paywallet-paypal.envs.json"
               TEST_FILE_PREFIX: "dev"
 
-  - stage: "API_DEV_test_IO: pay guest PAYPAL"
-    displayName: 'Running API test for IO on dev app'
+  - stage: "API_DEV_test_IO_pay_guest_PAYPAL"
+    displayName: 'Running API test for IO on dev app: pay paypal guest'
     dependsOn: [ ]
     jobs:
       - job: newman_api_test
@@ -136,8 +136,8 @@ stages:
               ENV_FILE: "src/api-tests/envs/ecommerce-for-io-dev-payguest-paypal.envs.json"
               TEST_FILE_PREFIX: "dev"
 
-  - stage: "API_DEV_test_IO: pay guest BANCOMATPAY"
-    displayName: 'Running API test for IO on dev app'
+  - stage: "API_DEV_test_IO_pay_guest_BANCOMATPAY"
+    displayName: 'Running API test for IO on dev app: pay bancomatpay guest'
     dependsOn: [ ]
     jobs:
       - job: newman_api_test
