@@ -62,7 +62,7 @@ resources:
     - repository: pagopaEcommerceTests
       type: github
       name: pagopa/pagopa-ecommerce-tests
-      ref: main
+      ref: CHK-4618-integration-tests-app-io
       endpoint: 'io-azure-devops-github-ro'
 
 pool:
