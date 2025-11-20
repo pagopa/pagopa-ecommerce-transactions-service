@@ -145,12 +145,10 @@ stages:
     jobs:
       - job: newman_api_test
         steps:
-          - checkout: pagopaEcommerceTests
-          - template: azure-templates/api-tests.yml
+          - template: .devops/azure-templates/api-tests-ecommerce-for-io.yaml@pagopaEcommerceTests
             parameters:
-              COLLECTION_TEST_FILE: "api-tests/ecommerce-for-io/ecommerce-for-io-payguest-cards.postman_collection.json"
-              ENV_FILE: "api-tests/envs/ecommerce-for-io-dev-payguest-cards.env.json"
-              TEST_FILE_PREFIX: "dev"
+              ENVIRONMENT: DEV
+              CHECKOUT_RESOURCE_REPO_NAME: pagopaEcommerceTests
 
   - stage: "E2E_Tests_Checkout_DEV_environment"
     displayName: 'Running E2E test on dev app'
