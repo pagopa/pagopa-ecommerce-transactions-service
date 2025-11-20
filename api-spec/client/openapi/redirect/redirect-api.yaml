@@ -49,12 +49,26 @@ paths:
       responses:
         '200':
           description: Redirect url response
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RedirectUrlResponse'
         '400':
           description: Formally invalid input
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
           content:
             application/json:
               schema:
@@ -65,6 +79,13 @@ paths:
                 idTransaction: 3fa85f6457174562b3fc2c963f66afa6
         '401':
           description: Unauthorized
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
           content:
             application/json:
               schema:
@@ -83,6 +104,8 @@ paths:
                 status: 500
                 detail: There was an error processing the request
                 idTransaction: 3fa85f6457174562b3fc2c963f66afa6
+security:
+  - PspApiKeyAuth: []
 components:
   schemas:
     ProblemJson:
@@ -289,3 +312,20 @@ components:
       in: header
       name: x-api-key
       description: PSP api key
+  headers:
+    RateLimitLimit:
+      description: The maximum number of requests allowed in the current time window.
+      schema:
+        type: integer
+    RateLimitRemaining:
+      description: The number of requests remaining in the current time window.
+      schema:
+        type: integer
+    RateLimitReset:
+      description: Seconds until the rate limit resets.
+      schema:
+        type: integer
+    RateLimitRetryAfter:
+      description: Seconds to wait before retrying after being rate limited.
+      schema:
+        type: integer
