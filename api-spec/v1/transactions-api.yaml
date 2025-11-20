@@ -79,6 +79,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemJson'
+        '401':
+          description: Unauthorized
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Node cannot find the services needed to process this request in its configuration. This error is most likely to occur when submitting a non-existing RPT id.
           headers:
@@ -120,6 +133,12 @@ paths:
               $ref: '#/components/headers/RateLimitReset'
             Retry-After:
               $ref: '#/components/headers/RateLimitRetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -187,6 +206,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           headers:
@@ -213,6 +245,12 @@ paths:
               $ref: '#/components/headers/RateLimitReset'
             Retry-After:
               $ref: '#/components/headers/RateLimitRetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -247,6 +285,19 @@ paths:
               $ref: '#/components/headers/RateLimitReset'
             Retry-After:
               $ref: '#/components/headers/RateLimitRetryAfter'
+        '401':
+          description: Unauthorized
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           headers:
@@ -349,6 +400,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           headers:
@@ -461,6 +525,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           headers:
@@ -535,6 +612,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           headers:
@@ -576,6 +666,12 @@ paths:
               $ref: '#/components/headers/RateLimitReset'
             Retry-After:
               $ref: '#/components/headers/RateLimitRetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -631,6 +727,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           headers:
