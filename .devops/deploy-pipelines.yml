@@ -145,7 +145,7 @@ stages:
     jobs:
       - job: newman_api_test
         steps:
-          - template: .devops/api-tests-ecommerce-for-io.yaml@pagopaEcommerceTests
+          - template: .devops/azure-templates/api-tests-ecommerce-for-io.yaml@pagopaEcommerceTests
             parameters:
               ENVIRONMENT: DEV
               CHECKOUT_RESOURCE_REPO_NAME: pagopaEcommerceTests
