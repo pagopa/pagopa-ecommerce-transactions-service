@@ -73,7 +73,6 @@ stages:
 
   - stage: "API_DEV_test_checkout"
     displayName: 'Running API test for checkout on dev app'
-    dependsOn: Deploy_for_DEV
     jobs:
       - job: newman_api_test
         steps:
@@ -86,7 +85,6 @@ stages:
 
   - stage: "API_DEV_test_IO"
     displayName: 'Running API test for IO on dev app'
-    dependsOn: Deploy_for_DEV
     jobs:
       - job: newman_api_test
         steps:
@@ -101,7 +99,6 @@ stages:
     displayName: 'Running E2E test on dev app'
     pool:
       vmImage: 'ubuntu-latest'
-    dependsOn: Deploy_for_DEV
     jobs:
       - job: e2e_tests
         steps:
