@@ -149,7 +149,7 @@ stages:
           - template: azure-templates/api-tests.yml
             parameters:
               COLLECTION_TEST_FILE: "api-tests/ecommerce-for-io/ecommerce-for-io-payguest-cards.postman_collection.json"
-              ENV_FILE: "api-tests/envs/dev.envs.json"
+              ENV_FILE: "api-tests/envs/ecommerce-for-io-dev-payguest-cards.env.json"
               TEST_FILE_PREFIX: "dev"
 
   - stage: "E2E_Tests_Checkout_DEV_environment"
