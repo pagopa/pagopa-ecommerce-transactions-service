@@ -141,7 +141,7 @@ stages:
 
   - stage: "API_DEV_test_IO_contextual_onboarding"
     displayName: 'Running API test for IO on dev app: contextual onboarding'
-    dependsOn: []
+    dependsOn: Deploy_for_DEV
     jobs:
       - job: newman_api_test
         steps:
