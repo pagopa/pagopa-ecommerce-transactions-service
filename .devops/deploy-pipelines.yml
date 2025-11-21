@@ -71,9 +71,64 @@ pool:
 # --- START Deploy DEV --- #
 stages:
 
+  - stage: 'Build_for_DEV'
+    displayName: 'Build for DEV'
+    condition: and(succeeded(), not(${{ parameters.SKIP_BUILD }}), eq(${{parameters.DEV_DEPLOY}}, true))
+    jobs:
+      - job: Build_docker
+        displayName: Build docker with Build.SourceVersion as TAG
+        steps:
+          - task: Bash@3
+            displayName: "write github token file"
+            inputs:
+              targetType: "inline"
+              script: |
+                echo "$(GITHUB_RO_TOKEN)" > ./github_ro_token
+          - template: templates/docker-release/template.yaml@pagopaCommons
+            parameters:
+              CONTAINER_REGISTRY_SERVICE_CONN: $(DEV_CONTAINER_REGISTRY_SERVICE_CONN)
+              CONTAINER_REGISTRY_FQDN: $(DEV_CONTAINER_NAMESPACE)
+              DOCKER_IMAGE_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
+              DOCKER_IMAGE_TAG: $(Build.SourceVersion)
+              FORCE_REPLACE_DOCKER_IMAGE: ${{ parameters.FORCE_REPLACE_DOCKER_IMAGE }}
+              DOCKER_BUILD_ARGS: --secret id=GITHUB_TOKEN,src=./github_ro_token
+
+  - stage: 'Deploy_for_DEV'
+    displayName: 'Deploy DEV'
+    dependsOn: Build_for_DEV
+    condition: or(succeeded(), ${{ parameters.SKIP_BUILD }}, eq(${{parameters.DEV_DEPLOY}}, true) )
+    jobs:
+      - deployment: "deploy"
+        environment: 'DEV'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                  displayName: "Checkout"
+                - task: Bash@3
+                  name: update_chart_version
+                  displayName: 'Setup helm microservice chart'
+                  inputs:
+                    targetType: "inline"
+                    script: |
+                      helm repo add microservice-chart https://pagopa.github.io/aks-microservice-chart-blueprint
+                      helm dep build helm
+                - template: azure-templates/helm-microservice-chart-deploy.yml
+                  parameters:
+                    DO_DEPLOY: true
+                    DO_BLUE_GREEN_DEPLOY: false
+                    ENV: 'DEV'
+                    KUBERNETES_SERVICE_CONN: $(DEV_KUBERNETES_SERVICE_CONN)
+                    NAMESPACE: ecommerce
+                    APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
+                    VALUE_FILE: "helm/values-dev.yaml"
+                    GREEN_VERSION: $(Build.SourceVersion)
+                    BLUE_VERSION: $(Build.SourceVersion)
+
   - stage: "API_DEV_test_checkout"
     displayName: 'Running API test for checkout on dev app'
-    dependsOn: []
+    dependsOn: Deploy_for_DEV
     jobs:
       - job: newman_api_test
         steps:
@@ -86,7 +141,7 @@ stages:
 
   - stage: "API_DEV_test_IO_pay_cards_guest"
     displayName: 'Running API test for IO on dev app: pay cards guest'
-    dependsOn: []
+    dependsOn: Deploy_for_DEV
     jobs:
       - job: newman_api_test
         steps:
@@ -99,7 +154,7 @@ stages:
 
   - stage: "API_DEV_test_IO_pay_by_wallet_CARDS"
     displayName: 'Running API test for IO on dev app: pay by card wallet'
-    dependsOn: [ ]
+    dependsOn: API_DEV_test_IO_pay_cards_guest
     jobs:
       - job: newman_api_test
         steps:
@@ -112,7 +167,7 @@ stages:
 
   - stage: "API_DEV_test_IO_pay_by_wallet_PAYPAL"
     displayName: 'Running API test for IO on dev app: pay by paypal wallet'
-    dependsOn: [ ]
+    dependsOn: API_DEV_test_IO_pay_by_wallet_CARDS
     jobs:
       - job: newman_api_test
         steps:
@@ -125,7 +180,7 @@ stages:
 
   - stage: "API_DEV_test_IO_pay_guest_PAYPAL"
     displayName: 'Running API test for IO on dev app: pay paypal guest'
-    dependsOn: [ ]
+    dependsOn: API_DEV_test_IO_pay_by_wallet_PAYPAL
     jobs:
       - job: newman_api_test
         steps:
@@ -138,7 +193,7 @@ stages:
 
   - stage: "API_DEV_test_IO_pay_guest_BANCOMATPAY"
     displayName: 'Running API test for IO on dev app: pay bancomatpay guest'
-    dependsOn: [ ]
+    dependsOn: API_DEV_test_IO_pay_guest_PAYPAL
     jobs:
       - job: newman_api_test
         steps:
@@ -153,7 +208,7 @@ stages:
     displayName: 'Running E2E test on dev app'
     pool:
       vmImage: 'ubuntu-latest'
-    dependsOn: []
+    dependsOn: Deploy_for_DEV
     jobs:
       - job: e2e_tests
         steps:
