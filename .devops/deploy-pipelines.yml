@@ -425,6 +425,71 @@ stages:
               ENV_FILE: "api-tests/uat.envs.json"
               TEST_FILE_PREFIX: "green-uat"
 
+  - stage: "API_UAT_test_IO_pay_cards_guest"
+    displayName: 'Running API test for IO on uat app: pay cards guest'
+    dependsOn: Deploy_UAT_Green
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaEcommerceTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              COLLECTION_TEST_FILE: "src/api-tests/ecommerce-for-io/ecommerce-for-io-payguest-cards.postman_collection.json"
+              ENV_FILE: "src/api-tests/envs/ecommerce-for-io-uat-payguest-cards.envs.json"
+              TEST_FILE_PREFIX: "uat"
+
+  - stage: "API_UAT_test_IO_pay_by_wallet_CARDS"
+    displayName: 'Running API test for IO on uat app: pay by card wallet'
+    dependsOn: API_UAT_test_IO_pay_cards_guest
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaEcommerceTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              COLLECTION_TEST_FILE: "src/api-tests/ecommerce-for-io/ecommerce-for-io-paywallet.postman_collection.json"
+              ENV_FILE: "src/api-tests/envs/ecommerce-for-io-uat-paywallet-cards.envs.json"
+              TEST_FILE_PREFIX: "uat"
+
+  - stage: "API_UAT_test_IO_pay_by_wallet_PAYPAL"
+    displayName: 'Running API test for IO on dev app: pay by paypal wallet'
+    dependsOn: API_UAT_test_IO_pay_by_wallet_CARDS
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaEcommerceTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              COLLECTION_TEST_FILE: "src/api-tests/ecommerce-for-io/ecommerce-for-io-paywallet.postman_collection.json"
+              ENV_FILE: "src/api-tests/envs/ecommerce-for-io-uat-paywallet-paypal.envs.json"
+              TEST_FILE_PREFIX: "uat"
+
+  - stage: "API_UAT_test_IO_pay_guest_PAYPAL"
+    displayName: 'Running API test for IO on uat app: pay paypal guest'
+    dependsOn: API_UAT_test_IO_pay_by_wallet_PAYPAL
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaEcommerceTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              COLLECTION_TEST_FILE: "src/api-tests/ecommerce-for-io/ecommerce-for-io-payguest.postman_collection.json"
+              ENV_FILE: "src/api-tests/envs/ecommerce-for-io-uat-payguest-paypal.envs.json"
+              TEST_FILE_PREFIX: "uat"
+
+  - stage: "API_UAT_test_IO_pay_guest_BANCOMATPAY"
+    displayName: 'Running API test for IO on uat app: pay bancomatpay guest'
+    dependsOn: API_UAT_test_IO_pay_guest_PAYPAL
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaEcommerceTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              COLLECTION_TEST_FILE: "src/api-tests/ecommerce-for-io/ecommerce-for-io-payguest.postman_collection.json"
+              ENV_FILE: "src/api-tests/envs/ecommerce-for-io-uat-payguest-bancomatpay.envs.json"
+              TEST_FILE_PREFIX: "uat"
+
   - stage: "E2E_Tests_Checkout_UAT_environment"
     displayName: 'Running E2E test on uat app'
     pool:
