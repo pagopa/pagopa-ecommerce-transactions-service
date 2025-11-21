@@ -62,7 +62,7 @@ resources:
     - repository: pagopaEcommerceTests
       type: github
       name: pagopa/pagopa-ecommerce-tests
-      ref: main
+      ref: CHK-4617-add-onboarding-contextual-integration-tests
       endpoint: 'io-azure-devops-github-ro'
 
 pool:
@@ -139,9 +139,22 @@ stages:
               ENV_FILE: "api-tests/dev.envs.json"
               TEST_FILE_PREFIX: "dev"
 
+  - stage: "API_DEV_test_IO_contextual_onboarding"
+    displayName: 'Running API test for IO on dev app: contextual onboarding'
+    dependsOn: Deploy_for_DEV
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaEcommerceTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              COLLECTION_TEST_FILE: "src/api-tests/ecommerce-for-io/ecommerce-for-io-contextual-onboarding.postman_collection.json"
+              ENV_FILE: "src/api-tests/envs/ecommerce-for-io-dev-contextual-onboarding-cards.envs.json"
+              TEST_FILE_PREFIX: "dev"
+
   - stage: "API_DEV_test_IO_pay_cards_guest"
     displayName: 'Running API test for IO on dev app: pay cards guest'
-    dependsOn: Deploy_for_DEV
+    dependsOn: API_DEV_test_IO_contextual_onboarding
     jobs:
       - job: newman_api_test
         steps:
@@ -425,9 +438,22 @@ stages:
               ENV_FILE: "api-tests/uat.envs.json"
               TEST_FILE_PREFIX: "green-uat"
 
+  - stage: "API_UAT_test_IO_contextual_onboarding"
+    displayName: 'Running API test for IO on dev app: contextual onboarding'
+    dependsOn: Deploy_UAT_Green
+    jobs:
+      - job: newman_api_test
+        steps:
+          - checkout: pagopaEcommerceTests
+          - template: azure-templates/api-tests.yml
+            parameters:
+              COLLECTION_TEST_FILE: "src/api-tests/ecommerce-for-io/ecommerce-for-io-contextual-onboarding.postman_collection.json"
+              ENV_FILE: "src/api-tests/envs/ecommerce-for-io-uat-contextual-onboarding-cards.envs.json"
+              TEST_FILE_PREFIX: "uat"
+
   - stage: "API_UAT_test_IO_pay_cards_guest"
     displayName: 'Running API test for IO on uat app: pay cards guest'
-    dependsOn: Deploy_UAT_Green
+    dependsOn: API_UAT_test_IO_contextual_onboarding
     jobs:
       - job: newman_api_test
         steps:
