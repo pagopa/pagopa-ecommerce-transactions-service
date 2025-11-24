@@ -272,6 +272,7 @@ components:
               paymentToken: "paymentToken1"
               reason: "reason1"
               amount: 600
+              isAllCCP: false
               transferList:
                 - paFiscalCode: "77777777777"
                   digitalStamp: false
@@ -285,6 +286,7 @@ components:
               paymentToken: "paymentToken2"
               reason: "reason2"
               amount: 400
+              isAllCCP: false
               transferList:
                 - paFiscalCode: "44444444444"
                   digitalStamp: true
