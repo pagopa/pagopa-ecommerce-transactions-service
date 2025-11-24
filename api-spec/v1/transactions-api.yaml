@@ -328,6 +328,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemJson'
+        '429':
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+            Retry-After:
+              $ref: '#/components/headers/RateLimitRetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '500':
           description: Internal server error
           content:
@@ -553,6 +568,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '429':
+          description: Too many requests
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+            Retry-After:
+              $ref: '#/components/headers/RateLimitRetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '500':
           description: Internal server error
           content:
@@ -893,6 +923,7 @@ components:
               paymentToken: "paymentToken1"
               reason: "reason1"
               amount: 600
+              isAllCCP: false
               transferList:
                 - paFiscalCode: "77777777777"
                   digitalStamp: false
@@ -906,6 +937,7 @@ components:
               paymentToken: "paymentToken2"
               reason: "reason2"
               amount: 400
+              isAllCCP: false
               transferList:
                 - paFiscalCode: "44444444444"
                   digitalStamp: true
