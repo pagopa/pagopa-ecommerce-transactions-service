@@ -3,6 +3,7 @@ package it.pagopa.transactions.controllers.v1;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.opentelemetry.api.common.Attributes;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
@@ -17,6 +18,7 @@ import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
+import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Assertions;
@@ -1639,6 +1641,17 @@ class TransactionsControllerTest {
         Assertions.assertNotNull(responseEntity);
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(response, responseEntity.getBody());
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        response.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transactionId,
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        response.getIsFinalStatus().toString()
+                )
+        );
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
