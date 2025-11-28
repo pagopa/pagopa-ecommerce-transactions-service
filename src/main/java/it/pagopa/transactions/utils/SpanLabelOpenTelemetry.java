@@ -29,7 +29,7 @@ public class SpanLabelOpenTelemetry {
             .stringKey("getTransactionsOutcomes.outcome");
 
     public static final AttributeKey<String> GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY = AttributeKey
-            .stringKey("getTransactionsOutcomes.ifFinalStatus");
+            .stringKey("getTransactionsOutcomes.isFinalStatus");
 
     public static final AttributeKey<String> GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY = AttributeKey
             .stringKey("getTransactionsOutcomes.transactionId");
