@@ -1,7 +1,6 @@
 package it.pagopa.transactions.controllers.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
@@ -439,20 +438,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                   ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionOutcome(transactionId, xUserId)
-                .doOnNext(t -> {
-                    log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId);
-                    openTelemetryUtils.addSpanWithAttributes(
-                            SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
-                            Attributes.of(
-                                    SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
-                                    t.getOutcome().toString(),
-                                    SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
-                                    transactionId,
-                                    SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
-                                    t.getIsFinalStatus().toString()
-                            )
-                    );
-                })
+                .doOnNext(t -> log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId))
                 .map(ResponseEntity::ok)
                 .contextWrite(
                         context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
