@@ -779,7 +779,8 @@ class TransactionServiceTests {
                 new HashMap<>(),
                 new HashSet<>(),
                 new HashSet<>(),
-                true
+                true,
+                openTelemetryUtils
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()

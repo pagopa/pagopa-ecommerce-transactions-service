@@ -34,4 +34,7 @@ public class SpanLabelOpenTelemetry {
     public static final AttributeKey<String> GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY = AttributeKey
             .stringKey("getTransactionsOutcomes.transactionId");
 
+    public static final AttributeKey<String> GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("getTransactionsOutcomes.transactionStatus");
+
 }
