@@ -1,5 +1,6 @@
 package it.pagopa.transactions.services.v1;
 
+import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
@@ -21,10 +22,7 @@ import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
-import it.pagopa.transactions.utils.AuthRequestDataUtils;
-import it.pagopa.transactions.utils.ConfidentialMailUtils;
-import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
+import it.pagopa.transactions.utils.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -485,7 +483,8 @@ class TransactionServiceTests {
                 new HashMap<>(),
                 new HashSet<>(),
                 new HashSet<>(),
-                true
+                true,
+                openTelemetryUtils
         );
 
         Transaction transaction = TransactionTestUtils.transactionDocument(
@@ -673,15 +672,23 @@ class TransactionServiceTests {
                 .isFinalStatus(true);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     /**
@@ -860,15 +867,23 @@ class TransactionServiceTests {
         transaction.setSendPaymentResultOutcome(sendPaymentResultOutcomeEnum);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     private static Stream<Arguments> getTransactionStatusForFinalOutcomesForGatewayOutcomeConditionedLogic() {
@@ -1630,15 +1645,23 @@ class TransactionServiceTests {
         transaction.setUserId(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     private static Stream<Arguments> getTransactionStatusForFinalOutcomesForGatewayOutcomeConditionedLogicForDeniedStateAndSpecificErrorCode() {
@@ -1952,15 +1975,23 @@ class TransactionServiceTests {
         transaction.setUserId(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     private static Stream<Arguments> getTransactionStatusForFinalOutcomesForExpiredState() {
@@ -2140,15 +2171,24 @@ class TransactionServiceTests {
                 .isFinalStatus(true);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
 
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     @Test
@@ -2164,15 +2204,23 @@ class TransactionServiceTests {
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     @Test
@@ -2188,15 +2236,23 @@ class TransactionServiceTests {
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     @Test
@@ -2212,15 +2268,23 @@ class TransactionServiceTests {
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     @Test
@@ -2236,15 +2300,23 @@ class TransactionServiceTests {
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     static Stream<Arguments> getAllGatewaysAndAuthorizationStatus() {
@@ -2277,15 +2349,23 @@ class TransactionServiceTests {
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     @Test
@@ -2302,15 +2382,23 @@ class TransactionServiceTests {
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(false);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     @ParameterizedTest
@@ -2337,15 +2425,23 @@ class TransactionServiceTests {
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(true);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     @ParameterizedTest
@@ -2372,15 +2468,23 @@ class TransactionServiceTests {
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
                 .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(false);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                expected,
-                transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
-        );
-
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectNext(expected)
                 .verifyComplete();
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        expected.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        expected.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
     }
 
     static Stream<Arguments> getAllFinalStatuses() {
@@ -2419,9 +2523,23 @@ class TransactionServiceTests {
         transaction.setUserId(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        TransactionOutcomeInfoDto response = transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block();
         assertTrue(
-                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                Objects.requireNonNull(response)
                         .getIsFinalStatus()
+        );
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        response.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        "true",
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
         );
     }
 
@@ -2440,9 +2558,23 @@ class TransactionServiceTests {
         transaction.setUserId(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        TransactionOutcomeInfoDto response = transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block();
         assertFalse(
-                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                Objects.requireNonNull(response)
                         .getIsFinalStatus()
+        );
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        response.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        "false",
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
         );
     }
 
@@ -2461,9 +2593,23 @@ class TransactionServiceTests {
         transaction.setUserId(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        TransactionOutcomeInfoDto response = transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block();
         assertFalse(
-                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                Objects.requireNonNull(response)
                         .getIsFinalStatus()
+        );
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        response.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        "false",
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
         );
     }
 
@@ -2482,10 +2628,25 @@ class TransactionServiceTests {
         transaction.setUserId(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        TransactionOutcomeInfoDto response = transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block();
         assertTrue(
-                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                Objects.requireNonNull(response)
                         .getIsFinalStatus()
         );
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        response.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        "true",
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
+        );
+
     }
 
     @ParameterizedTest
@@ -2503,9 +2664,23 @@ class TransactionServiceTests {
         transaction.setUserId(null);
 
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
+        TransactionOutcomeInfoDto response = transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block();
         assertTrue(
-                Objects.requireNonNull(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block())
+                Objects.requireNonNull(response)
                         .getIsFinalStatus()
+        );
+        verify(openTelemetryUtils, times(1)).addSpanWithAttributes(
+                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                Attributes.of(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                        response.getOutcome().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                        transaction.getTransactionId(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                        response.getIsFinalStatus().toString(),
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                        transaction.getStatus().toString()
+                )
         );
     }
 
