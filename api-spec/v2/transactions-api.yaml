@@ -15,11 +15,11 @@ servers:
     variables:
       host:
           description: The hostname of the API server
-          default: api.platform.pagopa.it
+          default: weuprod.ecommerce.internal.platform.pagopa.it
           enum:
-            - api.platform.pagopa.it
-            - api.dev.platform.pagopa.it
-            - api.uat.platform.pagopa.it
+            - weudev.ecommerce.internal.dev.platform.pagopa.it
+            - weuuat.ecommerce.internal.uat.platform.pagopa.it
+            - weuprod.ecommerce.internal.platform.pagopa.it
 tags:
   - name: transactions
     description: Api's for performing a transaction
@@ -63,43 +63,18 @@ paths:
       responses:
         '200':
           description: New transaction successfully created
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NewTransactionResponse'
         '400':
           description: Formally invalid input
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemJson'
         '401':
           description: Unauthorized
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
           content:
             application/json:
               schema:
@@ -109,15 +84,6 @@ paths:
                 detail: Unauthorized
         '404':
           description: Node cannot find the services needed to process this request in its configuration. This error is most likely to occur when submitting a non-existing RPT id.
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
@@ -126,15 +92,6 @@ paths:
                   - $ref: '#/components/schemas/ValidationFaultPaymentUnknownProblemJson'
         '409':
           description: Conflict on payment status
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
@@ -143,21 +100,6 @@ paths:
                   - $ref: '#/components/schemas/PaymentExpiredStatusFaultPaymentProblemJson'
                   - $ref: '#/components/schemas/PaymentCanceledStatusFaultPaymentProblemJson'
                   - $ref: '#/components/schemas/PaymentDuplicatedStatusFaultPaymentProblemJson'
-        '429':
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemJson'
         '500':
           description: Internal server error
           content:
@@ -201,43 +143,18 @@ paths:
       responses:
         '200':
           description: Transaction data successfully retrieved
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/TransactionInfo"
         '400':
           description: Invalid transaction id
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
         '401':
           description: Unauthorized
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
           content:
             application/json:
               schema:
@@ -245,32 +162,8 @@ paths:
               example:
                 status: 401
                 detail: Unauthorized
-        '429':
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
@@ -300,43 +193,18 @@ paths:
       responses:
         '200':
           description: Transaction authorization request successfully updated
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UpdateAuthorizationResponse"
         '400':
           description: Invalid transaction id
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
         '401':
           description: Unauthorized
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
           content:
             application/json:
               schema:
@@ -346,34 +214,10 @@ paths:
                 detail: Unauthorized
         '404':
           description: Transaction not found
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
-        '429':
-          description: Too many requests
-          headers:
-            X-RateLimit-Limit:
-              $ref: '#/components/headers/RateLimitLimit'
-            X-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-            X-RateLimit-Reset:
-              $ref: '#/components/headers/RateLimitReset'
-            Retry-After:
-              $ref: '#/components/headers/RateLimitRetryAfter'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProblemJson'
         '500':
           description: Internal server error
           content:
@@ -1220,20 +1064,3 @@ components:
       in: header
       name: x-api-key
       description: api key authentication
-  headers:
-    RateLimitLimit:
-      description: The maximum number of requests allowed in the current time window.
-      schema:
-        type: integer
-    RateLimitRemaining:
-      description: The number of requests remaining in the current time window.
-      schema:
-        type: integer
-    RateLimitReset:
-      description: Seconds until the rate limit resets.
-      schema:
-        type: integer
-    RateLimitRetryAfter:
-      description: Seconds to wait before retrying after being rate limited.
-      schema:
-        type: integer
