@@ -11,7 +11,7 @@ resources:
   repositories:
     - repository: pagopaEcommerceLocal
       type: github
-      name: pagopa/pagopa-ecommerce-local 
+      name: pagopa/pagopa-ecommerce-local
       ref: main
       endpoint: 'io-azure-devops-github-ro'
 
@@ -46,10 +46,34 @@ stages:
               docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite &
           displayName: Run azurite to test Service - Storage integration
 
+        # necessary step to make the authentication work
+        # removing it will cause the pipeline to fail when cache gets emptied
+        - task: Bash@3
+          displayName: 'Create Maven settings.xml'
+          inputs:
+            targetType: 'inline'
+            script: |
+              mkdir -p $(Pipeline.Workspace)/.m2
+              cat > $(Pipeline.Workspace)/.m2/settings.xml << EOF
+              <?xml version="1.0" encoding="UTF-8"?>
+              <settings>
+                <servers>
+                  <server>
+                    <id>github</id>
+                    <username>token</username>
+                    <password>${GITHUB_TOKEN}</password>
+                  </server>
+                </servers>
+              </settings>
+              EOF
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
+
         - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
             mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
             javaHomeOption: 'JDKVersion'
             jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
@@ -57,11 +81,15 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean validate'
             sonarQubeRunAnalysis: false
+          displayName: 'Maven clean validate'
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
         - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
             mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
             javaHomeOption: 'JDKVersion'
             jdkVersionOption: '21'
             jdkArchitectureOption: 'x64'
@@ -69,6 +97,9 @@ stages:
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
             goals: 'clean verify'
             sonarQubeRunAnalysis: true
+          displayName: 'Maven clean verify'
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
         - task: SonarCloudPublish@3
           displayName: 'Publish SonarCloud results on build summary'
@@ -94,6 +125,8 @@ stages:
           displayName: 'Change transaction branch name ecommerce-local .env'
         - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik azurite-init pagopa-psp-mock pagopa-jwt-issuer-mock -d
           displayName: 'Run app with docker-compose'
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
         - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
           displayName: 'Health check'

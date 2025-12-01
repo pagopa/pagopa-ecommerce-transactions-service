@@ -12,6 +12,7 @@ parameters:
     values:
       - False
       - True
+
   - name: 'UAT_PROD_DEPLOY'
     displayName: 'Deploy on UAT environment with PROD promotion'
     type: boolean
@@ -19,6 +20,7 @@ parameters:
     values:
       - False
       - True
+
   - name: 'SKIP_BUILD'
     displayName: 'Check this flag to skip build and proceed to deploy a docker image previously built'
     type: boolean
@@ -26,6 +28,7 @@ parameters:
     values:
       - False
       - True
+
   - name: "FORCE_REPLACE_DOCKER_IMAGE"
     displayName: "Force the existing docker image to be replaced (latest tag)"
     type: boolean
@@ -33,6 +36,7 @@ parameters:
     values:
       - False
       - True
+
   - name: "UAT_SKIP_BLUE_DEPLOYMENT"
     displayName: "Skip blue/green UAT deployment strategy: activating this parameter no blue version will be created and the pipeline proceed building and deploy artifact green version"
     type: boolean
@@ -40,6 +44,7 @@ parameters:
     values:
       - False
       - True
+
   - name: "PROD_SKIP_BLUE_DEPLOYMENT"
     displayName: "Skip blue/green PROD deployment strategy: activating this parameter no blue version will be created and the pipeline proceed building and deploy artifact green version"
     type: boolean
