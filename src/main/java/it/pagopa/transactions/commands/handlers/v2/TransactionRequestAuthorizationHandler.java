@@ -411,5 +411,4 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
         return redirectionAuthRequestPipeline(authorizationData, touchpoint, userId);
     }
-
 }
