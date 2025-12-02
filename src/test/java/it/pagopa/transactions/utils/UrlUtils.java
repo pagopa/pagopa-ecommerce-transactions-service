@@ -18,14 +18,14 @@ public class UrlUtils {
         URI expectedUri = URI.create(expected);
 
         // Compare full path
-        assertEquals(actualUri.getHost(), expectedUri.getHost());
-        assertEquals(actualUri.getPort(), expectedUri.getPort());
-        assertEquals(actualUri.getPath(), expectedUri.getPath());
+        assertEquals(expectedUri.getHost(), actualUri.getHost());
+        assertEquals(expectedUri.getPort(), actualUri.getPort());
+        assertEquals(expectedUri.getPath(), actualUri.getPath());
 
         // Compare fragments
-        assertEquals(getParametersAsMap(actualUri.getFragment()), getParametersAsMap(expectedUri.getFragment()));
+        assertEquals(getParametersAsMap(expectedUri.getFragment()), getParametersAsMap(actualUri.getFragment()));
         // Compare query params without random, if are equals complete url is equals
-        assertEquals(getParametersAsMap(actualUri.getQuery(), true), getParametersAsMap(expectedUri.getQuery(), true));
+        assertEquals(getParametersAsMap(expectedUri.getQuery(), true), getParametersAsMap(actualUri.getQuery(), true));
         return true;
     }
 

@@ -23,4 +23,18 @@ public class SpanLabelOpenTelemetry {
 
     public static final String CIRCUIT_BREAKER_OPEN_SPAN_NAME = "Circuit Breaker [%s] open";
 
+    public static final String GET_TRANSACTIONS_OUTCOMES_SPAN_NAME = "Get transactions outcome";
+
+    public static final AttributeKey<String> GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("getTransactionsOutcomes.outcome");
+
+    public static final AttributeKey<String> GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("getTransactionsOutcomes.isFinalStatus");
+
+    public static final AttributeKey<String> GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("getTransactionsOutcomes.transactionId");
+
+    public static final AttributeKey<String> GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY = AttributeKey
+            .stringKey("getTransactionsOutcomes.transactionStatus");
+
 }

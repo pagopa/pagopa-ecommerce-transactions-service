@@ -2,6 +2,7 @@ package it.pagopa.transactions.services.v1;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.opentelemetry.api.common.Attributes;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
@@ -15,6 +16,7 @@ import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
@@ -107,6 +109,8 @@ public class TransactionsService {
     private final Set<TransactionStatusDto> ecommercePossibleFinalState;
     private final boolean ecommercePaymentMethodsHandlerEnabled;
 
+    private final OpenTelemetryUtils openTelemetryUtils;
+
     @Autowired
     public TransactionsService(
             @Qualifier(
@@ -153,7 +157,8 @@ public class TransactionsService {
             @Value("#{${npg.authorizationErrorCodeMapping}}") Map<String, String> npgAuthorizationErrorCodeMapping,
             @Value("${ecommerce.finalStates}") Set<String> ecommerceFinalStates,
             @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates,
-            @Value("${ecommercePaymentMethodsHandler.enabled}") boolean ecommercePaymentMethodsHandlerEnabled
+            @Value("${ecommercePaymentMethodsHandler.enabled}") boolean ecommercePaymentMethodsHandlerEnabled,
+            OpenTelemetryUtils openTelemetryUtils
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
         this.requestAuthHandlerV2 = requestAuthHandlerV2;
@@ -188,6 +193,7 @@ public class TransactionsService {
                 .collect(Collectors.toSet());
         this.ecommercePaymentMethodsHandlerClient = ecommercePaymentMethodsHandlerClient;
         this.ecommercePaymentMethodsHandlerEnabled = ecommercePaymentMethodsHandlerEnabled;
+        this.openTelemetryUtils = openTelemetryUtils;
     }
 
     @CircuitBreaker(name = "node-backend")
@@ -284,11 +290,25 @@ public class TransactionsService {
         switch (baseTransactionView) {
             case Transaction transaction -> {
                 TransactionOutcomeInfoDto.OutcomeEnum outcome = evaluateOutcome(transaction.getStatus(), transaction.getSendPaymentResultOutcome(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus(), transaction.getAuthorizationErrorCode(), transaction.getClosureErrorData());
-                return new TransactionOutcomeInfoDto()
+                TransactionOutcomeInfoDto transactionOutcomeInfoDto = new TransactionOutcomeInfoDto()
                         .outcome(outcome)
                         .totalAmount(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0 ? transaction.getPaymentNotices().stream().mapToInt(it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount).sum() : null)
                         .fees(outcome == TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0 ? +Optional.ofNullable(transaction.getFeeTotal()).orElse(0) : null)
                         .isFinalStatus(evaluateFinalStatus(transaction.getStatus(), transaction.getClosureErrorData(), transaction.getPaymentGateway(), transaction.getGatewayAuthorizationStatus()));
+                openTelemetryUtils.addSpanWithAttributes(
+                        SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_NAME,
+                        Attributes.of(
+                                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_OUTCOME_ATTRIBUTE_KEY,
+                                transactionOutcomeInfoDto.getOutcome().toString(),
+                                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_ID_ATTRIBUTE_KEY,
+                                transaction.getTransactionId(),
+                                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_IS_FINAL_STATUS_FLAG_ATTRIBUTE_KEY,
+                                transactionOutcomeInfoDto.getIsFinalStatus().toString(),
+                                SpanLabelOpenTelemetry.GET_TRANSACTIONS_OUTCOMES_SPAN_TRANSACTION_STATUS_ATTRIBUTE_KEY,
+                                Optional.ofNullable(transaction.getStatus()).map(TransactionStatusDto::toString).orElse("-")
+                        )
+                );
+                return transactionOutcomeInfoDto;
             }
             default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
         }
@@ -412,7 +432,9 @@ public class TransactionsService {
                     ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18
                     : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
 
-            case BAD_REQUEST, NOT_FOUND -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
+            case BAD_REQUEST ->
+                    "Invalid token".equals(errorDescription) ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17 : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
+            case NOT_FOUND -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
             case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
 
         };

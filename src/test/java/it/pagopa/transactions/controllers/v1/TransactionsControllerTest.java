@@ -8,6 +8,7 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -57,8 +58,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -1566,6 +1566,48 @@ class TransactionsControllerTest {
                             );
                         }
                 );
+    }
+
+    @Test
+    void shouldReleaseLockOncePatchAuthRequestHaveBeenProcessed() {
+        /* preconditions */
+        String b64TransactionId = "aaa";
+        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeNpgGatewayDto()
+                                .authorizationCode("authorizationCode")
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                ).timestampOperation(OffsetDateTime.now());
+        ExclusiveLockDocument expectedLockDocument = new ExclusiveLockDocument(
+                "PATCH-auth-request-%s".formatted(transactionId.value()),
+                "transactions-service"
+        );
+        Mockito.when(uuidUtils.uuidFromBase64(b64TransactionId)).thenReturn(Either.right(transactionId.uuid()));
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(Mono.just(true));
+        Mockito.when(exclusiveLockDocumentWrapper.deleteById(any())).thenReturn(Mono.just(true));
+        Mockito.when(transactionsService.updateTransactionAuthorization(any(), any()))
+                .thenReturn(Mono.just(new TransactionInfoDto()));
+        /* test */
+        webTestClient.patch()
+                .uri("/transactions/{transactionId}/auth-requests", b64TransactionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("x-api-key", "primary-key")
+                .bodyValue(updateAuthorizationRequestDto)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(
+                        arg -> {
+                            assertEquals(expectedLockDocument.id(), arg.id());
+                            assertEquals(expectedLockDocument.holderName(), arg.holderName());
+                            return true;
+                        }
+                )
+        );
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).deleteById(expectedLockDocument.id());
     }
 
     @Test

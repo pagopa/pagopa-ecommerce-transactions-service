@@ -17,6 +17,7 @@ import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHa
 import it.pagopa.transactions.configurations.WalletConfig;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
+import it.pagopa.transactions.exceptions.WalletErrorResponseException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -82,15 +83,25 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                                 .exponentialBackoffRetryOffsetSeconds()
                                                 )
                                         )
+                                                .filter(
+                                                        exception -> !(exception instanceof WalletErrorResponseException walletErrorResponseException
+                                                                && walletErrorResponseException.getHttpStatus()
+                                                                        .is4xxClientError())
+                                                )
                                                 .doBeforeRetry(
                                                         signal -> log.warn(
                                                                 "Exception performing POST wallet notification",
                                                                 signal.failure()
                                                         )
                                                 )
-                                )
+                                ).onErrorResume(exception -> {
+                                    log.error(
+                                            "Error performing POST wallet notification, wallet status may have not been updated correctly!",
+                                            exception
+                                    );
+                                    return Mono.empty();
+                                })
                 )
-
                 .doOnNext(
                         TupleUtils.consumer(
                                 (
@@ -101,12 +112,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                         walletInfo.getWalletId(),
                                         walletNotificationRequest.getOperationResult()
                                 )
-                        )
-                )
-                .doOnError(
-                        exception -> log.error(
-                                "Error performing POST wallet notification, wallet status may have not been updated correctly!",
-                                exception
                         )
                 )
                 .subscribeOn(Schedulers.boundedElastic())
@@ -123,8 +128,6 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         TransactionStatusDto transactionStatus = TransactionStatusDto.valueOf(command.getData().transactionStatus());
 
         if (transactionStatus.equals(TransactionStatusDto.AUTHORIZATION_REQUESTED)) {
-            Sinks.EmitResult result = authorizationCommandsSink.tryEmitNext(command);
-            log.debug("Emit command result -> [{}]", result);
             UpdateAuthorizationRequestOutcomeGatewayDto outcomeGateway = command.getData().updateAuthorizationRequest()
                     .getOutcomeGateway();
 
@@ -145,7 +148,19 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 );
                         default -> throw new InvalidRequestException("Unexpected value: " + outcomeGateway);
                     };
-            return Mono.just(
+            return Mono.just(command)
+                    .flatMap(authCommand ->
+                            Mono.fromRunnable(() -> authorizationCommandsSink
+                                            .emitNext(
+                                                    authCommand,
+                                                    Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(500))
+                                            )
+                                    ).thenReturn(authCommand)
+                                    .doOnNext(ignored -> log.info("POST wallet notification event emitted successfully for transaction with contextual onboarding with id: [{}]", authCommand.getData().transactionId().value()))
+                                    .doOnError(exception -> log.error("Exception emitting event for POST wallet notification for transaction with contextual onboarding with id: [%s]".formatted(authCommand.getData().transactionId().value()), exception))
+                                    .onErrorReturn(authCommand)
+                    )
+                    .thenReturn(
                             new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent(
                                     transactionId.value(),
                                     new it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData(
@@ -222,7 +237,14 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         boolean isWalletPayment = isNpgTransaction
                 && ((NpgTransactionGatewayAuthorizationRequestedData) gatewayData).getWalletInfo() != null;
         boolean isCardPayment = authorizationRequestedData.getPaymentTypeCode().equals("CP");
-        return isContextualOnboarding && isWalletPayment && isCardPayment;
+        boolean isNpgWithContextualOnboarding = isContextualOnboarding && isWalletPayment && isCardPayment;
+        log.info(
+                "is NPG card with contextual onboarding payment verification -> isNpgWithContextualOnboarding: [{}],  isContextualOnboarding: [{}], isWalletPayment: [{}],  isCardPayment: [{}]",
+                isNpgWithContextualOnboarding,
+                isContextualOnboarding,
+                isWalletPayment,
+                isCardPayment
+        );
+        return isNpgWithContextualOnboarding;
     }
-
 }
