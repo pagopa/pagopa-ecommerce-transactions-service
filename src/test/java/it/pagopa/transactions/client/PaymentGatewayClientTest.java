@@ -149,6 +149,8 @@ class PaymentGatewayClientTest {
 
     private final NpgApiKeyConfiguration npgApiKeyHandler = Mockito.mock(NpgApiKeyConfiguration.class);
 
+    private final String checkoutBasePath = "https://checkout.it";
+
     @BeforeEach
     public void init() {
         client = new PaymentGatewayClient(
@@ -165,7 +167,8 @@ class PaymentGatewayClientTest {
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 redirectPaymentTypeCodeDescription,
-                jwtTokenIssuerClient
+                jwtTokenIssuerClient,
+                checkoutBasePath
         );
 
         Hooks.onOperatorDebug();
@@ -2526,7 +2529,8 @@ class PaymentGatewayClientTest {
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 redirectPaymentTypeCodeDescription,
-                jwtTokenIssuerClient
+                jwtTokenIssuerClient,
+                checkoutBasePath
         );
         given(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .willReturn(Mono.just(new CreateTokenResponseDto().token(MOCK_JWT)));
@@ -2731,7 +2735,8 @@ class PaymentGatewayClientTest {
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 redirectPaymentTypeCodeDescription,
-                jwtTokenIssuerClient
+                jwtTokenIssuerClient,
+                checkoutBasePath
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -2825,7 +2830,8 @@ class PaymentGatewayClientTest {
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 redirectPaymentTypeCodeDescription,
-                jwtTokenIssuerClient
+                jwtTokenIssuerClient,
+                checkoutBasePath
         );
 
         it.pagopa.ecommerce.commons.domain.v2.TransactionActivated transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
@@ -2972,7 +2978,8 @@ class PaymentGatewayClientTest {
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 Map.of(),
-                jwtTokenIssuerClient
+                jwtTokenIssuerClient,
+                checkoutBasePath
         );
         Hooks.onOperatorDebug();
         /* test */

@@ -16,8 +16,8 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
-import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
+import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
@@ -76,6 +76,8 @@ public class PaymentGatewayClient {
 
     private final JwtTokenIssuerClient jwtTokenIssuerClient;
 
+    private final String checkoutBasePath;
+
     @Autowired
     public PaymentGatewayClient(
 
@@ -96,7 +98,8 @@ public class PaymentGatewayClient {
             @Value(
                 "#{${redirect.paymentTypeCodeDescriptionMapping}}"
             ) Map<String, String> redirectPaymentTypeCodeDescription,
-            JwtTokenIssuerClient jwtTokenIssuerClient
+            JwtTokenIssuerClient jwtTokenIssuerClient,
+            @Value("${checkout.basePath}") String checkoutBasePath
     ) {
         this.objectMapper = objectMapper;
         this.npgClient = npgClient;
@@ -110,6 +113,7 @@ public class PaymentGatewayClient {
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
         this.redirectPaymentTypeCodeDescription = redirectPaymentTypeCodeDescription;
         this.jwtTokenIssuerClient = jwtTokenIssuerClient;
+        this.checkoutBasePath = checkoutBasePath;
     }
 
     public Mono<Tuple2<String, FieldsDto>> requestNpgBuildSession(
@@ -152,14 +156,18 @@ public class PaymentGatewayClient {
                             String orderId = npgBuildData.orderId();
                             String notificationJwtToken = npgBuildData.notificationJwtToken();
                             String outcomeJwtToken = npgBuildData.outcomeJwtToken();
-                            URI returnUrlBasePath = URI.create(npgSessionUrlConfig.basePath());
+                            URI npgSessionBasePath = URI.create(npgSessionUrlConfig.basePath());
                             URI outcomeResultUrl = generateOutcomeUrl(
                                     clientId,
                                     authorizationData.transactionId(),
                                     outcomeJwtToken
                             );
-                            URI merchantUrl = returnUrlBasePath;
-
+                            URI merchantUrl;
+                            if (ClientId.valueOf(clientId) == ClientId.CHECKOUT && isWalletPayment) {
+                                merchantUrl = URI.create(checkoutBasePath);
+                            } else {
+                                merchantUrl = npgSessionBasePath;
+                            }
                             URI notificationUrl = UriComponentsBuilder
                                     .fromUriString(npgSessionUrlConfig.notificationUrl())
                                     .build(
