@@ -362,7 +362,12 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             )
                                                     : Mono.just(
                                                             encodeURIWithFragmentParams(
-                                                                    URI.create(this.checkoutNpgGdiUrl),
+                                                                    URI.create(
+                                                                            authorizationData
+                                                                                    .authDetails() instanceof WalletAuthRequestDetailsDto
+                                                                                            ? ecommerceFeGdiCheckPath
+                                                                                            : this.checkoutNpgGdiUrl
+                                                                    ),
                                                                     List.of(
                                                                             Tuples.of(
                                                                                     "gdiIframeUrl",
