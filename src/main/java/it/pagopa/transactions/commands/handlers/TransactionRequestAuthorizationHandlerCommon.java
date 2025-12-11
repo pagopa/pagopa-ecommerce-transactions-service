@@ -339,43 +339,57 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                     .isWalletPaymentWithContextualOnboarding();
                                             Mono<URI> gdiCheckPathWithFragment = clientId.equals(
                                                     Transaction.ClientId.IO.toString()
-                                            ) ? generateWebviewToken(
-                                                    authorizationData.transactionId(),
-                                                    authorizationData.paymentInstrumentId(),
-                                                    orderId,
-                                                    userId.orElseThrow()
-                                            ).map(
-                                                    webViewSessionToken -> encodeURIWithFragmentParams(
-                                                            URI.create(
-                                                                    getGdiCheckUri(isContextualOnboarding)
-                                                            ),
-                                                            List.of(
-                                                                    Tuples.of("gdiIframeUrl", base64redirectionUrl),
-                                                                    Tuples.of("clientId", clientId),
-                                                                    Tuples.of(
-                                                                            "transactionId",
-                                                                            authorizationData.transactionId().value()
-                                                                    ),
-                                                                    Tuples.of("sessionToken", webViewSessionToken)
-                                                            )
-                                                    )
-                                            )
-                                                    : Mono.just(
-                                                            encodeURIWithFragmentParams(
-                                                                    URI.create(
-                                                                            authorizationData
-                                                                                    .authDetails() instanceof WalletAuthRequestDetailsDto
-                                                                                            ? ecommerceFeGdiCheckPath
-                                                                                            : this.checkoutNpgGdiUrl
-                                                                    ),
-                                                                    List.of(
-                                                                            Tuples.of(
-                                                                                    "gdiIframeUrl",
-                                                                                    base64redirectionUrl
+                                            ) || ((clientId.equals(Transaction.ClientId.CHECKOUT.toString()) ||
+                                                    clientId.equals(Transaction.ClientId.CHECKOUT_CART.toString()))
+                                                    && authorizationData
+                                                            .authDetails() instanceof WalletAuthRequestDetailsDto)
+                                                                    ? generateWebviewToken(
+                                                                            authorizationData.transactionId(),
+                                                                            authorizationData.paymentInstrumentId(),
+                                                                            orderId,
+                                                                            userId.orElseThrow()
+                                                                    ).map(
+                                                                            webViewSessionToken -> encodeURIWithFragmentParams(
+                                                                                    URI.create(
+                                                                                            getGdiCheckUri(
+                                                                                                    isContextualOnboarding
+                                                                                            )
+                                                                                    ),
+                                                                                    List.of(
+                                                                                            Tuples.of(
+                                                                                                    "gdiIframeUrl",
+                                                                                                    base64redirectionUrl
+                                                                                            ),
+                                                                                            Tuples.of(
+                                                                                                    "clientId",
+                                                                                                    clientId
+                                                                                            ),
+                                                                                            Tuples.of(
+                                                                                                    "transactionId",
+                                                                                                    authorizationData
+                                                                                                            .transactionId()
+                                                                                                            .value()
+                                                                                            ),
+                                                                                            Tuples.of(
+                                                                                                    "sessionToken",
+                                                                                                    webViewSessionToken
+                                                                                            )
+                                                                                    )
                                                                             )
                                                                     )
-                                                            )
-                                                    );
+                                                                    : Mono.just(
+                                                                            encodeURIWithFragmentParams(
+                                                                                    URI.create(
+                                                                                            this.checkoutNpgGdiUrl
+                                                                                    ),
+                                                                                    List.of(
+                                                                                            Tuples.of(
+                                                                                                    "gdiIframeUrl",
+                                                                                                    base64redirectionUrl
+                                                                                            )
+                                                                                    )
+                                                                            )
+                                                                    );
 
                                             yield gdiCheckPathWithFragment.map(
                                                     URI::toString
