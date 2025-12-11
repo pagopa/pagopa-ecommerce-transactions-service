@@ -362,7 +362,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                                             ),
                                                                                             Tuples.of(
                                                                                                     "clientId",
-                                                                                                    clientId
+                                                                                                    Transaction.ClientId.IO.toString()
                                                                                             ),
                                                                                             Tuples.of(
                                                                                                     "transactionId",
