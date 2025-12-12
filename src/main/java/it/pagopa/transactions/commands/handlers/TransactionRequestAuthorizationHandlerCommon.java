@@ -337,11 +337,9 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             );
                                             boolean isContextualOnboarding = authorizationData
                                                     .isWalletPaymentWithContextualOnboarding();
-                                            boolean isCheckoutWalletPayment = (clientId
-                                                    .equals(Transaction.ClientId.CHECKOUT.toString()) ||
-                                                    clientId.equals(Transaction.ClientId.CHECKOUT_CART.toString()))
-                                                    && authorizationData
-                                                            .authDetails() instanceof WalletAuthRequestDetailsDto;
+                                            boolean isCheckoutWalletPayment = !clientId.equals(
+                                                    Transaction.ClientId.IO.toString()
+                                            ) && authorizationData.authDetails() instanceof WalletAuthRequestDetailsDto;
                                             Mono<URI> gdiCheckPathWithFragment = clientId.equals(
                                                     Transaction.ClientId.IO.toString()
                                             ) || isCheckoutWalletPayment
