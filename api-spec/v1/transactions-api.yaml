@@ -860,6 +860,12 @@ components:
       type: integer
       minimum: 0
       maximum: 999999999
+    AuthorizationResult:
+      description: Authorization result
+      type: string
+      enum:
+        - OK
+        - KO
     TransactionStatus:
       type: string
       description: Possible statuses a transaction can be in
@@ -1028,6 +1034,24 @@ components:
       required:
         - faultCodeCategory
         - faultCodeDetail
+    PartyTimeoutFaultPaymentProblemJson:
+      description: |-
+        A PaymentProblemJson-like type specific for the GetPayment an operations.
+      type: object
+      properties:
+        faultCodeCategory:
+          $ref: '#/components/schemas/FaultCategory'
+        faultCodeDetail:
+          $ref: '#/components/schemas/PartyTimeoutFault'
+        title:
+          type: string
+          description: |-
+            A short, summary of the problem type. Written in english and readable
+            for engineers (usually not suited for non technical stakeholders and
+            not localized); example: Service Unavailable
+      required:
+        - faultCodeCategory
+        - faultCodeDetail
     FaultCategory:
       description: |-
         Fault code categorization for the PagoPA Verifica and Attiva operations.
@@ -1157,6 +1181,21 @@ components:
         - PAA_ID_INTERMEDIARIO_ERRATO
         - PAA_STAZIONE_INT_ERRATA
         - PAA_ATTIVA_RPT_IMPORTO_NON_VALIDO
+    PartyTimeoutFault:
+      description: |-
+        Fault codes for timeout errors, should be mapped to 504 HTTP status code.
+        For further information visit https://docs.pagopa.it/gestionedeglierrori/struttura-degli-errori/fault-code.
+        Possible fault codes are:
+        - `PPT_STAZIONE_INT_PA_TIMEOUT`
+        - `PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE`
+        - `PPT_STAZIONE_INT_PA_SERVIZIO_NONATTIVO`
+        - `GENERIC_ERROR`
+      type: string
+      enum:
+        - PPT_STAZIONE_INT_PA_TIMEOUT
+        - PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE
+        - PPT_STAZIONE_INT_PA_SERVIZIO_NONATTIVO
+        - GENERIC_ERROR
     OutcomeNpgGateway:
       type: object
       properties:
