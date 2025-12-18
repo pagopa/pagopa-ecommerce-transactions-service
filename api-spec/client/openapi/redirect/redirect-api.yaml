@@ -276,4 +276,3 @@ components:
       type: apiKey
       in: header
       name: x-api-key
-      description: PSP api key
