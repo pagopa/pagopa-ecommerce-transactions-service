@@ -19,7 +19,6 @@ jobs:
     strategy:
       matrix:
         spec:
-          - path: 'api-spec/client/openapi/redirect/redirect-api.yaml'
           - path: 'api-spec/v1/transactions-api.yaml'
             version: 'v1'
           - path: 'api-spec/v2/transactions-api.yaml'
