@@ -71,8 +71,6 @@ paths:
                 status: 500
                 detail: There was an error processing the request
                 idTransaction: 3fa85f6457174562b3fc2c963f66afa6
-security:
-  - PspApiKeyAuth: []
 components:
   schemas:
     ProblemJson:
