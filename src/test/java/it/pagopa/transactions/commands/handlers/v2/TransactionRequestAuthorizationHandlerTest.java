@@ -614,6 +614,218 @@ class TransactionRequestAuthorizationHandlerTest {
     }
 
     @Test
+    void shouldSaveAuthorizationEventGdiVerificationForCheckoutWallet() {
+        String walletId = UUID.randomUUID().toString();
+        String contractId = "contractId";
+        String sessionId = "sessionId";
+        String orderId = "oderId";
+
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(100);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        Transaction.ClientId clientId = Transaction.ClientId.CHECKOUT;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
+        String correlationId = UUID.randomUUID().toString();
+        String idBundle = UUID.randomUUID().toString();
+
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>(),
+                                false,
+                                new CompanyName(null),
+                                null
+                        )
+                ),
+                email,
+                null,
+                null,
+                clientId,
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(100)
+                .fee(200)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.empty(),
+                Optional.of(contractId),
+                "VISA",
+                new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
+                "http://asset",
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                idBundle,
+                Optional.empty()
+        );
+
+        AuthorizationRequestData authorizationDataAfterBuildSession = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.of(sessionId),
+                Optional.of(contractId),
+                "VISA",
+                new WalletAuthRequestDetailsDto().detailType("wallet").walletId(walletId),
+                "http://asset",
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                idBundle,
+                Optional.empty()
+        );
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
+                new NpgTransactionGatewayActivationData(orderId, correlationId)
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
+                authorizationData,
+                List.of(transactionActivatedEvent)
+        );
+
+        FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
+                .state(WorkflowStateDto.READY_FOR_PAYMENT).securityToken("securityToken");
+
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(WorkflowStateDto.GDI_VERIFICATION)
+                .fieldSet(
+                        new FieldsDto()
+                                .addFieldsItem(new FieldDto().src(NPG_URL_IFRAME))
+                );
+
+        Tuple2<String, FieldsDto> responseRequestNpgBuildSession = Tuples.of(orderId, npgBuildSessionResponse);
+        /* preconditions */
+        when(
+                paymentGatewayClient
+                        .requestNpgBuildSession(
+                                authorizationData,
+                                correlationId,
+                                true,
+                                clientId.name(),
+                                null,
+                                UUID.fromString(TransactionTestUtils.USER_ID)
+                        )
+        )
+                .thenReturn(Mono.just(responseRequestNpgBuildSession));
+        when(
+                paymentGatewayClient.requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId)
+        )
+                .thenReturn(Mono.just(stateResponseDto));
+
+        transactionActivatedEvent.getData().setClientId(clientId);
+        when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(
+                        (Flux) Flux.just(
+                                transactionActivatedEvent
+                        )
+                );
+
+        when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
+                .thenReturn(Mono.just(createTokenResponseDto));
+
+        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+
+        when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
+        RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
+                .authorizationRequestId(orderId)
+                .authorizationUrl(
+                        NPG_WALLET_GDI_CHECK_PATH + Base64.encodeBase64URLSafeString(
+                                NPG_URL_IFRAME
+                                        .getBytes(StandardCharsets.UTF_8)
+                        ).concat("&clientId=CHECKOUT&transactionId=").concat(authorizationData.transactionId().value())
+                                .concat("&sessionToken=").concat(MOCK_JWT).concat("&isCheckoutWalletPayment=")
+                                .concat("true")
+                );
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+        when(transactionTemplateWrapper.save(any())).thenReturn(Mono.empty());
+
+        StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
+                .expectNextMatches(
+                        value -> {
+                            boolean hasIsCheckoutWallet = value.getAuthorizationUrl()
+                                    .contains("&isCheckoutWalletPayment=true");
+                            boolean hasCheckoutClient = value.getAuthorizationUrl().contains("&clientId=CHECKOUT");
+                            return value.getAuthorizationRequestId().equals(responseDto.getAuthorizationRequestId())
+                                    && hasCheckoutClient && hasIsCheckoutWallet;
+                        }
+                )
+                .verifyComplete();
+
+        verify(transactionEventStoreRepository, times(1)).save(any());
+        TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
+        NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
+                .getData().getTransactionGatewayAuthorizationRequestedData();
+        assertEquals(
+                "sessionId",
+                npgTransactionGatewayAuthorizationRequestedData.getSessionId()
+        );
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
+        verify(transactionTemplateWrapper, times(1)).save(any());
+        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(lockDocument -> {
+                    assertEquals(
+                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                            lockDocument.id()
+                    );
+                    assertEquals("transactions-service", lockDocument.holderName());
+                    return true;
+                }),
+                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        );
+    }
+
+    @Test
     void shouldSaveAuthorizationEventNpgCardsPaymentCompleteIOClient() {
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
