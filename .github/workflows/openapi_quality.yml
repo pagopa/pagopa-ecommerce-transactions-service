@@ -3,8 +3,7 @@ name: OpenAPI Quality Check
 # this action runs only when OpenAPI spec files are modified
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'api-spec/**/*.yaml'
       - 'api-spec/**/*.yml'
@@ -29,7 +28,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Rate My OpenAPI - ${{ matrix.spec.version || matrix.spec.path }}
+      - name: Rate My OpenAPI - ${{ matrix.spec.version }}
         uses: zuplo/rmoa-action@v1
         with:
           filepath: ${{ matrix.spec.path }}
