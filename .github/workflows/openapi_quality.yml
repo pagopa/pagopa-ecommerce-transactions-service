@@ -30,7 +30,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Rate My OpenAPI - ${{ matrix.spec.version }}
-        uses: zuplo/rmoa-action@c4a74a8823496c6061cd6fb586d80db8c2fd7e34  # v1
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        uses: zuplo/rmoa-action@v1
         with:
           filepath: ${{ matrix.spec.path }}
           apikey: ${{ secrets.RATEMYOPENAPI_API_KEY }}
