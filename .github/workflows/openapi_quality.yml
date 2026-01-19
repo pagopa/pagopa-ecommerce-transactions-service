@@ -43,7 +43,7 @@ jobs:
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -X POST "https://api.ratemyopenapi.com/sync-report" \
             -H "Authorization: Bearer $RMOA_API_KEY" \
-            -F "file=@${{ matrix.spec.path }}")
+            -F "apiFile=@${{ matrix.spec.path }}")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
