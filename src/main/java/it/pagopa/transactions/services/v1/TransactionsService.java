@@ -1718,14 +1718,14 @@ public class TransactionsService {
             case ApmAuthRequestDetailsDto ignore -> {
                 Mono<String> name =
                         ecommercePaymentMethodsHandlerEnabled ?
-                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(requestAuthorizationRequestDto.getLanguage().getValue())) :
+                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(RequestAuthorizationRequestDto.LanguageEnum.IT.toString())) :
                                 ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName);
                 yield name.map(n -> PaymentSessionData.create(null, null, n, null, null));
             }
             case RedirectionAuthRequestDetailsDto ignored -> Mono.just(PaymentSessionData.create(
                     null,
                     null,
-                    "N/A",//TODO handle this value for Nodo close payment
+                    "N/A",
                     null,
                     null
             ));

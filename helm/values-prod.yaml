@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "3.10.1"
+    tag: "3.10.3"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -195,7 +195,7 @@ microservice-chart:
     ECOMMERCE_PAYMENT_METHODS_HANDLER_URI: https://api.platform.pagopa.it/ecommerce/payment-methods-handler/v1
     ECOMMERCE_PAYMENT_METHODS_HANDLER_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_HANDLER_CONNECTION_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "false"
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "true"
     WALLET_NOTIFICATION_MAX_RETRY_ATTEMPTS: "3"
     WALLET_NOTIFICATION_EXPONENTIAL_BACKOFF_RETRY_OFFSET_SECONDS: "10"
   envSecret:
