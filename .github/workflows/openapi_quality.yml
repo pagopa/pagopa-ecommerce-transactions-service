@@ -27,15 +27,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Rate My OpenAPI - ${{ matrix.spec.version }}
-        uses: zuplo/rmoa-action@v1
+    
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          filepath: ${{ matrix.spec.path }}
-          apikey: ${{ secrets.RATEMYOPENAPI_API_KEY }}
-          minimum-score: 80
-          max-warnings: 57
-          max-errors: 5
-      
-      - name: Rate My Open API
-        run: rmoa lint
+          node-version: '20'
+    
+      - name: Rate My OpenAPI - ${{ matrix.spec.version || matrix.spec.path }}
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        run: |
+          npx rmoa lint \
+            --filename ${{ matrix.spec.path }} \
+            --api-key ${{ secrets.RATEMYOPENAPI_API_KEY }} \
+            --minimum-score 80 \
+            --max-warnings 57 \
+            --max-errors 5
