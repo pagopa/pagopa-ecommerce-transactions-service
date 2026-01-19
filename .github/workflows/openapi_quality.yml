@@ -30,7 +30,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Rate My OpenAPI - ${{ matrix.spec.version || matrix.spec.path }}
-        if: ${{ github.event.pull_request.head.repo.fork == false }}
         uses: zuplo/rmoa-action@v1
         with:
           filepath: ${{ matrix.spec.path }}
@@ -38,3 +37,6 @@ jobs:
           minimum-score: 80
           max-warnings: 57
           max-errors: 5
+      
+      - name: Rate My Open API
+        run: rmoa lint
