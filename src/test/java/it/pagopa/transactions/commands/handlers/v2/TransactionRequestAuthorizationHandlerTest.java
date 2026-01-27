@@ -3035,7 +3035,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
 
         String differentTransactionId = "differentTransactionId";
-        PaymentSessionData.ContextualOnboardDetails contextualOnboardDetails = new PaymentSessionData.ContextualOnboardDetails(
+        PaymentSessionData.ContextualOnboardDetails details = new PaymentSessionData.ContextualOnboardDetails(
                 differentTransactionId,
                 300L,
                 orderId
@@ -3064,7 +3064,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 idBundle,
                 Optional.of(
-                        contextualOnboardDetails
+                        details
                 )
         );
 
@@ -3091,7 +3091,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 Optional.of(Map.of("VISA", "http://visaAsset")),
                 idBundle,
                 Optional.of(
-                        contextualOnboardDetails
+                        details
                 )
         );
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent(
@@ -3199,12 +3199,12 @@ class TransactionRequestAuthorizationHandlerTest {
         /* CHECK NPG API INVOCATION AND CACHE SAVING */
         verify(transactionTemplateWrapper, times(1)).save(any());
         verify(paymentGatewayClient, times(1)).requestNpgBuildSession(
-                eq(authorizationData),
-                eq(correlationId),
-                eq(true),
-                eq(clientId.toString()),
-                eq(null),
-                eq(UUID.fromString(TransactionTestUtils.USER_ID))
+                authorizationData,
+                correlationId,
+                true,
+                clientId.toString(),
+                null,
+                UUID.fromString(TransactionTestUtils.USER_ID)
         );
         verify(paymentGatewayClient, times(1))
                 .requestNpgCardsAuthorization(eq(authorizationDataAfterBuildSession), eq(correlationId));
@@ -3414,12 +3414,12 @@ class TransactionRequestAuthorizationHandlerTest {
         /* CHECK NPG API INVOCATION AND CACHE SAVING */
         verify(transactionTemplateWrapper, times(1)).save(any());
         verify(paymentGatewayClient, times(1)).requestNpgBuildSession(
-                eq(authorizationData),
-                eq(correlationId),
-                eq(true),
-                eq(clientId.toString()),
-                eq(null),
-                eq(UUID.fromString(TransactionTestUtils.USER_ID))
+                authorizationData,
+                correlationId,
+                true,
+                clientId.toString(),
+                null,
+                UUID.fromString(TransactionTestUtils.USER_ID)
         );
         verify(paymentGatewayClient, times(1))
                 .requestNpgCardsAuthorization(eq(authorizationDataAfterBuildSession), eq(correlationId));
