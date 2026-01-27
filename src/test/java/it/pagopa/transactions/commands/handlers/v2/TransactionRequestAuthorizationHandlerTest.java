@@ -3207,7 +3207,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 UUID.fromString(TransactionTestUtils.USER_ID)
         );
         verify(paymentGatewayClient, times(1))
-                .requestNpgCardsAuthorization(eq(authorizationDataAfterBuildSession), eq(correlationId));
+                .requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId);
     }
 
     @Test
@@ -3422,7 +3422,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 UUID.fromString(TransactionTestUtils.USER_ID)
         );
         verify(paymentGatewayClient, times(1))
-                .requestNpgCardsAuthorization(eq(authorizationDataAfterBuildSession), eq(correlationId));
+                .requestNpgCardsAuthorization(authorizationDataAfterBuildSession, correlationId);
     }
 
     @Test
