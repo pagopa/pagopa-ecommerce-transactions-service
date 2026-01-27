@@ -3174,7 +3174,29 @@ class TransactionRequestAuthorizationHandlerTest {
                         value -> value.getAuthorizationRequestId().equals(responseDto.getAuthorizationRequestId())
                 )
                 .verifyComplete();
-
+        verify(transactionEventStoreRepository, times(1)).save(any());
+        TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
+        NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
+                .getData().getTransactionGatewayAuthorizationRequestedData();
+        assertEquals(
+                "sessionId",
+                npgTransactionGatewayAuthorizationRequestedData.getSessionId()
+        );
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
+        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(lockDocument -> {
+                    assertEquals(
+                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                            lockDocument.id()
+                    );
+                    assertEquals("transactions-service", lockDocument.holderName());
+                    return true;
+                }),
+                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        );
+        /* CHECK NPG API INVOCATION AND CACHE SAVING */
         verify(transactionTemplateWrapper, times(1)).save(any());
         verify(paymentGatewayClient, times(1)).requestNpgBuildSession(
                 eq(authorizationData),
@@ -3365,7 +3387,29 @@ class TransactionRequestAuthorizationHandlerTest {
                         value -> value.getAuthorizationRequestId().equals(responseDto.getAuthorizationRequestId())
                 )
                 .verifyComplete();
-
+        verify(transactionEventStoreRepository, times(1)).save(any());
+        TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
+        NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
+                .getData().getTransactionGatewayAuthorizationRequestedData();
+        assertEquals(
+                "sessionId",
+                npgTransactionGatewayAuthorizationRequestedData.getSessionId()
+        );
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
+        assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
+        assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
+        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(lockDocument -> {
+                    assertEquals(
+                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                            lockDocument.id()
+                    );
+                    assertEquals("transactions-service", lockDocument.holderName());
+                    return true;
+                }),
+                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        );
+        /* CHECK NPG API INVOCATION AND CACHE SAVING */
         verify(transactionTemplateWrapper, times(1)).save(any());
         verify(paymentGatewayClient, times(1)).requestNpgBuildSession(
                 eq(authorizationData),
