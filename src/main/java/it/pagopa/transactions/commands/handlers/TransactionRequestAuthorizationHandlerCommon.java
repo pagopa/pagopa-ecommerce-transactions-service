@@ -171,9 +171,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                         authorizationData.asset(),
                                         authorizationData.brandAssets(),
                                         authorizationData.idBundle(),
-                                        authorizationData.isWalletPaymentWithContextualOnboarding()
-                                                ? authorizationData.contextualOnboardDetails()
-                                                : Optional.empty()
+                                        authorizationData.contextualOnboardDetails()
                                 ),
                                 orderIdAndSessionId.getT1(),
                                 correlationId,
