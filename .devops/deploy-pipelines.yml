@@ -238,7 +238,7 @@ stages:
     condition:
       and(
         succeeded(),
-        eq(${{parameters.UAT_PROD_DEPLOY}}, true),
+        eq(${{parameters.UAT_PROD_DEPLOY}}, true)
        )
     jobs:
       - job: "build"
@@ -379,7 +379,7 @@ stages:
       and(
         eq(${{parameters.UAT_PROD_DEPLOY}}, true),
         in(dependencies.tag_docker_release.result, 'Succeeded', 'Skipped'),
-        eq(dependencies.Get_Release_Version.result, 'Succeeded'),
+        eq(dependencies.Get_Release_Version.result, 'Succeeded')
       )
     variables:
       app_version: $[ stageDependencies.Get_Release_Version.get_version.outputs['chart_current_version.appVersion'] ]-test280126
