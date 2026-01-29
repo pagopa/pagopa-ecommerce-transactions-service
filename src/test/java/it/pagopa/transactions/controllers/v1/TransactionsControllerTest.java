@@ -60,6 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -1566,6 +1567,7 @@ class TransactionsControllerTest {
                             );
                         }
                 );
+        Mockito.verify(exclusiveLockDocumentWrapper, never()).deleteById(any());
     }
 
     @Test
