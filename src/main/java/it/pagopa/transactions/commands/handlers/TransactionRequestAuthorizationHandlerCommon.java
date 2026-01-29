@@ -125,6 +125,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                 UUID userId
     ) {
         return Mono.justOrEmpty(authorizationData.contextualOnboardDetails())
+                .filter(t -> authorizationData.isWalletPaymentWithContextualOnboarding())
                 .doOnNext(ignored -> log.info("Contextual Onboard Authorization"))
                 .map(details -> Tuples.of(details.orderId(), authorizationData.sessionId().orElseThrow()))
                 .switchIfEmpty(
