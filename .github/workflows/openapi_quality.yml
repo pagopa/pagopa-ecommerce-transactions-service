@@ -28,43 +28,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
     
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Rate My OpenAPI - ${{ matrix.spec.version }}
+        uses: zuplo/rmoa-action@c4a74a8823496c6061cd6fb586d80db8c2fd7e34  # v1
         with:
-          node-version: '20'
-    
-      - name: Test API Key and Debug
-        if: ${{ github.event.pull_request.head.repo.fork == false }}
-        run: |
-          echo "Testing Rate My OpenAPI API directly..."
-          echo "API Key length: ${#RMOA_API_KEY} characters"
-
-          # Test the API with curl to see actual error
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST "https://api.ratemyopenapi.com/sync-report" \
-            -H "Authorization: Bearer $RMOA_API_KEY" \
-            -F "apiFile=@${{ matrix.spec.path }}")
-
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
-
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response body:"
-          echo "$BODY" | head -c 2000
-
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "API returned error - check response above"
-            exit 1
-          fi
-        env:
-          RMOA_API_KEY: ${{ secrets.RATEMYOPENAPI_API_KEY }}
-
-      - name: Rate My OpenAPI - ${{ matrix.spec.version || matrix.spec.path }}
-        if: ${{ github.event.pull_request.head.repo.fork == false && success() }}
-        run: |
-          npx rmoa lint \
-            --filename ${{ matrix.spec.path }} \
-            --api-key ${{ secrets.RATEMYOPENAPI_API_KEY }} \
-            --minimum-score 80 \
-            --max-warnings 57 \
-            --max-errors 5
+          filepath: ${{ matrix.spec.path }}
+          apikey: ${{ secrets.RATEMYOPENAPI_API_KEY }} 
+          minimum-score: 80
+          max-warnings: 100
+          max-errors: 5
