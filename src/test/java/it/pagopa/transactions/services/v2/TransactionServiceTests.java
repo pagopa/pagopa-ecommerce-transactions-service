@@ -822,7 +822,7 @@ class TransactionServiceTests {
                 )
                 .id("paymentInstrumentId")
                 .paymentTypeCode(
-                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PaymentMethodResponseDto.PaymentTypeCodeEnum.BPAY
+                        "BPAY"
                 )
                 .feeRange(new FeeRangeDto().min(1L).max(100L));
 

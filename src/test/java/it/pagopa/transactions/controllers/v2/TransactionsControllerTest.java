@@ -8,6 +8,7 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v2.TransactionsService;
@@ -848,6 +849,49 @@ class TransactionsControllerTest {
                 .value(r -> assertEquals(TransactionStatusDto.CLOSURE_REQUESTED, r.getStatus()));
         verify(transactionsControllerV1, times(1))
                 .handleUpdateAuthorizationRequest(eq(transactionId), eq(expectedRequest), any());
+    }
+
+    @Test
+    void shouldReturn422ForNoLockAcquiredOnPatchAuthRequest() {
+        /* preconditions */
+        TransactionId transactionId = new TransactionId(
+                it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID
+        );
+        ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                "PATCH-auth-request-%s".formatted(transactionId.value()),
+                "transactions-service"
+        );
+        it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto()
+                                .authorizationCode("authorizationCode")
+                                .operationResult(
+                                        it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                )
+                ).timestampOperation(java.time.OffsetDateTime.now());
+
+        Mockito.when(transactionsControllerV1.handleUpdateAuthorizationRequest(any(), any(), any()))
+                .thenReturn(Mono.error(new LockNotAcquiredException(transactionId, lockDocument)));
+        /* test */
+        webTestClient.patch()
+                .uri("/v2/transactions/{transactionId}/auth-requests", transactionId.value())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("x-api-key", "primary-key")
+                .bodyValue(updateAuthorizationRequestDto)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(422)
+                .expectBody(ProblemJsonDto.class)
+                .value(
+                        p -> {
+                            assertEquals(422, p.getStatus());
+                            assertEquals(
+                                    "Lock not acquired for transaction with id: [%1$s] and locking key: [PATCH-auth-request-%1$s]"
+                                            .formatted(transactionId.value()),
+                                    p.getDetail()
+                            );
+                        }
+                );
     }
 
     private static CtFaultBean faultBeanWithCode(String faultCode) {
