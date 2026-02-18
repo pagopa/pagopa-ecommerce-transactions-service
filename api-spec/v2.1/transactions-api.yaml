@@ -86,19 +86,13 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/ValidationFaultPaymentDataErrorProblemJson'
-                  - $ref: '#/components/schemas/ValidationFaultPaymentUnknownProblemJson'
+                $ref: '#/components/schemas/NotFoundResponse'
         '409':
           description: Conflict on payment status
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/PaymentOngoingStatusFaultPaymentProblemJson'
-                  - $ref: '#/components/schemas/PaymentExpiredStatusFaultPaymentProblemJson'
-                  - $ref: '#/components/schemas/PaymentCanceledStatusFaultPaymentProblemJson'
-                  - $ref: '#/components/schemas/PaymentDuplicatedStatusFaultPaymentProblemJson'
+                $ref: '#/components/schemas/PaymentStatusConflictResponse'
         '500':
           description: Internal server error
           content:
@@ -110,9 +104,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/GatewayFaultPaymentProblemJson'
-                  - $ref: '#/components/schemas/ValidationFaultPaymentUnavailableProblemJson'
+                $ref: '#/components/schemas/BadGatewayResponse'
         '503':
           description: EC services are not available
           content:
@@ -743,6 +735,24 @@ components:
         - PAA_ATTIVA_RPT_IMPORTO_NON_VALIDO
         - PPT_ERRORE_EMESSO_DA_PAA
         - PAA_SYSTEM_ERROR
+    NotFoundResponse:
+      description: Payment not found or validation error
+      oneOf:
+        - $ref: '#/components/schemas/ValidationFaultPaymentDataErrorProblemJson'
+        - $ref: '#/components/schemas/ValidationFaultPaymentUnknownProblemJson'
+    PaymentStatusConflictResponse:
+      description: Conflict on payment status
+      oneOf:
+        - $ref: '#/components/schemas/PaymentOngoingStatusFaultPaymentProblemJson'
+        - $ref: '#/components/schemas/PaymentExpiredStatusFaultPaymentProblemJson'
+        - $ref: '#/components/schemas/PaymentCanceledStatusFaultPaymentProblemJson'
+        - $ref: '#/components/schemas/PaymentDuplicatedStatusFaultPaymentProblemJson'
+    BadGatewayResponse:
+      description: PagoPA services are not available or request is rejected by PagoPA
+      oneOf:
+        - $ref: '#/components/schemas/GatewayFaultPaymentProblemJson'
+        - $ref: '#/components/schemas/ValidationFaultPaymentUnavailableProblemJson'
+
   requestBodies:
     NewTransactionRequest:
       required: true
