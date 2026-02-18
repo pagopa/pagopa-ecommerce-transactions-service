@@ -57,7 +57,7 @@ resources:
     - repository: pagopaCheckoutTests
       type: github
       name: pagopa/pagopa-checkout-tests
-      ref: main
+      ref: PIDM-1415-fix-api-tests
       endpoint: 'io-azure-devops-github-ro'
     - repository: pagopaEcommerceTests
       type: github
