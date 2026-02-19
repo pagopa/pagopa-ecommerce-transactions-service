@@ -112,10 +112,10 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       responses:
         '200':
           description: Transaction data successfully retrieved
@@ -160,10 +160,10 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       summary: Performs the cancellation of the transaction
       responses:
         '202':
@@ -208,10 +208,10 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
         - in: header
           name: x-pgs-id
           schema:
@@ -279,10 +279,10 @@ paths:
       parameters:
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Base64 of bytes related to TransactionId
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       requestBody:
         $ref: "#/components/requestBodies/UpdateAuthorizationRequest"
       responses:
@@ -330,10 +330,10 @@ paths:
       parameters:
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       summary: Add user receipt
       description: Callback endpoint used for generate user receipt for the transaction
       requestBody:
@@ -391,10 +391,10 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       responses:
         '200':
           description: Transaction authorization request successfully updated
@@ -1274,6 +1274,9 @@ components:
       description: unique user identifier
       type: string
       format: uuid
+    TransactionID:
+      description:  Base64 of bytes related to TransactionId
+      type: string
   requestBodies:
     NewTransactionRequest:
       required: true

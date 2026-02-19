@@ -127,10 +127,10 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       responses:
         '200':
           description: Transaction data successfully retrieved
@@ -175,10 +175,10 @@ paths:
       parameters:
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
-          description: Base64 of bytes related to TransactionId
+          description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       requestBody:
         $ref: "#/components/requestBodies/UpdateAuthorizationRequest"
       responses:
@@ -418,6 +418,9 @@ components:
       description: unique user identifier
       type: string
       format: uuid
+    TransactionID:
+      description: Base64 of bytes related to TransactionId
+      type: string
     CorrelationId:
       description: correlationId
       type: string
