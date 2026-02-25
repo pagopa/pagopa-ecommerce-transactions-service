@@ -5,6 +5,20 @@ info:
   description: This microservice handles transaction's lifecycle and workflow.
   contact:
     name: pagoPA - Touchpoints team
+    url: https://www.pagopa.it/
+  license:
+    name: EUPL-1.2
+    url: https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+servers:
+  - url: https://${host}/transactions-service
+    variables:
+      host:
+          description: The hostname of the API server
+          default: weuprod.ecommerce.internal.platform.pagopa.it
+          enum:
+            - weudev.ecommerce.internal.dev.platform.pagopa.it
+            - weuuat.ecommerce.internal.uat.platform.pagopa.it
+            - weuprod.ecommerce.internal.platform.pagopa.it
 tags:
   - name: transactions
     description: Api's for performing a transaction
@@ -14,8 +28,6 @@ tags:
 externalDocs:
   url: https://pagopa.atlassian.net/wiki/spaces/I/pages/492339720/pagoPA+eCommerce+Design+Review
   description: Design review
-servers:
-  - url: https://api.platform.pagopa.it/transactions-service
 security:
   - ApiKeyAuth: [ ]
 paths:
@@ -48,6 +60,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemJson'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Node cannot find the services needed to process this request in its configuration. This error is most likely to occur when submitting a non-existing RPT id.
           content:
@@ -60,6 +78,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentStatusFaultPaymentProblemJson'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '502':
           description: PagoPA services are not available or request is rejected by PagoPa
           content:
@@ -88,10 +112,10 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       responses:
         '200':
           description: Transaction data successfully retrieved
@@ -105,12 +129,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
     delete:
       tags:
         - transactions
@@ -124,14 +160,20 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       summary: Performs the cancellation of the transaction
       responses:
         '202':
           description: Transaction cancellation request successfully accepted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           content:
@@ -166,10 +208,10 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
         - in: header
           name: x-pgs-id
           schema:
@@ -198,6 +240,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           content:
@@ -231,10 +279,10 @@ paths:
       parameters:
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Base64 of bytes related to TransactionId
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       requestBody:
         $ref: "#/components/requestBodies/UpdateAuthorizationRequest"
       responses:
@@ -250,6 +298,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           content:
@@ -276,10 +330,10 @@ paths:
       parameters:
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       summary: Add user receipt
       description: Callback endpoint used for generate user receipt for the transaction
       requestBody:
@@ -297,6 +351,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           content:
@@ -309,6 +369,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
   /transactions/{transactionId}/outcomes:
     get:
       tags:
@@ -325,10 +391,10 @@ paths:
             $ref: '#/components/schemas/UserId'
         - in: path
           name: transactionId
-          schema:
-            type: string
           required: true
           description: Transaction ID
+          schema:
+            $ref: '#/components/schemas/TransactionID'
       responses:
         '200':
           description: Transaction authorization request successfully updated
@@ -342,6 +408,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemJson"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemJson'
         '404':
           description: Transaction not found
           content:
@@ -471,6 +543,7 @@ components:
               paymentToken: "paymentToken1"
               reason: "reason1"
               amount: 600
+              isAllCCP: false
               transferList:
                 - paFiscalCode: "77777777777"
                   digitalStamp: false
@@ -484,6 +557,7 @@ components:
               paymentToken: "paymentToken2"
               reason: "reason2"
               amount: 400
+              isAllCCP: false
               transferList:
                 - paFiscalCode: "44444444444"
                   digitalStamp: true
@@ -1200,6 +1274,9 @@ components:
       description: unique user identifier
       type: string
       format: uuid
+    TransactionID:
+      description:  Base64 of bytes related to TransactionId
+      type: string
   requestBodies:
     NewTransactionRequest:
       required: true
