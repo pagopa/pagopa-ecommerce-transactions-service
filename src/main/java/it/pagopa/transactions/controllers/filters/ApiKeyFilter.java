@@ -23,7 +23,7 @@ public class ApiKeyFilter implements WebFilter {
     private enum ApiKeyType {
         PRIMARY,
         SECONDARY,
-        UNKNOWN
+        UNKNOWN,
     }
 
     private final Map<String, ApiKeyType> validKeys;
