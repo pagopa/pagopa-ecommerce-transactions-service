@@ -8,7 +8,17 @@
             <serviceEnvironment>${ECS_SERVICE_ENVIRONMENT:-undefined}</serviceEnvironment>
         </encoder>
     </appender>
-    <root level="INFO">
+    <appender name="auditLogAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="it.pagopa.transactions.utils.EcsAuditLogEncoder">
+            <serviceName>${ECS_SERVICE_NAME:-undefined}</serviceName>
+            <serviceVersion>${ECS_SERVICE_VERSION}</serviceVersion>
+            <serviceEnvironment>${ECS_SERVICE_ENVIRONMENT:-undefined}</serviceEnvironment>
+        </encoder>
+    </appender>
+    <root level="INFO" additivity="false">
         <appender-ref ref="ECS_JSON_CONSOLE"/>
     </root>
+    <logger name="auditLogs" level="INFO" additivity="false">
+        <appender-ref ref="auditLogAppender" />
+    </logger>
 </configuration>
