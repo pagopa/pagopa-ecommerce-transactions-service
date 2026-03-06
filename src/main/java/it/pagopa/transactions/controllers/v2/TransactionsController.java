@@ -340,6 +340,19 @@ public class TransactionsController implements V2Api {
         );
     }
 
+    @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
+    ResponseEntity<ProblemJsonDto> digitalStampNotAllowedHandler(DigitalStampNotAllowedForClientException exception) {
+        log.warn(exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title("Digital stamp not allowed")
+                        .detail(exception.getMessage()),
+                httpStatus
+        );
+    }
+
     @Warmup
     public void postNewTransactionWarmupMethod() {
         IntStream.range(0, 3).forEach(
