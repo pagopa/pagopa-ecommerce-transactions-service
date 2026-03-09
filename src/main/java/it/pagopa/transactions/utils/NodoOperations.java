@@ -96,7 +96,9 @@ public class NodoOperations {
                     boolean hasDigitalStamp = paymentRequestInfo.transferList() != null
                             && paymentRequestInfo.transferList().stream()
                                     .anyMatch(PaymentTransferInfo::digitalStamp);
-                    if (hasDigitalStamp && clientId != Transaction.ClientId.CHECKOUT_CART) {
+                    if (hasDigitalStamp
+                            && clientId != Transaction.ClientId.CHECKOUT_CART
+                            && clientId != Transaction.ClientId.WISP_REDIRECT) {
                         return Mono.error(
                                 new DigitalStampNotAllowedForClientException(clientId.name())
                         );
