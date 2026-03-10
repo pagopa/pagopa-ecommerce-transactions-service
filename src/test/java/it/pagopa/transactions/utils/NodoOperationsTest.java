@@ -135,7 +135,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -245,7 +245,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -346,7 +346,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -517,7 +517,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -791,7 +791,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -892,7 +892,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -993,7 +993,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -1094,7 +1094,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -1195,7 +1195,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -1477,7 +1477,7 @@ class NodoOperationsTest {
                         900,
                         null,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -1792,7 +1792,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
