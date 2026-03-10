@@ -2065,14 +2065,14 @@ class NodoOperationsTest {
                         3
                 }
         );
-        CtTransferPSPV2 ctTransferPSPV2_1 = objectFactoryUtil.createCtTransferPSPV2();
-        ctTransferPSPV2_1.setIdTransfer(2);
-        ctTransferPSPV2_1.setFiscalCodePA(fiscalCode);
-        ctTransferPSPV2_1.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2_1.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
-        ctTransferPSPV2_1.setRemittanceInformation("test1");
+        CtTransferPSPV2 ctTransferWithStamp = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferWithStamp.setIdTransfer(2);
+        ctTransferWithStamp.setFiscalCodePA(fiscalCode);
+        ctTransferWithStamp.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferWithStamp.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
+        ctTransferWithStamp.setRemittanceInformation("test1");
         ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
-        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2_1);
+        ctTransferListPSPV2.getTransfer().add(ctTransferWithStamp);
 
         ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
         activatePaymentRes.setPaymentToken(paymentToken);
@@ -2141,14 +2141,14 @@ class NodoOperationsTest {
                         3
                 }
         );
-        CtTransferPSPV2 ctTransferPSPV2_1 = objectFactoryUtil.createCtTransferPSPV2();
-        ctTransferPSPV2_1.setIdTransfer(2);
-        ctTransferPSPV2_1.setFiscalCodePA(fiscalCode);
-        ctTransferPSPV2_1.setTransferAmount(BigDecimal.valueOf(amount));
-        ctTransferPSPV2_1.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
-        ctTransferPSPV2_1.setRemittanceInformation("test1");
+        CtTransferPSPV2 ctTransferWithStamp = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferWithStamp.setIdTransfer(2);
+        ctTransferWithStamp.setFiscalCodePA(fiscalCode);
+        ctTransferWithStamp.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferWithStamp.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
+        ctTransferWithStamp.setRemittanceInformation("test1");
         ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
-        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2_1);
+        ctTransferListPSPV2.getTransfer().add(ctTransferWithStamp);
 
         ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
         activatePaymentRes.setPaymentToken(paymentToken);
