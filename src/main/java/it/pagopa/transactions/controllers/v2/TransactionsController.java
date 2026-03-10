@@ -347,7 +347,7 @@ public class TransactionsController implements V2Api {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(httpStatus.value())
-                        .title("Digital stamp not allowed")
+                        .title("Payment activation not allowed for digital stamp")
                         .detail(exception.getMessage()),
                 httpStatus
         );

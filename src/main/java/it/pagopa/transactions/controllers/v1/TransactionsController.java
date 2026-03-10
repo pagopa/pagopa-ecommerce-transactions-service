@@ -786,7 +786,7 @@ public class TransactionsController implements TransactionsApi {
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(httpStatus.value())
-                        .title("Digital stamp not allowed")
+                        .title("Payment activation not allowed for digital stamp")
                         .detail(exception.getMessage()),
                 httpStatus
         );
