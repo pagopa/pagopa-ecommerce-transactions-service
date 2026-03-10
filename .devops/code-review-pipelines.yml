@@ -126,7 +126,7 @@ stages:
         - script: |
             #drop down event dispatcher container to test flow of transactions stuck in CLOSURE_REQUESTED status
             docker compose down pagopa-ecommerce-event-dispatcher-service
-            newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=/Users/pietro.tota/Workspace/pagopa-ecommerce-local/api-tests/transaction-service/misc/transaction_service_closure_requested_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_ERROR-api-TEST.xml
+            newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_requested_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_ERROR-api-TEST.xml
           displayName: 'Run api test for CLOSURE_REQUESTED add user receipt handling flow'
           continueOnError: true
         - task: PublishTestResults@2
