@@ -2,7 +2,9 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureSyntheticEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -40,11 +42,14 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
 
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository;
 
+    private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData> closureSyntheticEventRepository;
+
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository,
+            TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData> closureSyntheticEventRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier(
                 "transactionNotificationRequestedQueueAsyncClientV2"
@@ -64,7 +69,18 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 sendPaymentResultForTxExpiredEnabled
         );
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
+        this.closureSyntheticEventRepository = closureSyntheticEventRepository;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
+    }
+
+    /*
+     * Check if the transaction is a synthetic
+     */
+    private boolean isSynthetic(BaseTransaction transaction) {
+        return transaction.getStatus() == TransactionStatusDto.CLOSURE_REQUESTED
+                ||
+                (transaction.getStatus() == TransactionStatusDto.CLOSURE_ERROR
+                        && transaction instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureError);
     }
 
     @Override
@@ -128,6 +144,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                         .equals(
                                                 transactionClosed.getTransactionClosureData().getResponseOutcome()
                                         )
+                                ||
+                                isSynthetic(t)
                 )
                 .switchIfEmpty(alreadyProcessedError)
                 .filterWhen(tx -> {
@@ -169,6 +187,15 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         );
                     }
                     return Mono.just(true);
+                })
+                .map(t -> {
+                    TransactionClosureSyntheticEvent transactionEvent = new TransactionClosureSyntheticEvent(
+                            t.getTransactionId().toString()
+                    );
+                    if (isSynthetic(t)) {
+                        closureSyntheticEventRepository.save(transactionEvent);
+                    }
+                    return t;
                 })
                 .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
                 .map(tx -> {
