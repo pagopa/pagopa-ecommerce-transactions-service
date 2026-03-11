@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
+import it.pagopa.transactions.exceptions.DigitalStampNotAllowedForClientException;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import lombok.extern.slf4j.Slf4j;
@@ -91,9 +92,18 @@ public class NodoOperations {
                                         )
                                 )
                         );
-                    } else {
-                        return Mono.just(paymentRequestInfo);
                     }
+                    boolean hasDigitalStamp = paymentRequestInfo.transferList() != null
+                            && paymentRequestInfo.transferList().stream()
+                                    .anyMatch(PaymentTransferInfo::digitalStamp);
+                    if (hasDigitalStamp
+                            && clientId != Transaction.ClientId.CHECKOUT_CART
+                            && clientId != Transaction.ClientId.WISP_REDIRECT) {
+                        return Mono.error(
+                                new DigitalStampNotAllowedForClientException(clientId.name())
+                        );
+                    }
+                    return Mono.just(paymentRequestInfo);
                 });
     }
 

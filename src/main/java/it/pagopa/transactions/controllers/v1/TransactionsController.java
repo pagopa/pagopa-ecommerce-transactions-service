@@ -779,6 +779,19 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
+    @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
+    ResponseEntity<ProblemJsonDto> digitalStampNotAllowedHandler(DigitalStampNotAllowedForClientException exception) {
+        log.warn(exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title("Payment activation not allowed for digital stamp")
+                        .detail(exception.getMessage()),
+                httpStatus
+        );
+    }
+
     @ExceptionHandler(NpgNotRetryableErrorException.class)
     ResponseEntity<ProblemJsonDto> npgNotRetryableErrorException(NpgNotRetryableErrorException exception) {
         log.warn(exception.getMessage());
