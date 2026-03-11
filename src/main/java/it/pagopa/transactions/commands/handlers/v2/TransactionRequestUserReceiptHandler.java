@@ -16,7 +16,6 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.InvalidStatusException;
 import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -30,6 +29,7 @@ import reactor.function.TupleUtils;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -190,10 +190,16 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 })
                 .flatMap(t -> {
                     if (isSynthetic(t)) {
-                        TransactionClosureSyntheticEvent transactionEvent = new TransactionClosureSyntheticEvent(
+                        TransactionClosureSyntheticEvent transactionSyntEvent = new TransactionClosureSyntheticEvent(
                                 t.getTransactionId().toString()
                         );
-                        closureSyntheticEventRepository.save(transactionEvent);
+                        List<BaseTransactionEvent<?>> events = (List<BaseTransactionEvent<?>>) command.getEvents();
+                        events.addLast(transactionSyntEvent);
+                        closureSyntheticEventRepository.save(transactionSyntEvent);
+                        return Mono.just(transactionsUtils
+                                .reduceV2Events(
+                                        events
+                                ));
                     }
                     return Mono.just(t);
                 })
@@ -274,14 +280,6 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                                         BaseTransactionWithRequestedAuthorization tx,
                                                                         String outcome
     ) {
-        if (tx.getStatus() == TransactionStatusDto.CLOSURE_REQUESTED) {
-            return Mono.error(
-                    new InvalidStatusException(
-                            "Error processing closure update request: the transaction is in the state "
-                                    + tx.getStatus()
-                    )
-            );
-        }
         return Mono.error(
                 new AlreadyProcessedException(
                         tx.getTransactionId(),
