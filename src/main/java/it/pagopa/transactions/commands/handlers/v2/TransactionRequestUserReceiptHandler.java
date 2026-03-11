@@ -188,14 +188,14 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                     }
                     return Mono.just(true);
                 })
-                .map(t -> {
+                .flatMap(t -> {
                     TransactionClosureSyntheticEvent transactionEvent = new TransactionClosureSyntheticEvent(
                             t.getTransactionId().toString()
                     );
                     if (isSynthetic(t)) {
                         closureSyntheticEventRepository.save(transactionEvent);
                     }
-                    return t;
+                    return Mono.just(t);
                 })
                 .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
                 .map(tx -> {
