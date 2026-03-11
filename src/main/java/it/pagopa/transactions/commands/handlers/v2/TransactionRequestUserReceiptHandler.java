@@ -191,15 +191,15 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 .flatMap(t -> {
                     if (isSynthetic(t)) {
                         TransactionClosureSyntheticEvent transactionSyntEvent = new TransactionClosureSyntheticEvent(
-                                t.getTransactionId().toString()
+                                t.getTransactionId().value()
                         );
                         List<BaseTransactionEvent<?>> events = (List<BaseTransactionEvent<?>>) command.getEvents();
                         events.addLast(transactionSyntEvent);
                         closureSyntheticEventRepository.save(transactionSyntEvent);
-                        return Mono.just(transactionsUtils
+                        return transactionsUtils
                                 .reduceV2Events(
                                         events
-                                ));
+                                );
                     }
                     return Mono.just(t);
                 })
