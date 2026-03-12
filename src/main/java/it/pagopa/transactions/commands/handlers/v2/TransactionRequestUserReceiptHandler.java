@@ -74,14 +74,15 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
     }
 
     /**
-     * This method checks whether a transaction is eligible to be closed after receiving
-     * a "send payment" result.
+     * This method checks whether a transaction is eligible to be closed after
+     * receiving a "send payment" result.
      * <p>
      * Valid transaction states include:
      * <ul>
      * <li><b>CLOSED</b> with an OK outcome;</li>
      * <li><b>CLOSURE_REQUESTED</b> if it has been authorized;</li>
-     * <li><b>CLOSURE_ERROR</b> if it was previously in <b>CLOSURE_REQUESTED</b> and authorized;</li>
+     * <li><b>CLOSURE_ERROR</b> if it was previously in <b>CLOSURE_REQUESTED</b> and
+     * authorized;</li>
      * </ul>
      * </p>
      *
