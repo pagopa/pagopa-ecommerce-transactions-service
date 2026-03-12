@@ -122,7 +122,7 @@ stages:
           continueOnError: false
         - script: newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_error_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_ERROR-stuck-transaction-api-TEST.xml
           displayName: 'Run api test for CLOSURE_ERROR add user receipt handling flow'
-          continueOnError: true
+          continueOnError: false
         - script: |
             #drop down event dispatcher container to test flow of transactions stuck in CLOSURE_REQUESTED status
             docker compose down pagopa-ecommerce-event-dispatcher-service
