@@ -2,8 +2,11 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureSyntheticEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureError;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureRequested;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
