@@ -662,7 +662,7 @@ class TransactionRequestUserReceiptHandlerTest {
     }
 
     @Test
-    void shouldSendEventForSendPaymentOutcomeOkWithClosedRequestedSyntheticEvent() {
+    void shouldSendEventForSendPaymentOutcomeOkWithClosedRequestedOkaySyntheticEvent() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
 
         TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
@@ -838,6 +838,11 @@ class TransactionRequestUserReceiptHandlerTest {
                         transactionClosureErrorEvent
                 ));
 
+        /*
+         * case authorizationCompletedEvent OKAY: case authorizationCompletedEvent KO,
+         * case userCancelledEvent case cancellated
+         */
+
         TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
                 addUserReceiptData,
@@ -980,12 +985,12 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectError(RuntimeException.class)
                 .verify();
 
-//        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-//                argThat(
-//                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
-//                                .equals(eventArg.getEventCode())
-//                )
-//        );
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
+                argThat(
+                        eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
+                                .equals(eventArg.getEventCode())
+                )
+        );
         Mockito.verify(queueAsyncClient, Mockito.times(1)).sendMessageWithResponse(any(), any(), any());
         TransactionUserReceiptRequestedEvent queueEvent = ((TransactionUserReceiptRequestedEvent) queueArgumentCaptor
                 .getValue().event());
@@ -996,70 +1001,6 @@ class TransactionRequestUserReceiptHandlerTest {
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
     }
-
-//    @Test
-//    void shouldRejectTransactionInInvalidStateClosureRequested() {
-//        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
-//
-//        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
-//
-//        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
-//                new NpgTransactionGatewayAuthorizationData(
-//                        OperationResultDto.EXECUTED,
-//                        "operationId",
-//                        "paymentEnd2EndId",
-//                        null,
-//                        null
-//                )
-//        );
-//
-//        TransactionClosureRequestedEvent transactionClosureRequestedEvent = transactionClosureRequestedEvent();
-//
-//        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
-//                .outcome(OK)
-//                .paymentDate(OffsetDateTime.now())
-//                .addPaymentsItem(
-//                        new AddUserReceiptRequestPaymentsInnerDto()
-//                                .paymentToken("paymentToken")
-//                                .companyName("companyName")
-//                                .creditorReferenceId("creditorReferenceId")
-//                                .description("description")
-//                                .debtor("debtor")
-//                                .fiscalCode("fiscalCode")
-//                                .officeName("officeName")
-//                );
-//
-//        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
-//
-//        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
-//                transaction.getTransactionId(),
-//                addUserReceiptRequest
-//        );
-//
-//        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
-//                .just(
-//                        transactionActivatedEvent,
-//                        authorizationRequestedEvent,
-//                        authorizationCompletedEvent,
-//                        transactionClosureRequestedEvent
-//                ));
-//
-//        TransactionAddUserReceiptCommand requestStatusCommand = new TransactionAddUserReceiptCommand(
-//                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
-//                addUserReceiptData,
-//                events.collectList().block()
-//        );
-//
-//        /* preconditions */
-//        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
-//
-//        /* test */
-//        StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-//                .expectErrorMatches(InvalidStatusException.class::isInstance)
-//                .verify();
-//
-//        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
-//    }
 
     @Test
     void shouldRejectTransactionInInvalidState() {
@@ -1645,6 +1586,122 @@ class TransactionRequestUserReceiptHandlerTest {
         );
         assertEquals(event.getData(), queueEvent.getData());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationArgumentCaptor.getValue());
+    }
+
+    @Test
+    void shouldRejectTransactionOkWithClosedRequestedNotAuthorizedSyntheticEvent() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+
+        TransactionAuthorizationRequestedEvent authorizationRequestedEvent = transactionAuthorizationRequestedEvent();
+
+        TransactionAuthorizationCompletedEvent authorizationCompletedEvent = transactionAuthorizationCompletedEvent(
+                new NpgTransactionGatewayAuthorizationData(
+                        OperationResultDto.CANCELED,
+                        "operationId",
+                        "paymentEnd2EndId",
+                        null,
+                        null
+                )
+        );
+
+        TransactionClosureRequestedEvent closureRequestedEvent = TransactionTestUtils
+                .transactionClosureRequestedEvent();
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction.getTransactionId(),
+                addUserReceiptRequest
+        );
+
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
+                .just(
+                        transactionActivatedEvent,
+                        authorizationRequestedEvent,
+                        authorizationCompletedEvent,
+                        closureRequestedEvent
+                ));
+
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        TransactionUserReceiptRequestedEvent event = transactionUserReceiptRequestedEvent(
+                TransactionTestUtils.transactionUserReceiptData(TransactionUserReceiptData.Outcome.OK)
+        );
+
+        /* preconditions */
+        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
+                .expectErrorMatches(AlreadyProcessedException.class::isInstance)
+                .verify();
+
+    }
+
+    @Test
+    void shouldRejectClosureErrorFromCancellationEvent() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+
+        TransactionUserCanceledEvent cancellationEvent = transactionUserCanceledEvent();
+
+        TransactionActivated transaction = transactionActivated(ZonedDateTime.now().toString());
+
+        AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
+                .outcome(OK)
+                .paymentDate(OffsetDateTime.now())
+                .addPaymentsItem(
+                        new AddUserReceiptRequestPaymentsInnerDto()
+                                .paymentToken("paymentToken")
+                                .companyName("companyName")
+                                .creditorReferenceId("creditorReferenceId")
+                                .description("description")
+                                .debtor("debtor")
+                                .fiscalCode("fiscalCode")
+                                .officeName("officeName")
+                );
+
+        AddUserReceiptData addUserReceiptData = new AddUserReceiptData(
+                transaction.getTransactionId(),
+                addUserReceiptRequest
+        );
+
+        TransactionClosureErrorEvent transactionClosureErrorEvent = TransactionTestUtils.transactionClosureErrorEvent();
+
+        Flux<BaseTransactionEvent<Object>> events = ((Flux) Flux
+                .just(
+                        transactionActivatedEvent,
+                        cancellationEvent,
+                        transactionClosureErrorEvent
+                ));
+
+        TransactionAddUserReceiptCommand addUserReceiptCommand = new TransactionAddUserReceiptCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                addUserReceiptData,
+                events.collectList().block()
+        );
+
+        /* test */
+        StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
+                .expectError(ProcessingErrorException.class)
+                .verify();
     }
 
 }
