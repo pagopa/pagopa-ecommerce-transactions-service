@@ -164,6 +164,11 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 .switchIfEmpty(alreadyProcessedError)
                 .flatMap(t -> {
                     if (t.getStatus() != TransactionStatusDto.CLOSED) {
+                        log.info(
+                                "Writing transaction closure synthetic event for transaction with id: [{}] in status: [{}]",
+                                t.getTransactionId().value(),
+                                t.getStatus()
+                        );
                         TransactionClosureSyntheticEvent transactionClosureSyntheticEvent = new TransactionClosureSyntheticEvent(
                                 t.getTransactionId().value()
                         );
