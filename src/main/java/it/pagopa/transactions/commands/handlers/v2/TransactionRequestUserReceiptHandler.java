@@ -2,8 +2,11 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureSyntheticEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureError;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureRequested;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -74,28 +77,30 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
     }
 
     /**
-     * This method check if a transaction can be valid for be closed after a send
-     * payment result. Accepted transaction: 'CLOSED'
+     * This method checks whether a transaction is eligible to be closed after
+     * receiving a "send payment" result.
+     * <p>
+     * Valid transaction states include:
+     * <ul>
+     * <li><b>CLOSED</b> with an OK outcome;</li>
+     * <li><b>CLOSURE_REQUESTED</b> if it has been authorized;</li>
+     * <li><b>CLOSURE_ERROR</b> if it was previously in <b>CLOSURE_REQUESTED</b> and
+     * authorized;</li>
+     * </ul>
+     * </p>
      *
-     * @param transaction
-     * @return
+     * @param transaction the transaction to be checked
+     * @return true if the transaction can be closed; false otherwise
      */
     private boolean isTransactionStatusValid(BaseTransaction transaction) {
 
-        return switch (transaction.getStatus()) {
-
-            case CLOSED -> transaction instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
-                    &&
-                    it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome.OK
-                            .equals(
-                                    transactionClosed.getTransactionClosureData().getResponseOutcome()
-                            );
-            case CLOSURE_REQUESTED -> ((it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureRequested) transaction)
-                    .wasTransactionAuthorized();
-            case CLOSURE_ERROR -> isTransactionStatusValid(
-                    ((it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureError) transaction)
-                            .getTransactionAtPreviousState()
-            );
+        return switch (transaction) {
+            case TransactionClosed t -> TransactionClosureData.Outcome.OK
+                    .equals(
+                            t.getTransactionClosureData().getResponseOutcome()
+                    );
+            case TransactionWithClosureRequested t -> t.wasTransactionAuthorized();
+            case TransactionWithClosureError t -> isTransactionStatusValid(t.getTransactionAtPreviousState());
             default -> false;
         };
     }
