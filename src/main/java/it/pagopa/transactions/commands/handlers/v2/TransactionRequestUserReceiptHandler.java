@@ -91,20 +91,13 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
      */
     private boolean isTransactionStatusValid(BaseTransaction transaction) {
 
-        return switch (transaction.getStatus()) {
-
-            case CLOSED -> transaction instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
-                    &&
-                    it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome.OK
-                            .equals(
-                                    transactionClosed.getTransactionClosureData().getResponseOutcome()
-                            );
-            case CLOSURE_REQUESTED -> ((it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureRequested) transaction)
-                    .wasTransactionAuthorized();
-            case CLOSURE_ERROR -> isTransactionStatusValid(
-                    ((it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureError) transaction)
-                            .getTransactionAtPreviousState()
-            );
+        return switch (transaction) {
+            case TransactionClosed t -> TransactionClosureData.Outcome.OK
+                    .equals(
+                            t.getTransactionClosureData().getResponseOutcome()
+                    );
+            case TransactionWithClosureRequested t -> t.wasTransactionAuthorized();
+            case TransactionWithClosureError t -> isTransactionStatusValid(t.getTransactionAtPreviousState());
             default -> false;
         };
     }
