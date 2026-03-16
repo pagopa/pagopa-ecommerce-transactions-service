@@ -120,6 +120,17 @@ stages:
         - script: newman run api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
           displayName: 'Run api test for REDIRECT integration'
           continueOnError: false
+        - script: newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_error_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_ERROR-stuck-transaction-api-TEST.xml
+          displayName: 'Run api test for CLOSURE_ERROR add user receipt handling flow'
+          continueOnError: false
+          # WATCH OUT!! the test below stop event-dispatcher service in order to test for CLOSURE_REQUESTED status recover
+          # any test run after it will find event dispatcher component down so new tests should be added before this one if this behavior is not wanted
+        - script: |
+            #drop down event dispatcher container to test flow of transactions stuck in CLOSURE_REQUESTED status
+            docker compose down pagopa-ecommerce-event-dispatcher-service
+            newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_requested_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_REQUESTED-stuck-transaction-api-TEST.xml
+          displayName: 'Run api test for CLOSURE_REQUESTED add user receipt handling flow'
+          continueOnError: false
         - task: PublishTestResults@2
           inputs:
             testResultsFormat: 'JUnit'
