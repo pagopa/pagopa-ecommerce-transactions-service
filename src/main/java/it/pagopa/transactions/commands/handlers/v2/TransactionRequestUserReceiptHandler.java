@@ -2,7 +2,12 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureSyntheticEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureError;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureRequested;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -14,7 +19,6 @@ import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
-import it.pagopa.transactions.exceptions.InvalidStatusException;
 import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -28,6 +32,7 @@ import reactor.function.TupleUtils;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,11 +45,14 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
 
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository;
 
+    private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData> closureSyntheticEventRepository;
+
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @Autowired
     public TransactionRequestUserReceiptHandler(
             TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionUserReceiptData> userReceiptAddedEventRepository,
+            TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData> closureSyntheticEventRepository,
             TransactionsUtils transactionsUtils,
             @Qualifier(
                 "transactionNotificationRequestedQueueAsyncClientV2"
@@ -64,7 +72,37 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 sendPaymentResultForTxExpiredEnabled
         );
         this.userReceiptAddedEventRepository = userReceiptAddedEventRepository;
+        this.closureSyntheticEventRepository = closureSyntheticEventRepository;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
+    }
+
+    /**
+     * This method checks whether a transaction is eligible to be closed after
+     * receiving a "send payment" result.
+     * <p>
+     * Valid transaction states include:
+     * <ul>
+     * <li><b>CLOSED</b> with an OK outcome;</li>
+     * <li><b>CLOSURE_REQUESTED</b> if it has been authorized;</li>
+     * <li><b>CLOSURE_ERROR</b> if it was previously in <b>CLOSURE_REQUESTED</b> and
+     * authorized;</li>
+     * </ul>
+     * </p>
+     *
+     * @param transaction the transaction to be checked
+     * @return true if the transaction can be closed; false otherwise
+     */
+    private boolean isTransactionStatusValid(BaseTransaction transaction) {
+
+        return switch (transaction) {
+            case TransactionClosed t -> TransactionClosureData.Outcome.OK
+                    .equals(
+                            t.getTransactionClosureData().getResponseOutcome()
+                    );
+            case TransactionWithClosureRequested t -> t.wasTransactionAuthorized();
+            case TransactionWithClosureError t -> isTransactionStatusValid(t.getTransactionAtPreviousState());
+            default -> false;
+        };
     }
 
     @Override
@@ -121,15 +159,31 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                 && sendPaymentResultForTxExpiredEnabled ? txExpired.getTransactionAtPreviousState() : tx
                 )
                 .filter(
-                        t -> t.getStatus() == TransactionStatusDto.CLOSED &&
-                                t instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
-                                &&
-                                it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData.Outcome.OK
-                                        .equals(
-                                                transactionClosed.getTransactionClosureData().getResponseOutcome()
-                                        )
+                        this::isTransactionStatusValid
                 )
                 .switchIfEmpty(alreadyProcessedError)
+                .flatMap(t -> {
+                    if (t.getStatus() != TransactionStatusDto.CLOSED) {
+                        log.info(
+                                "Writing transaction closure synthetic event for transaction with id: [{}] in status: [{}]",
+                                t.getTransactionId().value(),
+                                t.getStatus()
+                        );
+                        TransactionClosureSyntheticEvent transactionClosureSyntheticEvent = new TransactionClosureSyntheticEvent(
+                                t.getTransactionId().value()
+                        );
+                        List<BaseTransactionEvent<?>> events = (List<BaseTransactionEvent<?>>) command.getEvents();
+                        events.addLast(transactionClosureSyntheticEvent);
+                        return closureSyntheticEventRepository.save(transactionClosureSyntheticEvent).then(
+                                transactionsUtils
+                                        .reduceV2Events(
+                                                events
+                                        )
+                        );
+                    }
+                    return Mono.just(t);
+                })
+                .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
                 .filterWhen(tx -> {
                     Set<String> eCommercePaymentTokens = tx.getPaymentNotices().stream()
                             .map(p -> p.paymentToken().value()).collect(Collectors.toSet());
@@ -145,7 +199,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                             isOk
                     );
                     if (!isOk) {
-                        BaseTransactionWithRequestedAuthorization baseTransactionWithAuthData = ((BaseTransactionWithRequestedAuthorization) tx);
+
                         return Mono.error(
                                 new InvalidRequestException(
                                         "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send payment result payment tokens: %s"
@@ -155,10 +209,8 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                         addUserReceiptRequestPaymentTokens
                                                 ),
                                         tx.getTransactionId(),
-                                        baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
-                                                .getPspId(),
-                                        baseTransactionWithAuthData.getTransactionAuthorizationRequestData()
-                                                .getPaymentTypeCode(),
+                                        tx.getTransactionAuthorizationRequestData().getPspId(),
+                                        tx.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
                                         tx.getClientId().name(),
                                         transactionsUtils.isWalletPayment(tx).orElseThrow(),
                                         new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
@@ -170,7 +222,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                     }
                     return Mono.just(true);
                 })
-                .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
+
                 .map(tx -> {
                     AddUserReceiptRequestDto addUserReceiptRequestDto = command.getData().addUserReceiptRequest();
                     String language = "it-IT"; // FIXME: Add language to AuthorizationRequestData
@@ -247,14 +299,6 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                                         BaseTransactionWithRequestedAuthorization tx,
                                                                         String outcome
     ) {
-        if (tx.getStatus() == TransactionStatusDto.CLOSURE_REQUESTED) {
-            return Mono.error(
-                    new InvalidStatusException(
-                            "Error processing closure update request: the transaction is in the state "
-                                    + tx.getStatus()
-                    )
-            );
-        }
         return Mono.error(
                 new AlreadyProcessedException(
                         tx.getTransactionId(),

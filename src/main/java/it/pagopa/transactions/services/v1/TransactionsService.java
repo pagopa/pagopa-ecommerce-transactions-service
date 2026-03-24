@@ -9,9 +9,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -1202,7 +1200,8 @@ public class TransactionsService {
 
         Flux<? extends BaseTransactionEvent<?>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())));
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
+                .cache();
 
         Mono<ZonedDateTime> authorizationRequestedCreationDate = events
                 .filter(
@@ -1213,17 +1212,6 @@ public class TransactionsService {
                 .map(authRequestedEvent -> ZonedDateTime.parse(authRequestedEvent.getCreationDate()))
                 .switchIfEmpty(Mono.error(new AlreadyProcessedException(transactionId)));
 
-        Mono<Tuple2<BaseTransaction, ZonedDateTime>> transactionV1 = transactionsUtils
-                .reduceEvents(
-                        events,
-                        new EmptyTransaction(),
-                        it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent,
-                        it.pagopa.ecommerce.commons.domain.v1.Transaction.class
-                )
-                .filter(t -> !(t instanceof EmptyTransaction))
-                .cast(BaseTransaction.class)
-                .zipWith(authorizationRequestedCreationDate)
-                .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
         Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction, ZonedDateTime>> transactionV2 = transactionsUtils
                 .reduceEvents(
@@ -1237,23 +1225,14 @@ public class TransactionsService {
                 .zipWith(authorizationRequestedCreationDate)
                 .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
-        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txTracingDataV1 = transactionV1.map(Tuple2::getT1)
-                .map(t -> Tuples.of(
-                        transactionsUtils.getPspId(t).orElseThrow(),
-                        transactionsUtils.getPaymentMethodTypeCode(t).orElseThrow(),
-                        Transaction.ClientId.fromString(t.getClientId().name()),
-                        transactionsUtils.isWalletPayment(t).orElseThrow())
-                );
 
-        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txTracingDataV2 = transactionV2.map(Tuple2::getT1)
+        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txData = transactionV2.map(Tuple2::getT1)
                 .map(t -> Tuples.of(
                         transactionsUtils.getPspId(t).orElseThrow(),
                         transactionsUtils.getPaymentMethodTypeCode(t).orElseThrow(),
                         t.getClientId(),
                         transactionsUtils.isWalletPayment(t).orElseThrow())
                 );
-
-        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txData = txTracingDataV2.switchIfEmpty(txTracingDataV1);
 
         Mono<Tuple2<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext>> authUpdateContext = txData
                 .map(TupleUtils.function((pspId, paymentMethodTypeCode, clientId, isWalletPayment) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
