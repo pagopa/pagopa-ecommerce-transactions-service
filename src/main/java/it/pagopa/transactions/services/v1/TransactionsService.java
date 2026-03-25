@@ -323,7 +323,7 @@ public class TransactionsService {
                         && closureErrorData.getHttpErrorCode().is4xxClientError())
                 ||
                 (ecommercePossibleFinalState.contains(status)
-                        && !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus));
+                        && (gatewayAuthorizationStatus != null && !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus)));
     }
 
     private boolean wasAuthorizedByGateway(String gateway, String gatewayAuthorizationStatus) {
