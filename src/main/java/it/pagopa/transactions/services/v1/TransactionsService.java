@@ -458,7 +458,7 @@ public class TransactionsService {
                 case "ERROR", "EXPIRED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
             };
-            case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.WAITING_CONFIRMATION_EMAIL;
+            case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
         };
     }
 
