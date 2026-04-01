@@ -5,66 +5,101 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 parameters:
-  - name: 'IMAGE_TAG'
-    displayName: 'ACR image docker tag (used for push/pull image from repository)'
-    type: string
-    default: perf
-  - name: 'SOURCE_REF'
-    displayName: 'Source ref that will be checked out to build service (build skipped if empty, otherwise docker image will be replaced)'
-    type: string
-    default: '-'
-  - name: 'BUILD_IMAGE'
-    displayName: 'Check this to (re)build image'
+  - name: 'DEV_DEPLOY'
+    displayName: 'Deploy on DEV environment'
     type: boolean
-  - name: "ENABLE_CANARY"
-    displayName: "Enable canary?"
+    default: True
+    values:
+      - False
+      - True
+  - name: 'UAT_PROD_DEPLOY'
+    displayName: 'Deploy on UAT environment with PROD promotion'
+    type: boolean
+    default: False
+    values:
+      - False
+      - True
+  - name: 'SKIP_BUILD'
+    displayName: 'Check this flag to skip build and proceed to deploy a docker image previously built'
+    type: boolean
+    default: False
+    values:
+      - False
+      - True
+  - name: "FORCE_REPLACE_DOCKER_IMAGE"
+    displayName: "Force the existing docker image to be replaced (latest tag)"
+    type: boolean
+    default: False
+    values:
+      - False
+      - True
+  - name: "UAT_SKIP_BLUE_DEPLOYMENT"
+    displayName: "Skip blue/green UAT deployment strategy: activating this parameter no blue version will be created and the pipeline proceed building and deploy artifact green version"
+    type: boolean
+    default: True
+    values:
+      - False
+      - True
+  - name: "PROD_SKIP_BLUE_DEPLOYMENT"
+    displayName: "Skip blue/green PROD deployment strategy: activating this parameter no blue version will be created and the pipeline proceed building and deploy artifact green version"
+    type: boolean
+    default: True
+    values:
+      - False
+      - True
 resources:
   repositories:
     - repository: pagopaCommons
       type: github
       name: pagopa/azure-pipeline-templates
-      ref: refs/tags/v2.10.1
+      ref: refs/tags/v6.14.0
       endpoint: 'io-azure-devops-github-ro'
     - repository: pagopaCheckoutTests
       type: github
       name: pagopa/pagopa-checkout-tests
       ref: main
       endpoint: 'io-azure-devops-github-ro'
+    - repository: pagopaEcommerceTests
+      type: github
+      name: pagopa/pagopa-ecommerce-tests
+      ref: main
+      endpoint: 'io-azure-devops-github-ro'
 
 pool:
   vmImage: ubuntu-latest
 
-# --- START Deploy DEV --- #
 stages:
 
   # --- START Deploy UAT --- #
   - stage: "Build_release_candidate"
-    displayName: "Build release candidate"
-    condition: eq(${{parameters.BUILD_IMAGE}},true)
+    displayName: 'Build release candidate'
+    dependsOn: []
     jobs:
       - job: "build"
         displayName: 'Build release candidate docker image'
         steps:
-          - script: |
-              checkoutVersion=${{ parameters.SOURCE_REF }}
-              echo "Checkout current version repo tag: [$checkoutVersion]" 
-              git checkout $checkoutVersion
-            displayName: "Checkout source ref"
+          - task: Bash@3
+            displayName: "write github token file"
+            inputs:
+              targetType: "inline"
+              script: |
+                echo "$(GITHUB_RO_TOKEN)" > ./github_ro_token
           - template: templates/docker-release/template.yaml@pagopaCommons
             parameters:
               CONTAINER_REGISTRY_SERVICE_CONN: $(UAT_CONTAINER_REGISTRY_SERVICE_CONN)
               CONTAINER_REGISTRY_FQDN: $(UAT_CONTAINER_NAMESPACE)
               DOCKER_IMAGE_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
-              DOCKER_IMAGE_TAG: ${{ parameters.IMAGE_TAG }}
-              FORCE_REPLACE_DOCKER_IMAGE: true
+              DOCKER_IMAGE_TAG: $(Build.SourceVersion)
+              FORCE_REPLACE_DOCKER_IMAGE: ${{ parameters.FORCE_REPLACE_DOCKER_IMAGE }}
+              DOCKER_BUILD_ARGS: --secret id=GITHUB_TOKEN,src=./github_ro_token
           - template: azure-templates/chart-current-version.yml
+
 
   - stage: "Deploy_UAT_Green"
     displayName: 'UAT green deployment'
-    dependsOn: Build_release_candidate
-    condition: in(dependencies.Build_release_candidate.result, 'Succeeded', 'Skipped')
+    dependsOn: [ Build_release_candidate ]
     variables:
-      app_version: ${{ parameters.IMAGE_TAG }}
+      app_version: $(Build.SourceVersion)
     jobs:
       - deployment: "Green_deployment"
         displayName: "Green deployment"
@@ -89,12 +124,11 @@ stages:
                 - template: azure-templates/helm-microservice-chart-deploy.yml
                   parameters:
                     DO_DEPLOY: true
-                    DO_BLUE_GREEN_DEPLOY: ${{ parameters.ENABLE_CANARY }}
+                    DO_BLUE_GREEN_DEPLOY: false
                     ENV: 'UAT'
                     KUBERNETES_SERVICE_CONN: $(UAT_KUBERNETES_SERVICE_CONN)
                     NAMESPACE: ecommerce
                     APP_NAME: $(K8S_IMAGE_REPOSITORY_NAME)
-                    BLUE_VERSION: $(app_version)
                     VALUE_FILE: "helm/values-uat.yaml"
                     GREEN_VERSION: $(app_version)
 
