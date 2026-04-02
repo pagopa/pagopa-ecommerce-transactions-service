@@ -237,7 +237,8 @@ class TransactionsControllerTest {
         );
         DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
 
-        ResponseEntity<ProblemJsonDto> response = transactionsController.digitalStampNotAllowedHandler(exception);
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> response = transactionsController
+                .digitalStampNotAllowedHandler(exception);
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
     }

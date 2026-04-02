@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorDto;
 import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
@@ -791,7 +792,7 @@ public class TransactionsController implements TransactionsApi {
                         .faultCodeCategory(
                                 ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
                         )
-                        .faultCodeDetail(null),
+                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
                 HttpStatus.NOT_FOUND
         );
     }
