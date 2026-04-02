@@ -14,6 +14,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
         - it.pagopa.transactions.exceptions.NodoErrorException
         - it.pagopa.transactions.exceptions.InvalidNodoResponseException
+        - it.pagopa.transactions.exceptions.DigitalStampNotAllowedForClientException
     getTransactionInfo:
       maxAttempts: 3
       waitDuration: 2s
@@ -137,6 +138,7 @@ resilience4j.circuitbreaker:
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
         - it.pagopa.transactions.exceptions.NodoErrorException
         - it.pagopa.transactions.exceptions.InvalidNodoResponseException
+        - it.pagopa.transactions.exceptions.DigitalStampNotAllowedForClientException
     ecommerce-db:
       baseConfig: default
       ignoreExceptions:
