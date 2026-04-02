@@ -252,7 +252,7 @@ public class TransactionsController implements V21Api {
     @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
     ResponseEntity<ProblemJsonDto> digitalStampNotAllowedHandler(DigitalStampNotAllowedForClientException exception) {
         log.warn(exception.getMessage());
-        HttpStatus httpStatus = HttpStatus.CONFLICT;
+        HttpStatus httpStatus = HttpStatus.NOT_FOUND;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(httpStatus.value())

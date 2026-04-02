@@ -781,7 +781,9 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
-    ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(DigitalStampNotAllowedForClientException exception) {
+    ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
+                                                                                                DigitalStampNotAllowedForClientException exception
+    ) {
         log.warn(exception.getMessage());
         return new ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto>(
                 new ValidationFaultPaymentDataErrorProblemJsonDto()
