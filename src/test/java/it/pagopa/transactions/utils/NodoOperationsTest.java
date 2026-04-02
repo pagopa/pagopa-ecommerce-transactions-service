@@ -2106,8 +2106,13 @@ class NodoOperationsTest {
                                 Transaction.ClientId.IO
                         )
         )
-                .expectError(DigitalStampNotAllowedForClientException.class)
-                .verify();
+                .expectNextMatches(
+                        paymentRequestInfo -> paymentRequestInfo.transferList() != null &&
+                                !paymentRequestInfo.transferList().isEmpty() &&
+                                paymentRequestInfo.transferList().stream()
+                                        .anyMatch(t -> t.digitalStamp().equals(Boolean.TRUE))
+                )
+                .verifyComplete();
     }
 
     @Test
@@ -2182,8 +2187,13 @@ class NodoOperationsTest {
                                 Transaction.ClientId.CHECKOUT
                         )
         )
-                .expectError(DigitalStampNotAllowedForClientException.class)
-                .verify();
+                .expectNextMatches(
+                        paymentRequestInfo -> paymentRequestInfo.transferList() != null &&
+                                !paymentRequestInfo.transferList().isEmpty() &&
+                                paymentRequestInfo.transferList().stream()
+                                        .anyMatch(t -> t.digitalStamp().equals(Boolean.TRUE))
+                )
+                .verifyComplete();
     }
 
     @Test
