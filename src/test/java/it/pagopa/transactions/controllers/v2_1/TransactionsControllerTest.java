@@ -230,10 +230,10 @@ class TransactionsControllerTest {
     void testDigitalStampNotAllowedForClientExceptionHandler() {
         ResponseEntity<ProblemJsonDto> responseCheck = new ResponseEntity<>(
                 new ProblemJsonDto()
-                        .status(422)
+                        .status(409)
                         .title("Payment activation not allowed for digital stamp")
                         .detail("Digital stamp payments are only allowed from EC frontend. Client: IO"),
-                HttpStatus.UNPROCESSABLE_ENTITY
+                HttpStatus.CONFLICT
         );
         DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
 

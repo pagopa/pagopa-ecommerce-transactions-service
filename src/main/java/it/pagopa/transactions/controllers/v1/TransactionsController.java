@@ -782,7 +782,7 @@ public class TransactionsController implements TransactionsApi {
     @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
     ResponseEntity<ProblemJsonDto> digitalStampNotAllowedHandler(DigitalStampNotAllowedForClientException exception) {
         log.warn(exception.getMessage());
-        HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        HttpStatus httpStatus = HttpStatus.CONFLICT;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(httpStatus.value())
