@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v1.TransactionsService;
@@ -780,15 +781,16 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
-    ResponseEntity<ProblemJsonDto> digitalStampNotAllowedHandler(DigitalStampNotAllowedForClientException exception) {
+    ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(DigitalStampNotAllowedForClientException exception) {
         log.warn(exception.getMessage());
-        HttpStatus httpStatus = HttpStatus.CONFLICT;
-        return new ResponseEntity<>(
-                new ProblemJsonDto()
-                        .status(httpStatus.value())
-                        .title("Payment activation not allowed for digital stamp")
-                        .detail(exception.getMessage()),
-                httpStatus
+        return new ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto>(
+                new ValidationFaultPaymentDataErrorProblemJsonDto()
+                        .title("Payment Status Fault")
+                        .faultCodeCategory(
+                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
+                        )
+                        .faultCodeDetail(null),
+                HttpStatus.NOT_FOUND
         );
     }
 

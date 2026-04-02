@@ -15,6 +15,7 @@ import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -459,7 +460,7 @@ class TransactionsControllerTest {
         );
         DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
 
-        ResponseEntity<ProblemJsonDto> response = transactionsController.digitalStampNotAllowedHandler(exception);
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> response = transactionsController.digitalStampNotAllowedHandler(exception);
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
     }
