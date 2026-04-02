@@ -683,12 +683,14 @@ components:
         - `PPT_SINTASSI_XSD`
         - `PPT_DOMINIO_SCONOSCIUTO`
         - `PPT_STAZIONE_INT_PA_SCONOSCIUTA`
+        - 'PPT_CLIENT_NON_PERMESSO'
       type: string
       enum:
         - PPT_SINTASSI_EXTRAXSD
         - PPT_SINTASSI_XSD
         - PPT_DOMINIO_SCONOSCIUTO
         - PPT_STAZIONE_INT_PA_SCONOSCIUTA
+        - PPT_CLIENT_NON_PERMESSO
     ValidationFaultPaymentUnknown:
       description: |-
         Fault codes for errors related to well-formed requests to ECs not present inside Nodo, should be mapped to 404 HTTP status code.
