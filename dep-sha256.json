@@ -1685,7 +1685,7 @@
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
       "version": "3.3.1",
-      "sha256": "sHjOjrcf4Skpt715i-BSjVgDJZ0YMdGsGq88SXqcZhs="
+      "sha256": "bG4DTXUtpuLNE3xccCRhTV1V7Gdi_-5QXf9ptYOxr-M="
     },
     {
       "id": "io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.119.Final",
