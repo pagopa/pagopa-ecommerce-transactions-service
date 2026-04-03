@@ -322,22 +322,6 @@ public class TransactionsUtils {
                 nodeErrorToV2TransactionsResponseEntityMapping
         );
 
-        nodeErrorToV2_1TransactionsResponseEntityMapping.put(
-                it.pagopa.generated.transactions.v2_1.server.model.ValidationFaultPaymentDataErrorDto.PPT_CLIENT_NON_PERMESSO
-                        .getValue(),
-                new ResponseEntity<>(
-                        new it.pagopa.generated.transactions.v2_1.server.model.ValidationFaultPaymentDataErrorProblemJsonDto()
-                                .title("Payment Status Fault")
-                                .faultCodeCategory(
-                                        it.pagopa.generated.transactions.v2_1.server.model.ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
-                                )
-                                .faultCodeDetail(
-                                        it.pagopa.generated.transactions.v2_1.server.model.ValidationFaultPaymentDataErrorDto.PPT_CLIENT_NON_PERMESSO
-                                ),
-                        HttpStatus.NOT_FOUND
-                )
-        );
-
     }
 
     public Mono<BaseTransaction> reduceEventsV1(TransactionId transactionId) {

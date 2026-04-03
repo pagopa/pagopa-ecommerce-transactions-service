@@ -260,7 +260,7 @@ public class TransactionsController implements V21Api {
                         .faultCodeCategory(
                                 ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
                         )
-                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_CLIENT_NON_PERMESSO),
+                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
                 httpStatus
         );
     }
