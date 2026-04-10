@@ -1352,29 +1352,27 @@ public class TransactionsService {
         );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> baseTransaction = Mono.just(transaction);
-        return wasTransactionAuthorized(
-                transaction.getTransactionId()
-        ).<Either<TransactionInfoDto, Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction>>>flatMap(
-                alreadyAuthorized -> {
-                    if (Boolean.FALSE.equals(alreadyAuthorized)) {
-                        return Mono.just(baseTransaction).map(Either::right);
-                    } else {
-                        return baseTransaction.map(
-                                trx -> {
-                                    log.info(
-                                            "UpdateTransactionAuthorization outcome already received. Transaction status: [{}]",
-                                            trx.getStatus()
-                                    );
-                                    return buildTransactionInfoDtoV2(trx);
-                                }
-                        ).map(Either::left);
-                    }
-                }
-        )
-                .flatMap(
-                        either -> either.fold(
-                                Mono::just,
-                                tx -> baseTransaction
+
+        return transactionsUtils
+                .reduceV2Events(events)
+                .cast(BaseTransactionWithPaymentToken.class).filter(
+                        baseTransactionWithPaymentToken -> Set.of(
+                                TransactionStatusDto.AUTHORIZATION_REQUESTED,
+                                TransactionStatusDto.AUTHORIZATION_COMPLETED
+                        )
+                                .contains(baseTransactionWithPaymentToken.getStatus())
+                ).flatMap(
+                        tr -> {
+                            if (tr.getStatus().equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)) {
+                                return Mono.just(tr)
+                                        .map(
+                                                authorizationUpdated -> Tuples.of(
+                                                        authorizationUpdated,
+                                                        events
+                                                )
+                                        );
+                            } else {
+                                return baseTransaction
                                         .flatMap(
                                                 t -> transactionUpdateAuthorizationHandlerV2
                                                         .handle(transactionUpdateAuthorizationCommand)
@@ -1418,14 +1416,15 @@ public class TransactionsService {
                                                                             )
                                                             );
                                                 }
-                                        )
-                                        .flatMap(
-                                                TupleUtils.function(this::closePaymentV2)
-
-                                        )
-                                        .map(this::buildTransactionInfoDtoV2)
-                        )
-                );
+                                        );
+                            }
+                        }
+                )
+                .flatMap(
+                        t -> closePaymentV2(t.getT1(), t.getT2().stream().collect(Collectors.toUnmodifiableList()))
+                )
+                .map(this::buildTransactionInfoDtoV2)
+                .switchIfEmpty(Mono.just(buildTransactionInfoDtoV2(transaction)));
     }
 
     private Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> closePaymentV2(
@@ -1503,34 +1502,6 @@ public class TransactionsService {
                                 ).toList()
                 )
                 .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
-
-    }
-
-    private Mono<Boolean> wasTransactionAuthorized(
-                                                   TransactionId transactionId
-    ) {
-        /*
-         * @formatter:off
-         *
-         * This method determines whether transaction has been previously authorized or not
-         * by searching for an authorization completed event.
-         * The check is performed directly on the presence of an authorization completed event
-         * and not on the fact that the transaction aggregate is an instance of `BaseTransactionWithCompletedAuthorization`
-         * because a generic transaction can go in the REFUNDED or EXPIRED states without undergoing authorization
-         * (the corresponding aggregates do not extend, in fact, `BaseTransactionWithCompletedAuthorization`).
-         *
-         * This can happen, for example, when a transaction expires before getting a payment gateway response
-         * (for the EXPIRED state; if in REFUNDED that means the transaction was already refunded).
-         *
-         * @formatter:on
-         */
-        return eventsRepository
-                .findByTransactionIdAndEventCode(
-                        transactionId.value(),
-                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                )
-                .map(v -> true)
-                .switchIfEmpty(Mono.just(false));
 
     }
 
