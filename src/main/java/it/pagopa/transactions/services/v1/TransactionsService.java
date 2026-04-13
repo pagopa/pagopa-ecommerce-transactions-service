@@ -323,6 +323,8 @@ public class TransactionsService {
                         && closureErrorData.getHttpErrorCode().is4xxClientError())
                 ||
                 (ecommercePossibleFinalState.contains(status)
+                        && paymentGateway != null
+                        && gatewayAuthorizationStatus != null
                         && !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus));
     }
 
@@ -456,7 +458,7 @@ public class TransactionsService {
                 case "ERROR", "EXPIRED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
             };
-            case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+            case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
         };
     }
 
