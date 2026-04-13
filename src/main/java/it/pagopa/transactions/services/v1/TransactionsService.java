@@ -1426,12 +1426,6 @@ public class TransactionsService {
                 .flatMap(
                         t -> closePaymentV2(t.getT1(), t.getT2().stream().collect(Collectors.toUnmodifiableList()))
                 )
-                .doOnNext(
-                        tr -> log.info(
-                                "Closure Requested event processed for transaction with id {} ",
-                                tr.getTransactionId().value()
-                        )
-                )
                 .map(this::buildTransactionInfoDtoV2)
                 .switchIfEmpty(
                         Mono.just(buildTransactionInfoDtoV2(transaction)).doOnNext(
@@ -1458,7 +1452,8 @@ public class TransactionsService {
                 .handle(transactionClosureRequestCommand)
                 .doOnNext(
                         closureSentRequestedEvent -> log.info(
-                                "Requested async transaction closure for rptIds: {}",
+                                "Requested async transaction closure for transactionId: {} rptIds: {}",
+                                transactionClosureRequestCommand.getData().value(),
                                 transactionClosureRequestCommand.getRptIds().stream().map(RptId::value).toList()
                         )
                 )
