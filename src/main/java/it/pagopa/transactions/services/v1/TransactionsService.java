@@ -1361,7 +1361,18 @@ public class TransactionsService {
                                 TransactionStatusDto.AUTHORIZATION_COMPLETED
                         )
                                 .contains(baseTransactionWithPaymentToken.getStatus())
-                ).flatMap(
+                )
+                .doOnNext(
+                        transactionWithPaymentToken -> log.info(
+                                "UpdateTransactionAuthorization requested for transaction with id: {}, status: {} for rptIds: {}",
+                                transactionWithPaymentToken.getTransactionId().value(),
+                                transactionWithPaymentToken.getStatus().getValue(),
+                                transactionUpdateAuthorizationCommand
+                                        .getRptIds().stream().map(RptId::value)
+                                        .toList()
+                        )
+                )
+                .flatMap(
                         tr -> {
                             if (tr.getStatus().equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)) {
                                 return Mono.just(tr)
@@ -1376,14 +1387,6 @@ public class TransactionsService {
                                         .flatMap(
                                                 t -> transactionUpdateAuthorizationHandlerV2
                                                         .handle(transactionUpdateAuthorizationCommand)
-                                                        .doOnNext(
-                                                                authorizationStatusUpdatedEvent -> log.info(
-                                                                        "UpdateTransactionAuthorization requested for rptIds: {}",
-                                                                        transactionUpdateAuthorizationCommand
-                                                                                .getRptIds().stream().map(RptId::value)
-                                                                                .toList()
-                                                                )
-                                                        )
                                                         .doOnError(
                                                                 AlreadyProcessedException.class,
                                                                 exception -> log.error(
@@ -1424,7 +1427,14 @@ public class TransactionsService {
                         t -> closePaymentV2(t.getT1(), t.getT2().stream().collect(Collectors.toUnmodifiableList()))
                 )
                 .map(this::buildTransactionInfoDtoV2)
-                .switchIfEmpty(Mono.just(buildTransactionInfoDtoV2(transaction)));
+                .switchIfEmpty(
+                        Mono.just(buildTransactionInfoDtoV2(transaction)).doOnNext(
+                                tr -> log.info(
+                                        "Skipping UpdateTransactionAuthorization request since transaction with id {} is not in one of the allowed state",
+                                        transaction.getTransactionId().value()
+                                )
+                        )
+                );
     }
 
     private Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> closePaymentV2(
@@ -1442,7 +1452,8 @@ public class TransactionsService {
                 .handle(transactionClosureRequestCommand)
                 .doOnNext(
                         closureSentRequestedEvent -> log.info(
-                                "Requested async transaction closure for rptIds: {}",
+                                "Requested async transaction closure for transactionId: {} rptIds: {}",
+                                transactionClosureRequestCommand.getData().value(),
                                 transactionClosureRequestCommand.getRptIds().stream().map(RptId::value).toList()
                         )
                 )
