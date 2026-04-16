@@ -36,12 +36,12 @@ jobs:
       - name: Checkout
         id: checkout
         # from https://github.com/actions/checkout/commits/main
-        uses: actions/checkout@1f9a0c22da41e6ebfa534300ef656657ea2c6707
+        uses: actions/checkout@1f9a0c22da41e6ebfa534300ef656657ea2c6707 #v3
         with:
           persist-credentials: false
 
       # from https://github.com/pagopa/opex-dashboard-azure-action/
-      - uses: pagopa/opex-dashboard-azure-action@v1.1.2
+      - uses: pagopa/opex-dashboard-azure-action@ece3bc2b133be74cabb50aec14cdb9b8051b886f # v1.1.2
         with:
           environment: ${{ matrix.environment }}
           api-name: ${{ matrix.infra }}/${{ matrix.product }} # empty to have `.opex/env` directory structure
