@@ -12,16 +12,19 @@ import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.shaded.org.apache.commons.io.output.TeeOutputStream;
 
 import java.io.ByteArrayOutputStream;
-
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @SpringBootTest
-@TestPropertySource(locations = "classpath:application-tests.properties")
+@TestPropertySource(
+        locations = "classpath:application-tests.properties", properties = {
+                // force k8s profile in order to format log in ECS format
+                "spring.profiles.active=k8s"
+        }
+)
 class LogFormatterTests {
 
     private static final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
