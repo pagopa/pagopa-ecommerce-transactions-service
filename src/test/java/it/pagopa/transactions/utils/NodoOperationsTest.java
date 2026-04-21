@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
+import it.pagopa.transactions.exceptions.DigitalStampNotAllowedForClientException;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import org.junit.Assert;
@@ -135,7 +136,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -245,7 +246,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -346,7 +347,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -517,7 +518,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -791,7 +792,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -892,7 +893,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -993,7 +994,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -1094,7 +1095,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -1195,7 +1196,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -1477,7 +1478,7 @@ class NodoOperationsTest {
                         900,
                         null,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -1792,7 +1793,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT
+                        Transaction.ClientId.CHECKOUT_CART
                 )
                 .block();
 
@@ -2031,5 +2032,227 @@ class NodoOperationsTest {
         assert Objects.equals(response.transferList().get(0).transferCategory(), codiceConvenzioneValue);
         assert Objects.equals(response.transferList().get(0).transferAmount(), 0);
         assert Objects.equals(response.transferList().get(0).paFiscalCode(), "77777777777");
+    }
+
+    @Test
+    void shouldRejectDigitalStampPaymentFromIOClient() {
+        instantiateNodoOperations(false);
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paymentToken = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        int amount = 1000;
+        String idCart = "idCart";
+        it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
+        BigDecimal amountBigDec = BigDecimal.valueOf(amount);
+        String fiscalCode = "77777777777";
+
+        CtTransferListPSPV2 ctTransferListPSPV2 = objectFactoryUtil.createCtTransferListPSPV2();
+        CtTransferPSPV2 ctTransferPSPV2 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2.setIdTransfer(1);
+        ctTransferPSPV2.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
+        ctTransferPSPV2.setRemittanceInformation("test1");
+        CtRichiestaMarcaDaBollo ctRichiestaMarcaDaBollo = objectFactoryUtil.createCtRichiestaMarcaDaBollo();
+        ctRichiestaMarcaDaBollo.setTipoBollo("Tipo Bollo");
+        ctRichiestaMarcaDaBollo.setProvinciaResidenza("RM");
+        ctRichiestaMarcaDaBollo.setHashDocumento(
+                new byte[] {
+                        0,
+                        1,
+                        2,
+                        3
+                }
+        );
+        CtTransferPSPV2 ctTransferWithStamp = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferWithStamp.setIdTransfer(2);
+        ctTransferWithStamp.setFiscalCodePA(fiscalCode);
+        ctTransferWithStamp.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferWithStamp.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
+        ctTransferWithStamp.setRemittanceInformation("test1");
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
+        ctTransferListPSPV2.getTransfer().add(ctTransferWithStamp);
+
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
+        activatePaymentRes.setPaymentToken(paymentToken);
+        activatePaymentRes.setFiscalCodePA(fiscalCode);
+        activatePaymentRes.setTotalAmount(amountBigDec);
+        activatePaymentRes.setPaymentDescription("Description");
+        activatePaymentRes.setOutcome(StOutcome.OK);
+        activatePaymentRes.setTransferList(ctTransferListPSPV2);
+
+        /* preconditions */
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), Mockito.any()))
+                .thenReturn(Mono.just(activatePaymentRes));
+        Mockito.when(
+                objectFactoryNodeForPsp
+                        .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote().equals(idCart)))
+        )
+                .thenAnswer(args -> objectFactoryUtil.createActivatePaymentNoticeV2Request(args.getArgument(0)));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
+
+        /* test */
+        StepVerifier.create(
+                nodoOperations
+                        .activatePaymentRequest(
+                                rptId,
+                                idempotencyKey,
+                                amount,
+                                transactionId,
+                                900,
+                                idCart,
+                                dueDate,
+                                Transaction.ClientId.IO
+                        )
+        )
+                .expectNextMatches(
+                        paymentRequestInfo -> paymentRequestInfo.transferList() != null &&
+                                !paymentRequestInfo.transferList().isEmpty() &&
+                                paymentRequestInfo.transferList().stream()
+                                        .anyMatch(t -> t.digitalStamp().equals(Boolean.TRUE))
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldRejectDigitalStampPaymentFromCheckoutClient() {
+        instantiateNodoOperations(false);
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paymentToken = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        int amount = 1000;
+        String idCart = "idCart";
+        it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
+        BigDecimal amountBigDec = BigDecimal.valueOf(amount);
+        String fiscalCode = "77777777777";
+
+        CtTransferListPSPV2 ctTransferListPSPV2 = objectFactoryUtil.createCtTransferListPSPV2();
+        CtTransferPSPV2 ctTransferPSPV2 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2.setIdTransfer(1);
+        ctTransferPSPV2.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
+        ctTransferPSPV2.setRemittanceInformation("test1");
+        CtRichiestaMarcaDaBollo ctRichiestaMarcaDaBollo = objectFactoryUtil.createCtRichiestaMarcaDaBollo();
+        ctRichiestaMarcaDaBollo.setTipoBollo("Tipo Bollo");
+        ctRichiestaMarcaDaBollo.setProvinciaResidenza("RM");
+        ctRichiestaMarcaDaBollo.setHashDocumento(
+                new byte[] {
+                        0,
+                        1,
+                        2,
+                        3
+                }
+        );
+        CtTransferPSPV2 ctTransferWithStamp = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferWithStamp.setIdTransfer(2);
+        ctTransferWithStamp.setFiscalCodePA(fiscalCode);
+        ctTransferWithStamp.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferWithStamp.setRichiestaMarcaDaBollo(ctRichiestaMarcaDaBollo);
+        ctTransferWithStamp.setRemittanceInformation("test1");
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
+        ctTransferListPSPV2.getTransfer().add(ctTransferWithStamp);
+
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
+        activatePaymentRes.setPaymentToken(paymentToken);
+        activatePaymentRes.setFiscalCodePA(fiscalCode);
+        activatePaymentRes.setTotalAmount(amountBigDec);
+        activatePaymentRes.setPaymentDescription("Description");
+        activatePaymentRes.setOutcome(StOutcome.OK);
+        activatePaymentRes.setTransferList(ctTransferListPSPV2);
+
+        /* preconditions */
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), Mockito.any()))
+                .thenReturn(Mono.just(activatePaymentRes));
+        Mockito.when(
+                objectFactoryNodeForPsp
+                        .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote().equals(idCart)))
+        )
+                .thenAnswer(args -> objectFactoryUtil.createActivatePaymentNoticeV2Request(args.getArgument(0)));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
+
+        /* test */
+        StepVerifier.create(
+                nodoOperations
+                        .activatePaymentRequest(
+                                rptId,
+                                idempotencyKey,
+                                amount,
+                                transactionId,
+                                900,
+                                idCart,
+                                dueDate,
+                                Transaction.ClientId.CHECKOUT
+                        )
+        )
+                .expectNextMatches(
+                        paymentRequestInfo -> paymentRequestInfo.transferList() != null &&
+                                !paymentRequestInfo.transferList().isEmpty() &&
+                                paymentRequestInfo.transferList().stream()
+                                        .anyMatch(t -> t.digitalStamp().equals(Boolean.TRUE))
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldAllowNonDigitalStampPaymentFromIOClient() {
+        instantiateNodoOperations(false);
+        RptId rptId = new RptId("77777777777302016723749670035");
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paymentToken = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        int amount = 1000;
+        String idCart = "idCart";
+        it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
+        BigDecimal amountBigDec = BigDecimal.valueOf(amount);
+        String fiscalCode = "77777777777";
+
+        CtTransferListPSPV2 ctTransferListPSPV2 = objectFactoryUtil.createCtTransferListPSPV2();
+        CtTransferPSPV2 ctTransferPSPV2 = objectFactoryUtil.createCtTransferPSPV2();
+        ctTransferPSPV2.setIdTransfer(1);
+        ctTransferPSPV2.setFiscalCodePA(fiscalCode);
+        ctTransferPSPV2.setTransferAmount(BigDecimal.valueOf(amount));
+        ctTransferPSPV2.setIBAN("IT41B0000100899876113235567");
+        ctTransferPSPV2.setRemittanceInformation("test1");
+        ctTransferListPSPV2.getTransfer().add(ctTransferPSPV2);
+
+        ActivatePaymentNoticeV2Response activatePaymentRes = objectFactoryUtil.createActivatePaymentNoticeV2Response();
+        activatePaymentRes.setPaymentToken(paymentToken);
+        activatePaymentRes.setFiscalCodePA(fiscalCode);
+        activatePaymentRes.setTotalAmount(amountBigDec);
+        activatePaymentRes.setPaymentDescription("Description");
+        activatePaymentRes.setOutcome(StOutcome.OK);
+        activatePaymentRes.setTransferList(ctTransferListPSPV2);
+
+        /* preconditions */
+        Mockito.when(nodeForPspClient.activatePaymentNoticeV2(Mockito.any(), Mockito.any()))
+                .thenReturn(Mono.just(activatePaymentRes));
+        Mockito.when(
+                objectFactoryNodeForPsp
+                        .createActivatePaymentNoticeV2Request(argThat(req -> req.getPaymentNote().equals(idCart)))
+        )
+                .thenAnswer(args -> objectFactoryUtil.createActivatePaymentNoticeV2Request(args.getArgument(0)));
+        Mockito.when(nodoConfig.baseActivatePaymentNoticeV2Request()).thenReturn(new ActivatePaymentNoticeV2Request());
+
+        /* test */
+        PaymentRequestInfo response = nodoOperations
+                .activatePaymentRequest(
+                        rptId,
+                        idempotencyKey,
+                        amount,
+                        transactionId,
+                        900,
+                        idCart,
+                        dueDate,
+                        Transaction.ClientId.IO
+                )
+                .block();
+
+        /* asserts */
+        assertNotNull(response);
+        assertEquals(paymentToken, response.paymentToken());
+        assertEquals(false, response.transferList().stream().anyMatch(t -> t.digitalStamp()));
     }
 }
