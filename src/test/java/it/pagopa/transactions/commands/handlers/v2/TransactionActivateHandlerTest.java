@@ -123,6 +123,8 @@ class TransactionActivateHandlerTest {
         Mockito.reset(transactionEventActivatedStoreRepository, confidentialMailUtils);
         Mockito.when(transactionEventActivatedStoreRepository.save(any()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        Mockito.when(transactionEventActivatedStoreRepository.insert(any(BaseTransactionEvent.class)))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
     }
 
