@@ -388,6 +388,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         );
 
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::insert)
+                .doOnNext(it -> log.info("INSERT"))
                 .flatMap(
                         e -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
