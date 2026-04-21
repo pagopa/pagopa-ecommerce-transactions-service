@@ -11,6 +11,6 @@
     <root level="INFO">
         <appender-ref ref="ECS_JSON_CONSOLE"/>
     </root>
-    <logger name="org.springframework.data.mongodb.core.ReactiveMongoTemplate" level="DEBUG"/>
-    <logger name="org.springframework.data.mongodb.repository" level="DEBUG"/>
+    <logger name="org.springframework.data.mongodb.core.ReactiveMongoTemplate" level="TRACE"/>
+    <logger name="org.springframework.data.mongodb.repository" level="TRACE"/>
 </configuration>
