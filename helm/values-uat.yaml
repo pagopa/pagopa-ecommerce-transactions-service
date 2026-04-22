@@ -24,6 +24,8 @@ microservice-chart:
       TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-u-weu-ecommerce-transaction-auth-requested-queue-b
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=uat"
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
+      REDIS_TIMEOUT: "2s"
+      REDIS_CONNECTION_TIMEOUT: "2s"
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "3.13.5"
