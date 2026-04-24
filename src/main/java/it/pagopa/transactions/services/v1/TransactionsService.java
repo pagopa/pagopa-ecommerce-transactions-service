@@ -415,7 +415,7 @@ public class TransactionsService {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
                 }
                 case REFUND_ERROR, REFUND_REQUESTED -> {
-                    return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+                    return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
                 }
                 case null, default -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
