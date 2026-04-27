@@ -61,7 +61,7 @@ WORKDIR /app/
 
 ARG EXTRACTED=/workspace/app/extracted
 #ELK Agent
-ADD --chown=user https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.1.0/opentelemetry-javaagent.jar .
+ADD --chown=user https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.26.0/opentelemetry-javaagent.jar .
 
 COPY --from=optimizer --chown=user ${EXTRACTED}/dependencies/ ./
 COPY --from=optimizer --chown=user ${EXTRACTED}/spring-boot-loader/ ./
