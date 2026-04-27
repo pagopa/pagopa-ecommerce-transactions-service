@@ -26,8 +26,6 @@ microservice-chart:
       TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-d-weu-ecommerce-transaction-auth-requested-queue-b
       CHECKOUT_NPG_GDI_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/gdi-check"
       CHECKOUT_OUTCOME_URL: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net/esito"
-      REDIS_TIMEOUT: "2s"
-      REDIS_CONNECTION_TIMEOUT: "2s"
     envSecret: {}
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
@@ -113,6 +111,8 @@ microservice-chart:
     MONGO_HEARTBEAT_FREQUENCY_MS: "5000"
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
+    REDIS_TIMEOUT: "2s"
+    REDIS_CONNECTION_TIMEOUT: "2s"
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
     NODE_FOR_PSP_URI: /nodo-auth/node-for-psp/v1
     NODO_PER_PM_URI: /nodo-auth/node-for-ecommerce/v2

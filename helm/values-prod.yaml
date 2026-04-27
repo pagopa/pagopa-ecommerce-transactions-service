@@ -24,8 +24,6 @@ microservice-chart:
       TRANSACTIONS_AUTHORIZATION_REQUESTED_QUEUE_NAME: pagopa-p-weu-ecommerce-transaction-auth-requested-queue-b
       OTEL_RESOURCE_ATTRIBUTES: "service.name=pagopa-ecommerce-transactions-service-blue,deployment.environment=prod"
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
-      REDIS_TIMEOUT: "2s"
-      REDIS_CONNECTION_TIMEOUT: "2s"
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
     tag: "3.13.5"
@@ -226,6 +224,8 @@ microservice-chart:
     SECURITY_API_KEYS_SECONDARY: ecommerce-transactions-service-secondary-api-key
     JWT_ISSUER_API_KEY: ecommerce-jwt-issuer-service-active-api-key
     ECOMMERCE_PAYMENT_METHODS_HANDLER_APY_KEY: payment-method-api-key
+    REDIS_TIMEOUT: "2s"
+    REDIS_CONNECTION_TIMEOUT: "2s"
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
