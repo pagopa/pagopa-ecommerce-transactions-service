@@ -1632,20 +1632,6 @@
       "sha256": "va8sVTJlucGsaWes9Zjj9DPMWS6F54cr0k0eYmSpe5M="
     },
     {
-      "id": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.9.25",
-      "artifactId": "kotlin-stdlib-jdk8",
-      "groupId": "org.jetbrains.kotlin",
-      "version": "1.9.25",
-      "sha256": "-U_feDkM6b4wODvwOcWpNcrqM7EfA3_H-Gu87hkoflo="
-    },
-    {
-      "id": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.9.25",
-      "artifactId": "kotlin-stdlib-jdk7",
-      "groupId": "org.jetbrains.kotlin",
-      "version": "1.9.25",
-      "sha256": "-1Nz3XYbTpPj9TjF6FO7o4pxFDoYFTbo8ZPtbk7ds7g="
-    },
-    {
       "id": "io.github.resilience4j:resilience4j-ratelimiter:jar:2.3.0",
       "artifactId": "resilience4j-ratelimiter",
       "groupId": "io.github.resilience4j",
@@ -1730,95 +1716,102 @@
       "sha256": "iJO7OZhJYp7sqh-hLUiq1zFhcht851_ety5uQMVJrVU="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-api:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-api:jar:1.34.1",
       "artifactId": "opentelemetry-api",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "jk6pS76blNgjrG592nx0YkZZoTUsrwUpoH9D-GtsoNU="
+      "version": "1.34.1",
+      "sha256": "OCD76Ebp88rVXw_hunJGfak0PRoUzHp71TbUBAqxffk="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-context:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-context:jar:1.34.1",
       "artifactId": "opentelemetry-context",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "8xH4d3zxyogkwAoc754PFj2e_Cc4QNf2JbeYKynw1Tw="
+      "version": "1.34.1",
+      "sha256": "YtNPPb83eD3AIjr-YSvM7NzPQE6yXO-Vo6uQ_KpomXU="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-common:jar:1.60.1",
-      "artifactId": "opentelemetry-common",
-      "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "aZmjkyNvqljx2VScAVLBKYZCNfBZYnqscKfARZpQPFY="
-    },
-    {
-      "id": "io.opentelemetry:opentelemetry-sdk:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-sdk:jar:1.34.1",
       "artifactId": "opentelemetry-sdk",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "UmrsEEz6QggswEcwwiBum0EuX70RGtC4J-bawNre-WA="
+      "version": "1.34.1",
+      "sha256": "3h-as_HQ3fz21pjzBZNS9uz73_QxhCTuymLh7qa3Rc0="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-sdk-common:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-sdk-common:jar:1.34.1",
       "artifactId": "opentelemetry-sdk-common",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "dcyWcT4uEcmjDdpMuIzP7MIgk2fB6YC7lGxfyLtxhY8="
+      "version": "1.34.1",
+      "sha256": "v-nI7-LDlylFJ7mjR5NBh_mw3oBdLK1kIBfsfZtxr8U="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-sdk-trace:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-sdk-trace:jar:1.34.1",
       "artifactId": "opentelemetry-sdk-trace",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "ON-JJ_UYWZ2UwF1oWKGP90Xe1QAUtU4ouXYQQXTV6CY="
+      "version": "1.34.1",
+      "sha256": "lzste3DN16asEiseLnp1bxiEC2v93Ms3EPWdXBjse2w="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-sdk-metrics:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-sdk-metrics:jar:1.34.1",
       "artifactId": "opentelemetry-sdk-metrics",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "suHiwPcXNSAVL1dlUrN3rey7_zYyjgu8a99Io5DRP3E="
+      "version": "1.34.1",
+      "sha256": "qYPnQsJgBroIiIpfuJ8IX5Ldgckj_r46xcYlm37Jk10="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-sdk-logs:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-extension-incubator:jar:1.34.1-alpha",
+      "artifactId": "opentelemetry-extension-incubator",
+      "groupId": "io.opentelemetry",
+      "version": "1.34.1-alpha",
+      "sha256": "Y_eUjn00uBuK2xGsjO5XOKMz5XlUx9ooIx7KFoZWUU0="
+    },
+    {
+      "id": "io.opentelemetry:opentelemetry-sdk-logs:jar:1.34.1",
       "artifactId": "opentelemetry-sdk-logs",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "6Yj5Ug0qv057dzHfgJSfwi_yNQrfKLjnSZI31c4LDe0="
+      "version": "1.34.1",
+      "sha256": "C_QKYwqkEV_VSf3X3Pd-sfbAeeDQKrDYGkFdX7CEjzU="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-exporter-otlp:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-api-events:jar:1.34.1-alpha",
+      "artifactId": "opentelemetry-api-events",
+      "groupId": "io.opentelemetry",
+      "version": "1.34.1-alpha",
+      "sha256": "95onuDAN21frIcfWYttGmzTZ-GJTUpxyDrBnzlXBs0U="
+    },
+    {
+      "id": "io.opentelemetry:opentelemetry-exporter-otlp:jar:1.34.1",
       "artifactId": "opentelemetry-exporter-otlp",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "bcnf7MfORGj0DOAc_jizje5FOgsxmLfKYK8GCg8gajU="
+      "version": "1.34.1",
+      "sha256": "o7vG5a2Wth-nNPfPeHCh98tUfa52DaFogz8qK7I7hqw="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-exporter-otlp-common:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-exporter-otlp-common:jar:1.34.1",
       "artifactId": "opentelemetry-exporter-otlp-common",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "LFb75eQQzHcgJqBoAAyD1eLSEp8QGcAXu9E8kh2BBE0="
+      "version": "1.34.1",
+      "sha256": "6fXzJtH7ljFJ415MypHQB29oLvaAwAb5G2RwZxd3Mgs="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-exporter-common:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-exporter-common:jar:1.34.1",
       "artifactId": "opentelemetry-exporter-common",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "Pyv_Opg8W6eShz24O6OslQ7wSdDjIE9-r4qldEOalDg="
+      "version": "1.34.1",
+      "sha256": "c7sR5k1LvO4Qcj-rxDdNtc21zou3VCFzBp9L-WAJPXA="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-exporter-sender-okhttp:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-exporter-sender-okhttp:jar:1.34.1",
       "artifactId": "opentelemetry-exporter-sender-okhttp",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "IFpNSynJIea-NcPxKfAeGyeo--6QcgmmTqh4mmxoe8U="
+      "version": "1.34.1",
+      "sha256": "R5nQe9vonKpd8EjiW3rqYj0p_Qg5mlRN4lhp9PuH4xI="
     },
     {
-      "id": "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:jar:1.60.1",
+      "id": "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:jar:1.34.1",
       "artifactId": "opentelemetry-sdk-extension-autoconfigure-spi",
       "groupId": "io.opentelemetry",
-      "version": "1.60.1",
-      "sha256": "bdCZZgWFWGt7Y1wNf39BLK-qKOgncAVFnruX1twtJfA="
+      "version": "1.34.1",
+      "sha256": "WjvCYZ-lDxdsIavwjs-pjdjomA8VTMordKCnTn0c9HM="
     },
     {
       "id": "io.opentelemetry:opentelemetry-semconv:jar:1.27.0-alpha",
@@ -1828,11 +1821,32 @@
       "sha256": "BpMPh-AI9galQ-Q876-ev6y93YWlRJKpzCZqBZuTWjk="
     },
     {
-      "id": "com.squareup.okhttp3:okhttp:jar:5.3.2",
+      "id": "com.squareup.okhttp3:okhttp:jar:4.11.0",
       "artifactId": "okhttp",
       "groupId": "com.squareup.okhttp3",
-      "version": "5.3.2",
-      "sha256": "5yCjg_3D6x30qsd6CF5ht3MINzZBUd6GcJP9vK_LRKo="
+      "version": "4.11.0",
+      "sha256": "7o9r1s0SVwE9dIMw9MoUdjip-8tS-ziNWsk89TQIdF0="
+    },
+    {
+      "id": "com.squareup.okio:okio:jar:3.2.0",
+      "artifactId": "okio",
+      "groupId": "com.squareup.okio",
+      "version": "3.2.0",
+      "sha256": "3KkyyyAptsniZ3D4fbCLFNSB_-gTGlnzaaI4XBG-Ti0="
+    },
+    {
+      "id": "com.squareup.okio:okio-jvm:jar:3.2.0",
+      "artifactId": "okio-jvm",
+      "groupId": "com.squareup.okio",
+      "version": "3.2.0",
+      "sha256": "tkK670xXAFXeTLPRZnsrFtztkB_4BmNFoGNpGqBgJaQ="
+    },
+    {
+      "id": "org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.9.25",
+      "artifactId": "kotlin-stdlib-common",
+      "groupId": "org.jetbrains.kotlin",
+      "version": "1.9.25",
+      "sha256": "ggLn8DLI3GaY0AxihncBVGp8EsRzHr3fuO7AeI4u7uQ="
     },
     {
       "id": "org.jetbrains.kotlin:kotlin-stdlib:jar:1.9.25",
@@ -1842,39 +1856,25 @@
       "sha256": "-c3Nv_H13oU4CuUml35oNybCqkLbHtbm5Qronklulf0="
     },
     {
-      "id": "com.squareup.okio:okio:jar:3.16.4",
-      "artifactId": "okio",
-      "groupId": "com.squareup.okio",
-      "version": "3.16.4",
-      "sha256": "yZZPOUxM0yt5vzOK-_ovIpciHu4IMReHBhzqVfh91g4="
+      "id": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.9.25",
+      "artifactId": "kotlin-stdlib-jdk8",
+      "groupId": "org.jetbrains.kotlin",
+      "version": "1.9.25",
+      "sha256": "-U_feDkM6b4wODvwOcWpNcrqM7EfA3_H-Gu87hkoflo="
     },
     {
-      "id": "com.squareup.okio:okio-jvm:jar:3.16.4",
-      "artifactId": "okio-jvm",
-      "groupId": "com.squareup.okio",
-      "version": "3.16.4",
-      "sha256": "IZa5k800272Rnn4B9XpHgbWL7oD4YQYWPih8IDQ6lqc="
+      "id": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.9.25",
+      "artifactId": "kotlin-stdlib-jdk7",
+      "groupId": "org.jetbrains.kotlin",
+      "version": "1.9.25",
+      "sha256": "-1Nz3XYbTpPj9TjF6FO7o4pxFDoYFTbo8ZPtbk7ds7g="
     },
     {
-      "id": "com.squareup.okhttp3:mockwebserver:jar:5.3.2",
+      "id": "com.squareup.okhttp3:mockwebserver:jar:4.11.0",
       "artifactId": "mockwebserver",
       "groupId": "com.squareup.okhttp3",
-      "version": "5.3.2",
-      "sha256": "YWSleDrLhyePQu8FgdLeIivWvMAKLoM2EbLt3wx7hmk="
-    },
-    {
-      "id": "com.squareup.okhttp3:mockwebserver3:jar:5.3.2",
-      "artifactId": "mockwebserver3",
-      "groupId": "com.squareup.okhttp3",
-      "version": "5.3.2",
-      "sha256": "U6bgJOzCs_RdBNCFFhxsEFJqNEuAvz8NTmoTwzwYOZg="
-    },
-    {
-      "id": "com.squareup.okhttp3:okhttp-jvm:jar:5.3.2",
-      "artifactId": "okhttp-jvm",
-      "groupId": "com.squareup.okhttp3",
-      "version": "5.3.2",
-      "sha256": "x3H0gHW3Y_bDIgVeIRKalLfeTB-vP49YrOMgsMlRejA="
+      "version": "4.11.0",
+      "sha256": "weBOG3xao9DxaUu6vLrEGtFpyPzfmk1StZqm6kOdMxQ="
     },
     {
       "id": "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.18.3",
