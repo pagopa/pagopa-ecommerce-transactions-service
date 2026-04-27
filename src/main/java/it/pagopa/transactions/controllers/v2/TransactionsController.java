@@ -202,6 +202,18 @@ public class TransactionsController implements V2Api {
         );
     }
 
+    @ExceptionHandler(LockNotAcquiredException.class)
+    ResponseEntity<ProblemJsonDto> lockNotAcquiredExceptionHandler(LockNotAcquiredException exception) {
+        HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(httpStatus.value())
+                        .title("Error acquiring lock to perform operation")
+                        .detail(exception.getMessage()),
+                httpStatus
+        );
+    }
+
     @ExceptionHandler(BadGatewayException.class)
     ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
         return new ResponseEntity<>(

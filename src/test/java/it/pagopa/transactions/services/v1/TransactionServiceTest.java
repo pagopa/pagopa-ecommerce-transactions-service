@@ -16,6 +16,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
+import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
@@ -54,8 +55,7 @@ import java.util.stream.Stream;
 import static it.pagopa.ecommerce.commons.v2.TransactionTestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @AutoConfigureDataRedis
 class TransactionServiceTest {
@@ -153,6 +153,8 @@ class TransactionServiceTest {
 
     private final boolean enablePaymentMethodsHandler = false;
 
+    private final OpenTelemetryUtils openTelemetryUtils = mock(OpenTelemetryUtils.class);
+
     private final TransactionsService transactionsServiceV1 = new TransactionsService(
             transactionActivateHandlerV2,
             transactionRequestAuthorizationHandlerV2,
@@ -180,7 +182,8 @@ class TransactionServiceTest {
             npgAuthorizationErrorCodeMapping,
             ecommerceFinalStates,
             ecommercePossibleFinalStates,
-            enablePaymentMethodsHandler
+            enablePaymentMethodsHandler,
+            openTelemetryUtils
     );
 
     private final TransactionsService transactionsServiceV2 = new TransactionsService(
@@ -210,7 +213,8 @@ class TransactionServiceTest {
             npgAuthorizationErrorCodeMapping,
             ecommerceFinalStates,
             ecommercePossibleFinalStates,
-            enablePaymentMethodsHandler
+            enablePaymentMethodsHandler,
+            openTelemetryUtils
     );
 
     @Test
