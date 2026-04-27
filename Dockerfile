@@ -48,6 +48,8 @@ ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/release
 
 RUN java \
 -javaagent:opentelemetry-javaagent.jar \
+-XX:+UnlockDiagnosticVMOptions \
+-XX:+AllowArchvingWithJavaAgent \
 -Dspring.aot.enabled=true \
 -XX:ArchiveClassesAtExit=../cds.jsa \
 -Dspring.context.exit=onRefresh \
