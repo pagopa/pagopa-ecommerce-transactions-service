@@ -44,12 +44,8 @@ then echo "Skipped empty folder: [$dir]"; \
 else cp -R ../extracted/"$dir"/* ./; \
 fi \
 done
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.26.0/opentelemetry-javaagent.jar .
 
 RUN java \
--javaagent:opentelemetry-javaagent.jar \
--XX:+UnlockDiagnosticVMOptions \
--XX:+AllowArchvingWithJavaAgent \
 -Dspring.aot.enabled=true \
 -XX:ArchiveClassesAtExit=../cds.jsa \
 -Dspring.context.exit=onRefresh \
