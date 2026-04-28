@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "3.14.0"
+    tag: "3.16.0"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -69,10 +69,10 @@ microservice-chart:
     allowPrivilegeEscalation: false
   resources:
     requests:
-      memory: "512Mi"
+      memory: "768Mi"
       cpu: "300m"
     limits:
-      memory: "512Mi"
+      memory: "768Mi"
       cpu: "900m"
   autoscaling:
     enable: true
@@ -193,6 +193,8 @@ microservice-chart:
     ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "true"
     WALLET_NOTIFICATION_MAX_RETRY_ATTEMPTS: "3"
     WALLET_NOTIFICATION_EXPONENTIAL_BACKOFF_RETRY_OFFSET_SECONDS: "10"
+    REDIS_TIMEOUT: "2s"
+    REDIS_CONNECTION_TIMEOUT: "2s"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key

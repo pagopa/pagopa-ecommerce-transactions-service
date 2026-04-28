@@ -29,7 +29,7 @@ microservice-chart:
     envSecret: {}
   image:
     repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "3.14.0" #improve
+    tag: "3.16.0" #improve
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -72,11 +72,11 @@ microservice-chart:
     allowPrivilegeEscalation: false
   resources:
     requests:
-      memory: "512Mi"
+      memory: "768Mi"
       cpu: "300m"
     limits:
-      memory: "512Mi"
-      cpu: "300m"
+      memory: "768Mi"
+      cpu: "900m"
   autoscaling:
     enable: false
     minReplica: 1
@@ -111,6 +111,8 @@ microservice-chart:
     MONGO_HEARTBEAT_FREQUENCY_MS: "5000"
     REDIS_PORT: "6380"
     REDIS_SSL_ENABLED: "true"
+    REDIS_TIMEOUT: "2s"
+    REDIS_CONNECTION_TIMEOUT: "2s"
     NODO_HOSTNAME: https://api.uat.platform.pagopa.it
     NODE_FOR_PSP_URI: /nodo-auth/node-for-psp/v1
     NODO_PER_PM_URI: /nodo-auth/node-for-ecommerce/v2
