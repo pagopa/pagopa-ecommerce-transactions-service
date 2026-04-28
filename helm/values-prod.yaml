@@ -198,6 +198,8 @@ microservice-chart:
     ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "true"
     WALLET_NOTIFICATION_MAX_RETRY_ATTEMPTS: "3"
     WALLET_NOTIFICATION_EXPONENTIAL_BACKOFF_RETRY_OFFSET_SECONDS: "10"
+    REDIS_TIMEOUT: "2s"
+    REDIS_CONNECTION_TIMEOUT: "2s"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
@@ -224,8 +226,6 @@ microservice-chart:
     SECURITY_API_KEYS_SECONDARY: ecommerce-transactions-service-secondary-api-key
     JWT_ISSUER_API_KEY: ecommerce-jwt-issuer-service-active-api-key
     ECOMMERCE_PAYMENT_METHODS_HANDLER_APY_KEY: payment-method-api-key
-    REDIS_TIMEOUT: "2s"
-    REDIS_CONNECTION_TIMEOUT: "2s"
   keyvault:
     name: "pagopa-p-ecommerce-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
