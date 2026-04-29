@@ -226,6 +226,23 @@ class TransactionsControllerTest {
     }
 
     @Test
+    void testDigitalStampNotAllowedForClientExceptionHandler() {
+        ResponseEntity<ProblemJsonDto> responseCheck = new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(404)
+                        .title("Payment activation not allowed for digital stamp")
+                        .detail("Digital stamp payments are only allowed from EC frontend. Client: IO"),
+                HttpStatus.NOT_FOUND
+        );
+        DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
+
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> response = transactionsController
+                .digitalStampNotAllowedHandler(exception);
+
+        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+    }
+
+    @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
         webTestClient.post()
                 .uri("/v2/transactions")

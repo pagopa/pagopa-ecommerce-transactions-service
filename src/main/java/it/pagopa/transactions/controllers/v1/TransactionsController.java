@@ -10,6 +10,8 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorDto;
+import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v1.TransactionsService;
@@ -776,6 +778,22 @@ public class TransactionsController implements TransactionsApi {
                         .title(httpStatus.getReasonPhrase())
                         .detail(exception.getErrorDescription()),
                 httpStatus
+        );
+    }
+
+    @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
+    ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
+                                                                                                DigitalStampNotAllowedForClientException exception
+    ) {
+        log.warn(exception.getMessage());
+        return new ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto>(
+                new ValidationFaultPaymentDataErrorProblemJsonDto()
+                        .title("Payment Status Fault")
+                        .faultCodeCategory(
+                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
+                        )
+                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
+                HttpStatus.NOT_FOUND
         );
     }
 

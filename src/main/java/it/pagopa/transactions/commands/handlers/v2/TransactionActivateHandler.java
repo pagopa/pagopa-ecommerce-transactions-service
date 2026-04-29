@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JwtIssuerClientException;
@@ -24,6 +25,7 @@ import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionActivateHandlerCommon;
+import it.pagopa.transactions.exceptions.DigitalStampNotAllowedForClientException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.NodoOperations;
@@ -100,6 +102,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                 multiplePaymentNotices,
                 Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
         );
+        boolean allowDigitalStamp = command.getClientId().equals(Transaction.ClientId.CHECKOUT_CART.toString())
+                || command.getClientId().equals(Transaction.ClientId.WISP_REDIRECT.toString());
 
         return Mono.defer(
                 () -> Flux.fromIterable(paymentNotices)
@@ -169,6 +173,15 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         )
                         .sequential()
                         .collectList()
+                        .filter(paymentRequestInfoList -> {
+                            if (allowDigitalStamp)
+                                return true;
+                            return paymentRequestInfoList.stream().allMatch(
+                                    paymentRequestInfo -> paymentRequestInfo.transferList().stream()
+                                            .allMatch(t -> t.digitalStamp().equals(Boolean.FALSE))
+                            );
+                        })
+                        .switchIfEmpty(Mono.error(new DigitalStampNotAllowedForClientException(command.getClientId())))
                         .flatMap(
                                 paymentRequestInfos -> generateTransactionJwtToken(command, transactionId)
                                         .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
@@ -339,7 +352,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 null,
                                 paymentNotice.creditorReferenceId()
                         )
-                ).doOnNext(p -> log.info("PaymentRequestInfo cache miss for {}", p.id().value()));
+                )
+                .doOnNext(p -> log.info("PaymentRequestInfo cache miss for {}", p.id().value()));
     }
 
     private boolean isValidPaymentToken(String paymentToken) {

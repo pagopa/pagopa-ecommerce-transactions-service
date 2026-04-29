@@ -86,7 +86,8 @@ class CircuitBreakerTest {
             new InvalidRequestException(""),
             new TransactionAmountMismatchException(10, 11),
             new NodoErrorException(new CtFaultBean()),
-            new InvalidNodoResponseException("")
+            new InvalidNodoResponseException(""),
+            new DigitalStampNotAllowedForClientException("")
     ).collect(Collectors.toMap(exception -> exception.getClass().getCanonicalName(), Function.identity()));
 
     static {
