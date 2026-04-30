@@ -358,7 +358,7 @@ public class TransactionsService {
                             ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0
                             : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 }
-                case NOTIFIED_KO, REFUNDED -> {
+                case NOTIFIED_KO -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 }
                 case EXPIRED_NOT_AUTHORIZED -> {
@@ -414,7 +414,7 @@ public class TransactionsService {
                 case AUTHORIZATION_REQUESTED -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
                 }
-                case REFUND_ERROR, REFUND_REQUESTED -> {
+                case REFUNDED, REFUND_ERROR, REFUND_REQUESTED -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
                 }
                 case null, default -> {
