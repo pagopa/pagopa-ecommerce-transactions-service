@@ -561,7 +561,7 @@ class TransactionServiceTests {
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
