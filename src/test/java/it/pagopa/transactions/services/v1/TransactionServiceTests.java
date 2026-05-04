@@ -705,8 +705,8 @@ class TransactionServiceTests {
      * true <br/>
      * Transaction status: AUTHORIZATION_REQUESTED expected outcome: 17 final
      * status: false <br/>
-     * Transaction status: REFUND_ERROR expected outcome: 1 final status: true <br/>
-     * Transaction status: REFUND_REQUESTED expected outcome: 1 final status: true
+     * Transaction status: REFUND_ERROR expected outcome: 18 final status: true <br/>
+     * Transaction status: REFUND_REQUESTED expected outcome: 18 final status: true
      * <br/>
      * </p>
      */
