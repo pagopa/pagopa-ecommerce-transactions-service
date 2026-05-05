@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -49,41 +51,51 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                 .doOnNext(t -> log.error("Error: requesting async closure for transaction in state {}", t.getStatus()))
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
 
-        return transaction
-                .filter(
-                        t -> t.getStatus() == TransactionStatusDto.AUTHORIZATION_COMPLETED
-                )
-                .switchIfEmpty(alreadyProcessedError)
-                .cast(TransactionAuthorizationCompleted.class)
-                .flatMap(t -> {
-                    it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent transactionClosureRequestedEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent(
-                            t.getTransactionId().value()
-                    );
+        return transaction.filter(
+                t -> Set.of(TransactionStatusDto.AUTHORIZATION_COMPLETED, TransactionStatusDto.CLOSURE_REQUESTED)
+                        .contains(t.getStatus())
+        ).switchIfEmpty(alreadyProcessedError)
+                .flatMap(
+                        t -> Mono.just(t)
+                                .filter(tr -> tr.getStatus() == TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                                .cast(TransactionAuthorizationCompleted.class)
+                                .flatMap(trx -> {
+                                    it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent transactionClosureRequestedEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent(
+                                            trx.getTransactionId().value()
+                                    );
 
-                    return transactionEventSendClosureRequestRepository.save(transactionClosureRequestedEvent).flatMap(
-                            event -> tracingUtils.traceMono(
-                                    this.getClass().getSimpleName(),
-                                    tracingInfo -> transactionClosureQueueAsyncClient
-                                            .sendMessageWithResponse(
-                                                    new QueueEvent<>(transactionClosureRequestedEvent, tracingInfo),
-                                                    Duration.ZERO,
-                                                    Duration.ofSeconds(transientQueuesTTLSeconds)
-                                            )
-                            )
-                    ).thenReturn(transactionClosureRequestedEvent)
-                            .doOnError(
-                                    exception -> log.error(
-                                            "Error to generate event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} - error {}",
-                                            transactionClosureRequestedEvent.getTransactionId(),
-                                            exception.getMessage()
-                                    )
-                            )
-                            .doOnNext(
-                                    event -> log.info(
-                                            "Generated event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {}",
-                                            event.getTransactionId()
-                                    )
-                            );
-                });
+                                    return transactionEventSendClosureRequestRepository
+                                            .save(transactionClosureRequestedEvent);
+                                })
+                                .switchIfEmpty(
+                                        Mono.just(command.getEvents().getLast())
+                                                .cast(TransactionClosureRequestedEvent.class)
+                                )
+                ).flatMap(
+                        event -> tracingUtils.traceMono(
+                                this.getClass().getSimpleName(),
+                                tracingInfo -> transactionClosureQueueAsyncClient
+                                        .sendMessageWithResponse(
+                                                new QueueEvent<>(event, tracingInfo),
+                                                Duration.ZERO,
+                                                Duration.ofSeconds(transientQueuesTTLSeconds)
+                                        )
+                        ).thenReturn(event)
+                                .doOnError(
+                                        exception -> log.error(
+                                                "Error to generate event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} - error {}",
+                                                event.getTransactionId(),
+                                                exception.getMessage()
+                                        )
+                                )
+                                .doOnNext(
+                                        evt -> log.info(
+                                                "Generated event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {}",
+                                                evt.getTransactionId()
+                                        )
+                                )
+
+                );
+
     }
 }
