@@ -1457,12 +1457,27 @@ public class TransactionsService {
                         )
                 )
                 .flatMap(
-                        closureRequestedEvent -> transactionsUtils.reduceV2Events(
-                                Stream.concat(
-                                        events.stream(),
-                                        Stream.of(closureRequestedEvent)
-                                ).toList()
+                        closureRequestedEvent -> closureRequestedProjectionHandler.handle(
+                                (TransactionClosureRequestedEvent) closureRequestedEvent
                         )
+                                .then(
+                                        Mono.just(transaction)
+                                                .filter(
+                                                        t -> t.getStatus()
+                                                                .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                                                )
+                                                .flatMap(
+                                                        t -> transactionsUtils.reduceV2Events(
+                                                                Stream.concat(
+                                                                        events.stream(),
+                                                                        Stream.of(closureRequestedEvent)
+                                                                ).toList()
+                                                        )
+                                                )
+                                                .switchIfEmpty(
+                                                        Mono.just(transaction)
+                                                )
+                                )
                 );
     }
 

@@ -1422,8 +1422,28 @@ class TransactionServiceTests {
                 .transactionClosureRequestedEvent();
         TransactionClosureRequestedEvent transactionClosedEvent = TransactionTestUtils
                 .transactionClosureRequestedEvent();
+        Transaction closedTransactionDocument = new Transaction(
+                transactionDocument.getTransactionId(),
+                transactionDocument.getPaymentNotices(),
+                null,
+                transactionDocument.getEmail(),
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                Transaction.ClientId.CHECKOUT,
+                ZonedDateTime.now().toString(),
+                transactionDocument.getIdCart(),
+                transactionDocument.getRrn(),
+                transactionDocument.getUserId(),
+                transactionDocument.getPaymentTypeCode(),
+                transactionDocument.getPspId(),
+                transactionDocument.getLastProcessedEventAt()
+        );
 
         /* preconditions */
+        Mockito.when(
+                closureRequestedProjectionHandler.handle(
+                        any()
+                )
+        ).thenReturn(Mono.just(closedTransactionDocument));
         Mockito.when(
                 transactionsEventStoreRepository.findByTransactionIdAndEventCode(
                         transactionId.value(),
@@ -1453,7 +1473,7 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV2, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV2, times(0)).handle(any());
         verify(transactionSendClosureRequestHandler, times(1)).handle(any());
-        verify(closureRequestedProjectionHandler, times(0)).handle(any());
+        verify(closureRequestedProjectionHandler, times(1)).handle(any());
     }
 
     @Test
@@ -1628,7 +1648,7 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV2, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV2, times(0)).handle(any());
         verify(transactionSendClosureRequestHandler, times(1)).handle(any());
-        verify(closureRequestedProjectionHandler, times(0)).handle(any());
+        verify(closureRequestedProjectionHandler, times(1)).handle(any());
 
     }
 

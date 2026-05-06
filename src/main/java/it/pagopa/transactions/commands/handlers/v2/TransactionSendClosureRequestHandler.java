@@ -70,6 +70,12 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                 .switchIfEmpty(
                                         Mono.just(command.getEvents().getLast())
                                                 .cast(TransactionClosureRequestedEvent.class)
+                                                .doOnNext(
+                                                        evt -> log.info(
+                                                                "event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} already present. Processing it.",
+                                                                evt.getTransactionId()
+                                                        )
+                                                )
                                 )
                 ).flatMap(
                         event -> tracingUtils.traceMono(
@@ -83,14 +89,14 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                         ).thenReturn(event)
                                 .doOnError(
                                         exception -> log.error(
-                                                "Error to generate event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} - error {}",
+                                                "Error to generate or processing event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} - error {}",
                                                 event.getTransactionId(),
                                                 exception.getMessage()
                                         )
                                 )
                                 .doOnNext(
                                         evt -> log.info(
-                                                "Generated event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {}",
+                                                "Generated and processed event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {}",
                                                 evt.getTransactionId()
                                         )
                                 )
