@@ -69,6 +69,7 @@ import static org.mockito.Mockito.verify;
 @TestPropertySource(locations = "classpath:application-tests.properties")
 @AutoConfigureDataRedis
 class TransactionsControllerTest {
+    private static final Long MOCK_AMOUNT = 100L;
 
     @InjectMocks
     private TransactionsController transactionsController = new TransactionsController();
@@ -127,7 +128,7 @@ class TransactionsControllerTest {
             NewTransactionResponseDto response = new NewTransactionResponseDto();
 
             PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-            paymentInfoDto.setAmount(10);
+            paymentInfoDto.setAmount(MOCK_AMOUNT);
             paymentInfoDto.setReason("Reason");
             paymentInfoDto.setPaymentToken("payment_token");
             paymentInfoDto.setRptId(RPTID);
@@ -173,7 +174,7 @@ class TransactionsControllerTest {
 
         TransactionInfoDto response = new TransactionInfoDto();
         PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-        paymentInfoDto.setAmount(10);
+        paymentInfoDto.setAmount(MOCK_AMOUNT);
         paymentInfoDto.setReason("Reason");
         paymentInfoDto.setPaymentToken("payment_token");
         response.addPaymentsItem(paymentInfoDto);
@@ -266,7 +267,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(1)
                 .paymentInstrumentId(paymentMethodId)
                 .pspId("pspId")
@@ -311,7 +312,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(1)
                 .paymentInstrumentId(paymentMethodId)
                 .pspId("pspId")
@@ -457,7 +458,7 @@ class TransactionsControllerTest {
                 .transactionId(transactionId)
                 .addPaymentsItem(
                         new PaymentInfoDto()
-                                .amount(100)
+                                .amount(MOCK_AMOUNT)
                                 .paymentToken(paymentToken)
                 )
                 .status(TransactionStatusDto.NOTIFIED_OK);
@@ -680,7 +681,7 @@ class TransactionsControllerTest {
         given(requestPath.value()).willReturn(contextPath);
         ResponseEntity<ProblemJsonDto> responseEntity = transactionsController
                 .amountMismatchErrorHandler(
-                        new TransactionAmountMismatchException(1, 2),
+                        new TransactionAmountMismatchException(1L, 2L),
                         exchange
                 );
 
@@ -768,7 +769,7 @@ class TransactionsControllerTest {
         TransactionInfoDto response = new TransactionInfoDto()
                 .addPaymentsItem(
                         new PaymentInfoDto()
-                                .amount(10)
+                                .amount(MOCK_AMOUNT)
                                 .reason("Reason")
                                 .paymentToken("payment_token")
                 ).authToken("token");
@@ -866,7 +867,7 @@ class TransactionsControllerTest {
         String pgsId = "NPG";
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(1)
                 .paymentInstrumentId(paymentMethodId)
                 .pspId("pspId")
@@ -914,7 +915,7 @@ class TransactionsControllerTest {
         String pgsId = "VPOS";
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(1)
                 .paymentInstrumentId(paymentMethodId)
                 .pspId("pspId")
@@ -952,7 +953,7 @@ class TransactionsControllerTest {
         String pgsId = "XPAY";
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(1)
                 .paymentInstrumentId(paymentMethodId)
                 .pspId("pspId")
@@ -1240,7 +1241,7 @@ class TransactionsControllerTest {
         TransactionInfoDto transactionInfo = new TransactionInfoDto()
                 .addPaymentsItem(
                         new PaymentInfoDto()
-                                .amount(100)
+                                .amount(MOCK_AMOUNT)
                                 .paymentToken(paymentToken)
                 )
                 .authToken("authToken")
@@ -1489,7 +1490,7 @@ class TransactionsControllerTest {
         String pgsId = "NPG";
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(1)
                 .paymentInstrumentId(paymentMethodId)
                 .pspId("pspId")

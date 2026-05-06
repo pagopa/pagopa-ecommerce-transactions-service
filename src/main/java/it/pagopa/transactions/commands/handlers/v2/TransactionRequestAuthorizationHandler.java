@@ -301,7 +301,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             t.getTransactionId().value(),
                                             new TransactionAuthorizationRequestData(
                                                     t.getPaymentNotices().stream()
-                                                            .mapToInt(
+                                                            .mapToLong(
                                                                     paymentNotice -> paymentNotice.transactionAmount()
                                                                             .value()
                                                             ).sum(),
