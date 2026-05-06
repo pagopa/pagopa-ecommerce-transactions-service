@@ -67,6 +67,7 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler.class,
+            it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class,
             it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.class,
@@ -140,6 +141,9 @@ class TransactionServiceTests {
 
     @MockitoBean
     private it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2;
+
+    @MockitoBean
+    private it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
 
     @MockitoBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
@@ -461,6 +465,7 @@ class TransactionServiceTests {
                 transactionCancelHandlerV2,
                 null, // authorizationProjectionHandlerV2,
                 authorizationUpdateProjectionHandlerV2,
+                closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
                 transactionUserReceiptProjectionHandlerV2,
                 null, // transactionsActivationProjectionHandlerV2,
