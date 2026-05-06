@@ -1374,7 +1374,7 @@ class TransactionServiceTests {
     }
 
     @Test
-    void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosedRequested() {
+    void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosureRequested() {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
         UUID transactionIdDecoded = transactionId.uuid();
@@ -1442,6 +1442,89 @@ class TransactionServiceTests {
                         )
                 );
 
+        Mockito.when(transactionSendClosureRequestHandler.handle(any()))
+                .thenReturn(Mono.just(transactionClosedEvent));
+
+        /* test */
+        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
+                .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
+
+        assertEquals(expectedResponse, transactionInfoResponse);
+        verify(transactionUpdateAuthorizationHandlerV2, times(0)).handle(any());
+        verify(authorizationUpdateProjectionHandlerV2, times(0)).handle(any());
+        verify(transactionSendClosureRequestHandler, times(1)).handle(any());
+        verify(closureRequestedProjectionHandler, times(0)).handle(any());
+    }
+
+    @Test
+    void shouldUpdateTransactionAuthOutcomeBeIdempotentForAlreadyAuthorizedTransactionClosed() {
+        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
+
+        UUID transactionIdDecoded = transactionId.uuid();
+
+        Transaction transactionDocument = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                ZonedDateTime.now()
+        );
+
+        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeNpgGatewayDto()
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                )
+                .timestampOperation(OffsetDateTime.now());
+
+        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+                .transactionId(transactionDocument.getTransactionId())
+                .payments(
+                        transactionDocument.getPaymentNotices().stream().map(
+                                paymentNotice -> new PaymentInfoDto()
+                                        .amount(paymentNotice.getAmount())
+                                        .reason(paymentNotice.getDescription())
+                                        .paymentToken(paymentNotice.getPaymentToken())
+                                        .rptId(paymentNotice.getRptId())
+                        ).toList()
+                )
+                .status(TransactionStatusDto.CLOSED);
+
+        TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
+        TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
+                .transactionAuthorizationRequestedEvent();
+        TransactionAuthorizationCompletedEvent transactionAuthorizationCompletedEvent = TransactionTestUtils
+                .transactionAuthorizationCompletedEvent(
+                        new NpgTransactionGatewayAuthorizationData(
+                                OperationResultDto.EXECUTED,
+                                "operationId",
+                                "paymentEnd2EndId",
+                                null,
+                                null
+                        )
+
+                );
+        TransactionClosureRequestedEvent transactionClosureRequestedEvent = TransactionTestUtils
+                .transactionClosureRequestedEvent();
+        TransactionClosedEvent transactionClosedEvent = TransactionTestUtils
+                .transactionClosedEvent(TransactionClosureData.Outcome.OK);
+
+        /* preconditions */
+        Mockito.when(
+                transactionsEventStoreRepository.findByTransactionIdAndEventCode(
+                        transactionId.value(),
+                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
+                )
+        )
+                .thenReturn(Mono.just(transactionAuthorizationCompletedEvent));
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(
+                        Flux.just(
+                                transactionActivatedEvent,
+                                transactionAuthorizationRequestedEvent,
+                                transactionAuthorizationCompletedEvent,
+                                transactionClosureRequestedEvent,
+                                transactionClosedEvent
+                        )
+                );
+
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
@@ -1451,7 +1534,6 @@ class TransactionServiceTests {
         verify(authorizationUpdateProjectionHandlerV2, times(0)).handle(any());
         verify(transactionSendClosureRequestHandler, times(0)).handle(any());
         verify(closureRequestedProjectionHandler, times(0)).handle(any());
-
     }
 
     @Test
@@ -1546,7 +1628,7 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV2, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV2, times(0)).handle(any());
         verify(transactionSendClosureRequestHandler, times(1)).handle(any());
-        verify(closureRequestedProjectionHandler, times(1)).handle(any());
+        verify(closureRequestedProjectionHandler, times(0)).handle(any());
 
     }
 
