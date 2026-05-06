@@ -1008,22 +1008,6 @@ class TransactionServiceTests {
                 )
                 .status(TransactionStatusDto.CLOSURE_REQUESTED);
 
-        Transaction closedTransactionDocument = new Transaction(
-                transactionDocument.getTransactionId(),
-                transactionDocument.getPaymentNotices(),
-                null,
-                transactionDocument.getEmail(),
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString(),
-                transactionDocument.getIdCart(),
-                transactionDocument.getRrn(),
-                transactionDocument.getUserId(),
-                transactionDocument.getPaymentTypeCode(),
-                transactionDocument.getPspId(),
-                transactionDocument.getLastProcessedEventAt()
-        );
-
         /* preconditions */
 
         Mockito.when(transactionUpdateAuthorizationHandlerV2.handle(any()))
@@ -1574,21 +1558,6 @@ class TransactionServiceTests {
         TransactionClosureRequestedEvent closureSentEvent = TransactionTestUtils
                 .transactionClosureRequestedEvent();
 
-        Transaction closedTransactionDocument = new Transaction(
-                transactionDocument.getTransactionId(),
-                transactionDocument.getPaymentNotices(),
-                null,
-                transactionDocument.getEmail(),
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
-                Transaction.ClientId.CHECKOUT,
-                ZonedDateTime.now().toString(),
-                transactionDocument.getIdCart(),
-                transactionDocument.getRrn(),
-                transactionDocument.getUserId(),
-                transactionDocument.getPaymentTypeCode(),
-                transactionDocument.getPspId(),
-                transactionDocument.getLastProcessedEventAt()
-        );
         /* preconditions */
         Mockito.when(transactionSendClosureRequestHandler.handle(any()))
                 .thenReturn(Mono.just(closureSentEvent));
