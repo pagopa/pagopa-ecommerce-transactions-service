@@ -76,8 +76,6 @@ public class TransactionsService {
 
     private final AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2;
 
-    private final ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
-
     private final CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2;
 
     private final TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2;
@@ -131,7 +129,6 @@ public class TransactionsService {
             @Qualifier(
                 AuthorizationUpdateProjectionHandler.QUALIFIER_NAME
             ) AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandlerV2,
-            ClosureRequestedProjectionHandler closureRequestedProjectionHandler,
             @Qualifier(
                 CancellationRequestProjectionHandler.QUALIFIER_NAME
             ) CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2,
@@ -166,7 +163,6 @@ public class TransactionsService {
         this.transactionCancelHandlerV2 = transactionCancelHandlerV2;
         this.authorizationProjectionHandlerV2 = authorizationProjectionHandlerV2;
         this.authorizationUpdateProjectionHandlerV2 = authorizationUpdateProjectionHandlerV2;
-        this.closureRequestedProjectionHandler = closureRequestedProjectionHandler;
         this.cancellationRequestProjectionHandlerV2 = cancellationRequestProjectionHandlerV2;
         this.transactionUserReceiptProjectionHandlerV2 = transactionUserReceiptProjectionHandlerV2;
         this.transactionsActivationProjectionHandlerV2 = transactionsActivationProjectionHandlerV2;

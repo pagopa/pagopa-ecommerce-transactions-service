@@ -82,7 +82,6 @@ import static org.mockito.Mockito.*;
             it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler.class,
             it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler.class,
-            it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionUserCancelHandler.class,
             it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestUserReceiptHandler.class,
@@ -156,9 +155,6 @@ class TransactionServiceTests {
 
     @MockitoBean
     private it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2;
-
-    @MockitoBean
-    private it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler;
 
     @MockitoBean
     private TransactionsEventStoreRepository transactionsEventStoreRepository;
@@ -761,7 +757,6 @@ class TransactionServiceTests {
                 transactionCancelHandlerV2,
                 authorizationRequestProjectionHandler, // authorizationProjectionHandlerV2,
                 authorizationUpdateProjectionHandlerV2,
-                closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
                 transactionUserReceiptProjectionHandlerV2,
                 null, // transactionsActivationProjectionHandlerV2,
@@ -1039,8 +1034,6 @@ class TransactionServiceTests {
         Mockito.when(transactionSendClosureRequestHandler.handle(any()))
                 .thenReturn(Mono.just(closureSentEvent));
 
-        Mockito.when(closureRequestedProjectionHandler.handle(any()))
-                .thenReturn(Mono.just(closedTransactionDocument));
         Mockito.when(
                 transactionsEventStoreRepository.findByTransactionIdAndEventCode(
                         transactionId.value(),
@@ -1453,7 +1446,6 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV2, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV2, times(0)).handle(any());
         verify(transactionSendClosureRequestHandler, times(1)).handle(any());
-        verify(closureRequestedProjectionHandler, times(0)).handle(any());
     }
 
     @Test
@@ -1533,7 +1525,6 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV2, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV2, times(0)).handle(any());
         verify(transactionSendClosureRequestHandler, times(0)).handle(any());
-        verify(closureRequestedProjectionHandler, times(0)).handle(any());
     }
 
     @Test
@@ -1599,8 +1590,6 @@ class TransactionServiceTests {
                 transactionDocument.getLastProcessedEventAt()
         );
         /* preconditions */
-        Mockito.when(closureRequestedProjectionHandler.handle(any()))
-                .thenReturn(Mono.just(closedTransactionDocument));
         Mockito.when(transactionSendClosureRequestHandler.handle(any()))
                 .thenReturn(Mono.just(closureSentEvent));
         Mockito.when(
@@ -1628,7 +1617,6 @@ class TransactionServiceTests {
         verify(transactionUpdateAuthorizationHandlerV2, times(0)).handle(any());
         verify(authorizationUpdateProjectionHandlerV2, times(0)).handle(any());
         verify(transactionSendClosureRequestHandler, times(1)).handle(any());
-        verify(closureRequestedProjectionHandler, times(0)).handle(any());
 
     }
 

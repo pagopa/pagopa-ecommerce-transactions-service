@@ -104,8 +104,6 @@ class TransactionServiceTest {
             .mock(it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler.class);
     private final it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler transactionUserReceiptProjectionHandlerV2 = Mockito
             .mock(it.pagopa.transactions.projections.handlers.v2.TransactionUserReceiptProjectionHandler.class);
-    private final it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler closureRequestedProjectionHandler = Mockito
-            .mock(it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler.class);
     private final it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler transactionsActivationProjectionHandlerV2 = Mockito
             .mock(it.pagopa.transactions.projections.handlers.v2.TransactionsActivationProjectionHandler.class);
     private final it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2 = Mockito
@@ -164,7 +162,6 @@ class TransactionServiceTest {
             transactionCancelHandlerV2,
             authorizationProjectionHandlerV2,
             authorizationUpdateProjectionHandlerV2,
-            closureRequestedProjectionHandler,
             cancellationRequestProjectionHandlerV2,
             transactionUserReceiptProjectionHandlerV2,
             transactionsActivationProjectionHandlerV2,
@@ -195,7 +192,6 @@ class TransactionServiceTest {
             transactionCancelHandlerV2,
             authorizationProjectionHandlerV2,
             authorizationUpdateProjectionHandlerV2,
-            closureRequestedProjectionHandler,
             cancellationRequestProjectionHandlerV2,
             transactionUserReceiptProjectionHandlerV2,
             transactionsActivationProjectionHandlerV2,
@@ -441,8 +437,6 @@ class TransactionServiceTest {
 
         Mockito.when(transactionSendClosureRequestHandler.handle(any()))
                 .thenReturn(Mono.just(transactionClosureRequestedEvent()));
-        Mockito.when(closureRequestedProjectionHandler.handle(any()))
-                .thenReturn(Mono.just(closureRequestedTransaction));
 
         Mockito.when(transactionsUtils.getPspId(any(BaseTransaction.class))).thenCallRealMethod();
         Mockito.when(transactionsUtils.getPaymentMethodTypeCode(any(BaseTransaction.class))).thenCallRealMethod();
