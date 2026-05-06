@@ -1358,8 +1358,7 @@ public class TransactionsService {
                 )
                 .doOnNext(
                         transactionWithPaymentToken -> log.info(
-                                "UpdateTransactionAuthorization requested for transaction with id: {}, status: {} for rptIds: {}",
-                                transactionWithPaymentToken.getTransactionId().value(),
+                                "UpdateTransactionAuthorization requested for transaction with status: {} for rptIds: {}",
                                 transactionWithPaymentToken.getStatus().getValue(),
                                 transactionUpdateAuthorizationCommand
                                         .getRptIds().stream().map(RptId::value)
