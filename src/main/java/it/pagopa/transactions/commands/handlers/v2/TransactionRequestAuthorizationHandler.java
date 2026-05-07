@@ -208,7 +208,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 })
                 .flatMap(t -> {
                     TransactionId transactionId = t.getTransactionId();
-                    ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                    ExclusiveLockDocument transactioIdLockDocument = new ExclusiveLockDocument(
                             "POST-auth-request-%s".formatted(transactionId.value()),
                             "transactions-service"
                     );
@@ -218,66 +218,44 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     // the payment token validity time in order to make this API call performable
                     // only once per transaction (further attempts will find the transaction in an
                     // expired status and return an error)
-                    return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
+                    return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(transactioIdLockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
                             .doOnNext(lockAcquired ->
                                     log.info(
                                             "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}] and duration: [{}]",
                                             transactionId,
-                                            lockDocument.id(),
+                                            transactioIdLockDocument.id(),
                                             lockAcquired,
                                             Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds())
                                     )
                             )
                             .flatMap(lockAcquired -> {
                                 if (Boolean.FALSE.equals(lockAcquired)) {
-                                    return Mono.error(new LockNotAcquiredException(transactionId, lockDocument));
+                                    return Mono.error(new LockNotAcquiredException(transactionId, transactioIdLockDocument));
                                 }
                                 return Mono.just(t);
                             });
                 })
                 .flatMap(t -> {
-                            List<Tuple2<ExclusiveLockDocument, Mono<Boolean>>> paymentTokenLockMonoList = t.getTransactionActivatedData()
-                                    .getPaymentNotices()
-                                    .stream().map(
-                                            p -> {
-                                                ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
-                                                        "POST-auth-request-payment-token-%s".formatted(p.getPaymentToken()),
-                                                        "transactions-service"
-                                                );
-                                                return Tuples.of(lockDocument, reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument
-                                                        ,Duration.ofSeconds(20))
-                                                        .doOnNext(lockAcquired ->
-                                                                log.info(
-                                                                        "requestTransactionAuthorization lock acquired for transactionId: [{}] paymentToken: [{}] with key: [{}]: [{}]",
-                                                                        t.getTransactionId().value(),
-                                                                        p.getPaymentToken(),
-                                                                        lockDocument.id(),
-                                                                        lockAcquired
-                                                                )
-                                                        ));
-                                            }
-                                    ).toList();
+                            String firstPaymentToken = t.getTransactionActivatedData().getPaymentNotices().stream().map(PaymentNotice::getPaymentToken).findFirst().orElse(null);
+                            ExclusiveLockDocument paymentTokenLockDocument = new ExclusiveLockDocument(
+                                    "POST-auth-request-payment-token-%s".formatted(firstPaymentToken),
+                                    "transactions-service"
+                            );
 
-                    // fix CHK-4810:
-                    List<ExclusiveLockDocument> exclusiveLockDocumentList = paymentTokenLockMonoList.stream().map(Tuple2::getT1).toList();
-
-                    return Flux.fromIterable(paymentTokenLockMonoList)
-                            .flatMap(Tuple2::getT2)
-                            .all(lockAcquired -> lockAcquired)
-                            .defaultIfEmpty(false)
-                            .doOnNext(lockAcquired ->
-                                    log.info(
-                                            "requestTransactionAuthorization for transactionId: [{}] lock acquired: [{}]",
-                                            t.getTransactionId().value(),
-                                            lockAcquired
+                            return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(paymentTokenLockDocument
+                                            ,Duration.ofSeconds(20))
+                                    .doOnNext(lockAcquired ->
+                                            log.info(
+                                                    "requestTransactionAuthorization lock acquired for transactionId: [{}] paymentToken: [{}] with key: [{}]: [{}]",
+                                                    t.getTransactionId().value(),
+                                                    firstPaymentToken,
+                                                    paymentTokenLockDocument.id(),
+                                                    lockAcquired
+                                            )
                                     )
-                            )
                             .flatMap(lockAcquired -> {
                                 if (Boolean.FALSE.equals(lockAcquired)) {
-                                    exclusiveLockDocumentList.forEach(
-                                            doc -> reactiveExclusiveLockDocumentWrapper.deleteById(doc.id())
-                                    );
-                                    return Mono.error(new LockNotAcquiredException(t.getTransactionId(), exclusiveLockDocumentList));
+                                    return Mono.error(new LockNotAcquiredException(t.getTransactionId(), paymentTokenLockDocument));
                                 }
                                 return Mono.just(t);
                             });
