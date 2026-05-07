@@ -221,11 +221,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(transactioIdLockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
                             .doOnNext(lockAcquired ->
                                     log.info(
-                                            "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}] and duration: [{}]",
+                                            "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
                                             transactionId,
                                             transactioIdLockDocument.id(),
-                                            lockAcquired,
-                                            Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds())
+                                            lockAcquired
                                     )
                             )
                             .flatMap(lockAcquired -> {
