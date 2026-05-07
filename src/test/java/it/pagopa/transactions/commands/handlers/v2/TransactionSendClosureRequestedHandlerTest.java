@@ -9,9 +9,11 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestedEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
@@ -120,7 +122,7 @@ class TransactionSendClosureRequestedHandlerTest {
     }
 
     @Test
-    void shouldNotSaveClosureRequestedEventWithErrorAlreadyProcessedException() {
+    void shouldNotSaveClosureRequestedEventButWriteEventToTheQueue() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
 
         Flux<BaseTransactionEvent<Object>> events = (Flux) Flux.just(
@@ -130,6 +132,56 @@ class TransactionSendClosureRequestedHandlerTest {
                         new NpgTransactionGatewayAuthorizationData()
                 ),
                 TransactionTestUtils.transactionClosureRequestedEvent()
+        );
+        /* PRECONDITION */
+        Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
+                .thenReturn(
+                        events
+                );
+
+        Mockito.when(
+                transactionSendClosureRequestQueueClient
+                        .sendMessageWithResponse(any(), any(), durationCaptor.capture())
+        )
+                .thenReturn(queueSuccessfulResponse());
+
+        TransactionClosureRequestCommand transactionClosureRequestCommand = new TransactionClosureRequestCommand(
+                null,
+                new TransactionId(transactionId),
+                events.collectList().block()
+        );
+        /* TEST EXECUTION */
+        StepVerifier.create(transactionSendClosureRequestHandler.handle(transactionClosureRequestCommand))
+                .consumeNextWith(
+                        next -> {
+                            assertEquals(
+                                    TransactionEventCode.TRANSACTION_CLOSURE_REQUESTED_EVENT.toString(),
+                                    next.getEventCode()
+                            );
+                        }
+                )
+                .verifyComplete();
+
+        verify(transactionEventClosureRequestedRepository, times(0)).save(any());
+        verify(transactionSendClosureRequestQueueClient, times(1)).sendMessageWithResponse(any(), any(), any());
+        assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
+    }
+
+    @Test
+    void shouldNotSaveClosureRequestedEventWithErrorAlreadyProcessedException() {
+        String transactionId = TransactionTestUtils.TRANSACTION_ID;
+
+        NpgTransactionGatewayAuthorizationData authorizationData = new NpgTransactionGatewayAuthorizationData();
+        authorizationData.setOperationResult(OperationResultDto.EXECUTED);
+
+        Flux<BaseTransactionEvent<Object>> events = (Flux) Flux.just(
+                TransactionTestUtils.transactionActivateEvent(),
+                TransactionTestUtils.transactionAuthorizationRequestedEvent(),
+                TransactionTestUtils.transactionAuthorizationCompletedEvent(
+                        authorizationData
+                ),
+                TransactionTestUtils.transactionClosureRequestedEvent(),
+                TransactionTestUtils.transactionClosedEvent(TransactionClosureData.Outcome.OK)
         );
         /* PRECONDITION */
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
