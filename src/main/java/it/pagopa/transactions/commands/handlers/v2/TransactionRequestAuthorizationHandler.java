@@ -72,6 +72,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     protected final Integer authRequestEventVisibilityTimeoutSeconds;
     protected final Integer transientQueuesTTLSeconds;
+    protected final Integer exclusiveLockPaymentTokenTTLSeconds;
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
@@ -102,7 +103,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${ecommerce.fe.gdicheck.path}") String ecommerceFeGdiCheckPath,
             @Value(
                 "${payment-wallet.fe.contextualonboarding.gdicheck.path}"
-            ) String walletFeContextualOnboardingGdiCheckPath
+            ) String walletFeContextualOnboardingGdiCheckPath,
+            @Value(
+                "${exclusiveLockPaymentTokenDocument.ttlSeconds}"
+            ) int exclusiveLockPaymentTokenTTLSeconds
     ) {
         super(
                 paymentGatewayClient,
@@ -126,6 +130,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
         this.reactiveExclusiveLockDocumentWrapper = reactiveExclusiveLockDocumentWrapper;
+        this.exclusiveLockPaymentTokenTTLSeconds = exclusiveLockPaymentTokenTTLSeconds;
     }
 
     @Override
@@ -242,7 +247,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                             );
 
                             return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(paymentTokenLockDocument
-                                            ,Duration.ofSeconds(20))
+                                            ,Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds))
                                     .doOnNext(lockAcquired ->
                                             log.info(
                                                     "requestTransactionAuthorization lock acquired for transactionId: [{}] paymentToken: [{}] with key: [{}]: [{}]",

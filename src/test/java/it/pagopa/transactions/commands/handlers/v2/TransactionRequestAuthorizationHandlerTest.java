@@ -1,7 +1,6 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
@@ -117,6 +116,7 @@ class TransactionRequestAuthorizationHandlerTest {
     private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
     private final int transientQueueEventsTtlSeconds = 30;
+    private final int exclusiveLockPaymentTokenTTLSeconds = 20;
     private final int authRequestEventVisibilityTimeoutSeconds = 0;
     private final PaymentSessionData.ContextualOnboardDetails contextualOnboardDetails = new PaymentSessionData.ContextualOnboardDetails(
             TransactionTestUtils.TRANSACTION_ID,
@@ -159,7 +159,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 exclusiveLockDocumentWrapper,
                 ECOMMERCE_ESITO_PATH,
                 ECOMMERCE_NPG_GDI_PATH,
-                PAYMENT_WALLET_NPG_GDI_PATH
+                PAYMENT_WALLET_NPG_GDI_PATH,
+                exclusiveLockPaymentTokenTTLSeconds
         );
     }
 
@@ -320,7 +321,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -486,7 +487,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -658,7 +659,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -884,7 +885,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -1057,7 +1058,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -1231,7 +1232,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -1367,7 +1368,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -1579,7 +1580,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -1718,7 +1719,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -1860,7 +1861,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -2003,7 +2004,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -2146,7 +2147,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -2288,7 +2289,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -2450,7 +2451,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -2619,7 +2620,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -2790,7 +2791,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -3009,7 +3010,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -3239,7 +3240,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -3476,7 +3477,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
         /* CHECK NPG API INVOCATION AND CACHE SAVING */
         verify(transactionTemplateWrapper, times(1)).save(any());
@@ -3612,7 +3613,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -3784,7 +3785,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
         verify(transactionTemplateWrapper, times(1)).save(
                 argThat(transactionCacheInfo -> {
@@ -3965,7 +3966,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
         verify(transactionTemplateWrapper, times(1)).save(
                 argThat(transactionCacheInfo -> {
@@ -4130,7 +4131,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -4277,7 +4278,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -4441,7 +4442,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -4604,7 +4605,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -4767,7 +4768,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -4930,7 +4931,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -5218,7 +5219,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
 
@@ -5314,8 +5315,16 @@ class TransactionRequestAuthorizationHandlerTest {
                         )
                 );
 
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC)))).thenReturn(Mono.just(true));
-        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), eq(Duration.ofSeconds(20)))).thenReturn(Mono.just(false));
+        when(
+                exclusiveLockDocumentWrapper.saveIfAbsent(
+                        any(),
+                        eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+                )
+        ).thenReturn(Mono.just(true));
+        when(
+                exclusiveLockDocumentWrapper
+                        .saveIfAbsent(any(), eq(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds)))
+        ).thenReturn(Mono.just(false));
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -5348,7 +5357,7 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
         verifyNoInteractions(paymentGatewayClient);
     }
@@ -5430,19 +5439,20 @@ class TransactionRequestAuthorizationHandlerTest {
                         null
                 )
         );
-        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNoticesDocumentList = paymentNoticeList.stream().map(
-                p -> new it.pagopa.ecommerce.commons.documents.PaymentNotice(
-                        p.paymentToken().value(),
-                        p.rptId().value(),
-                        p.transactionDescription().value(),
-                        p.transactionAmount().value(),
-                        p.paymentContextCode().value(),
-                        new ArrayList<>(),
-                        p.isAllCCP(),
-                        p.companyName().value(),
-                        p.creditorReferenceId()
-                )
-        ).toList();
+        List<it.pagopa.ecommerce.commons.documents.PaymentNotice> paymentNoticesDocumentList = paymentNoticeList
+                .stream().map(
+                        p -> new it.pagopa.ecommerce.commons.documents.PaymentNotice(
+                                p.paymentToken().value(),
+                                p.rptId().value(),
+                                p.transactionDescription().value(),
+                                p.transactionAmount().value(),
+                                p.paymentContextCode().value(),
+                                new ArrayList<>(),
+                                p.isAllCCP(),
+                                p.companyName().value(),
+                                p.creditorReferenceId()
+                        )
+                ).toList();
         TransactionActivated transaction = new TransactionActivated(
                 transactionId,
                 paymentNoticeList,
@@ -5495,7 +5505,6 @@ class TransactionRequestAuthorizationHandlerTest {
         it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData data = transactionActivatedEvent.getData();
         data.setPaymentNotices(paymentNoticesDocumentList);
         transactionActivatedEvent.setData(data);
-
 
         TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
                 transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
@@ -5590,10 +5599,8 @@ class TransactionRequestAuthorizationHandlerTest {
                         "POST-auth-request-payment-token-%s".formatted("ApaymentToken"),
                         capturedDocuments.getLast().id()
                 ),
-                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
+                () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
     }
-
-
 
 }
