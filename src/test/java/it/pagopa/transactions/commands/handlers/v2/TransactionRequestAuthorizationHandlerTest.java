@@ -19,6 +19,7 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
@@ -109,6 +110,8 @@ class TransactionRequestAuthorizationHandlerTest {
     private ArgumentCaptor<TransactionEvent<TransactionAuthorizationRequestData>> eventStoreCaptor;
     @Captor
     private ArgumentCaptor<Duration> durationArgumentCaptor;
+    @Captor
+    private ArgumentCaptor<ExclusiveLockDocument> lockDocumentCaptor;
 
     private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
@@ -293,16 +296,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -445,16 +462,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -603,16 +634,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -815,16 +860,30 @@ class TransactionRequestAuthorizationHandlerTest {
         assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         verify(transactionTemplateWrapper, times(1)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -974,16 +1033,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -1134,16 +1207,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 npgTransactionGatewayAuthorizationRequestedData.getSessionId()
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -1256,16 +1343,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         verify(paymentMethodsClient, times(1)).updateSession(any(), any(), any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -1454,16 +1555,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         verify(transactionEventStoreRepository, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -1579,16 +1694,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         verify(transactionEventStoreRepository, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -1707,16 +1836,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         verify(transactionEventStoreRepository, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -1836,16 +1979,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         verify(transactionEventStoreRepository, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -1965,16 +2122,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         verify(transactionEventStoreRepository, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -2093,16 +2264,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 .verify();
 
         verify(transactionEventStoreRepository, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -2241,16 +2426,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 TransactionTestUtils.NPG_CONFIRM_PAYMENT_SESSION_ID,
                 npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId()
         );
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -2396,16 +2595,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 TransactionTestUtils.NPG_CONFIRM_PAYMENT_SESSION_ID,
                 npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId()
         );
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -2553,16 +2766,30 @@ class TransactionRequestAuthorizationHandlerTest {
                 TransactionTestUtils.NPG_CONFIRM_PAYMENT_SESSION_ID,
                 npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId()
         );
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -2758,16 +2985,30 @@ class TransactionRequestAuthorizationHandlerTest {
         assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         verify(transactionTemplateWrapper, times(1)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -2974,16 +3215,30 @@ class TransactionRequestAuthorizationHandlerTest {
         assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         verify(transactionTemplateWrapper, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -3007,6 +3262,8 @@ class TransactionRequestAuthorizationHandlerTest {
     void checkAuthorizationDataForWalletAfterContextualOnboardingWithDifferentTransactionIdInContextualOnboardingDetails(
                                                                                                                          Optional<PaymentSessionData.ContextualOnboardDetails> details
     ) {
+
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
         String walletId = UUID.randomUUID().toString();
         String contractId = "contractId";
         String sessionId = "sessionId";
@@ -3195,16 +3452,30 @@ class TransactionRequestAuthorizationHandlerTest {
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
         assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
         /* CHECK NPG API INVOCATION AND CACHE SAVING */
         verify(transactionTemplateWrapper, times(1)).save(any());
@@ -3317,16 +3588,30 @@ class TransactionRequestAuthorizationHandlerTest {
         verify(paymentGatewayClient, times(0)).requestNpgCardsAuthorization(any(), any());
         verify(transactionEventStoreRepository, times(0)).save(any());
         verify(transactionTemplateWrapper, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -3475,16 +3760,30 @@ class TransactionRequestAuthorizationHandlerTest {
         assertEquals(walletId, npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletId());
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getWalletInfo().getWalletDetails());
         verify(transactionTemplateWrapper, times(1)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
         verify(transactionTemplateWrapper, times(1)).save(
                 argThat(transactionCacheInfo -> {
@@ -3642,16 +3941,30 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
         verify(transactionTemplateWrapper, times(1)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
         verify(transactionTemplateWrapper, times(1)).save(
                 argThat(transactionCacheInfo -> {
@@ -3792,22 +4105,37 @@ class TransactionRequestAuthorizationHandlerTest {
 
         verify(transactionEventStoreRepository, times(0)).save(any());
         verify(transactionTemplateWrapper, times(0)).save(any());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
     @Test
     void shouldHandleAuthorizationRequestForRedirectionPaymentGateway() {
-
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
         PaymentToken paymentToken = new PaymentToken("paymentToken");
         RptId rptId = new RptId("77777777777111111111111111111");
         TransactionDescription description = new TransactionDescription("description");
@@ -3926,16 +4254,29 @@ class TransactionRequestAuthorizationHandlerTest {
                 redirectUrlResponseDto.getTimeout(),
                 redirectionAuthRequestedData.getTransactionOutcomeTimeoutMillis()
         );
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -4076,16 +4417,30 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
         assertEquals(expectedLogo, npgTransactionGatewayAuthorizationRequestedData.getLogo().toString());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -4225,16 +4580,30 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
         assertEquals(expectedLogo, npgTransactionGatewayAuthorizationRequestedData.getLogo().toString());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -4374,16 +4743,30 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
         assertEquals(expectedLogo, npgTransactionGatewayAuthorizationRequestedData.getLogo().toString());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -4523,16 +4906,30 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
         assertEquals(expectedLogo, npgTransactionGatewayAuthorizationRequestedData.getLogo().toString());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
@@ -4797,16 +5194,30 @@ class TransactionRequestAuthorizationHandlerTest {
         );
         assertNull(npgTransactionGatewayAuthorizationRequestedData.getConfirmPaymentSessionId());
         assertEquals(Boolean.FALSE, savedEvent.getData().getIsContextualOnboard());
-        verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(lockDocument -> {
-                    assertEquals(
-                            "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
-                            lockDocument.id()
-                    );
-                    assertEquals("transactions-service", lockDocument.holderName());
-                    return true;
-                }),
-                eq(Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC))
+        ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
+        verify(exclusiveLockDocumentWrapper, times(2))
+                .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
+        List<ExclusiveLockDocument> capturedDocuments = lockDocumentCaptor.getAllValues();
+        List<Duration> capturedDurations = durationCaptor.getAllValues();
+
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-%s".formatted(TransactionTestUtils.TRANSACTION_ID),
+                        capturedDocuments.getFirst().id()
+                ),
+                () -> assertEquals(
+                        Duration.ofSeconds(TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC),
+                        capturedDurations.getFirst()
+                )
+        );
+        assertAll(
+                () -> assertEquals("transactions-service", capturedDocuments.getLast().holderName()),
+                () -> assertEquals(
+                        "POST-auth-request-payment-token-%s".formatted(TransactionTestUtils.PAYMENT_TOKEN),
+                        capturedDocuments.getLast().id()
+                ),
+                () -> assertEquals(Duration.ofSeconds(20), capturedDurations.getLast())
         );
     }
 
