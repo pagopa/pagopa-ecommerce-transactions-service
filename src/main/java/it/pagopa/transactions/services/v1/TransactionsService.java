@@ -1355,14 +1355,14 @@ public class TransactionsService {
                 .cast(BaseTransactionWithPaymentToken.class).filter(
                         baseTransactionWithPaymentToken -> Set.of(
                                 TransactionStatusDto.AUTHORIZATION_REQUESTED,
-                                TransactionStatusDto.AUTHORIZATION_COMPLETED
+                                TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                                TransactionStatusDto.CLOSURE_REQUESTED
                         )
                                 .contains(baseTransactionWithPaymentToken.getStatus())
                 )
                 .doOnNext(
                         transactionWithPaymentToken -> log.info(
-                                "UpdateTransactionAuthorization requested for transaction with id: {}, status: {} for rptIds: {}",
-                                transactionWithPaymentToken.getTransactionId().value(),
+                                "UpdateTransactionAuthorization requested for transaction with status: {} for rptIds: {}",
                                 transactionWithPaymentToken.getStatus().getValue(),
                                 transactionUpdateAuthorizationCommand
                                         .getRptIds().stream().map(RptId::value)
@@ -1371,7 +1371,8 @@ public class TransactionsService {
                 )
                 .flatMap(
                         tr -> {
-                            if (tr.getStatus().equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)) {
+                            if (tr.getStatus().equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                                    || tr.getStatus().equals(TransactionStatusDto.CLOSURE_REQUESTED)) {
                                 return Mono.just(tr)
                                         .map(
                                                 authorizationUpdated -> Tuples.of(
@@ -1449,23 +1450,34 @@ public class TransactionsService {
                 .handle(transactionClosureRequestCommand)
                 .doOnNext(
                         closureSentRequestedEvent -> log.info(
-                                "Requested async transaction closure for transactionId: {} rptIds: {}",
+                                "Requested async transaction closure for transactionId: {} rptIds: {} status: {}",
                                 transactionClosureRequestCommand.getData().value(),
-                                transactionClosureRequestCommand.getRptIds().stream().map(RptId::value).toList()
+                                transactionClosureRequestCommand.getRptIds().stream().map(RptId::value).toList(),
+                                transaction.getStatus().getValue()
                         )
                 )
                 .flatMap(
                         closureRequestedEvent -> closureRequestedProjectionHandler.handle(
                                 (TransactionClosureRequestedEvent) closureRequestedEvent
-
-                        ).then(
-                                transactionsUtils.reduceV2Events(
-                                        Stream.concat(
-                                                events.stream(),
-                                                Stream.of(closureRequestedEvent)
-                                        ).toList()
-                                )
                         )
+                                .then(
+                                        Mono.just(transaction)
+                                                .filter(
+                                                        t -> t.getStatus()
+                                                                .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                                                )
+                                                .flatMap(
+                                                        t -> transactionsUtils.reduceV2Events(
+                                                                Stream.concat(
+                                                                        events.stream(),
+                                                                        Stream.of(closureRequestedEvent)
+                                                                ).toList()
+                                                        )
+                                                )
+                                                .switchIfEmpty(
+                                                        Mono.just(transaction)
+                                                )
+                                )
                 );
     }
 
