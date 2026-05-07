@@ -313,7 +313,7 @@
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
       "version": "3.3.1",
-      "sha256": "uCJDT2Y_KiNHqblx-LVcwVxnArKV7kRTeTuOt8RyI1o="
+      "sha256": "1B4LwBLv6Fjabc8GPCXc7rUoEuplCGqq965oS8aCs6Y="
     },
     {
       "id": "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.18.3",
@@ -1699,7 +1699,7 @@
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
       "version": "3.3.1",
-      "sha256": "bG4DTXUtpuLNE3xccCRhTV1V7Gdi_-5QXf9ptYOxr-M="
+      "sha256": "ZzvZ1qDXoGdGq_GixWeYamhOOH9evFTKh8SnbyKJ6Sg="
     },
     {
       "id": "io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.119.Final",
