@@ -69,6 +69,12 @@ stages:
             GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
         # TODO: remove after merging commons branch PIDM-1763-amount-int-to-long
+        - task: JavaToolInstaller@0
+          displayName: 'Set Java 21 for commons build'
+          inputs:
+            versionSpec: '21'
+            jdkArchitectureOption: 'x64'
+            jdkSourceOption: 'PreInstalled'
         - task: Bash@3
           displayName: 'Checkout and install commons branch'
           inputs:
