@@ -17,14 +17,11 @@
             <id>central</id>
             <url>https://repo.maven.apache.org/maven2</url>
         </repository>
-<!-- TODO: restore after merging commons branch PIDM-1763-amount-int-to-long and remove scm:bootstrap plugin-->
-<!--
         <repository>
             <id>github</id>
-            suppress UnresolvedMavenProperty, create a github personal access token with at least package:read permission and set in environment
+            <!--suppress UnresolvedMavenProperty, create a github personal access token with at least package:read permission and set in environment-->
             <url>https://maven.pkg.github.com/pagopa/pagopa-ecommerce-commons</url>
         </repository>
--->
     </repositories>
     <pluginRepositories>
         <pluginRepository>
@@ -36,7 +33,7 @@
         <java.version>21</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.13</jacoco.version>
-        <pagopa-ecommerce-commons.version>3.3.1-rc</pagopa-ecommerce-commons.version>
+        <pagopa-ecommerce-commons.version>3.3.1</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
         <ecs-logging-version>1.7.0</ecs-logging-version>
         <mock-web-server.version>5.3.2</mock-web-server.version>
