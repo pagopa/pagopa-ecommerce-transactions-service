@@ -561,13 +561,13 @@ class TransactionServiceTests {
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUNDED,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -597,13 +597,13 @@ class TransactionServiceTests {
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_ERROR,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_REQUESTED,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 )
         );
@@ -705,8 +705,9 @@ class TransactionServiceTests {
      * true <br/>
      * Transaction status: AUTHORIZATION_REQUESTED expected outcome: 17 final
      * status: false <br/>
-     * Transaction status: REFUND_ERROR expected outcome: 1 final status: true <br/>
-     * Transaction status: REFUND_REQUESTED expected outcome: 1 final status: true
+     * Transaction status: REFUND_ERROR expected outcome: 18 final status: true
+     * <br/>
+     * Transaction status: REFUND_REQUESTED expected outcome: 18 final status: true
      * <br/>
      * </p>
      */
