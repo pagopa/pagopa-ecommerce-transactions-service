@@ -68,6 +68,21 @@ stages:
           env:
             GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
+        # TODO: remove after merging commons branch PIDM-1763-amount-int-to-long
+        - task: Bash@3
+          displayName: 'Checkout and install commons branch'
+          inputs:
+            targetType: 'inline'
+            script: |
+              git clone --branch PIDM-1763-amount-int-to-long \
+                https://token:$(GITHUB_RO_TOKEN)@github.com/pagopa/pagopa-ecommerce-commons.git \
+                /tmp/pagopa-ecommerce-commons
+              cd /tmp/pagopa-ecommerce-commons
+              mvn install -DskipTests -s $(Pipeline.Workspace)/.m2/settings.xml \
+                -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)
+          env:
+            GITHUB_RO_TOKEN: $(GITHUB_RO_TOKEN)
+
         - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
