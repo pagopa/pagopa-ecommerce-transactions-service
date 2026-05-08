@@ -636,6 +636,24 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>it.pagopa.maven</groupId>
+                <artifactId>depcheck</artifactId>
+                <version>1.3.0</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <fileName>dep-sha256.json</fileName>
+                    <includePlugins>false</includePlugins>
+                    <includeParent>false</includeParent>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-scm-plugin</artifactId>
                 <version>2.0.0-M3</version>
@@ -654,24 +672,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>it.pagopa.maven</groupId>
-                <artifactId>depcheck</artifactId>
-                <version>1.3.0</version>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <fileName>dep-sha256.json</fileName>
-                    <includePlugins>false</includePlugins>
-                    <includeParent>false</includeParent>
-                </configuration>
             </plugin>
         </plugins>
     </build>
