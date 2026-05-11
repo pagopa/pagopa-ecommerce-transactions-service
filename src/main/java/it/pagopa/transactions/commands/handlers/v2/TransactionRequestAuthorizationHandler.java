@@ -240,7 +240,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                             });
                 })
                 .flatMap(t -> {
-                            String firstPaymentToken = t.getTransactionActivatedData().getPaymentNotices().stream().map(PaymentNotice::getPaymentToken).findFirst().orElse(null);
+                            String firstPaymentToken = t.getTransactionActivatedData().getPaymentNotices().stream().map(PaymentNotice::getPaymentToken).sorted().findFirst().orElseThrow();
                             ExclusiveLockDocument paymentTokenLockDocument = new ExclusiveLockDocument(
                                     "POST-auth-request-payment-token-%s".formatted(firstPaymentToken),
                                     "transactions-service"
