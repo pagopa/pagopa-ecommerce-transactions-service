@@ -561,13 +561,13 @@ class TransactionServiceTests {
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.NOTIFIED_KO,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUNDED,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -597,13 +597,13 @@ class TransactionServiceTests {
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_ERROR,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.REFUND_REQUESTED,
                         50,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18)
                                 .isFinalStatus(true)
                 )
         );
@@ -705,8 +705,9 @@ class TransactionServiceTests {
      * true <br/>
      * Transaction status: AUTHORIZATION_REQUESTED expected outcome: 17 final
      * status: false <br/>
-     * Transaction status: REFUND_ERROR expected outcome: 1 final status: true <br/>
-     * Transaction status: REFUND_REQUESTED expected outcome: 1 final status: true
+     * Transaction status: REFUND_ERROR expected outcome: 18 final status: true
+     * <br/>
+     * Transaction status: REFUND_REQUESTED expected outcome: 18 final status: true
      * <br/>
      * </p>
      */
@@ -892,22 +893,22 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                         null,
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
-                                .isFinalStatus(true)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                         "OTHER_PAYMENT_GATEWAY",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
-                                .isFinalStatus(true)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
                         "REDIRECT",
                         null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
@@ -948,22 +949,22 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
                         null,
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
-                                .isFinalStatus(true)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
                         "OTHER_PAYMENT_GATEWAY",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
-                                .isFinalStatus(true)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
                         "REDIRECT",
                         null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
@@ -1004,22 +1005,22 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
                         null,
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
-                                .isFinalStatus(true)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
                         "OTHER_PAYMENT_GATEWAY",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
-                                .isFinalStatus(true)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
                         "REDIRECT",
                         null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
@@ -1074,14 +1075,14 @@ class TransactionServiceTests {
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
                         null,
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.UNAUTHORIZED,
                         "OTHER_PAYMENT_GATEWAY",
                         null,
-                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1)
+                        new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17)
                                 .isFinalStatus(true)
                 ),
                 Arguments.of(
@@ -1117,7 +1118,7 @@ class TransactionServiceTests {
                         "NPG",
                         null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_ERROR,
@@ -1201,7 +1202,7 @@ class TransactionServiceTests {
                         "NPG",
                         null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.AUTHORIZATION_COMPLETED,
@@ -1285,7 +1286,7 @@ class TransactionServiceTests {
                         "NPG",
                         null,
                         new TransactionOutcomeInfoDto().outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25)
-                                .isFinalStatus(true)
+                                .isFinalStatus(false)
                 ),
                 Arguments.of(
                         it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
@@ -2380,7 +2381,7 @@ class TransactionServiceTests {
         ClosureErrorData closureErrorData = new ClosureErrorData();
         transaction.setClosureErrorData(closureErrorData);
         TransactionOutcomeInfoDto expected = new TransactionOutcomeInfoDto()
-                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1).isFinalStatus(false);
+                .outcome(TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17).isFinalStatus(false);
         when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))

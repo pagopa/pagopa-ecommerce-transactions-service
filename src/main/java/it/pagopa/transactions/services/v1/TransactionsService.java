@@ -9,9 +9,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.v1.EmptyTransaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
-import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
@@ -325,6 +323,8 @@ public class TransactionsService {
                         && closureErrorData.getHttpErrorCode().is4xxClientError())
                 ||
                 (ecommercePossibleFinalState.contains(status)
+                        && paymentGateway != null
+                        && gatewayAuthorizationStatus != null
                         && !wasAuthorizedByGateway(paymentGateway, gatewayAuthorizationStatus));
     }
 
@@ -357,9 +357,6 @@ public class TransactionsService {
                     return TransactionUserReceiptData.Outcome.OK.equals(sendPaymentResultOutcome)
                             ? TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_0
                             : TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
-                }
-                case NOTIFIED_KO, REFUNDED -> {
-                    return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 }
                 case EXPIRED_NOT_AUTHORIZED -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_4;
@@ -414,8 +411,8 @@ public class TransactionsService {
                 case AUTHORIZATION_REQUESTED -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
                 }
-                case REFUND_ERROR, REFUND_REQUESTED -> {
-                    return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+                case NOTIFIED_KO, REFUNDED, REFUND_ERROR, REFUND_REQUESTED -> {
+                    return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_18;
                 }
                 case null, default -> {
                     return TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
@@ -458,7 +455,7 @@ public class TransactionsService {
                 case "ERROR", "EXPIRED" -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
                 case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
             };
-            case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_1;
+            case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
         };
     }
 
@@ -1202,7 +1199,8 @@ public class TransactionsService {
 
         Flux<? extends BaseTransactionEvent<?>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())));
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
+                .cache();
 
         Mono<ZonedDateTime> authorizationRequestedCreationDate = events
                 .filter(
@@ -1213,17 +1211,6 @@ public class TransactionsService {
                 .map(authRequestedEvent -> ZonedDateTime.parse(authRequestedEvent.getCreationDate()))
                 .switchIfEmpty(Mono.error(new AlreadyProcessedException(transactionId)));
 
-        Mono<Tuple2<BaseTransaction, ZonedDateTime>> transactionV1 = transactionsUtils
-                .reduceEvents(
-                        events,
-                        new EmptyTransaction(),
-                        it.pagopa.ecommerce.commons.domain.v1.Transaction::applyEvent,
-                        it.pagopa.ecommerce.commons.domain.v1.Transaction.class
-                )
-                .filter(t -> !(t instanceof EmptyTransaction))
-                .cast(BaseTransaction.class)
-                .zipWith(authorizationRequestedCreationDate)
-                .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
         Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction, ZonedDateTime>> transactionV2 = transactionsUtils
                 .reduceEvents(
@@ -1237,23 +1224,14 @@ public class TransactionsService {
                 .zipWith(authorizationRequestedCreationDate)
                 .onErrorResume(ClassCastException.class, e -> Mono.empty());
 
-        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txTracingDataV1 = transactionV1.map(Tuple2::getT1)
-                .map(t -> Tuples.of(
-                        transactionsUtils.getPspId(t).orElseThrow(),
-                        transactionsUtils.getPaymentMethodTypeCode(t).orElseThrow(),
-                        Transaction.ClientId.fromString(t.getClientId().name()),
-                        transactionsUtils.isWalletPayment(t).orElseThrow())
-                );
 
-        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txTracingDataV2 = transactionV2.map(Tuple2::getT1)
+        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txData = transactionV2.map(Tuple2::getT1)
                 .map(t -> Tuples.of(
                         transactionsUtils.getPspId(t).orElseThrow(),
                         transactionsUtils.getPaymentMethodTypeCode(t).orElseThrow(),
                         t.getClientId(),
                         transactionsUtils.isWalletPayment(t).orElseThrow())
                 );
-
-        Mono<Tuple4<String, String, Transaction.ClientId, Boolean>> txData = txTracingDataV2.switchIfEmpty(txTracingDataV1);
 
         Mono<Tuple2<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext>> authUpdateContext = txData
                 .map(TupleUtils.function((pspId, paymentMethodTypeCode, clientId, isWalletPayment) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
@@ -1371,40 +1349,42 @@ public class TransactionsService {
         );
 
         Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> baseTransaction = Mono.just(transaction);
-        return wasTransactionAuthorized(
-                transaction.getTransactionId()
-        ).<Either<TransactionInfoDto, Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction>>>flatMap(
-                alreadyAuthorized -> {
-                    if (Boolean.FALSE.equals(alreadyAuthorized)) {
-                        return Mono.just(baseTransaction).map(Either::right);
-                    } else {
-                        return baseTransaction.map(
-                                trx -> {
-                                    log.info(
-                                            "UpdateTransactionAuthorization outcome already received. Transaction status: [{}]",
-                                            trx.getStatus()
-                                    );
-                                    return buildTransactionInfoDtoV2(trx);
-                                }
-                        ).map(Either::left);
-                    }
-                }
-        )
+
+        return transactionsUtils
+                .reduceV2Events(events)
+                .cast(BaseTransactionWithPaymentToken.class).filter(
+                        baseTransactionWithPaymentToken -> Set.of(
+                                TransactionStatusDto.AUTHORIZATION_REQUESTED,
+                                TransactionStatusDto.AUTHORIZATION_COMPLETED,
+                                TransactionStatusDto.CLOSURE_REQUESTED
+                        )
+                                .contains(baseTransactionWithPaymentToken.getStatus())
+                )
+                .doOnNext(
+                        transactionWithPaymentToken -> log.info(
+                                "UpdateTransactionAuthorization requested for transaction with status: {} for rptIds: {}",
+                                transactionWithPaymentToken.getStatus().getValue(),
+                                transactionUpdateAuthorizationCommand
+                                        .getRptIds().stream().map(RptId::value)
+                                        .toList()
+                        )
+                )
                 .flatMap(
-                        either -> either.fold(
-                                Mono::just,
-                                tx -> baseTransaction
+                        tr -> {
+                            if (tr.getStatus().equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                                    || tr.getStatus().equals(TransactionStatusDto.CLOSURE_REQUESTED)) {
+                                return Mono.just(tr)
+                                        .map(
+                                                authorizationUpdated -> Tuples.of(
+                                                        authorizationUpdated,
+                                                        events
+                                                )
+                                        );
+                            } else {
+                                return baseTransaction
                                         .flatMap(
                                                 t -> transactionUpdateAuthorizationHandlerV2
                                                         .handle(transactionUpdateAuthorizationCommand)
-                                                        .doOnNext(
-                                                                authorizationStatusUpdatedEvent -> log.info(
-                                                                        "UpdateTransactionAuthorization requested for rptIds: {}",
-                                                                        transactionUpdateAuthorizationCommand
-                                                                                .getRptIds().stream().map(RptId::value)
-                                                                                .toList()
-                                                                )
-                                                        )
                                                         .doOnError(
                                                                 AlreadyProcessedException.class,
                                                                 exception -> log.error(
@@ -1437,12 +1417,20 @@ public class TransactionsService {
                                                                             )
                                                             );
                                                 }
-                                        )
-                                        .flatMap(
-                                                TupleUtils.function(this::closePaymentV2)
-
-                                        )
-                                        .map(this::buildTransactionInfoDtoV2)
+                                        );
+                            }
+                        }
+                )
+                .flatMap(
+                        t -> closePaymentV2(t.getT1(), t.getT2().stream().collect(Collectors.toUnmodifiableList()))
+                )
+                .map(this::buildTransactionInfoDtoV2)
+                .switchIfEmpty(
+                        Mono.just(buildTransactionInfoDtoV2(transaction)).doOnNext(
+                                tr -> log.info(
+                                        "Skipping UpdateTransactionAuthorization request since transaction with id {} is not in one of the allowed state",
+                                        transaction.getTransactionId().value()
+                                )
                         )
                 );
     }
@@ -1462,22 +1450,34 @@ public class TransactionsService {
                 .handle(transactionClosureRequestCommand)
                 .doOnNext(
                         closureSentRequestedEvent -> log.info(
-                                "Requested async transaction closure for rptIds: {}",
-                                transactionClosureRequestCommand.getRptIds().stream().map(RptId::value).toList()
+                                "Requested async transaction closure for transactionId: {} rptIds: {} status: {}",
+                                transactionClosureRequestCommand.getData().value(),
+                                transactionClosureRequestCommand.getRptIds().stream().map(RptId::value).toList(),
+                                transaction.getStatus().getValue()
                         )
                 )
                 .flatMap(
                         closureRequestedEvent -> closureRequestedProjectionHandler.handle(
                                 (TransactionClosureRequestedEvent) closureRequestedEvent
-
-                        ).then(
-                                transactionsUtils.reduceV2Events(
-                                        Stream.concat(
-                                                events.stream(),
-                                                Stream.of(closureRequestedEvent)
-                                        ).toList()
-                                )
                         )
+                                .then(
+                                        Mono.just(transaction)
+                                                .filter(
+                                                        t -> t.getStatus()
+                                                                .equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
+                                                )
+                                                .flatMap(
+                                                        t -> transactionsUtils.reduceV2Events(
+                                                                Stream.concat(
+                                                                        events.stream(),
+                                                                        Stream.of(closureRequestedEvent)
+                                                                ).toList()
+                                                        )
+                                                )
+                                                .switchIfEmpty(
+                                                        Mono.just(transaction)
+                                                )
+                                )
                 );
     }
 
@@ -1522,34 +1522,6 @@ public class TransactionsService {
                                 ).toList()
                 )
                 .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
-
-    }
-
-    private Mono<Boolean> wasTransactionAuthorized(
-                                                   TransactionId transactionId
-    ) {
-        /*
-         * @formatter:off
-         *
-         * This method determines whether transaction has been previously authorized or not
-         * by searching for an authorization completed event.
-         * The check is performed directly on the presence of an authorization completed event
-         * and not on the fact that the transaction aggregate is an instance of `BaseTransactionWithCompletedAuthorization`
-         * because a generic transaction can go in the REFUNDED or EXPIRED states without undergoing authorization
-         * (the corresponding aggregates do not extend, in fact, `BaseTransactionWithCompletedAuthorization`).
-         *
-         * This can happen, for example, when a transaction expires before getting a payment gateway response
-         * (for the EXPIRED state; if in REFUNDED that means the transaction was already refunded).
-         *
-         * @formatter:on
-         */
-        return eventsRepository
-                .findByTransactionIdAndEventCode(
-                        transactionId.value(),
-                        TransactionEventCode.TRANSACTION_AUTHORIZATION_COMPLETED_EVENT.toString()
-                )
-                .map(v -> true)
-                .switchIfEmpty(Mono.just(false));
 
     }
 
@@ -1718,14 +1690,14 @@ public class TransactionsService {
             case ApmAuthRequestDetailsDto ignore -> {
                 Mono<String> name =
                         ecommercePaymentMethodsHandlerEnabled ?
-                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(requestAuthorizationRequestDto.getLanguage().getValue())) :
+                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(RequestAuthorizationRequestDto.LanguageEnum.IT.toString())) :
                                 ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName);
                 yield name.map(n -> PaymentSessionData.create(null, null, n, null, null));
             }
             case RedirectionAuthRequestDetailsDto ignored -> Mono.just(PaymentSessionData.create(
                     null,
                     null,
-                    "N/A",//TODO handle this value for Nodo close payment
+                    "N/A",
                     null,
                     null
             ));

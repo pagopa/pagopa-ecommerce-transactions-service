@@ -125,6 +125,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                 UUID userId
     ) {
         return Mono.justOrEmpty(authorizationData.contextualOnboardDetails())
+                .filter(t -> authorizationData.isWalletPaymentWithContextualOnboarding())
                 .doOnNext(ignored -> log.info("Contextual Onboard Authorization"))
                 .map(details -> Tuples.of(details.orderId(), authorizationData.sessionId().orElseThrow()))
                 .switchIfEmpty(
@@ -337,32 +338,57 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                             );
                                             boolean isContextualOnboarding = authorizationData
                                                     .isWalletPaymentWithContextualOnboarding();
+                                            boolean isCheckoutWalletPayment = !clientId.equals(
+                                                    Transaction.ClientId.IO.toString()
+                                            ) && authorizationData.authDetails() instanceof WalletAuthRequestDetailsDto;
                                             Mono<URI> gdiCheckPathWithFragment = clientId.equals(
                                                     Transaction.ClientId.IO.toString()
-                                            ) ? generateWebviewToken(
-                                                    authorizationData.transactionId(),
-                                                    authorizationData.paymentInstrumentId(),
-                                                    orderId,
-                                                    userId.orElseThrow()
-                                            ).map(
-                                                    webViewSessionToken -> encodeURIWithFragmentParams(
-                                                            URI.create(
-                                                                    getGdiCheckUri(isContextualOnboarding)
-                                                            ),
-                                                            List.of(
-                                                                    Tuples.of("gdiIframeUrl", base64redirectionUrl),
-                                                                    Tuples.of("clientId", clientId),
-                                                                    Tuples.of(
-                                                                            "transactionId",
-                                                                            authorizationData.transactionId().value()
+                                            ) || isCheckoutWalletPayment
+                                                    ? generateWebviewToken(
+                                                            authorizationData.transactionId(),
+                                                            authorizationData.paymentInstrumentId(),
+                                                            orderId,
+                                                            userId.orElseThrow()
+                                                    ).map(
+                                                            webViewSessionToken -> encodeURIWithFragmentParams(
+                                                                    URI.create(
+                                                                            getGdiCheckUri(
+                                                                                    isContextualOnboarding
+                                                                            )
                                                                     ),
-                                                                    Tuples.of("sessionToken", webViewSessionToken)
+                                                                    List.of(
+                                                                            Tuples.of(
+                                                                                    "gdiIframeUrl",
+                                                                                    base64redirectionUrl
+                                                                            ),
+                                                                            Tuples.of(
+                                                                                    "clientId",
+                                                                                    clientId
+                                                                            ),
+                                                                            Tuples.of(
+                                                                                    "transactionId",
+                                                                                    authorizationData
+                                                                                            .transactionId()
+                                                                                            .value()
+                                                                            ),
+                                                                            Tuples.of(
+                                                                                    "sessionToken",
+                                                                                    webViewSessionToken
+                                                                            ),
+                                                                            Tuples.of(
+                                                                                    "isCheckoutWalletPayment",
+                                                                                    Boolean.toString(
+                                                                                            isCheckoutWalletPayment
+                                                                                    )
+                                                                            )
+                                                                    )
                                                             )
                                                     )
-                                            )
                                                     : Mono.just(
                                                             encodeURIWithFragmentParams(
-                                                                    URI.create(this.checkoutNpgGdiUrl),
+                                                                    URI.create(
+                                                                            this.checkoutNpgGdiUrl
+                                                                    ),
                                                                     List.of(
                                                                             Tuples.of(
                                                                                     "gdiIframeUrl",

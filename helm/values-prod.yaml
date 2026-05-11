@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "3.10.0"
+    tag: "3.16.3"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -159,7 +159,7 @@ microservice-chart:
     NPG_CARDS_PSP_LIST: "BCITITMM,CIPBITMM,BIC36019,UNCRITMM,BPPIITRRXXX,PPAYITR1XXX,BNLIITRR,PASCITMM,WOLLNLB1,BPMOIT22,SARDIT31,IFSPIT21,BCEPITMM"
     NPG_PAYPAL_PSP_LIST: "BCITITMM,SIGPITM1XXX,MOONITMMXXX,CIPBITMM"
     NPG_MYBANK_PSP_LIST: "BCITITMM,UNCRITMM"
-    NPG_BANCOMATPAY_PSP_LIST: "BCITITMM"
+    NPG_BANCOMATPAY_PSP_LIST: "BCITITMM,ABI36925"
     NPG_SATISPAY_PSP_LIST: "SATYLUL1"
     NPG_APPLEPAY_PSP_LIST: "SIGPITM1XXX,MOONITMMXXX"
     NPG_GOOGLE_PAY_PSP_LIST: ""
@@ -173,8 +173,8 @@ microservice-chart:
     SESSION_URL_OUTCOME_SUFFIX: "/esito#clientId={clientId}&transactionId={transactionId}&sessionToken={sessionToken}"
     SESSION_URL_NOTIFICATION_URL: "https://api.platform.pagopa.it/ecommerce/npg/notifications/v1/sessions/{orderId}/outcomes?sessionToken={sessionToken}"
     JWT_NPG_NOTIFICATION_VALIDITY_TIME: "900"
-    REDIRECT_PAYMENT_TYPE_CODE_LIST: "PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,RBPS,RPIC,CHECKOUT-BPPIITRRXXX-RBPR,CHECKOUT-BPPIITRRXXX-RBPP,CHECKOUT-BPPIITRRXXX-RBPB,IO-PPAYITR1XXX-RBPP,RICO,KLRN"
-    REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING: '{"RBPR":"Poste addebito in conto Retail","RBPB":"Poste addebito in conto Business","RBPP":"Paga con BottonePostePay","RPIC":"Pago in Conto Intesa","RBPS":"SCRIGNO Internet Banking","RICO":"Conto ICONTO","KLRN":"Klarna (anche a rate)"}'
+    REDIRECT_PAYMENT_TYPE_CODE_LIST: "PPAYITR1XXX-RBPB,CHECKOUT-PPAYITR1XXX-RBPP,PPAYITR1XXX-RBPR,RBPS,RPIC,CHECKOUT-BPPIITRRXXX-RBPR,CHECKOUT-BPPIITRRXXX-RBPP,CHECKOUT-BPPIITRRXXX-RBPB,IO-PPAYITR1XXX-RBPP,RICO,KLRN,RFPB"
+    REDIRECT_PAYMENT_TYPE_CODE_DESCRIPTION_MAPPING: '{"RBPR":"Poste addebito in conto Retail","RBPB":"Poste addebito in conto Business","RBPP":"Paga con BottonePostePay","RPIC":"Pago in Conto Intesa","RBPS":"SCRIGNO Internet Banking","RICO":"Conto ICONTO","KLRN":"Klarna (anche a rate)","RFPB":"Fabrick Pay by Bank"}'
     NODE_FORWARDER_URL: "https://api.platform.pagopa.it/pagopa-node-forwarder/api/v1"
     NODE_FORWARDER_READ_TIMEOUT: "10000"
     NODE_FORWARDER_CONNECTION_TIMEOUT: "10000"
@@ -191,13 +191,15 @@ microservice-chart:
     JWT_ISSUER_READ_TIMEOUT: "10000"
     JWT_ISSUER_CONNECTION_TIMEOUT: "10000"
     SECURITY_API_KEYS_SECURED_PATHS: "/transactions,/v2/transactions,/v2.1/transactions"
-    TRANSACTIONSVIEW_UPDATE_ENABLED: "true"
+    TRANSACTIONSVIEW_UPDATE_ENABLED: "false"
     ECOMMERCE_PAYMENT_METHODS_HANDLER_URI: https://api.platform.pagopa.it/ecommerce/payment-methods-handler/v1
     ECOMMERCE_PAYMENT_METHODS_HANDLER_READ_TIMEOUT: "10000"
     ECOMMERCE_PAYMENT_METHODS_HANDLER_CONNECTION_TIMEOUT: "10000"
-    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "false"
+    ECOMMERCE_PAYMENT_METHODS_HANDLER_ENABLED: "true"
     WALLET_NOTIFICATION_MAX_RETRY_ATTEMPTS: "3"
     WALLET_NOTIFICATION_EXPONENTIAL_BACKOFF_RETRY_OFFSET_SECONDS: "10"
+    REDIS_TIMEOUT: "2s"
+    REDIS_CONNECTION_TIMEOUT: "2s"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
