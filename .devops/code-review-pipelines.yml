@@ -69,6 +69,19 @@ stages:
             GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
         - task: Maven@4
+          displayName: 'Install commons from branch'  # ← solo qui
+          inputs:
+            mavenPomFile: 'pom.xml'
+            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+            options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '21'
+            jdkArchitectureOption: 'x64'
+            goals: 'scm:bootstrap'
+          env:
+            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
+
+        - task: Maven@4
           inputs:
             mavenPomFile: 'pom.xml'
             mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
