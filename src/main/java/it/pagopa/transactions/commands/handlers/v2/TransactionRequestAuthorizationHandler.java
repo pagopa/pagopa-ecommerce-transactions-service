@@ -213,7 +213,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 })
                 .flatMap(t -> {
                     TransactionId transactionId = t.getTransactionId();
-                    ExclusiveLockDocument transactioIdLockDocument = new ExclusiveLockDocument(
+                    ExclusiveLockDocument transactionIdLockDocument = new ExclusiveLockDocument(
                             "POST-auth-request-%s".formatted(transactionId.value()),
                             "transactions-service"
                     );
@@ -223,18 +223,18 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     // the payment token validity time in order to make this API call performable
                     // only once per transaction (further attempts will find the transaction in an
                     // expired status and return an error)
-                    return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(transactioIdLockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
+                    return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(transactionIdLockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
                             .doOnNext(lockAcquired ->
                                     log.info(
                                             "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
                                             transactionId,
-                                            transactioIdLockDocument.id(),
+                                            transactionIdLockDocument.id(),
                                             lockAcquired
                                     )
                             )
                             .flatMap(lockAcquired -> {
                                 if (Boolean.FALSE.equals(lockAcquired)) {
-                                    return Mono.error(new LockNotAcquiredException(transactionId, transactioIdLockDocument));
+                                    return Mono.error(new LockNotAcquiredException(transactionId, transactionIdLockDocument));
                                 }
                                 return Mono.just(t);
                             });
