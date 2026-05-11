@@ -323,7 +323,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             )
                                     );
 
-                                    return transactionEventStoreRepository.save(authorizationEvent)
+                                    return transactionEventStoreRepository.insert(authorizationEvent)
                                             .doOnNext(e -> {
                                                 String authorizationRequestId = e.getData().getAuthorizationRequestId();
                                                 String transactionId = t.getTransactionId().value();

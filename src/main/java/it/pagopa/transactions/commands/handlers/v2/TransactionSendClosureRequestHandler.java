@@ -65,7 +65,7 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                     );
 
                                     return transactionEventSendClosureRequestRepository
-                                            .save(transactionClosureRequestedEvent);
+                                            .insert(transactionClosureRequestedEvent);
                                 })
                                 .switchIfEmpty(
                                         Mono.just(command.getEvents().getLast())

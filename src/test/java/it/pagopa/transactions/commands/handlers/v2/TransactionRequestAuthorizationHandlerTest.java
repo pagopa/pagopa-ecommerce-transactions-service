@@ -1,10 +1,9 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
-import it.pagopa.ecommerce.commons.documents.v2.TransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
@@ -47,10 +46,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import reactor.core.publisher.Flux;
@@ -252,7 +248,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -279,7 +275,8 @@ class TransactionRequestAuthorizationHandlerTest {
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
                 .verifyComplete();
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -403,7 +400,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -431,7 +428,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -562,7 +560,7 @@ class TransactionRequestAuthorizationHandlerTest {
         when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
         when(
@@ -588,7 +586,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(paymentGatewayClient, times(1)).requestNpgBuildSession(any(), any(), anyBoolean(), any(), any(), any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
@@ -766,7 +765,7 @@ class TransactionRequestAuthorizationHandlerTest {
         when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
         when(
@@ -803,7 +802,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -927,7 +927,7 @@ class TransactionRequestAuthorizationHandlerTest {
         when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -960,7 +960,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -1085,7 +1086,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -1120,7 +1121,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -1360,7 +1362,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
     }
 
     @Test
@@ -1453,7 +1456,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof InvalidRequestException)
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
                     assertEquals(
@@ -1578,7 +1582,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
                     assertEquals(
@@ -1706,7 +1711,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
                     assertEquals(
@@ -1835,7 +1841,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
                     assertEquals(
@@ -1964,7 +1971,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
                     assertEquals(
@@ -2092,7 +2100,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
                     assertEquals(
@@ -2201,7 +2210,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -2229,7 +2238,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNext(responseDto)
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -2353,7 +2363,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -2384,7 +2394,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -2508,7 +2519,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -2541,7 +2552,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -2716,7 +2728,7 @@ class TransactionRequestAuthorizationHandlerTest {
         when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
         when(
@@ -2746,7 +2758,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -2933,7 +2946,7 @@ class TransactionRequestAuthorizationHandlerTest {
         when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
         when(
@@ -2962,7 +2975,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -3155,7 +3169,7 @@ class TransactionRequestAuthorizationHandlerTest {
         when(jwtTokenIssuerClient.createJWTToken(any(CreateTokenRequestDto.class)))
                 .thenReturn(Mono.just(createTokenResponseDto));
 
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
         when(
@@ -3184,7 +3198,8 @@ class TransactionRequestAuthorizationHandlerTest {
                         value -> value.getAuthorizationRequestId().equals(responseDto.getAuthorizationRequestId())
                 )
                 .verifyComplete();
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -3315,7 +3330,8 @@ class TransactionRequestAuthorizationHandlerTest {
                         eq(UUID.fromString(TransactionTestUtils.USER_ID))
                 );
         verify(paymentGatewayClient, times(0)).requestNpgCardsAuthorization(any(), any());
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionTemplateWrapper, times(0)).save(any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
@@ -3442,7 +3458,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
         when(
@@ -3463,7 +3479,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNext(responseDto)
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -3610,7 +3627,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
 
         when(
@@ -3632,7 +3649,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNext(responseDto)
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
@@ -3790,7 +3808,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectError(BadGatewayException.class)
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionTemplateWrapper, times(0)).save(any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
@@ -3892,7 +3911,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 .thenReturn(Mono.just(redirectUrlResponseDto));
         when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value().toString()))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
         when(
@@ -3907,7 +3926,8 @@ class TransactionRequestAuthorizationHandlerTest {
         /* test */
         requestAuthorizationHandler.handle(requestAuthorizationCommand).block();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -4033,7 +4053,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -4061,7 +4081,8 @@ class TransactionRequestAuthorizationHandlerTest {
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
                 .verifyComplete();
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -4183,7 +4204,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -4210,7 +4231,8 @@ class TransactionRequestAuthorizationHandlerTest {
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
                 .verifyComplete();
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -4332,7 +4354,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -4359,7 +4381,8 @@ class TransactionRequestAuthorizationHandlerTest {
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
                 .verifyComplete();
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -4481,7 +4504,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -4508,7 +4531,8 @@ class TransactionRequestAuthorizationHandlerTest {
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNext(responseDto)
                 .verifyComplete();
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),
@@ -4635,7 +4659,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectError(LockNotAcquiredException.class)
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).save(any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionTemplateWrapper, times(0)).save(any());
         verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
                 argThat(lockDocument -> {
@@ -4754,7 +4779,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 )
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -4782,7 +4807,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectNextMatches(value -> requestAuthResponseDtoComparator(value, responseDto))
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         verify(transactionAuthorizationRequestedQueueAsyncClient, times(1)).sendMessageWithResponse(
                 any(QueueEvent.class),
                 any(),

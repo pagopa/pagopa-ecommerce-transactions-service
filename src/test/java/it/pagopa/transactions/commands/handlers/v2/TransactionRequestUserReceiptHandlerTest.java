@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,7 +49,6 @@ import static it.pagopa.generated.transactions.server.model.AddUserReceiptReques
 import static it.pagopa.transactions.utils.Queues.QUEUE_SUCCESSFUL_RESPONSE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -159,7 +159,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -189,8 +192,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -282,7 +285,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -306,8 +312,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -402,7 +408,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -427,8 +436,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -523,7 +532,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -548,8 +560,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -630,7 +642,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -642,8 +657,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -722,8 +737,15 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(closureSyntheticEventRepository.save(any())).thenReturn(Mono.just(transactionSynthEvent));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
+        Mockito.when(
+                closureSyntheticEventRepository.insert(
+                        ArgumentMatchers.<BaseTransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>>any()
+                )
+        ).thenReturn(Mono.just(transactionSynthEvent));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -753,15 +775,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(closureSyntheticEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(closureSyntheticEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_SYNTHETIC_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -852,8 +874,15 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
-        Mockito.when(closureSyntheticEventRepository.save(any())).thenReturn(Mono.just(transactionSynthEvent));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
+        Mockito.when(
+                closureSyntheticEventRepository.insert(
+                        ArgumentMatchers.<BaseTransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>>any()
+                )
+        ).thenReturn(Mono.just(transactionSynthEvent));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -883,15 +912,15 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(closureSyntheticEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(closureSyntheticEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_CLOSURE_SYNTHETIC_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
         );
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -971,7 +1000,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -983,8 +1015,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectError(RuntimeException.class)
                 .verify();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -1052,7 +1084,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectErrorMatches(AlreadyProcessedException.class::isInstance)
                 .verify();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any());
     }
 
     @Test
@@ -1102,7 +1135,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 )
                 .verify();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any());
     }
 
     @Test
@@ -1169,7 +1203,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 any()
         );
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any());
     }
 
     @Test
@@ -1235,7 +1270,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -1247,8 +1285,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -1327,7 +1365,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -1353,9 +1394,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 any()
         );
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(
-                any()
-        );
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any());
         Mockito.verify(queueAsyncClient, Mockito.times(0)).sendMessageWithResponse(any(), any(), any());
     }
 
@@ -1436,7 +1476,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -1451,7 +1494,8 @@ class TransactionRequestUserReceiptHandlerTest {
         verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(
                 any()
         );
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0)).save(any());
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any());
         Mockito.verify(queueAsyncClient, Mockito.times(0)).sendMessageWithResponse(any(), any(), any());
     }
 
@@ -1535,7 +1579,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(TRANSACTION_ID)).thenReturn(events);
         Mockito.when(
                 queueAsyncClient
@@ -1547,8 +1594,8 @@ class TransactionRequestUserReceiptHandlerTest {
                 .expectNext(event)
                 .verifyComplete();
 
-        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).save(
-                argThat(
+        Mockito.verify(userReceiptDataEventRepository, Mockito.times(1)).insert(
+                ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>argThat(
                         eventArg -> TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT.toString()
                                 .equals(eventArg.getEventCode())
                 )
@@ -1645,7 +1692,10 @@ class TransactionRequestUserReceiptHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(userReceiptDataEventRepository.save(any())).thenReturn(Mono.just(event));
+        Mockito.when(
+                userReceiptDataEventRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionUserReceiptData>>any())
+        ).thenReturn(Mono.just(event));
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
