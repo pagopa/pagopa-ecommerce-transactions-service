@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
+import it.pagopa.transactions.commands.data.ClosureRequestedEventData;
 import it.pagopa.transactions.commands.handlers.TransactionSendClosureRequestHandlerCommon;
 import it.pagopa.transactions.exceptions.AlreadyProcessedException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -67,7 +68,7 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
 
                                     return transactionEventSendClosureRequestRepository
                                             .save(transactionClosureRequestedEvent)
-                                            .map(e -> Tuples.of(Duration.ZERO, e));
+                                            .map(e -> new ClosureRequestedEventData(Duration.ZERO, e));
                                 })
                                 .switchIfEmpty(
                                         Mono.just(command.getEvents().getLast())
@@ -78,29 +79,34 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                                                 evt.getTransactionId()
                                                         )
                                                 )
-                                                .map(e -> Tuples.of(Duration.ofSeconds(30), e))
+                                                .map(e -> new ClosureRequestedEventData(Duration.ofSeconds(30), e))
                                 )
                 ).flatMap(
-                        visibilityTimeout_event -> tracingUtils.traceMono(
+                        closureRequestedEventData -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
                                 tracingInfo -> transactionClosureQueueAsyncClient
                                         .sendMessageWithResponse(
-                                                new QueueEvent<>(visibilityTimeout_event.getT2(), tracingInfo),
-                                                visibilityTimeout_event.getT1(),
+                                                new QueueEvent<>(
+                                                        closureRequestedEventData.transactionClosureRequestedEvent(),
+                                                        tracingInfo
+                                                ),
+                                                closureRequestedEventData.visibilityTimeout(),
                                                 Duration.ofSeconds(transientQueuesTTLSeconds)
                                         )
-                        ).thenReturn(visibilityTimeout_event.getT2())
+                        ).thenReturn(closureRequestedEventData.transactionClosureRequestedEvent())
                                 .doOnError(
                                         exception -> log.error(
                                                 "Error to generate or processing event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} - error {}",
-                                                visibilityTimeout_event.getT2().getTransactionId(),
+                                                closureRequestedEventData.transactionClosureRequestedEvent()
+                                                        .getTransactionId(),
                                                 exception.getMessage()
                                         )
                                 )
                                 .doOnNext(
                                         evt -> log.info(
                                                 "Generated and processed event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {}",
-                                                visibilityTimeout_event.getT2().getTransactionId()
+                                                closureRequestedEventData.transactionClosureRequestedEvent()
+                                                        .getTransactionId()
                                         )
                                 )
 
