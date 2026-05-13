@@ -5553,7 +5553,7 @@ class TransactionRequestAuthorizationHandlerTest {
                                 transactionActivatedEvent
                         )
                 );
-        when(transactionEventStoreRepository.save(eventStoreCaptor.capture()))
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         when(
                 paymentMethodsClient.updateSession(
@@ -5584,7 +5584,7 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).save(any());
+        verify(transactionEventStoreRepository, times(1)).insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
