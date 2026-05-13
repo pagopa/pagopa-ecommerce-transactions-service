@@ -98,7 +98,7 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
         )
                 .doOnNext(
                         response -> log.info(
-                                "Generated and processed event {} for transactionId {}",
+                                "Processed event {} for transactionId {}",
                                 event.getClass().getSimpleName(),
                                 event.getTransactionId()
                         )
