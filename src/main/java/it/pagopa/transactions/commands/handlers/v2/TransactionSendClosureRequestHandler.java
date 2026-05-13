@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 import java.time.Duration;
 import java.util.Set;
@@ -65,7 +66,8 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                     );
 
                                     return transactionEventSendClosureRequestRepository
-                                            .save(transactionClosureRequestedEvent);
+                                            .save(transactionClosureRequestedEvent)
+                                            .map(e -> Tuples.of(Duration.ZERO, e));
                                 })
                                 .switchIfEmpty(
                                         Mono.just(command.getEvents().getLast())
@@ -76,28 +78,29 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                                                 evt.getTransactionId()
                                                         )
                                                 )
+                                                .map(e -> Tuples.of(Duration.ofSeconds(30), e))
                                 )
                 ).flatMap(
-                        event -> tracingUtils.traceMono(
+                        visibilityTimeout_event -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
                                 tracingInfo -> transactionClosureQueueAsyncClient
                                         .sendMessageWithResponse(
-                                                new QueueEvent<>(event, tracingInfo),
-                                                Duration.ZERO,
+                                                new QueueEvent<>(visibilityTimeout_event.getT2(), tracingInfo),
+                                                visibilityTimeout_event.getT1(),
                                                 Duration.ofSeconds(transientQueuesTTLSeconds)
                                         )
-                        ).thenReturn(event)
+                        ).thenReturn(visibilityTimeout_event.getT2())
                                 .doOnError(
                                         exception -> log.error(
                                                 "Error to generate or processing event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} - error {}",
-                                                event.getTransactionId(),
+                                                visibilityTimeout_event.getT2().getTransactionId(),
                                                 exception.getMessage()
                                         )
                                 )
                                 .doOnNext(
                                         evt -> log.info(
                                                 "Generated and processed event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {}",
-                                                evt.getTransactionId()
+                                                visibilityTimeout_event.getT2().getTransactionId()
                                         )
                                 )
 
