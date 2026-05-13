@@ -1559,7 +1559,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 .expectErrorMatches(error -> error instanceof InvalidRequestException)
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
         verify(exclusiveLockDocumentWrapper, times(2))
                 .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
@@ -1698,7 +1699,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
         verify(exclusiveLockDocumentWrapper, times(2))
                 .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
@@ -1840,7 +1842,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
         verify(exclusiveLockDocumentWrapper, times(2))
                 .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
@@ -1983,7 +1986,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
         verify(exclusiveLockDocumentWrapper, times(2))
                 .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
@@ -2126,7 +2130,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
         verify(exclusiveLockDocumentWrapper, times(2))
                 .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
@@ -2268,7 +2273,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verify();
 
-        verify(transactionEventStoreRepository, times(0)).insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
+        verify(transactionEventStoreRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         ArgumentCaptor<Duration> durationCaptor = ArgumentCaptor.forClass(Duration.class);
         verify(exclusiveLockDocumentWrapper, times(2))
                 .saveIfAbsent(lockDocumentCaptor.capture(), durationCaptor.capture());
@@ -5584,7 +5590,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventStoreRepository, times(1)).insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
+        verify(transactionEventStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationRequestData>>any());
         TransactionEvent<TransactionAuthorizationRequestData> savedEvent = eventStoreCaptor.getValue();
         NpgTransactionGatewayAuthorizationRequestedData npgTransactionGatewayAuthorizationRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) savedEvent
                 .getData().getTransactionGatewayAuthorizationRequestedData();
