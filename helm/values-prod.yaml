@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopapcommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "3.16.3"
+    tag: "3.16.4"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -185,6 +185,7 @@ microservice-chart:
     PAYMENT_WALLET_FE_CONTEXTUAL_ONBOARDING_GDICHECK_PATH: "https://payment-wallet.pagopa.it/gdi-check-ctx-onboarding"
     NPG_AUTHORIZATION_EXCLUDED_ERROR_CODES: "GW0035,GW0004"
     EXCLUSIVE_LOCK_DOCUMENT_TTL_SECONDS: "30"
+    EXCLUSIVE_LOCK_PAYMENT_TOKEN_DOCUMENT_TTL_SECONDS: "20"
     ECOMMERCE_FINAL_STATES: "NOTIFIED_OK,NOTIFIED_KO,NOTIFICATION_ERROR,NOTIFICATION_REQUESTED,EXPIRED,REFUNDED,CANCELED,UNAUTHORIZED,REFUND_ERROR,REFUND_REQUESTED,CANCELLATION_EXPIRED"
     ECOMMERCE_POSSIBLE_FINAL_STATES: "AUTHORIZATION_COMPLETED,CLOSURE_REQUESTED,CLOSURE_ERROR"
     JWT_ISSUER_URI: "https://weuprod.ecommerce.internal.platform.pagopa.it/pagopa-jwt-issuer-service"
