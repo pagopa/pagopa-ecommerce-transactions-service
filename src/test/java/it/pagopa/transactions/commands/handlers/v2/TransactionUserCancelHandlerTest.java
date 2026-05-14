@@ -5,6 +5,7 @@ import com.azure.core.http.HttpRequest;
 import com.azure.core.http.rest.Response;
 import com.azure.storage.queue.models.SendMessageResult;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -17,10 +18,7 @@ import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -79,7 +77,9 @@ class TransactionUserCancelHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
-        Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
+        Mockito.when(
+                transactionEventUserCancelStoreRepository.insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any())
+        )
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(
@@ -101,7 +101,8 @@ class TransactionUserCancelHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
+        verify(transactionEventUserCancelStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any());
         verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(), any(), any());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }
@@ -119,7 +120,9 @@ class TransactionUserCancelHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
-        Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
+        Mockito.when(
+                transactionEventUserCancelStoreRepository.insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any())
+        )
                 .thenReturn(Mono.error(new RuntimeException()));
 
         /* TEST EXECUTION */
@@ -127,7 +130,8 @@ class TransactionUserCancelHandlerTest {
                 .expectError(RuntimeException.class)
                 .verify();
 
-        verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
+        verify(transactionEventUserCancelStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any());
         verify(transactionUserCancelQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
     }
 
@@ -144,7 +148,9 @@ class TransactionUserCancelHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn((Flux) Flux.just(TransactionTestUtils.transactionActivateEvent()));
 
-        Mockito.when(transactionEventUserCancelStoreRepository.save(any()))
+        Mockito.when(
+                transactionEventUserCancelStoreRepository.insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any())
+        )
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(
@@ -158,7 +164,8 @@ class TransactionUserCancelHandlerTest {
                 .expectError(RuntimeException.class)
                 .verify();
 
-        verify(transactionEventUserCancelStoreRepository, times(1)).save(any());
+        verify(transactionEventUserCancelStoreRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any());
         verify(transactionUserCancelQueueClient, times(1)).sendMessageWithResponse(any(), any(), any());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }

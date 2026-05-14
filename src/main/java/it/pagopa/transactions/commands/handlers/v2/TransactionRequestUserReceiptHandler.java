@@ -174,7 +174,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         );
                         List<BaseTransactionEvent<?>> events = (List<BaseTransactionEvent<?>>) command.getEvents();
                         events.addLast(transactionClosureSyntheticEvent);
-                        return closureSyntheticEventRepository.save(transactionClosureSyntheticEvent).then(
+                        return closureSyntheticEventRepository.insert(transactionClosureSyntheticEvent).then(
                                 transactionsUtils
                                         .reduceV2Events(
                                                 events
@@ -244,7 +244,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                 (
                                  event,
                                  transactionClosed
-                                ) -> userReceiptAddedEventRepository.save(event)
+                                ) -> userReceiptAddedEventRepository.insert(event)
                                         .flatMap(
                                                 userReceiptEvent -> tracingUtils.traceMono(
                                                         this.getClass().getSimpleName(),

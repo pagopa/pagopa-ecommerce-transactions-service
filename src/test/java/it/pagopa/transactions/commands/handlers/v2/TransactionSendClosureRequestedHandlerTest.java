@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -96,7 +97,9 @@ class TransactionSendClosureRequestedHandlerTest {
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId))
                 .thenReturn(events);
 
-        Mockito.when(transactionEventClosureRequestedRepository.save(any()))
+        Mockito.when(
+                transactionEventClosureRequestedRepository.insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any())
+        )
                 .thenAnswer(a -> Mono.just(a.getArgument(0)));
 
         Mockito.when(
@@ -118,7 +121,8 @@ class TransactionSendClosureRequestedHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventClosureRequestedRepository, times(1)).save(any());
+        verify(transactionEventClosureRequestedRepository, times(1))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any());
         verify(transactionSendClosureRequestQueueClient, times(1)).sendMessageWithResponse(any(), any(), any());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }
@@ -164,7 +168,8 @@ class TransactionSendClosureRequestedHandlerTest {
                 )
                 .verifyComplete();
 
-        verify(transactionEventClosureRequestedRepository, times(0)).save(any());
+        verify(transactionEventClosureRequestedRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any());
         verify(transactionSendClosureRequestQueueClient, times(1)).sendMessageWithResponse(any(), any(), any());
         assertEquals(Duration.ofSeconds(transientQueueEventsTtlSeconds), durationCaptor.getValue());
     }
@@ -200,7 +205,8 @@ class TransactionSendClosureRequestedHandlerTest {
                 .expectError(AlreadyProcessedException.class)
                 .verify();
 
-        verify(transactionEventClosureRequestedRepository, times(0)).save(any());
+        verify(transactionEventClosureRequestedRepository, times(0))
+                .insert(ArgumentMatchers.<BaseTransactionEvent<Void>>any());
         verify(transactionSendClosureRequestQueueClient, times(0)).sendMessageWithResponse(any(), any(), any());
     }
 

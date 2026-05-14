@@ -40,6 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -121,7 +122,10 @@ class TransactionActivateHandlerTest {
     @BeforeEach
     void setup() {
         Mockito.reset(transactionEventActivatedStoreRepository, confidentialMailUtils);
-        Mockito.when(transactionEventActivatedStoreRepository.save(any()))
+        Mockito.when(
+                transactionEventActivatedStoreRepository
+                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionActivatedData>>any())
+        )
                 .thenAnswer(args -> Mono.just(args.getArguments()[0]));
         Mockito.when(confidentialMailUtils.toConfidential(EMAIL_STRING)).thenReturn(Mono.just(EMAIL));
     }
