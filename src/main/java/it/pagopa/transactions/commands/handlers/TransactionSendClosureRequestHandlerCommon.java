@@ -12,6 +12,7 @@ public abstract class TransactionSendClosureRequestHandlerCommon implements
 
     protected final TracingUtils tracingUtils;
     protected final int transientQueuesTTLSeconds;
+    protected final int closureRequestedRetryDelaySeconds;
     protected final TransactionsUtils transactionsUtils;
     protected final QueueAsyncClient transactionClosureQueueAsyncClient;
 
@@ -19,10 +20,12 @@ public abstract class TransactionSendClosureRequestHandlerCommon implements
             TracingUtils tracingUtils,
             int transientQueuesTTLSeconds,
             TransactionsUtils transactionsUtils,
-            QueueAsyncClient transactionClosureQueueAsyncClient
+            QueueAsyncClient transactionClosureQueueAsyncClient,
+            int closureRequestedRetryDelaySeconds
     ) {
         this.tracingUtils = tracingUtils;
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
+        this.closureRequestedRetryDelaySeconds = closureRequestedRetryDelaySeconds;
         this.transactionsUtils = transactionsUtils;
         this.transactionClosureQueueAsyncClient = transactionClosureQueueAsyncClient;
     }
