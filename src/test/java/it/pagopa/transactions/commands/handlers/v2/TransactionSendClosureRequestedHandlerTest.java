@@ -55,6 +55,7 @@ class TransactionSendClosureRequestedHandlerTest {
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(eventStoreRepository, "3020");
 
     private final int transientQueueEventsTtlSeconds = 30;
+    private final int closureRequestedRetryDelaySeconds = 20;
 
     private final TracingUtils tracingUtils = TracingUtilsTests.getMock();
 
@@ -67,6 +68,7 @@ class TransactionSendClosureRequestedHandlerTest {
                 transactionEventClosureRequestedRepository,
                 transactionSendClosureRequestQueueClient,
                 transientQueueEventsTtlSeconds,
+                closureRequestedRetryDelaySeconds,
                 transactionsUtils,
                 tracingUtils
         );

@@ -36,10 +36,17 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
             TransactionsEventStoreRepository<Void> transactionEventSendClosureRequestRepository,
             @Qualifier("transactionClosureQueueAsyncClientV2") QueueAsyncClient transactionClosureQueueAsyncClient,
             @Value("${azurestorage.queues.transientQueues.ttlSeconds}") int transientQueuesTTLSeconds,
+            @Value("${closureRequestedRetryDelay.visibilityTimeoutSeconds}") int closureRequestedRetryDelaySeconds,
             TransactionsUtils transactionsUtils,
             TracingUtils tracingUtils
     ) {
-        super(tracingUtils, transientQueuesTTLSeconds, transactionsUtils, transactionClosureQueueAsyncClient);
+        super(
+                tracingUtils,
+                transientQueuesTTLSeconds,
+                transactionsUtils,
+                transactionClosureQueueAsyncClient,
+                closureRequestedRetryDelaySeconds
+        );
         this.transactionEventSendClosureRequestRepository = transactionEventSendClosureRequestRepository;
     }
 
@@ -79,7 +86,12 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                                                 evt.getTransactionId()
                                                         )
                                                 )
-                                                .map(e -> new ClosureRequestedEventData(Duration.ofSeconds(30), e))
+                                                .map(
+                                                        e -> new ClosureRequestedEventData(
+                                                                Duration.ofSeconds(closureRequestedRetryDelaySeconds),
+                                                                e
+                                                        )
+                                                )
                                 )
                 ).flatMap(
                         closureRequestedEventData -> tracingUtils.traceMono(
