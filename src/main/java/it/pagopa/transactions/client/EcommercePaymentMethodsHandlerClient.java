@@ -14,7 +14,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -117,13 +116,11 @@ public class EcommercePaymentMethodsHandlerClient {
         handlerRequest.setIdPspList(source.getIdPspList());
         handlerRequest.setIsAllCCP(source.getIsAllCCP());
 
-        if (source.getPaymentNotices() != null) {
-            List<it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PaymentNoticeDto> handlerNotices = source
-                    .getPaymentNotices().stream()
-                    .map(this::mapPaymentNotice)
-                    .collect(Collectors.toList());
-            handlerRequest.setPaymentNotices(handlerNotices);
-        }
+        List<it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PaymentNoticeDto> handlerNotices = source
+                .getPaymentNotices().stream()
+                .map(this::mapPaymentNotice)
+                .toList();
+        handlerRequest.setPaymentNotices(handlerNotices);
 
         return handlerRequest;
     }
@@ -138,13 +135,11 @@ public class EcommercePaymentMethodsHandlerClient {
         notice.setPaymentAmount(source.getPaymentAmount());
         notice.setPrimaryCreditorInstitution(source.getPrimaryCreditorInstitution());
 
-        if (source.getTransferList() != null) {
-            List<it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.TransferListItemDto> handlerTransfers = source
-                    .getTransferList().stream()
-                    .map(this::mapTransferListItem)
-                    .collect(Collectors.toList());
-            notice.setTransferList(handlerTransfers);
-        }
+        List<it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.TransferListItemDto> handlerTransfers = source
+                .getTransferList().stream()
+                .map(this::mapTransferListItem)
+                .toList();
+        notice.setTransferList(handlerTransfers);
 
         return notice;
     }
@@ -193,7 +188,7 @@ public class EcommercePaymentMethodsHandlerClient {
         if (source.getBundles() != null) {
             List<BundleDto> bundles = source.getBundles().stream()
                     .map(this::mapBundle)
-                    .collect(Collectors.toList());
+                    .toList();
             response.setBundles(bundles);
         }
 
