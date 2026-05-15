@@ -1,6 +1,5 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
-import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.NpgTransactionGatewayAuthorizationData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationData;
@@ -29,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -47,6 +45,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionUpdateAuthorizationHandlerTest {
@@ -129,10 +128,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(
-                transactionEventStoreRepository
-                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
-        ).thenReturn(Mono.just(event));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
         /* test */
@@ -141,8 +137,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
-                .insert(
-                        ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>argThat(
+                .save(
+                        argThat(
                                 eventArg -> {
                                     NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
                                             .getData().getTransactionGatewayAuthorizationData();
@@ -208,7 +204,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         assertThrows(InvalidRequestException.class, () -> updateAuthHandler.handle(requestAuthorizationCommand));
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(0))
-                .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any());
+                .save(any());
     }
 
     @Test
@@ -257,10 +253,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         );
 
         /* preconditions */
-        Mockito.when(
-                transactionEventStoreRepository
-                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
-        ).thenReturn(Mono.just(event));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
@@ -279,8 +272,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
-                .insert(
-                        ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>argThat(
+                .save(
+                        argThat(
                                 eventArg -> {
 
                                     assertEquals(
@@ -360,10 +353,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(
-                transactionEventStoreRepository
-                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
-        ).thenReturn(Mono.just(event));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
         Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(Mono.empty());
@@ -373,8 +363,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
-                .insert(
-                        ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>argThat(
+                .save(
+                        argThat(
                                 eventArg -> {
                                     NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
                                             .getData().getTransactionGatewayAuthorizationData();
@@ -468,10 +458,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(
-                transactionEventStoreRepository
-                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
-        ).thenReturn(Mono.just(event));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
         Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(
@@ -485,8 +472,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
-                .insert(
-                        ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>argThat(
+                .save(
+                        argThat(
                                 eventArg -> {
                                     NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
                                             .getData().getTransactionGatewayAuthorizationData();
@@ -566,10 +553,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(
-                transactionEventStoreRepository
-                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
-        ).thenReturn(Mono.just(event));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
         Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(
@@ -588,8 +572,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
-                .insert(
-                        ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>argThat(
+                .save(
+                        argThat(
                                 eventArg -> {
                                     NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
                                             .getData().getTransactionGatewayAuthorizationData();
@@ -669,10 +653,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 );
 
         /* preconditions */
-        Mockito.when(
-                transactionEventStoreRepository
-                        .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
-        ).thenReturn(Mono.just(event));
+        Mockito.when(transactionEventStoreRepository.save(any())).thenReturn(Mono.just(event));
         Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
                 .thenReturn(transactionId.uuid().toString());
         Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(
@@ -698,8 +679,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .verifyComplete();
 
         Mockito.verify(transactionEventStoreRepository, Mockito.times(1))
-                .insert(
-                        ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>argThat(
+                .save(
+                        argThat(
                                 eventArg -> {
                                     NpgTransactionGatewayAuthorizationData npgData = (NpgTransactionGatewayAuthorizationData) eventArg
                                             .getData().getTransactionGatewayAuthorizationData();

@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import com.azure.cosmos.implementation.InternalServerErrorException;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
+import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData.PaymentGateway;
@@ -43,6 +44,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -50,8 +52,10 @@ import reactor.util.function.Tuples;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
@@ -68,6 +72,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     protected final Integer authRequestEventVisibilityTimeoutSeconds;
     protected final Integer transientQueuesTTLSeconds;
+    protected final Integer exclusiveLockPaymentTokenTTLSeconds;
 
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
@@ -98,7 +103,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${ecommerce.fe.gdicheck.path}") String ecommerceFeGdiCheckPath,
             @Value(
                 "${payment-wallet.fe.contextualonboarding.gdicheck.path}"
-            ) String walletFeContextualOnboardingGdiCheckPath
+            ) String walletFeContextualOnboardingGdiCheckPath,
+            @Value(
+                "${exclusiveLockPaymentTokenDocument.ttlSeconds}"
+            ) int exclusiveLockPaymentTokenTTLSeconds
     ) {
         super(
                 paymentGatewayClient,
@@ -122,6 +130,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.transientQueuesTTLSeconds = transientQueuesTTLSeconds;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
         this.reactiveExclusiveLockDocumentWrapper = reactiveExclusiveLockDocumentWrapper;
+        this.exclusiveLockPaymentTokenTTLSeconds = exclusiveLockPaymentTokenTTLSeconds;
     }
 
     @Override
@@ -204,7 +213,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 })
                 .flatMap(t -> {
                     TransactionId transactionId = t.getTransactionId();
-                    ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                    ExclusiveLockDocument transactionIdLockDocument = new ExclusiveLockDocument(
                             "POST-auth-request-%s".formatted(transactionId.value()),
                             "transactions-service"
                     );
@@ -214,18 +223,43 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     // the payment token validity time in order to make this API call performable
                     // only once per transaction (further attempts will find the transaction in an
                     // expired status and return an error)
-                    return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
+                    return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(transactionIdLockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
                             .doOnNext(lockAcquired ->
                                     log.info(
                                             "requestTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
                                             transactionId,
-                                            lockDocument.id(),
+                                            transactionIdLockDocument.id(),
                                             lockAcquired
                                     )
                             )
                             .flatMap(lockAcquired -> {
                                 if (Boolean.FALSE.equals(lockAcquired)) {
-                                    return Mono.error(new LockNotAcquiredException(transactionId, lockDocument));
+                                    return Mono.error(new LockNotAcquiredException(transactionId, transactionIdLockDocument));
+                                }
+                                return Mono.just(t);
+                            });
+                })
+                .flatMap(t -> {
+                            String firstPaymentToken = t.getTransactionActivatedData().getPaymentNotices().stream().map(PaymentNotice::getPaymentToken).sorted().findFirst().orElseThrow();
+                            ExclusiveLockDocument paymentTokenLockDocument = new ExclusiveLockDocument(
+                                    "POST-auth-request-payment-token-%s".formatted(firstPaymentToken),
+                                    "transactions-service"
+                            );
+
+                            return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(paymentTokenLockDocument
+                                            ,Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds))
+                                    .doOnNext(lockAcquired ->
+                                            log.info(
+                                                    "requestTransactionAuthorization lock acquired for transactionId: [{}] paymentToken: [{}] with key: [{}]: [{}]",
+                                                    t.getTransactionId().value(),
+                                                    firstPaymentToken,
+                                                    paymentTokenLockDocument.id(),
+                                                    lockAcquired
+                                            )
+                                    )
+                            .flatMap(lockAcquired -> {
+                                if (Boolean.FALSE.equals(lockAcquired)) {
+                                    return Mono.error(new LockNotAcquiredException(t.getTransactionId(), paymentTokenLockDocument));
                                 }
                                 return Mono.just(t);
                             });
@@ -323,7 +357,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                             )
                                     );
 
-                                    return transactionEventStoreRepository.insert(authorizationEvent)
+                                    return transactionEventStoreRepository.save(authorizationEvent)
                                             .doOnNext(e -> {
                                                 String authorizationRequestId = e.getData().getAuthorizationRequestId();
                                                 String transactionId = t.getTransactionId().value();

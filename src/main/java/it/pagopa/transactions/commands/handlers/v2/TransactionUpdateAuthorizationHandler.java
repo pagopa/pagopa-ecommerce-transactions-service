@@ -171,7 +171,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                     )
                             )
                     )
-                    .flatMap(transactionEventStoreRepository::insert);
+                    .flatMap(transactionEventStoreRepository::save);
         } else {
             return alreadyProcessedError;
         }
