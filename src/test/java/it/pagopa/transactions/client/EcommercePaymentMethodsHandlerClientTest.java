@@ -452,4 +452,141 @@ class EcommercePaymentMethodsHandlerClientTest {
         assertThat(notice.getTransferList().get(0).getDigitalStamp()).isTrue();
         assertThat(notice.getTransferList().get(0).getTransferCategory()).isEqualTo("TAX");
     }
+
+    @Test
+    void shouldHandleMaintenanceStatusByDefaultingToDisabled() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
+        String language = "IT";
+        Integer maxOccurrences = 5;
+
+        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeDto()
+                                .paymentAmount(1000L)
+                                .primaryCreditorInstitution("77777777777")
+                                .addTransferListItem(
+                                        new TransferListItemDto()
+                                                .creditorInstitution("77777777777")
+                                                .digitalStamp(false)
+                                                .transferCategory("PO")
+                                )
+                )
+                .touchpoint("CHECKOUT")
+                .isAllCCP(false);
+
+        // Handler returns MAINTENANCE which has no equivalent in v2
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
+                .paymentMethodName("test")
+                .paymentMethodDescription("desc")
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.MAINTENANCE
+                )
+                .asset("asset")
+                .bundles(List.of());
+
+        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
+                .thenReturn(Mono.just(handlerResponse));
+
+        /* test */
+        CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
+                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
+                .block();
+
+        /* asserts */
+        assertThat(result).isNotNull();
+        assertThat(result.getPaymentMethodStatus())
+                .isEqualTo(it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.DISABLED);
+    }
+
+    @Test
+    void shouldHandleNullPaymentMethodStatus() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
+        String language = "IT";
+        Integer maxOccurrences = 5;
+
+        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeDto()
+                                .paymentAmount(1000L)
+                                .primaryCreditorInstitution("77777777777")
+                                .addTransferListItem(
+                                        new TransferListItemDto()
+                                                .creditorInstitution("77777777777")
+                                                .digitalStamp(false)
+                                                .transferCategory("PO")
+                                )
+                )
+                .touchpoint("CHECKOUT")
+                .isAllCCP(false);
+
+        // Handler returns null status
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
+                .paymentMethodName("test")
+                .paymentMethodDescription("desc")
+                .paymentMethodStatus(null)
+                .asset("asset")
+                .bundles(List.of());
+
+        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
+                .thenReturn(Mono.just(handlerResponse));
+
+        /* test */
+        CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
+                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
+                .block();
+
+        /* asserts */
+        assertThat(result).isNotNull();
+        assertThat(result.getPaymentMethodStatus()).isNull();
+    }
+
+    @Test
+    void shouldHandleNullBundlesInResponse() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
+        String language = "IT";
+        Integer maxOccurrences = 5;
+
+        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeDto()
+                                .paymentAmount(1000L)
+                                .primaryCreditorInstitution("77777777777")
+                                .addTransferListItem(
+                                        new TransferListItemDto()
+                                                .creditorInstitution("77777777777")
+                                                .digitalStamp(false)
+                                                .transferCategory("PO")
+                                )
+                )
+                .touchpoint("CHECKOUT")
+                .isAllCCP(false);
+
+        // Handler returns null bundles
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
+                .paymentMethodName("test")
+                .paymentMethodDescription("desc")
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
+                )
+                .asset("asset")
+                .bundles(null);
+
+        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
+                .thenReturn(Mono.just(handlerResponse));
+
+        /* test */
+        CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
+                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
+                .block();
+
+        /* asserts */
+        assertThat(result).isNotNull();
+        assertThat(result.getBundles()).isEmpty();
+    }
 }
