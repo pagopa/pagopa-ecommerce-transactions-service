@@ -883,19 +883,32 @@ public class TransactionsService {
 
         List<PaymentNotice> paymentNotices = transaction.getPaymentNotices();
 
-        return ecommercePaymentMethodsClient
-                .calculateFee(
+        CalculateFeeRequestDto feeRequest = createCalculateFeeRequest(
+                transaction,
+                authRequest,
+                paymentSessionData,
+                paymentNotices
+        );
+
+        String language = authRequest.getLanguage() != null ? authRequest.getLanguage().toString() : "IT";
+
+        Mono<CalculateFeeResponseDto> feesMono = ecommercePaymentMethodsHandlerEnabled
+                ? ecommercePaymentMethodsHandlerClient.calculateFee(
                         authRequest.getPaymentInstrumentId(),
                         transaction.getTransactionId().value(),
-                        createCalculateFeeRequest(
-                                transaction,
-                                authRequest,
-                                paymentSessionData,
-                                paymentNotices
-                        ),
-                        Integer.MAX_VALUE
+                        feeRequest,
+                        Integer.MAX_VALUE,
+                        transactionsUtils.getEffectiveClientId(transaction),
+                        language
                 )
-                .map(calculateFeeResponseDto -> Tuples.of(calculateFeeResponseDto, paymentSessionData));
+                : ecommercePaymentMethodsClient.calculateFee(
+                        authRequest.getPaymentInstrumentId(),
+                        transaction.getTransactionId().value(),
+                        feeRequest,
+                        Integer.MAX_VALUE
+                );
+
+        return feesMono.map(calculateFeeResponseDto -> Tuples.of(calculateFeeResponseDto, paymentSessionData));
     }
 
     /**
