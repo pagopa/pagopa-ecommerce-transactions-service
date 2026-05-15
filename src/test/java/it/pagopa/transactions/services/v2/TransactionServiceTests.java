@@ -850,6 +850,19 @@ class TransactionServiceTests {
         )
                 .thenReturn(Mono.just(paymentMethod));
 
+        Mockito.when(
+                ecommercePaymentMethodsHandlerClient.calculateFee(
+                        eq(authorizationRequest.getPaymentInstrumentId()),
+                        any(),
+                        any(),
+                        eq(Integer.MAX_VALUE),
+                        any(),
+                        any()
+                )
+        ).thenReturn(
+                Mono.just(calculateFeeResponseDto)
+        );
+
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
                 .thenReturn(
                         Flux.just(
