@@ -15,6 +15,8 @@ import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorDto;
+import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -444,6 +446,25 @@ class TransactionsControllerTest {
         GatewayTimeoutException exception = new GatewayTimeoutException();
 
         ResponseEntity<ProblemJsonDto> response = transactionsController.gatewayTimeoutHandler(exception);
+
+        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+    }
+
+    @Test
+    void testDigitalStampNotAllowedForClientExceptionHandler() {
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> responseCheck = new ResponseEntity<>(
+                new ValidationFaultPaymentDataErrorProblemJsonDto()
+                        .title("Payment activation not allowed for digital stamp")
+                        .faultCodeCategory(
+                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
+                        )
+                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
+                HttpStatus.NOT_FOUND
+        );
+        DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
+
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> response = transactionsController
+                .digitalStampNotAllowedHandler(exception);
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
     }
