@@ -26,7 +26,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "3.16.5"
+    tag: "3.16.6"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -196,6 +196,7 @@ microservice-chart:
     WALLET_NOTIFICATION_EXPONENTIAL_BACKOFF_RETRY_OFFSET_SECONDS: "10"
     REDIS_TIMEOUT: "2s"
     REDIS_CONNECTION_TIMEOUT: "2s"
+    CLOSURE_REQUESTED_RETRY_DELAY_VISIBILITY_TIMEOUT_SECONDS: "20"
   envSecret:
     NODO_NODEFORECOMMERCE_API_KEY: node-for-ecommerce-api-v2-key
     NODO_NODEFORPSP_API_KEY: nodo-nodeforpsp-api-key
