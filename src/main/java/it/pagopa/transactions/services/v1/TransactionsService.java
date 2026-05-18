@@ -890,9 +890,8 @@ public class TransactionsService {
                 paymentNotices
         );
 
-        String language = Optional.ofNullable(authRequest.getLanguage())
-                .map(Enum::toString)
-                .orElse("IT");
+        @SuppressWarnings("java:S2583") // language can be null at runtime despite @NotNull annotation
+        String language = authRequest.getLanguage() != null ? authRequest.getLanguage().toString() : "IT";
 
         Mono<CalculateFeeResponseDto> feesMono = ecommercePaymentMethodsHandlerEnabled
                 ? ecommercePaymentMethodsHandlerClient.calculateFee(
