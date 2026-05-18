@@ -890,7 +890,7 @@ public class TransactionsService {
                 paymentNotices
         );
 
-        String language = authRequest.getLanguage().toString();
+        String language = authRequest.getLanguage() != null ? authRequest.getLanguage().toString() : "IT";
 
         Mono<CalculateFeeResponseDto> feesMono = ecommercePaymentMethodsHandlerEnabled
                 ? ecommercePaymentMethodsHandlerClient.calculateFee(
