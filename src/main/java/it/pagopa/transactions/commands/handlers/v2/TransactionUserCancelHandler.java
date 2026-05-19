@@ -53,7 +53,7 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                             it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent userCanceledEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent(
                                     t.getTransactionId().value()
                             );
-                            return transactionEventUserCancelStoreRepository.save(userCanceledEvent)
+                            return transactionEventUserCancelStoreRepository.insert(userCanceledEvent)
                                     .flatMap(
                                             event -> tracingUtils.traceMono(
                                                     this.getClass().getSimpleName(),

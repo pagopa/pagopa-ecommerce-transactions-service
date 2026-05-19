@@ -74,7 +74,7 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                     );
 
                                     return transactionEventSendClosureRequestRepository
-                                            .save(transactionClosureRequestedEvent)
+                                            .insert(transactionClosureRequestedEvent)
                                             .map(e -> new ClosureRequestedEventData(Duration.ZERO, e));
                                 })
                                 .switchIfEmpty(
