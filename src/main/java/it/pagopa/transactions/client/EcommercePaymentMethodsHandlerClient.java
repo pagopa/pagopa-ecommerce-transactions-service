@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -196,6 +197,20 @@ public class EcommercePaymentMethodsHandlerClient {
     }
 
     /**
+     * Mapping from AFM payment method names to NPG PaymentMethod enum values.
+     * AFM returns Italian names while NPG expects uppercase enum constants.
+     */
+    private static final Map<String, String> PAYMENT_METHOD_MAPPING = Map.of(
+            "Carte", "CARDS",
+            "Bancomat Pay", "BANCOMATPAY",
+            "MyBank", "MYBANK",
+            "PayPal", "PAYPAL",
+            "Apple Pay", "APPLEPAY",
+            "Satispay", "SATISPAY",
+            "Google Pay", "GOOGLEPAY"
+    );
+
+    /**
      * Maps a single Bundle from handler format to v2 format
      */
     private BundleDto mapBundle(
@@ -210,11 +225,22 @@ public class EcommercePaymentMethodsHandlerClient {
         bundle.setIdChannel(source.getIdChannel());
         bundle.setIdPsp(source.getIdPsp());
         bundle.setOnUs(source.getOnUs());
-        bundle.setPaymentMethod(source.getPaymentMethod());
+        bundle.setPaymentMethod(mapPaymentMethodName(source.getPaymentMethod()));
         bundle.setTaxPayerFee(source.getTaxPayerFee());
         bundle.setTouchpoint(source.getTouchpoint());
         bundle.setPspBusinessName(source.getPspBusinessName());
         return bundle;
+    }
+
+    /**
+     * Maps AFM payment method name to NPG PaymentMethod enum value.
+     * Falls back to the original value if no mapping is found.
+     */
+    private String mapPaymentMethodName(String afmPaymentMethod) {
+        if (afmPaymentMethod == null) {
+            return null;
+        }
+        return PAYMENT_METHOD_MAPPING.getOrDefault(afmPaymentMethod, afmPaymentMethod);
     }
 
     private static void logWebClientException(WebClientResponseException e) {

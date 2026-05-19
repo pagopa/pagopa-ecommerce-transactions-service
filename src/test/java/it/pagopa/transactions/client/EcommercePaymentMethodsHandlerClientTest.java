@@ -589,4 +589,77 @@ class EcommercePaymentMethodsHandlerClientTest {
         assertThat(result).isNotNull();
         assertThat(result.getBundles()).isEmpty();
     }
+
+    @Test
+    void shouldMapAfmPaymentMethodNameToNpgEnum() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String transactionId = UUID.randomUUID().toString();
+        String clientId = "IO";
+        String language = "IT";
+        Integer maxOccurrences = 5;
+
+        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
+                .addPaymentNoticesItem(
+                        new PaymentNoticeDto()
+                                .paymentAmount(1000L)
+                                .primaryCreditorInstitution("77777777777")
+                                .addTransferListItem(
+                                        new TransferListItemDto()
+                                                .creditorInstitution("77777777777")
+                                                .digitalStamp(false)
+                                                .transferCategory("PO")
+                                )
+                )
+                .touchpoint("IO")
+                .isAllCCP(false);
+
+        // Handler returns AFM-style payment method names
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse =
+                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
+                        .paymentMethodName("test")
+                        .paymentMethodDescription("desc")
+                        .paymentMethodStatus(
+                                it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
+                        )
+                        .asset("asset")
+                        .bundles(List.of(
+                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
+                                        .idPsp("psp1")
+                                        .paymentMethod("Carte")
+                                        .taxPayerFee(100L),
+                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
+                                        .idPsp("psp2")
+                                        .paymentMethod("Bancomat Pay")
+                                        .taxPayerFee(50L),
+                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
+                                        .idPsp("psp3")
+                                        .paymentMethod("PayPal")
+                                        .taxPayerFee(75L),
+                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
+                                        .idPsp("psp4")
+                                        .paymentMethod("UNKNOWN_METHOD")
+                                        .taxPayerFee(200L),
+                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
+                                        .idPsp("psp5")
+                                        .paymentMethod(null)
+                                        .taxPayerFee(0L)
+                        ));
+
+        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
+                .thenReturn(Mono.just(handlerResponse));
+
+        /* test */
+        CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
+                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
+                .block();
+
+        /* asserts */
+        assertThat(result).isNotNull();
+        assertThat(result.getBundles()).hasSize(5);
+        assertThat(result.getBundles().get(0).getPaymentMethod()).isEqualTo("CARDS");
+        assertThat(result.getBundles().get(1).getPaymentMethod()).isEqualTo("BANCOMATPAY");
+        assertThat(result.getBundles().get(2).getPaymentMethod()).isEqualTo("PAYPAL");
+        assertThat(result.getBundles().get(3).getPaymentMethod()).isEqualTo("UNKNOWN_METHOD"); // fallback
+        assertThat(result.getBundles().get(4).getPaymentMethod()).isNull(); // null stays null
+    }
 }
