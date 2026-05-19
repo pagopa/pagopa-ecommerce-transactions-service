@@ -614,15 +614,15 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .isAllCCP(false);
 
         // Handler returns AFM-style payment method names
-        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse =
-                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
-                        .paymentMethodName("test")
-                        .paymentMethodDescription("desc")
-                        .paymentMethodStatus(
-                                it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
-                        )
-                        .asset("asset")
-                        .bundles(List.of(
+        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
+                .paymentMethodName("test")
+                .paymentMethodDescription("desc")
+                .paymentMethodStatus(
+                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
+                )
+                .asset("asset")
+                .bundles(
+                        List.of(
                                 new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
                                         .idPsp("psp1")
                                         .paymentMethod("Carte")
@@ -643,7 +643,8 @@ class EcommercePaymentMethodsHandlerClientTest {
                                         .idPsp("psp5")
                                         .paymentMethod(null)
                                         .taxPayerFee(0L)
-                        ));
+                        )
+                );
 
         when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
                 .thenReturn(Mono.just(handlerResponse));

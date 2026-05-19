@@ -197,17 +197,24 @@ public class EcommercePaymentMethodsHandlerClient {
     }
 
     /**
-     * Mapping from AFM payment method names to NPG PaymentMethod enum values.
-     * AFM returns Italian names while NPG expects uppercase enum constants.
+     * Mapping from AFM payment method names to NPG PaymentMethod enum values. AFM
+     * returns Italian names while NPG expects uppercase enum constants.
      */
     private static final Map<String, String> PAYMENT_METHOD_MAPPING = Map.of(
-            "Carte", "CARDS",
-            "Bancomat Pay", "BANCOMATPAY",
-            "MyBank", "MYBANK",
-            "PayPal", "PAYPAL",
-            "Apple Pay", "APPLEPAY",
-            "Satispay", "SATISPAY",
-            "Google Pay", "GOOGLEPAY"
+            "Carte",
+            "CARDS",
+            "Bancomat Pay",
+            "BANCOMATPAY",
+            "MyBank",
+            "MYBANK",
+            "PayPal",
+            "PAYPAL",
+            "Apple Pay",
+            "APPLEPAY",
+            "Satispay",
+            "SATISPAY",
+            "Google Pay",
+            "GOOGLEPAY"
     );
 
     /**
@@ -233,8 +240,8 @@ public class EcommercePaymentMethodsHandlerClient {
     }
 
     /**
-     * Maps AFM payment method name to NPG PaymentMethod enum value.
-     * Falls back to the original value if no mapping is found.
+     * Maps AFM payment method name to NPG PaymentMethod enum value. Falls back to
+     * the original value if no mapping is found.
      */
     private String mapPaymentMethodName(String afmPaymentMethod) {
         if (afmPaymentMethod == null) {
