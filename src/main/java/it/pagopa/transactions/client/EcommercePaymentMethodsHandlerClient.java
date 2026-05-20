@@ -166,7 +166,7 @@ public class EcommercePaymentMethodsHandlerClient {
                                                               it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto source
     ) {
         var response = new CalculateFeeResponseDto();
-        response.setPaymentMethodName(source.getPaymentMethodName());
+        response.setPaymentMethodName(mapPaymentMethodName(source.getPaymentMethodName()));
         response.setPaymentMethodDescription(source.getPaymentMethodDescription());
         response.setBelowThreshold(source.getBelowThreshold());
         response.setAsset(source.getAsset());
