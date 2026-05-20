@@ -218,6 +218,37 @@ public class EcommercePaymentMethodsHandlerClient {
     );
 
     /**
+     * Mapping from payment type codes to NPG PaymentMethod service names.
+     */
+    private static final Map<String, String> PAYMENT_TYPE_CODE_TO_NPG = Map.of(
+            "CP",
+            "CARDS",
+            "BPAY",
+            "BANCOMATPAY",
+            "MYBK",
+            "MYBANK",
+            "PPAL",
+            "PAYPAL",
+            "APPL",
+            "APPLEPAY",
+            "SATY",
+            "SATISPAY",
+            "GOOG",
+            "GOOGLEPAY"
+    );
+
+    /**
+     * Maps a payment type code (e.g. "CP") to the NPG PaymentMethod service name
+     * (e.g. "CARDS"). Falls back to the original value if no mapping is found.
+     */
+    public static String mapPaymentTypeCodeToNpgServiceName(String paymentTypeCode) {
+        if (paymentTypeCode == null) {
+            return null;
+        }
+        return PAYMENT_TYPE_CODE_TO_NPG.getOrDefault(paymentTypeCode, paymentTypeCode);
+    }
+
+    /**
      * Maps a single Bundle from handler format to v2 format
      */
     private BundleDto mapBundle(

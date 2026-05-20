@@ -663,4 +663,22 @@ class EcommercePaymentMethodsHandlerClientTest {
         assertThat(result.getBundles().get(3).getPaymentMethod()).isEqualTo("UNKNOWN_METHOD"); // fallback
         assertThat(result.getBundles().get(4).getPaymentMethod()).isNull(); // null stays null
     }
+
+    @Test
+    void shouldMapPaymentTypeCodeToNpgServiceName() {
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("CP")).isEqualTo("CARDS");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("BPAY"))
+                .isEqualTo("BANCOMATPAY");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("MYBK")).isEqualTo("MYBANK");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("PPAL")).isEqualTo("PAYPAL");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("APPL"))
+                .isEqualTo("APPLEPAY");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("SATY"))
+                .isEqualTo("SATISPAY");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("GOOG"))
+                .isEqualTo("GOOGLEPAY");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("UNKNOWN"))
+                .isEqualTo("UNKNOWN");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName(null)).isNull();
+    }
 }

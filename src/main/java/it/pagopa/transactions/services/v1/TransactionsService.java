@@ -1703,7 +1703,7 @@ public class TransactionsService {
             case ApmAuthRequestDetailsDto ignore -> {
                 Mono<String> name =
                         ecommercePaymentMethodsHandlerEnabled ?
-                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(RequestAuthorizationRequestDto.LanguageEnum.IT.toString())) :
+                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName(responseDto.getPaymentTypeCode())) :
                                 ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName);
                 yield name.map(n -> PaymentSessionData.create(null, null, n, null, null));
             }
