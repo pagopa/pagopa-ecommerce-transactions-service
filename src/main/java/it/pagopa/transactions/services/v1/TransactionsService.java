@@ -1173,7 +1173,7 @@ public class TransactionsService {
                                                                                    UUID xUserId
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
-                .cache(Duration.ofSeconds(10))
+                .cache()
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
                 .filterWhen(
@@ -1201,7 +1201,7 @@ public class TransactionsService {
         Flux<? extends BaseTransactionEvent<?>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
-                .cache(Duration.ofSeconds(10));
+                .cache();
 
         Mono<ZonedDateTime> authorizationRequestedCreationDate = events
                 .filter(
@@ -1532,7 +1532,7 @@ public class TransactionsService {
                                                    AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
-                .cache(Duration.ofSeconds(10))
+                .cache()
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))

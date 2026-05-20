@@ -355,7 +355,7 @@ public class TransactionsUtils {
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .reduce(initialValue, accumulator)
                 .cast(clazz)
-                .cache(Duration.ofSeconds(10));
+                .cache();
     }
 
     public <A, T> Mono<T> reduceEvents(
