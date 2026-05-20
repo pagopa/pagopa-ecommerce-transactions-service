@@ -3,7 +3,6 @@ package it.pagopa.transactions.services.v1;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.opentelemetry.api.common.Attributes;
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
@@ -46,6 +45,7 @@ import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -1173,6 +1173,7 @@ public class TransactionsService {
                                                                                    UUID xUserId
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
+                .cache(Duration.ofSeconds(10))
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
                 .filterWhen(
@@ -1200,7 +1201,7 @@ public class TransactionsService {
         Flux<? extends BaseTransactionEvent<?>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
-                .cache();
+                .cache(Duration.ofSeconds(10));
 
         Mono<ZonedDateTime> authorizationRequestedCreationDate = events
                 .filter(
@@ -1531,6 +1532,7 @@ public class TransactionsService {
                                                    AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
+                .cache(Duration.ofSeconds(10))
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))

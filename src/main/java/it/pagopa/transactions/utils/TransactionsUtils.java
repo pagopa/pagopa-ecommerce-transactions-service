@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -353,7 +354,8 @@ public class TransactionsUtils {
         return eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .reduce(initialValue, accumulator)
-                .cast(clazz);
+                .cast(clazz)
+                .cache(Duration.ofSeconds(10));
     }
 
     public <A, T> Mono<T> reduceEvents(
