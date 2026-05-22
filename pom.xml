@@ -433,7 +433,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-ecommerce-payment-methods-handler/introduce-post-fees/api-spec/v1/api.yaml</inputSpec>
+                            <inputSpec>https://raw.githubusercontent.com/pagopa/pagopa-infra/PIDM-1947-add-fees-openapi/src/domains/ecommerce-app/api/ecommerce-payment-methods-handler/v1/_openapi.json.tpl</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
                             <generateApiDocumentation>false</generateApiDocumentation>
@@ -448,7 +448,7 @@
                             </configOptions>
                             <modelPackage>it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto</modelPackage>
                             <apiPackage>it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api</apiPackage>
-                            <apiNameSuffix>HandlerApi</apiNameSuffix>
+                            <apiNameSuffix>Api</apiNameSuffix>
                             <modelNameSuffix>dto</modelNameSuffix>
                         </configuration>
                     </execution>
