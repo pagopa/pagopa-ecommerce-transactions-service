@@ -21,7 +21,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @SpringBootTest
-@TestPropertySource(locations = "classpath:application-tests.properties")
+@TestPropertySource(
+        locations = "classpath:application-tests.properties", properties = {
+                // force k8s profile in order to format log in ECS format
+                "spring.profiles.active=k8s"
+        }
+)
 class LogFormatterTests {
 
     private static final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
