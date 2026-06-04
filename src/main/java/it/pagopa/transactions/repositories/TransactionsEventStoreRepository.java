@@ -1,11 +1,11 @@
 package it.pagopa.transactions.repositories;
 
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface TransactionsEventStoreRepository<T> extends ReactiveCrudRepository<BaseTransactionEvent<T>, String> {
+public interface TransactionsEventStoreRepository<T> extends ReactiveMongoRepository<BaseTransactionEvent<T>, String> {
     Mono<BaseTransactionEvent<T>> findByTransactionIdAndEventCode(
                                                                   String idTransaction,
                                                                   String transactionEventCode

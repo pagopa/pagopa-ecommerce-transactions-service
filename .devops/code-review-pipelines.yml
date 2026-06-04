@@ -120,6 +120,9 @@ stages:
         - script: newman run api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
           displayName: 'Run api test for REDIRECT integration'
           continueOnError: false
+        - script: newman run api-tests/transaction-service/misc/transaction_service_double_post_auth_request_same_payment_token_different_transactionId.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_double_post_auth_request_same_payment_token_different_transactionId.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
+          displayName: 'Run api test to prevent double POST auth request for same payment token and different transactionId'
+          continueOnError: false
         - script: newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_error_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_ERROR-stuck-transaction-api-TEST.xml
           displayName: 'Run api test for CLOSURE_ERROR add user receipt handling flow'
           continueOnError: false
