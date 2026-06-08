@@ -15,7 +15,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local
-      ref: main
+      ref: fix-api-tests-transactions-service
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
