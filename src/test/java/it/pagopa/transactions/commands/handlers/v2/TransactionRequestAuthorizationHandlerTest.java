@@ -5289,7 +5289,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(100L)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -5495,7 +5495,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(100L)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
@@ -5736,7 +5736,7 @@ class TransactionRequestAuthorizationHandlerTest {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(100L)
                 .fee(200)
                 .paymentInstrumentId("paymentInstrumentId")
                 .pspId("PSP_CODE")
