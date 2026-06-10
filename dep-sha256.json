@@ -309,11 +309,11 @@
       "sha256": "T-tKHPs6GEvPXxmeIJk13plEsYto0MD0PmBqrJ3lH78="
     },
     {
-      "id": "it.pagopa:pagopa-ecommerce-commons:jar:3.3.1",
+      "id": "it.pagopa:pagopa-ecommerce-commons:jar:3.3.2-PIDM-1696-redirect-url-configuration-refactoring-SNAPSHOT-e8c4e92",
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
-      "version": "3.3.1",
-      "sha256": "uCJDT2Y_KiNHqblx-LVcwVxnArKV7kRTeTuOt8RyI1o="
+      "version": "3.3.2-PIDM-1696-redirect-url-configuration-refactoring-SNAPSHOT-e8c4e92",
+      "sha256": "WSUEodzurbwMy0EIe7BxVUj9lAoQQDRBJWN0ZAb_Ydw="
     },
     {
       "id": "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.18.3",
@@ -1695,11 +1695,11 @@
       "sha256": "deQif7fcX5fD1Gic0cJDn02wvRjOovokLEZWzZPFmao="
     },
     {
-      "id": "it.pagopa:pagopa-ecommerce-commons:test-jar:tests:3.3.1",
+      "id": "it.pagopa:pagopa-ecommerce-commons:test-jar:tests:3.3.2-PIDM-1696-redirect-url-configuration-refactoring-SNAPSHOT-e8c4e92",
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
-      "version": "3.3.1",
-      "sha256": "bG4DTXUtpuLNE3xccCRhTV1V7Gdi_-5QXf9ptYOxr-M="
+      "version": "3.3.2-PIDM-1696-redirect-url-configuration-refactoring-SNAPSHOT-e8c4e92",
+      "sha256": "5BkBIHJxkuV8l-fqFdeuvgrH1kpnu-1Vd0sc4M7BXlo="
     },
     {
       "id": "io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.119.Final",

@@ -1,13 +1,10 @@
 package it.pagopa.transactions.configurations;
 
-import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
+import it.pagopa.ecommerce.commons.utils.RedirectUrlMappingConf;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Configuration class used to read all the PSP configurations that will be used
@@ -17,26 +14,26 @@ import java.util.Set;
 @Slf4j
 public class RedirectConfigurationsBuilder {
     /**
-     * Create a {@link RedirectKeysConfiguration} that will handle, to every handled
+     * Create a {@link RedirectUrlMappingConf} that will handle, to every handled
      * PSP, the backend URI to be used to perform Redirect payment flow api call
      *
-     * @param paymentTypeCodeList - set of all redirect payment type codes to be
-     *                            handled flow
-     * @param pspUrlMapping       - configuration parameter that contains PSP to URI
-     *                            mapping
-     * @return an {@link RedirectKeysConfiguration} instance that handle a
-     *         configuration map for every PSPs
+     * @param expectedMatchingCriteria - set of all redirect payment type codes to
+     *                                 be handled flow
+     * @param pspUrlMapping            - configuration parameter that contains PSP
+     *                                 to URI mapping
+     * @return an {@link it.pagopa.ecommerce.commons.utils.RedirectUrlMappingConf}
+     *         instance that handle a configuration map for every PSPs
      */
     @Bean
-    public RedirectKeysConfiguration redirectKeysConfig(
-                                                        @Value(
-                                                            "${redirect.paymentTypeCodeList}"
-                                                        ) Set<String> paymentTypeCodeList,
-                                                        @Value(
-                                                            "#{${redirect.pspUrlMapping}}"
-                                                        ) Map<String, String> pspUrlMapping
+    public RedirectUrlMappingConf redirectKeysConfig(
+                                                     @Value(
+                                                         "${redirect.expectedMatchingCriteria}"
+                                                     ) String expectedMatchingCriteria,
+                                                     @Value(
+                                                         "${redirect.pspUrlMapping}"
+                                                     ) String pspUrlMapping
     ) {
-        return new RedirectKeysConfiguration(pspUrlMapping, paymentTypeCodeList);
+        return new RedirectUrlMappingConf(pspUrlMapping, expectedMatchingCriteria);
     }
 
 }
