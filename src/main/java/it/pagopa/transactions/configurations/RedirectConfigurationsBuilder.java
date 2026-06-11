@@ -25,13 +25,13 @@ public class RedirectConfigurationsBuilder {
      *         instance that handle a configuration map for every PSPs
      */
     @Bean
-    public RedirectUrlMappingConf redirectKeysConfig(
-                                                     @Value(
-                                                         "${redirect.expectedMatchingCriteria}"
-                                                     ) String expectedMatchingCriteria,
-                                                     @Value(
-                                                         "${redirect.pspUrlMapping}"
-                                                     ) String pspUrlMapping
+    public RedirectUrlMappingConf redirectUrlMappingConf(
+                                                         @Value(
+                                                             "${redirect.expectedMatchingCriteria}"
+                                                         ) String expectedMatchingCriteria,
+                                                         @Value(
+                                                             "${redirect.pspUrlMapping}"
+                                                         ) String pspUrlMapping
     ) {
         return new RedirectUrlMappingConf(pspUrlMapping, expectedMatchingCriteria);
     }

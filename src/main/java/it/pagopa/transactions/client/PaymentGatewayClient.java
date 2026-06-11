@@ -539,7 +539,7 @@ public class PaymentGatewayClient {
                                                     RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
                                                     authorizationData.paymentTypeCode(),
                                                     RedirectUrlMappingCriteria.PSP_CHANNEL_ID,
-                                                    authorizationData.pspChannelCode()
+                                                    Objects.toString(authorizationData.pspChannelCode())
                                             )
                                     );
 
