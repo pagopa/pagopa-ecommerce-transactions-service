@@ -20,6 +20,7 @@ RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
 COPY src src
 COPY api-spec api-spec
 COPY eclipse-style.xml eclipse-style.xml
+ENV ACTIVE_PROFILE=k8s
 RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
     ./mvnw compile spring-boot:process-aot install -DskipTests
 
@@ -50,7 +51,6 @@ RUN java \
 -XX:ArchiveClassesAtExit=../cds.jsa \
 -Dspring.context.exit=onRefresh \
 -Dspring.config.location=/workspace/app/application-tests.properties \
--Dspring-boot.run.jvmArguments="-Dspring.profiles.active=k8s" \
 org.springframework.boot.loader.launch.JarLauncher
 
 FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd
