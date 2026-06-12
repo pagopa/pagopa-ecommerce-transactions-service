@@ -50,6 +50,7 @@ RUN java \
 -XX:ArchiveClassesAtExit=../cds.jsa \
 -Dspring.context.exit=onRefresh \
 -Dspring.config.location=/workspace/app/application-tests.properties \
+-Dspring-boot.run.jvmArguments="-DACTIVE_PROFILE=k8s" \
 org.springframework.boot.loader.launch.JarLauncher
 
 FROM eclipse-temurin:21-jre-alpine@sha256:8728e354e012e18310faa7f364d00185277dec741f4f6d593af6c61fc0eb15fd
