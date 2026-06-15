@@ -18,6 +18,9 @@ import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
 import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
+import it.pagopa.ecommerce.commons.utils.RedirectUrlMappingConf;
+import it.pagopa.ecommerce.commons.utils.bean.redirect.configuration.RedirectUrlMappingCriteria;
+import it.pagopa.ecommerce.commons.utils.bean.redirect.configuration.RedirectUrlMappingEntry;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
@@ -66,7 +69,7 @@ public class PaymentGatewayClient {
     private final int npgJwtKeyValidityTime;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
-    private final RedirectKeysConfiguration redirectKeysConfig;
+    private final RedirectUrlMappingConf redirectUrlMappingConfig;
 
     private final Set<String> npgAuthorizationRetryExcludedErrorCodes;
 
@@ -88,7 +91,7 @@ public class PaymentGatewayClient {
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
-            RedirectKeysConfiguration redirectKeysConfig,
+            RedirectUrlMappingConf redirectUrlMappingConfig,
             NpgApiKeyConfiguration npgApiKeyConfiguration,
             @Value(
                 "${npg.authorization.retry.excluded.error.codes}"
@@ -104,7 +107,7 @@ public class PaymentGatewayClient {
         this.uniqueIdUtils = uniqueIdUtils;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
-        this.redirectKeysConfig = redirectKeysConfig;
+        this.redirectUrlMappingConfig = redirectUrlMappingConfig;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
@@ -526,11 +529,18 @@ public class PaymentGatewayClient {
                                     )
                                     .idPaymentMethod(paymentTypeCode)
                                     .paName(shortenRedirectPaName(paName));// optional
-                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = redirectKeysConfig
-                                    .getRedirectUrlForPsp(
-                                            touchpoint.name(),
-                                            authorizationData.pspId(),
-                                            authorizationData.paymentTypeCode()
+                            Either<RedirectConfigurationException, RedirectUrlMappingEntry> pspConfiguredUrl = redirectUrlMappingConfig
+                                    .getRedirectUrlForCriteria(
+                                            Map.of(
+                                                    RedirectUrlMappingCriteria.TOUCHPOINT,
+                                                    touchpoint.name(),
+                                                    RedirectUrlMappingCriteria.PSP_ID,
+                                                    authorizationData.pspId(),
+                                                    RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                                    authorizationData.paymentTypeCode(),
+                                                    RedirectUrlMappingCriteria.PSP_CHANNEL_ID,
+                                                    Objects.toString(authorizationData.pspChannelCode())
+                                            )
                                     );
 
                             return pspConfiguredUrl.fold(
@@ -538,7 +548,7 @@ public class PaymentGatewayClient {
                                     proxyPspUrl -> nodeForwarderRedirectApiClient
                                             .proxyRequest(
                                                     request,
-                                                    proxyPspUrl,
+                                                    proxyPspUrl.url(),
                                                     authorizationData.transactionId().value(),
                                                     RedirectUrlResponseDto.class
                                             ).onErrorMap(
