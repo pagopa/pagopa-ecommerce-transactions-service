@@ -33,7 +33,7 @@
         <java.version>21</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.13</jacoco.version>
-        <pagopa-ecommerce-commons.version>3.3.2-PIDM-1763-amount-int-to-long-SNAPSHOT-19278cb</pagopa-ecommerce-commons.version>
+        <pagopa-ecommerce-commons.version>3.5.0-PIDM-1763-amount-int-to-long-SNAPSHOT-917a202</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
         <ecs-logging-version>1.7.0</ecs-logging-version>
         <mock-web-server.version>5.3.2</mock-web-server.version>
