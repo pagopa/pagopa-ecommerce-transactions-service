@@ -454,7 +454,7 @@ class TransactionsControllerTest {
     void testDigitalStampNotAllowedForClientExceptionHandler() {
         ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> responseCheck = new ResponseEntity<>(
                 new ValidationFaultPaymentDataErrorProblemJsonDto()
-                        .title("Payment activation not allowed for digital stamp")
+                        .title("Payment Status Fault")
                         .faultCodeCategory(
                                 ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
                         )
@@ -467,6 +467,7 @@ class TransactionsControllerTest {
                 .digitalStampNotAllowedHandler(exception);
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+        assertEquals(responseCheck.getBody(), response.getBody());
     }
 
     @Test

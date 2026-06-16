@@ -228,11 +228,12 @@ class TransactionsControllerTest {
 
     @Test
     void testDigitalStampNotAllowedForClientExceptionHandler() {
-        ResponseEntity<ProblemJsonDto> responseCheck = new ResponseEntity<>(
-                new ProblemJsonDto()
-                        .status(404)
-                        .title("Payment activation not allowed for digital stamp")
-                        .detail("Digital stamp payments are only allowed from EC frontend. Client: IO"),
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> responseCheck = new ResponseEntity<>(
+                new ValidationFaultPaymentDataErrorProblemJsonDto()
+                        .faultCodeCategory(
+                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
+                        )
+                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
                 HttpStatus.NOT_FOUND
         );
         DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
@@ -241,6 +242,7 @@ class TransactionsControllerTest {
                 .digitalStampNotAllowedHandler(exception);
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+        assertEquals(responseCheck.getBody(), response.getBody());
     }
 
     @Test
