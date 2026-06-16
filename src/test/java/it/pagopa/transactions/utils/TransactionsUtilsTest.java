@@ -226,7 +226,7 @@ class TransactionsUtilsTest {
                         it.pagopa.ecommerce.commons.documents.PaymentNotice::getAmount
                 ).sum();
         Long methodTotalAmount = utils.getTransactionTotalAmount(transaction);
-        assertEquals(totalAmount, methodTotalAmount.intValue());
+        assertEquals(totalAmount, methodTotalAmount.longValue());
     }
 
     @Test
