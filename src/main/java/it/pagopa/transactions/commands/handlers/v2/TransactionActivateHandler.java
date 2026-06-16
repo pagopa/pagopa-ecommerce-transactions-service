@@ -178,7 +178,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 return true;
                             return paymentRequestInfoList.stream().allMatch(
                                     paymentRequestInfo -> paymentRequestInfo.transferList().stream()
-                                            .allMatch(t -> t.digitalStamp().equals(Boolean.FALSE))
+                                            .allMatch(t -> Boolean.FALSE.equals(t.digitalStamp()))
                             );
                         })
                         .switchIfEmpty(Mono.error(new DigitalStampNotAllowedForClientException(command.getClientId())))
