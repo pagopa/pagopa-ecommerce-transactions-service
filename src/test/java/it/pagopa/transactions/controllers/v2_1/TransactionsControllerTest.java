@@ -227,6 +227,25 @@ class TransactionsControllerTest {
     }
 
     @Test
+    void testDigitalStampNotAllowedForClientExceptionHandler() {
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> responseCheck = new ResponseEntity<>(
+                new ValidationFaultPaymentDataErrorProblemJsonDto()
+                        .faultCodeCategory(
+                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
+                        )
+                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
+                HttpStatus.NOT_FOUND
+        );
+        DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
+
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> response = transactionsController
+                .digitalStampNotAllowedHandler(exception);
+
+        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+        assertEquals(responseCheck.getBody(), response.getBody());
+    }
+
+    @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
         HashMap<String, String> map = new HashMap<>();
         Mockito.when(
