@@ -28,26 +28,9 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Create Maven settings.xml
-        run: |
-          cat > "${RUNNER_TEMP}/settings.xml" << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <settings>
-            <servers>
-              <server>
-                <id>github</id>
-                <username>token</username>
-                <password>${env.GITHUB_TOKEN}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-        shell: bash
-
       - name: Submit Dependency Snapshot
         uses: advanced-security/maven-dependency-submission-action@b275d12641ac2d2108b2cbb7598b154ad2f2cee8 # v5.0.0
         with:
-          settings-file: ${{ runner.temp }}/settings.xml
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
