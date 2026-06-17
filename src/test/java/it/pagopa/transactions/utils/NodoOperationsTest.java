@@ -9,7 +9,6 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.model.*;
 import it.pagopa.transactions.client.NodeForPspClient;
 import it.pagopa.transactions.configurations.NodoConfig;
-import it.pagopa.transactions.exceptions.DigitalStampNotAllowedForClientException;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import org.junit.Assert;
@@ -136,7 +135,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -246,7 +245,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -347,7 +346,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -518,7 +517,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -792,7 +791,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -893,7 +892,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -994,7 +993,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1095,7 +1094,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1196,7 +1195,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1478,7 +1477,7 @@ class NodoOperationsTest {
                         900,
                         null,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
@@ -1793,7 +1792,7 @@ class NodoOperationsTest {
                         900,
                         idCart,
                         dueDate,
-                        Transaction.ClientId.CHECKOUT_CART
+                        Transaction.ClientId.CHECKOUT
                 )
                 .block();
 
