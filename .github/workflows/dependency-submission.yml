@@ -1,0 +1,56 @@
+name: Maven Dependency Submission
+
+# Submits the Maven dependency graph to GitHub so it can be used by
+# Dependency graph / Dependabot / security scanning.
+# This replaces GitHub's "Automatic dependency submission" (submit-maven).
+
+on:
+  push:
+    branches:
+      - main
+      - PIDM-1969-add-deps-submission-gha # TODO: remove before merge - temporary trigger to test the workflow on the feature branch
+  workflow_dispatch:
+
+permissions:
+  contents: write # required to submit the dependency snapshot
+
+jobs:
+  dependency-submission:
+    name: Submit Maven Dependency Graph
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # submit the dependency snapshot
+      packages: read # read pagopa-ecommerce-commons / depcheck from GitHub Packages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Create Maven settings.xml
+        run: |
+          cat > "${RUNNER_TEMP}/settings.xml" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>token</username>
+                <password>${env.GITHUB_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+        shell: bash
+
+      - name: Submit Dependency Snapshot
+        uses: advanced-security/maven-dependency-submission-action@b275d12641ac2d2108b2cbb7598b154ad2f2cee8 # v5.0.0
+        with:
+          settings-file: ${{ runner.temp }}/settings.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
