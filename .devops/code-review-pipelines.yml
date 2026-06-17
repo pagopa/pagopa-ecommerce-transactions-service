@@ -15,7 +15,7 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local
-      ref: PIDM-1217-update-digital-stamp-tests
+      ref: main
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
