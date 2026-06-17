@@ -6,9 +6,6 @@ name: Maven Dependency Submission
 
 on:
   push:
-    branches:
-      - main
-      - PIDM-1969-add-deps-submission-gha # TODO: remove before merge - temporary trigger to test the workflow on the feature branch
   workflow_dispatch:
 
 permissions:
