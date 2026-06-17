@@ -174,8 +174,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .sequential()
                         .collectList()
                         .filter(paymentRequestInfoList -> {
-                            if (allowDigitalStamp)
+                            if (allowDigitalStamp) {
                                 return true;
+                            }
                             return paymentRequestInfoList.stream().allMatch(
                                     paymentRequestInfo -> paymentRequestInfo.transferList().stream()
                                             .allMatch(t -> Boolean.FALSE.equals(t.digitalStamp()))
