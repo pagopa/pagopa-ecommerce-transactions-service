@@ -786,7 +786,7 @@ public class TransactionsController implements TransactionsApi {
                                                                                                 DigitalStampNotAllowedForClientException exception
     ) {
         log.warn(exception.getMessage());
-        return new ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto>(
+        return new ResponseEntity<>(
                 new ValidationFaultPaymentDataErrorProblemJsonDto()
                         .title("Payment Status Fault")
                         .faultCodeCategory(
