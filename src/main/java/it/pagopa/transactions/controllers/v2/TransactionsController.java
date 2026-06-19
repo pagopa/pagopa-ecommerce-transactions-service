@@ -340,6 +340,23 @@ public class TransactionsController implements V2Api {
         );
     }
 
+    @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
+    ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
+                                                                                                DigitalStampNotAllowedForClientException exception
+    ) {
+        log.warn(exception.getMessage());
+        HttpStatus httpStatus = HttpStatus.NOT_FOUND;
+        return new ResponseEntity<>(
+                new ValidationFaultPaymentDataErrorProblemJsonDto()
+                        .title("Payment Status Fault")
+                        .faultCodeCategory(
+                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
+                        )
+                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
+                httpStatus
+        );
+    }
+
     @Warmup
     public void postNewTransactionWarmupMethod() {
         IntStream.range(0, 3).forEach(
