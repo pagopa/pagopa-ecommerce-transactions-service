@@ -201,7 +201,7 @@ public class PaymentGatewayClient {
                                                             )
                                                     ) : null,
                                                     authorizationData.paymentNotices().stream()
-                                                            .mapToInt(
+                                                            .mapToLong(
                                                                     paymentNotice -> paymentNotice.transactionAmount()
                                                                             .value()
                                                             ).sum()
@@ -367,7 +367,7 @@ public class PaymentGatewayClient {
 
     private BigDecimal calculateGrandTotal(AuthorizationRequestData data) {
         long totalAmount = data.paymentNotices().stream()
-                .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value())
+                .mapToLong(paymentNotice -> paymentNotice.transactionAmount().value())
                 .sum();
         return BigDecimal.valueOf(totalAmount + data.fee());
     }
@@ -497,7 +497,7 @@ public class PaymentGatewayClient {
                                             authorizationData
                                                     .paymentNotices()
                                                     .stream()
-                                                    .mapToInt(
+                                                    .mapToLong(
                                                             p -> p.transactionAmount().value()
                                                     )
                                                     .sum()
