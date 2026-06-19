@@ -2040,7 +2040,7 @@ class NodoOperationsTest {
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
         String transactionId = UUID.randomUUID().toString();
-        int amount = 1000;
+        long amount = 1000L;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -2121,7 +2121,7 @@ class NodoOperationsTest {
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
         String transactionId = UUID.randomUUID().toString();
-        int amount = 1000;
+        long amount = 1000L;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
@@ -2202,7 +2202,7 @@ class NodoOperationsTest {
         IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
         String paymentToken = UUID.randomUUID().toString();
         String transactionId = UUID.randomUUID().toString();
-        int amount = 1000;
+        long amount = 1000L;
         String idCart = "idCart";
         it.pagopa.generated.transactions.model.ObjectFactory objectFactoryUtil = new it.pagopa.generated.transactions.model.ObjectFactory();
         BigDecimal amountBigDec = BigDecimal.valueOf(amount);
