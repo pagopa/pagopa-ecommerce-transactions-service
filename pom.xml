@@ -33,7 +33,7 @@
         <java.version>21</java.version>
         <spring-cloud-azure.version>4.0.0</spring-cloud-azure.version>
         <jacoco.version>0.8.13</jacoco.version>
-        <pagopa-ecommerce-commons.version>3.8.0</pagopa-ecommerce-commons.version>
+        <pagopa-ecommerce-commons.version>3.8.0-PIDM-2143-aggiornamento-commons-lang-SNAPSHOT-a79babb</pagopa-ecommerce-commons.version>
         <spotless.version>2.28.0</spotless.version>
         <ecs-logging-version>1.7.0</ecs-logging-version>
         <mock-web-server.version>5.3.2</mock-web-server.version>
@@ -182,12 +182,6 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
-        </dependency>
-
         <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
