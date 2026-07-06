@@ -95,7 +95,7 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                     .getOrderId(), correlationId, clientId, Optional.ofNullable(userId))
             ;
             case WalletAuthRequestDetailsDto ignored -> {
-                NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.valueOf(authorizationData.paymentMethodName());
+                NpgClient.PaymentMethod npgPaymentMethod = NpgClient.PaymentMethod.fromMethodTypeCode(authorizationData.paymentTypeCode());
                 if (npgPaymentMethod.equals(NpgClient.PaymentMethod.CARDS)) {
                     yield walletNpgCardsPaymentFlow(authorizationData, correlationId, clientId, lang, userId);
                 } else {
