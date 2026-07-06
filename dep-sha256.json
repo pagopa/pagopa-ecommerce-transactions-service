@@ -309,11 +309,11 @@
       "sha256": "T-tKHPs6GEvPXxmeIJk13plEsYto0MD0PmBqrJ3lH78="
     },
     {
-      "id": "it.pagopa:pagopa-ecommerce-commons:jar:3.8.0",
+      "id": "it.pagopa:pagopa-ecommerce-commons:jar:3.8.0-PIDM-2191-add-type-code-payment-method-SNAPSHOT-9224dcd",
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
-      "version": "3.8.0",
-      "sha256": "Yv-MOKcTkPf_jgoVZnktlBkThfBAzzCR8eQ7tX2q76I="
+      "version": "3.8.0-PIDM-2191-add-type-code-payment-method-SNAPSHOT-9224dcd",
+      "sha256": "iE9aid_2YF5vGHvOrod9K7Gk6Lnw2zuRJA7Y4gJ3UA8="
     },
     {
       "id": "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.18.3",
@@ -1695,11 +1695,11 @@
       "sha256": "deQif7fcX5fD1Gic0cJDn02wvRjOovokLEZWzZPFmao="
     },
     {
-      "id": "it.pagopa:pagopa-ecommerce-commons:test-jar:tests:3.8.0",
+      "id": "it.pagopa:pagopa-ecommerce-commons:test-jar:tests:3.8.0-PIDM-2191-add-type-code-payment-method-SNAPSHOT-9224dcd",
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
-      "version": "3.8.0",
-      "sha256": "LsJGsMZ7DZ_tvKuvM-B5uZFqP0dUnJC5VOAbpxKaPU4="
+      "version": "3.8.0-PIDM-2191-add-type-code-payment-method-SNAPSHOT-9224dcd",
+      "sha256": "n7kv5ZA7u0RlPDQehf83z4Tp4UEwMboQgucEj6Xut9A="
     },
     {
       "id": "io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.119.Final",
