@@ -176,7 +176,7 @@ public class PaymentGatewayClient {
                             Either<NpgApiKeyConfigurationException, String> buildApiKey = isApmPayment
                                     ? npgApiKeyConfiguration.getApiKeyForPaymentMethod(
                                             NpgClient.PaymentMethod
-                                                    .valueOf(authorizationData.paymentMethodName()),
+                                                    .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                             authorizationData.pspId()
                                     )
                                     : Either.right(npgApiKeyConfiguration.getDefaultApiKey());
@@ -193,7 +193,7 @@ public class PaymentGatewayClient {
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .valueOf(authorizationData.paymentMethodName()),
+                                                            .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                                     apiKey,
                                                     isWalletPayment ? authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -218,7 +218,7 @@ public class PaymentGatewayClient {
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .valueOf(authorizationData.paymentMethodName()),
+                                                            .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                                     apiKey,
                                                     authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
