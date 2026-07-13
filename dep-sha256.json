@@ -1394,13 +1394,6 @@
       "sha256": "BWvE0-XlPOghRQ-pez-eD43eElz22miENTux8JWC4dk="
     },
     {
-      "id": "commons-lang:commons-lang:jar:2.6",
-      "artifactId": "commons-lang",
-      "groupId": "commons-lang",
-      "version": "2.6",
-      "sha256": "UPEbCfh3wpTVbyRGP0fSj5Kc9QRPZIZhwPDPuumi9Jw="
-    },
-    {
       "id": "org.jacoco:jacoco-maven-plugin:jar:0.8.13",
       "artifactId": "jacoco-maven-plugin",
       "groupId": "org.jacoco",
