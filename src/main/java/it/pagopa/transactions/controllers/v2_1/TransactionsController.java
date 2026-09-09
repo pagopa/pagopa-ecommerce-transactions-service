@@ -8,7 +8,6 @@ import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.v2_1.server.api.V21Api;
 import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v2_1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -95,18 +94,7 @@ public class TransactionsController implements V21Api {
                     );
                     return transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId);
                 })
-                .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        transactionId,
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .map(ResponseEntity::ok);
     }
 
     @ExceptionHandler(AlreadyProcessedException.class)

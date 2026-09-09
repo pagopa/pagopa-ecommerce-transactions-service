@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
@@ -13,7 +14,6 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorDto;
 import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -35,11 +35,9 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.context.Context;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -102,18 +100,7 @@ public class TransactionsController implements TransactionsApi {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
                 .flatMap(ntr -> transactionsService.newTransaction(ntr, xClientId, transactionId))
-                .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        transactionId,
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -124,18 +111,7 @@ public class TransactionsController implements TransactionsApi {
     ) {
         return transactionsService.getTransactionInfo(transactionId, xUserId)
                 .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
-                .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -148,79 +124,17 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnNext(logTransactionRequestFor(transactionId))
-                .flatMap(request -> authorizeTransaction(transactionId, xUserId, xPgsId, lang, request))
+                .flatMap(
+                        request -> transactionsService.requestTransactionAuthorization(
+                                transactionId,
+                                xUserId,
+                                xPgsId,
+                                lang,
+                                request
+                        )
+                )
                 .map(ResponseEntity::ok)
-                .contextWrite(context -> addTransactionContext(context, transactionId, exchange));
-    }
-
-    /**
-     * Creates a consumer that logs a transaction request for a specific transaction
-     * ID.
-     *
-     * @param transactionId The ID of the transaction being requested
-     * @return A consumer that logs the transaction request
-     */
-    private Consumer<RequestAuthorizationRequestDto> logTransactionRequestFor(String transactionId) {
-        return request -> logTransactionRequest(transactionId);
-    }
-
-    private void logTransactionRequest(String transactionId) {
-        log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId);
-    }
-
-    /**
-     * Creates a function that authorizes a transaction with the specified
-     * parameters.
-     *
-     * @param transactionId The ID of the transaction to authorize
-     * @param xUserId       The user ID for the authorization
-     * @param xPgsId        The payment gateway ID
-     * @param lang          The language code
-     * @return A function that processes the authorization request
-     */
-    private Mono<RequestAuthorizationResponseDto> authorizeTransaction(
-                                                                       String transactionId,
-                                                                       UUID xUserId,
-                                                                       String xPgsId,
-                                                                       String lang,
-                                                                       RequestAuthorizationRequestDto request
-    ) {
-        return transactionsService.requestTransactionAuthorization(
-                transactionId,
-                xUserId,
-                xPgsId,
-                lang,
-                request
-        );
-    }
-
-    /**
-     * Creates a function that adds transaction context to a reactor context.
-     *
-     * @param transactionId The ID of the transaction
-     * @param exchange      The server web exchange
-     * @return A function that adds transaction context
-     */
-    private Context addTransactionContext(
-                                          Context context,
-                                          String transactionId,
-                                          ServerWebExchange exchange
-    ) {
-        TransactionTracingUtils.TransactionInfo transactionInfo = createTransactionInfo(transactionId, exchange);
-        return TransactionTracingUtils.setTransactionInfoIntoReactorContext(transactionInfo, context);
-    }
-
-    private TransactionTracingUtils.TransactionInfo createTransactionInfo(
-                                                                          String transactionId,
-                                                                          ServerWebExchange exchange
-    ) {
-        return new TransactionTracingUtils.TransactionInfo(
-                new TransactionId(transactionId),
-                new HashSet<>(),
-                exchange.getRequest().getMethod().name(),
-                exchange.getRequest().getURI().getPath()
-        );
+                .doOnNext(request -> log.info("Completed RequestTransactionAuthorization request"));
     }
 
     @Override
@@ -231,21 +145,20 @@ public class TransactionsController implements TransactionsApi {
     ) {
         return uuidUtils.uuidFromBase64(base64TransactionId).fold(
                 Mono::error,
-                transactionIdDecoded -> {
-                    log.info(
-                            "UpdateTransactionAuthorization for transactionId: [{}], decoded transaction id: [{}]",
-                            base64TransactionId,
-                            transactionIdDecoded
-                    );
-                    return updateAuthorizationRequestDto.flatMap(
-                            updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
-                                    new TransactionId(transactionIdDecoded),
-                                    updateAuthorizationRequest,
-                                    exchange
-                            )
-                    )
-                            .map(ResponseEntity::ok);
-                }
+                transactionIdDecoded -> updateAuthorizationRequestDto
+                        .flatMap(
+                                updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
+                                        new TransactionId(transactionIdDecoded),
+                                        updateAuthorizationRequest,
+                                        exchange
+                                )
+                                        .doOnNext(
+                                                req -> LogTracingUtils.loggerTracingUtils()
+                                                        .success()
+                                                        .logInfo(log, "Transaction authorization updated")
+                                        )
+                        )
+                        .map(ResponseEntity::ok)
         );
     }
 
@@ -260,14 +173,12 @@ public class TransactionsController implements TransactionsApi {
         );
         return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument)
                 .flatMap(lockAcquired -> {
-                    log.info(
-                            "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
-                            domainTransactionId.value(),
-                            lockDocument.id(),
-                            lockAcquired
-                    );
                     if (!lockAcquired) {
-                        return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
+                        var exc = new LockNotAcquiredException(domainTransactionId, lockDocument);
+                        LogTracingUtils.loggerTracingUtils()
+                                .failure()
+                                .logError(log, exc, "Unable to acquire lock");
+                        return Mono.error(exc);
                     }
 
                     return transactionsService.updateTransactionAuthorization(
@@ -278,33 +189,29 @@ public class TransactionsController implements TransactionsApi {
                                     .deleteById(lockDocument.id())
                                     .subscribeOn(Schedulers.boundedElastic())
                                     .doOnNext(
-                                            deleted -> log
-                                                    .info(
-                                                            "Lock with id: [{}], deleted: [{}]",
-                                                            lockDocument.id(),
-                                                            deleted
+                                            deleted -> LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .details(
+                                                            Map.of(
+                                                                    "lock_id",
+                                                                    lockDocument.id(),
+                                                                    "lock_deleted",
+                                                                    deleted.toString()
+                                                            )
                                                     )
+                                                    .logInfo(log, "Lock deletion status")
                                     )
                                     .doOnError(
-                                            error -> log.error(
-                                                    "Error deleting lock with id: [%s]".formatted(lockDocument.id()),
-                                                    error
-                                            )
+                                            error -> LogTracingUtils.loggerTracingUtils()
+                                                    .failure()
+                                                    .details(
+                                                            Map.of("lock_id", lockDocument.id())
+                                                    )
+                                                    .logError(log, error, "Error on lock deletion")
                                     )
                                     .subscribe()
                     );
-                })
-                .contextWrite(
-                        ctx -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        domainTransactionId,
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                ctx
-                        )
-                );
+                });
     }
 
     @Override
@@ -314,10 +221,14 @@ public class TransactionsController implements TransactionsApi {
                                                                           ServerWebExchange exchange
     ) {
         return addUserReceiptRequestDto
-                .doOnNext(t -> log.info("AddUserReceipt for transactionId: [{}]", transactionId))
                 .flatMap(
                         addUserReceiptRequest -> transactionsService
                                 .addUserReceipt(transactionId, addUserReceiptRequest)
+                                .doOnNext(
+                                        t -> LogTracingUtils.loggerTracingUtils()
+                                                .success()
+                                                .logInfo(log, "AddUserReceipt successful")
+                                )
                                 .map(
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
@@ -348,22 +259,13 @@ public class TransactionsController implements TransactionsApi {
                                                 );
                                     }
 
-                                    log.error("Got error while trying to add user receipt", exception);
+                                    LogTracingUtils.loggerTracingUtils()
+                                            .failure()
+                                            .logError(log, exception, "Got error while trying to add user receipt");
                                 })
                                 .onErrorMap(SendPaymentResultException::new)
                 )
-                .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .map(ResponseEntity::ok);
     }
 
     /**
@@ -422,17 +324,6 @@ public class TransactionsController implements TransactionsApi {
                                                                          ServerWebExchange exchange
     ) {
         return transactionsService.cancelTransaction(transactionId, xUserId)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                )
                 .thenReturn(ResponseEntity.accepted().build());
     }
 
@@ -444,18 +335,7 @@ public class TransactionsController implements TransactionsApi {
     ) {
         return transactionsService.getTransactionOutcome(transactionId, xUserId)
                 .doOnNext(t -> log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId))
-                .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .map(ResponseEntity::ok);
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
