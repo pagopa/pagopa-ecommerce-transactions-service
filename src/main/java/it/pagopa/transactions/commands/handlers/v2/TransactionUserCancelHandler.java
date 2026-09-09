@@ -3,6 +3,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
@@ -67,17 +68,18 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                     )
                                     .thenReturn(userCanceledEvent)
                                     .doOnError(
-                                            exception -> log.error(
-                                                    "Error to generate event TRANSACTION_USER_CANCELED_EVENT for transactionId {} - error {}",
-                                                    userCanceledEvent.getTransactionId(),
-                                                    exception.getMessage()
-                                            )
+                                            exception -> LogTracingUtils.loggerTracingUtils()
+                                                    .failure()
+                                                    .logError(
+                                                            log,
+                                                            exception,
+                                                            "Unable to generate TRANSACTION_USER_CANCELED event"
+                                                    )
                                     )
                                     .doOnNext(
-                                            event -> log.info(
-                                                    "Generated event TRANSACTION_USER_CANCELED_EVENT for transactionId {}",
-                                                    event.getTransactionId()
-                                            )
+                                            event -> LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .logInfo(log, "Generated event TRANSACTION_USER_CANCELED_EVENT")
                                     );
                         }
                 );

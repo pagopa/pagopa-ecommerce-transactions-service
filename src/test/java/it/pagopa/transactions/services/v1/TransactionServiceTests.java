@@ -630,6 +630,20 @@ class TransactionServiceTests {
     }
 
     @Test
+    void getTransactionOutcomeThrowsExceptionForTransactionsNotFound() {
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.empty());
+        assertThrows(
+                TransactionNotFoundException.class,
+                () -> transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectError(TransactionNotFoundException.class)
+                .verify();
+    }
+
+    @Test
     void getTransactionOutcomeReturnsOutcomesForStatusesNotifiedOKAndRightTotalAmount() {
         final it.pagopa.ecommerce.commons.documents.v2.Transaction transaction = it.pagopa.ecommerce.commons.v2.TransactionTestUtils
                 .transactionDocument(

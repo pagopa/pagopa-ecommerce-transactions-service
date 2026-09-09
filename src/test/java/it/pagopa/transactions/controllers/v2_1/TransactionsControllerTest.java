@@ -37,7 +37,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -80,12 +79,6 @@ class TransactionsControllerTest {
 
     @Mock
     ServerWebExchange mockExchange;
-
-    @Mock
-    ServerHttpRequest mockRequest;
-
-    @Mock
-    HttpHeaders mockHeaders;
 
     private CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
             Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
@@ -133,23 +126,6 @@ class TransactionsControllerTest {
                                     )
                     )
                     .thenReturn(Mono.just(response));
-
-            Mockito.when(mockExchange.getRequest())
-                    .thenReturn(mockRequest);
-
-            Mockito.when(mockExchange.getRequest().getMethod())
-                    .thenReturn(HttpMethod.POST);
-
-            Mockito.when(mockExchange.getRequest().getURI())
-                    .thenReturn(
-                            URI.create(
-                                    String.join(
-                                            "/",
-                                            "https://localhost/transactions",
-                                            transactionId.value()
-                                    )
-                            )
-                    );
 
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
                     .newTransaction(
@@ -773,23 +749,6 @@ class TransactionsControllerTest {
                                     )
                     )
                     .thenReturn(Mono.just(response));
-
-            Mockito.when(mockExchange.getRequest())
-                    .thenReturn(mockRequest);
-
-            Mockito.when(mockExchange.getRequest().getMethod())
-                    .thenReturn(HttpMethod.POST);
-
-            Mockito.when(mockExchange.getRequest().getURI())
-                    .thenReturn(
-                            URI.create(
-                                    String.join(
-                                            "/",
-                                            "https://localhost/transactions",
-                                            transactionId.value()
-                                    )
-                            )
-                    );
 
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
                     .newTransaction(

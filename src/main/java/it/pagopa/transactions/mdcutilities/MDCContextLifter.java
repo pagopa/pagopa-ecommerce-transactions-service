@@ -1,5 +1,6 @@
 package it.pagopa.transactions.mdcutilities;
 
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import org.reactivestreams.Subscription;
 import org.slf4j.MDC;
 import reactor.core.CoreSubscriber;
@@ -57,7 +58,7 @@ class MDCContextLifter<T> implements CoreSubscriber<T> {
         if (!context.isEmpty()) {
             Map<String, String> mdcContextMap = Optional.ofNullable(MDC.getCopyOfContextMap()).orElseGet(HashMap::new);
             Map<String, String> reactorContextMap = Arrays
-                    .stream(TransactionTracingUtils.TracingEntry.values())
+                    .stream(LogTracingUtils.AttributeKeys.values())
                     .map(
                             key -> new AbstractMap.SimpleEntry<>(
                                     key.getKey(),
