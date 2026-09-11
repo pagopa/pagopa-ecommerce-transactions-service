@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.domain.v2.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionAmount;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -31,6 +32,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -108,18 +110,18 @@ public class TransactionsService {
                 transactionId,
                 userId
         );
-        log.info(
-                "Initializing transaction for rptIds: {}. ClientId: {}",
-                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
-                clientId
-        );
 
         return transactionActivateHandlerV2.handle(transactionActivateCommand)
                 .doOnNext(
-                        args -> log.info(
-                                "Transaction initialized for rptId [{}]",
-                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
-                        )
+                        args -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .details(
+                                        Map.of(
+                                                "rpt-id",
+                                                newTransactionRequestDto.getPaymentNotices().getFirst().getRptId()
+                                        )
+                                )
+                                .logInfo(log, "Transaction initialized")
                 )
                 .flatMap(
                         es -> {
@@ -215,9 +217,13 @@ public class TransactionsService {
                                                                                                         String transactionId,
                                                                                                         UUID xUserId
     ) {
-        log.info("Get Transaction Invoked with id {} ", transactionId);
         return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .doOnError(
+                        e -> LogTracingUtils.loggerTracingUtils()
+                                .failure()
+                                .logError(log, e, "Transaction not found")
+                )
                 .map(this::buildTransactionInfoDtoFromView);
     }
 
