@@ -2,6 +2,7 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ErrorDto;
@@ -23,6 +24,9 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import jakarta.xml.bind.JAXBElement;
+
+import java.util.Map;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -62,12 +66,6 @@ public class NodeForPspClient {
                                                                          JAXBElement<ActivatePaymentNoticeV2Request> request,
                                                                          String transactionId
     ) {
-        log.info(
-                "ActivatePaymentNoticeV2 init for noticeNumber [{}]; idPSP: [{}], IdemPK: [{}]",
-                request.getValue().getQrCode().getNoticeNumber(),
-                request.getValue().getIdPSP(),
-                request.getValue().getIdempotencyKey()
-        );
         return nodoWebClient.post()
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
@@ -90,24 +88,39 @@ public class NodeForPspClient {
                 )
                 .bodyToMono(ActivatePaymentNoticeV2Response.class)
                 .doOnSuccess(
-                        activateResponse -> log.info(
-                                "ActivatePaymentNoticeV2 completed for noticeNumber [{}], paymentToken [{}]",
-                                request.getValue().getQrCode().getNoticeNumber(),
-                                activateResponse.getPaymentToken()
-
-                        )
+                        activateResponse -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                .details(
+                                        Map.of(
+                                                "notice_number",
+                                                request.getValue().getQrCode().getNoticeNumber(),
+                                                "payment_token",
+                                                Objects.toString(activateResponse.getPaymentToken())
+                                        )
+                                )
+                                .logInfo(log, "ActivatePaymentNoticeV2 completed")
                 )
                 .onErrorMap(
                         ResponseStatusException.class,
                         error -> {
-                            log.error("ActivatePaymentNoticeV2 ResponseStatus Error:", error);
+                            LogTracingUtils.loggerTracingUtils()
+                                    .failure()
+                                    .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                    .logError(log, error, "ActivatePaymentNoticeV2 ResponseStatusException");
                             return new BadGatewayException(
-                                    error.getReason(),
+                                    Objects.toString(error.getReason()),
                                     HttpStatus.valueOf(error.getStatusCode().value())
                             );
                         }
                 )
-                .doOnError(Exception.class, error -> log.error("ActivatePaymentNoticeV2 Generic Error:", error));
+                .doOnError(
+                        Exception.class,
+                        error -> LogTracingUtils.loggerTracingUtils()
+                                .failure()
+                                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                .logError(log, error, "ActivatePaymentNoticeV2 Generic Error")
+                );
     }
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {

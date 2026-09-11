@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v2.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.repositories.v2.PaymentRequestInfo;
 import it.pagopa.ecommerce.commons.utils.EuroUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
@@ -14,6 +15,7 @@ import it.pagopa.transactions.configurations.NodoConfig;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.exceptions.NodoErrorException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -83,14 +86,18 @@ public class NodoOperations {
                 .flatMap(paymentRequestInfo -> {
                     if (clientId == Transaction.ClientId.WISP_REDIRECT
                             && paymentRequestInfo.creditorReferenceId() == null) {
-                        return Mono.error(
-                                new InvalidNodoResponseException(
-                                        String.format(
-                                                "Mandatory creditorReferenceId for client %s is missing",
-                                                clientId.name()
-                                        )
+                        var exc = new InvalidNodoResponseException(
+                                String.format(
+                                        "Mandatory creditorReferenceId for client %s is missing",
+                                        clientId.name()
                                 )
                         );
+
+                        LogTracingUtils.loggerTracingUtils()
+                                .failure()
+                                .logError(log, exc, exc.getMessage());
+
+                        return Mono.error(exc);
                     } else {
                         return Mono.just(paymentRequestInfo);
                     }
@@ -154,15 +161,26 @@ public class NodoOperations {
                             String faultCode = Optional.ofNullable(activatePaymentNoticeV2Response.getFault())
                                     .map(CtFaultBean::getFaultCode)
                                     .orElse("No faultCode received");
-                            log.info(
-                                    "Nodo activation for  transaction id: [{}] RPT id: [{}] idCart: [{}] response outcome: [{}] faultCode: [{}]",
-                                    transactionId,
-                                    rptId,
-                                    Optional.ofNullable(idCart).orElse("idCart not present"),
-                                    activatePaymentNoticeV2Response.getOutcome(),
-                                    faultCode
-                            );
-                            if (StOutcome.OK.value().equals(activatePaymentNoticeV2Response.getOutcome().value())) {
+
+                            LogTracingUtils.loggerTracingUtils()
+                                    .success()
+                                    .details(
+                                            Map.of(
+                                                    "transaction_id",
+                                                    transactionId,
+                                                    "rpt_id",
+                                                    rptId.value(),
+                                                    "id_cart",
+                                                    Optional.ofNullable(idCart).orElse("{idCart-not-found}"),
+                                                    "response_outcome",
+                                                    activatePaymentNoticeV2Response.getOutcome().value(),
+                                                    "fault_code",
+                                                    faultCode
+                                            )
+                                    )
+                                    .logInfo(log, "Nodo activation");
+
+                            if (activatePaymentNoticeV2Response.getOutcome() == StOutcome.OK) {
                                 openTelemetryUtils.addSpanWithAttributes(
                                         SpanLabelOpenTelemetry.NODO_ACTIVATION_OK_SPAN_NAME,
                                         Attributes.of(
@@ -170,7 +188,7 @@ public class NodoOperations {
                                                 StOutcome.OK.toString()
                                         )
                                 );
-                                return isOkPaymentToken(activatePaymentNoticeV2Response.getPaymentToken())
+                                return StringUtils.isNotBlank(activatePaymentNoticeV2Response.getPaymentToken())
                                         ? Mono.just(activatePaymentNoticeV2Response)
                                         : Mono.error(new InvalidNodoResponseException("No payment token received"));
                             } else {
@@ -232,10 +250,6 @@ public class NodoOperations {
                                                                 && isIbanCCP(ctMapEntry.getValue())
                                                 ))
                 );
-    }
-
-    private boolean isOkPaymentToken(String paymentToken) {
-        return paymentToken != null && !paymentToken.isBlank();
     }
 
     private boolean isIbanCCP(String iban) {
