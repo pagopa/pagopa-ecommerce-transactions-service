@@ -7,7 +7,6 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.v2.server.api.V2Api;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v2.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -86,18 +85,7 @@ public class TransactionsController implements V2Api {
     ) {
         return transactionsService.getTransactionInfo(transactionId, xUserId)
                 .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
-                .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -113,18 +101,7 @@ public class TransactionsController implements V2Api {
                 .flatMap(
                         ntr -> transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId)
                 )
-                .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        transactionId,
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .map(ResponseEntity::ok);
     }
 
     @Override

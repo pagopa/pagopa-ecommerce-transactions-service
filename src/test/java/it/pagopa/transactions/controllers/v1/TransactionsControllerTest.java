@@ -149,15 +149,6 @@ class TransactionsControllerTest {
                     )
                     .thenReturn(Mono.just(response));
 
-            Mockito.when(mockExchange.getRequest())
-                    .thenReturn(mockRequest);
-
-            Mockito.when(mockExchange.getRequest().getMethod())
-                    .thenReturn(HttpMethod.POST);
-
-            Mockito.when(mockExchange.getRequest().getURI())
-                    .thenReturn(URI.create("https://localhost/transactions"));
-
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
                     .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), mockExchange).block();
 
@@ -187,15 +178,6 @@ class TransactionsControllerTest {
         Mockito.lenient().when(transactionsService.getTransactionInfo(transactionId, null))
                 .thenReturn(Mono.just(response));
 
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.GET);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
-
         ResponseEntity<TransactionInfoDto> responseEntity = transactionsController
                 .getTransactionInfo(transactionId, null, mockExchange).block();
 
@@ -214,15 +196,6 @@ class TransactionsControllerTest {
         Mockito.lenient().when(transactionsService.cancelTransaction(transactionId, null))
                 .thenReturn(Mono.empty());
 
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.DELETE);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
-
         ResponseEntity<Void> responseEntity = transactionsController
                 .requestTransactionUserCancellation(transactionId, null, mockExchange).block();
 
@@ -240,15 +213,6 @@ class TransactionsControllerTest {
         /* preconditions */
         Mockito.when(transactionsService.cancelTransaction(transactionId, null))
                 .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.DELETE);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
 
         /* test */
 
@@ -505,17 +469,6 @@ class TransactionsControllerTest {
         /* preconditions */
         Mockito.when(transactionsService.addUserReceipt(transactionId, addUserReceiptRequest))
                 .thenReturn(Mono.just(transactionInfo));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.POST);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(String.join("/", "https://localhost/transactions", transactionId, "user-receipts"))
-                );
 
         /* test */
         ResponseEntity<AddUserReceiptResponseDto> response = transactionsController
@@ -1278,23 +1231,6 @@ class TransactionsControllerTest {
         )
                 .thenReturn(Mono.just(transactionInfo));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.POST);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "user-receipts"
-                                )
-                        )
-                );
         Hooks.onOperatorDebug();
         /* test */
 
@@ -1359,23 +1295,6 @@ class TransactionsControllerTest {
         )
                 .thenReturn(Mono.error(raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.POST);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "user-receipts"
-                                )
-                        )
-                );
 
         /* test */
         StepVerifier.create(
@@ -1457,23 +1376,6 @@ class TransactionsControllerTest {
         )
                 .thenReturn(Mono.error((Throwable) raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.POST);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "user-receipts"
-                                )
-                        )
-                );
 
         /* test */
         StepVerifier.create(
@@ -1644,15 +1546,6 @@ class TransactionsControllerTest {
 
         Mockito.lenient().when(transactionsService.getTransactionOutcome(eq(transactionId), any()))
                 .thenReturn(Mono.just(response));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.GET);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId, "outcomes")));
 
         ResponseEntity<TransactionOutcomeInfoDto> responseEntity = transactionsController
                 .getTransactionOutcomes(transactionId, null, mockExchange).block();

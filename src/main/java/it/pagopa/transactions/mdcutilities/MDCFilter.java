@@ -1,5 +1,6 @@
 package it.pagopa.transactions.mdcutilities;
 
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -7,9 +8,9 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
-import reactor.util.context.Context;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -19,6 +20,7 @@ public class MDCFilter implements WebFilter {
     public static final String HEADER_TRANSACTION_ID = "x-transaction-id";
     public static final String HEADER_RPT_ID = "x-rpt-ids";
     public static final String HEADER_NPG_CORRELATION_ID = "x-correlation-id";
+    public static final String HEADER_USER_ID = "x-user-id";
 
     @Override
     public Mono<Void> filter(
@@ -26,18 +28,50 @@ public class MDCFilter implements WebFilter {
                              WebFilterChain chain
     ) {
         final HttpHeaders headers = exchange.getRequest().getHeaders();
-        final String transactionId = Optional.ofNullable(headers.get(HEADER_TRANSACTION_ID)).orElse(new ArrayList<>())
+        final String transactionId = Optional.ofNullable(headers.get(HEADER_TRANSACTION_ID))
+                .orElse(new ArrayList<>())
                 .stream()
-                .findFirst().orElse(TransactionTracingUtils.TracingEntry.TRANSACTION_ID.getDefaultValue());
-        final String rptId = Optional.ofNullable(headers.get(HEADER_RPT_ID)).orElse(new ArrayList<>()).stream()
-                .findFirst().orElse(TransactionTracingUtils.TracingEntry.RPT_IDS.getDefaultValue());
+                .findFirst()
+                .orElse(LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID.getDefaultValue());
+
+        final String rptId = Optional.ofNullable(headers.get(HEADER_RPT_ID))
+                .orElse(new ArrayList<>())
+                .stream()
+                .findFirst()
+                .orElse(LogTracingUtils.AttributeKeys.CTX_RPT_IDS.getDefaultValue());
+
         final String correlationId = Optional.ofNullable(headers.get(HEADER_NPG_CORRELATION_ID))
-                .orElse(new ArrayList<>()).stream()
-                .findFirst().orElse(TransactionTracingUtils.TracingEntry.CORRELATION_ID.getDefaultValue());
+                .orElse(new ArrayList<>())
+                .stream()
+                .findFirst()
+                .orElse(LogTracingUtils.AttributeKeys.CORRELATION_ID.getDefaultValue());
+
+        final String userId = Optional.ofNullable(headers.get(HEADER_USER_ID))
+                .orElse(new ArrayList<>())
+                .stream()
+                .findFirst()
+                .orElse(LogTracingUtils.AttributeKeys.CTX_USER_ID.getDefaultValue());
 
         return chain.filter(exchange)
-                .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.TRANSACTION_ID.getKey(), transactionId))
-                .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.RPT_IDS.getKey(), rptId))
-                .contextWrite(Context.of(TransactionTracingUtils.TracingEntry.CORRELATION_ID.getKey(), correlationId));
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId,
+                                        LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                        rptId,
+                                        LogTracingUtils.AttributeKeys.CORRELATION_ID,
+                                        correlationId,
+                                        LogTracingUtils.AttributeKeys.CTX_USER_ID,
+                                        userId,
+                                        LogTracingUtils.AttributeKeys.EVENT_ACTION,
+                                        "%s %s".formatted(
+                                                exchange.getRequest().getMethod().name(),
+                                                exchange.getRequest().getURI().getPath()
+                                        )
+                                ),
+                                ctx
+                        )
+                );
     }
 }
