@@ -115,10 +115,13 @@ public class TransactionsService {
                 .doOnNext(
                         args -> LogTracingUtils.loggerTracingUtils()
                                 .success()
-                                .details(
+                                .attributes(
                                         Map.of(
-                                                "rpt-id",
-                                                newTransactionRequestDto.getPaymentNotices().getFirst().getRptId()
+                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                List.of(
+                                                        newTransactionRequestDto.getPaymentNotices().getFirst()
+                                                                .getRptId()
+                                                ).toString()
                                         )
                                 )
                                 .logInfo(log, "Transaction initialized")
@@ -218,17 +221,28 @@ public class TransactionsService {
                                                                                                         UUID xUserId
     ) {
         return getBaseTransactionView(transactionId, xUserId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .doOnError(
-                        e -> LogTracingUtils.loggerTracingUtils()
-                                .failure()
-                                .logError(log, e, "Transaction not found")
+                .switchIfEmpty(
+                        Mono.defer(() -> {
+                            var exc = new TransactionNotFoundException(transactionId);
+                            LogTracingUtils.loggerTracingUtils()
+                                    .failure()
+                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                    .logError(log, exc, "Transaction not found");
+
+                            return Mono.error(exc);
+                        })
                 )
                 .map(this::buildTransactionInfoDtoFromView);
     }
 
     private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
         return transactionsViewRepository.findById(transactionId)
+                .doOnNext(transaction ->
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                            .logInfo(log, "Retrieved transaction document")
+                )
                 .filter(transactionDocument -> switch (transactionDocument) {
                     case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
                     case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->

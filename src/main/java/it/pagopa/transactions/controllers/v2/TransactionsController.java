@@ -91,6 +91,17 @@ public class TransactionsController implements V2Api {
                                 .success()
                                 .logInfo(log, "GetTransactionInfo completed")
                 )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId,
+                                        LogTracingUtils.AttributeKeys.CTX_USER_ID,
+                                        xUserId.toString()
+                                ),
+                                ctx
+                        )
+                )
                 .map(ResponseEntity::ok);
     }
 
@@ -138,6 +149,15 @@ public class TransactionsController implements V2Api {
                 .map(
                         transactionInfo -> new UpdateAuthorizationResponseDto()
                                 .status(TransactionStatusDto.fromValue(transactionInfo.getStatus().getValue()))
+                )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
+                                ),
+                                ctx
+                        )
                 )
                 .map(ResponseEntity::ok);
     }
@@ -255,7 +275,16 @@ public class TransactionsController implements V2Api {
         }
     )
     ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
-        log.warn("Got invalid input: {}", exception.getMessage());
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of(
+                                "exception_message",
+                                exception.getMessage()
+                        )
+                )
+                .logError(log, exception, "Got invalid input");
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(400)
