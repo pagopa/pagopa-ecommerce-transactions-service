@@ -12,7 +12,6 @@ import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.v2.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JwtIssuerClientException;
@@ -259,7 +258,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
                                         .privateClaims(claimsMap)
                         )
-                ).doOnError(
+                )
+                .doOnError(
                         c -> Mono.error(
                                 new JwtIssuerClientException(
                                         "Error while generating jwt token for ecommerce",
@@ -333,7 +333,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                             .attributes(
                                     Map.of(
                                             LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
-                                            List.of(requestInfo.id().value()).toString()
+                                            List.of(rptId.value()).toString()
                                     )
                             )
                             .details(
@@ -452,6 +452,12 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         );
 
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::insert)
+                .doOnSuccess(
+                        e -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Saved domain event")
+                )
                 .flatMap(
                         e -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
@@ -460,19 +466,30 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         Duration.ofSeconds(paymentTokenTimeout),
                                         Duration.ofSeconds(transientQueuesTTLSeconds)
                                 )
-                        ).doOnError(
-                                exception -> log.error(
-                                        "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
-                                        transactionId.value(),
-                                        exception.getMessage()
-                                )
                         )
-                                .doOnNext(
-                                        event -> log.info(
-                                                "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
-                                                transactionId.value()
-                                        )
-                                ).thenReturn(e)
+                                .doOnSuccess(
+                                        event -> LogTracingUtils.loggerTracingUtils()
+                                                .success()
+                                                .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                .details(
+                                                        Map.of(
+                                                                "send_reason",
+                                                                "New transaction activation event"
+                                                        )
+                                                )
+                                                .logInfo(log, "Event successfully sent to queue")
+                                )
+                                .doOnError(
+                                        exception -> LogTracingUtils.loggerTracingUtils()
+                                                .failure()
+                                                .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                .logError(
+                                                        log,
+                                                        exception,
+                                                        "Error generating transaction activation event"
+                                                )
+                                )
+                                .thenReturn(e)
 
                 );
     }
@@ -485,7 +502,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         paymentRequestInfo.description(),
                         paymentRequestInfo.amount(),
                         null,
-                        paymentRequestInfo.transferList().stream().map(
+                        CollectionUtils.emptyIfNull(paymentRequestInfo.transferList()).stream().map(
                                 transfer -> new PaymentTransferInformation(
                                         transfer.paFiscalCode(),
                                         transfer.digitalStamp(),
@@ -493,7 +510,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         transfer.transferCategory()
                                 )
                         ).toList(),
-                        paymentRequestInfo.isAllCCP(),
+                        Boolean.TRUE.equals(paymentRequestInfo.isAllCCP()),
                         paymentRequestInfo.paName(),
                         paymentRequestInfo.creditorReferenceId()
                 )

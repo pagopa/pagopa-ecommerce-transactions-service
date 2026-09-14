@@ -91,13 +91,16 @@ public class TransactionsController implements V2Api {
                                 .success()
                                 .logInfo(log, "GetTransactionInfo completed")
                 )
+                .doOnNext(
+                        t -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "GetTransactionInfo completed")
+                )
                 .contextWrite(
                         ctx -> LogTracingUtils.enrichContextForEvent(
                                 Map.of(
                                         LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                        transactionId,
-                                        LogTracingUtils.AttributeKeys.CTX_USER_ID,
-                                        xUserId.toString()
+                                        transactionId
                                 ),
                                 ctx
                         )

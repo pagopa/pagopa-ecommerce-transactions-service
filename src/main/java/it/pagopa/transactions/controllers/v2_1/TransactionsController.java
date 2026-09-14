@@ -3,6 +3,7 @@ package it.pagopa.transactions.controllers.v2_1;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.v2_1.server.api.V21Api;
@@ -28,7 +29,7 @@ import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -85,15 +86,29 @@ public class TransactionsController implements V21Api {
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
-                .flatMap(ntr -> {
-                    log.info(
-                            "Create new Transaction for rptIds: {}. ClientId: [{}] ",
-                            ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList(),
-                            xClientId.getValue()
-
-                    );
-                    return transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId);
-                })
+                .flatMap(
+                        ntr -> transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId)
+                )
+                .doOnNext(
+                        ignored -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .details(
+                                        Map.of(
+                                                "client_id",
+                                                xClientId.getValue()
+                                        )
+                                )
+                                .logInfo(log, "New transaction created successfully")
+                )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId.value()
+                                ),
+                                ctx
+                        )
+                )
                 .map(ResponseEntity::ok);
     }
 
@@ -185,7 +200,6 @@ public class TransactionsController implements V21Api {
         }
     )
     ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JwtIssuerResponseException exception) {
-        log.warn(exception.getMessage());
         HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -212,11 +226,17 @@ public class TransactionsController implements V21Api {
                 )
         );
 
-        log.error(
-                "Nodo error processing request with fault code: [" + faultCode + "] mapped to http status code: [" +
-                        response.getStatusCode() + "]",
-                e
-        );
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of(
+                                "fault_code",
+                                faultCode,
+                                "mapped_status_code",
+                                response.getStatusCode().toString()
+                        )
+                )
+                .logError(log, e, "Nodo error processing request");
         return response;
     }
 
@@ -226,7 +246,6 @@ public class TransactionsController implements V21Api {
         }
     )
     ResponseEntity<ProblemJsonDto> invalidNodoResponse(InvalidNodoResponseException exception) {
-        log.warn(exception.getMessage());
         HttpStatus httpStatus = HttpStatus.BAD_GATEWAY;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
