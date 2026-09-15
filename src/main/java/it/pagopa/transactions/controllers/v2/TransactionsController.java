@@ -91,11 +91,6 @@ public class TransactionsController implements V2Api {
                                 .success()
                                 .logInfo(log, "GetTransactionInfo completed")
                 )
-                .doOnNext(
-                        t -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "GetTransactionInfo completed")
-                )
                 .contextWrite(
                         ctx -> LogTracingUtils.enrichContextForEvent(
                                 Map.of(

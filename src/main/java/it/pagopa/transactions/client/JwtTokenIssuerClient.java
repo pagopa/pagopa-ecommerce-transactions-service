@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @Component
 @Slf4j
 public class JwtTokenIssuerClient {
@@ -25,13 +27,25 @@ public class JwtTokenIssuerClient {
     }
 
     public Mono<CreateTokenResponseDto> createJWTToken(CreateTokenRequestDto createTokenRequestDto) {
-        return jwtIssuerWebClient.createJwtToken(createTokenRequestDto).doOnError(
-                WebClientResponseException.class,
-                JwtTokenIssuerClient::logWebClientException
-        )
+        return jwtIssuerWebClient.createJwtToken(createTokenRequestDto)
+                .doOnError(
+                        WebClientResponseException.class,
+                        err ->
+                                LogTracingUtils.loggerTracingUtils()
+                                        .failure()
+                                        .dependency("ecommerce-jwt-token-issuer")
+                                        .details(
+                                            Map.of(
+                                                "status_code", err.getStatusCode().toString(),
+                                                "response_body", err.getResponseBodyAsString()
+                                            )
+                                        )
+                                        .logError(log, err, "Received bad response from jwt-issuer-service")
+                )
                 .doOnSuccess(
                         ignored -> LogTracingUtils.loggerTracingUtils()
                                 .success()
+                                .dependency("ecommerce-jwt-token-issuer")
                                 .logInfo(log, "JWT Token created")
                 )
                 .onErrorMap(
@@ -40,13 +54,5 @@ public class JwtTokenIssuerClient {
                                 "Error while invoke method for create jwt token"
                         )
                 );
-    }
-
-    private static void logWebClientException(WebClientResponseException e) {
-        log.error(
-                "Got bad response from jwt-issuer-service [HTTP {}]: {}",
-                e.getStatusCode(),
-                e.getResponseBodyAsString()
-        );
     }
 }
