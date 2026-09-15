@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.wallet.v1.api.WalletsApi;
 import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
@@ -34,6 +35,11 @@ public class WalletClient {
     ) {
         return walletWebClient
                 .getWalletAuthDataById(UUID.fromString(walletId))
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Retrieved wallet auth data")
+                )
                 .doOnError(
                         WebClientResponseException.class,
                         WalletClient::logWebClientException

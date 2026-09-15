@@ -100,6 +100,26 @@ public class TransactionsController implements TransactionsApi {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
                 .flatMap(ntr -> transactionsService.newTransaction(ntr, xClientId, transactionId))
+                .doOnNext(
+                        ignored -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .details(
+                                        Map.of(
+                                                "client_id",
+                                                xClientId.getValue()
+                                        )
+                                )
+                                .logInfo(log, "New transaction created successfully")
+                )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId.value()
+                                ),
+                                ctx
+                        )
+                )
                 .map(ResponseEntity::ok);
     }
 
@@ -110,7 +130,20 @@ public class TransactionsController implements TransactionsApi {
                                                                        ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionInfo(transactionId, xUserId)
-                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
+                .doOnNext(
+                        t -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "GetTransactionInfo completed")
+                )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
+                                ),
+                                ctx
+                        )
+                )
                 .map(ResponseEntity::ok);
     }
 
@@ -134,7 +167,11 @@ public class TransactionsController implements TransactionsApi {
                         )
                 )
                 .map(ResponseEntity::ok)
-                .doOnNext(request -> log.info("Completed RequestTransactionAuthorization request"));
+                .doOnNext(
+                        request -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Completed RequestTransactionAuthorization request")
+                );
     }
 
     @Override
@@ -177,6 +214,7 @@ public class TransactionsController implements TransactionsApi {
                         var exc = new LockNotAcquiredException(domainTransactionId, lockDocument);
                         LogTracingUtils.loggerTracingUtils()
                                 .failure()
+                                .dependency(LogTracingUtils.REDIS_DEPENDENCY)
                                 .logError(log, exc, "Unable to acquire lock");
                         return Mono.error(exc);
                     }
@@ -224,11 +262,6 @@ public class TransactionsController implements TransactionsApi {
                 .flatMap(
                         addUserReceiptRequest -> transactionsService
                                 .addUserReceipt(transactionId, addUserReceiptRequest)
-                                .doOnNext(
-                                        t -> LogTracingUtils.loggerTracingUtils()
-                                                .success()
-                                                .logInfo(log, "AddUserReceipt successful")
-                                )
                                 .map(
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
@@ -324,6 +357,15 @@ public class TransactionsController implements TransactionsApi {
                                                                          ServerWebExchange exchange
     ) {
         return transactionsService.cancelTransaction(transactionId, xUserId)
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
+                                ),
+                                ctx
+                        )
+                )
                 .thenReturn(ResponseEntity.accepted().build());
     }
 
@@ -334,7 +376,20 @@ public class TransactionsController implements TransactionsApi {
                                                                                   ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionOutcome(transactionId, xUserId)
-                .doOnNext(t -> log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId))
+                .doOnNext(
+                        t -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "TransactionOutcomeInfo completed")
+                )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
+                                ),
+                                ctx
+                        )
+                )
                 .map(ResponseEntity::ok);
     }
 

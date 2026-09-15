@@ -38,6 +38,7 @@ public class CancellationRequestProjectionHandler
     public Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> handle(
                                                                              it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent transactionUserCanceledEvent
     ) {
+        // Saltato poiché adesso è gestito da CDC
         if (!transactionsviewUpdateEnabled) {
             return Mono.empty();
         }
