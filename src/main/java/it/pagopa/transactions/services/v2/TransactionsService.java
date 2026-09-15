@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.domain.v2.PaymentNotice;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionAmount;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -31,6 +32,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -108,18 +110,21 @@ public class TransactionsService {
                 transactionId,
                 userId
         );
-        log.info(
-                "Initializing transaction for rptIds: {}. ClientId: {}",
-                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
-                clientId
-        );
 
         return transactionActivateHandlerV2.handle(transactionActivateCommand)
                 .doOnNext(
-                        args -> log.info(
-                                "Transaction initialized for rptId [{}]",
-                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
-                        )
+                        args -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                List.of(
+                                                        newTransactionRequestDto.getPaymentNotices().getFirst()
+                                                                .getRptId()
+                                                ).toString()
+                                        )
+                                )
+                                .logInfo(log, "Transaction initialized")
                 )
                 .flatMap(
                         es -> {
@@ -215,14 +220,29 @@ public class TransactionsService {
                                                                                                         String transactionId,
                                                                                                         UUID xUserId
     ) {
-        log.info("Get Transaction Invoked with id {} ", transactionId);
         return getBaseTransactionView(transactionId, xUserId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .switchIfEmpty(
+                        Mono.defer(() -> {
+                            var exc = new TransactionNotFoundException(transactionId);
+                            LogTracingUtils.loggerTracingUtils()
+                                    .failure()
+                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                    .logError(log, exc, "Transaction not found");
+
+                            return Mono.error(exc);
+                        })
+                )
                 .map(this::buildTransactionInfoDtoFromView);
     }
 
     private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
         return transactionsViewRepository.findById(transactionId)
+                .doOnNext(transaction ->
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                            .logInfo(log, "Retrieved transaction document")
+                )
                 .filter(transactionDocument -> switch (transactionDocument) {
                     case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
                     case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->

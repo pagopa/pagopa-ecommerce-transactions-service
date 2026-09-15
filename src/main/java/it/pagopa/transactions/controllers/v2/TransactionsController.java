@@ -3,11 +3,11 @@ package it.pagopa.transactions.controllers.v2;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.v2.server.api.V2Api;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v2.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -29,6 +29,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -85,19 +86,21 @@ public class TransactionsController implements V2Api {
                                                                        ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionInfo(transactionId, xUserId)
-                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
-                .map(ResponseEntity::ok)
+                .doOnNext(
+                        t -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "GetTransactionInfo completed")
+                )
                 .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
                                 ),
-                                context
+                                ctx
                         )
-                );
+                )
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -113,18 +116,7 @@ public class TransactionsController implements V2Api {
                 .flatMap(
                         ntr -> transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId)
                 )
-                .map(ResponseEntity::ok)
-                .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        transactionId,
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                context
-                        )
-                );
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -155,6 +147,15 @@ public class TransactionsController implements V2Api {
                 .map(
                         transactionInfo -> new UpdateAuthorizationResponseDto()
                                 .status(TransactionStatusDto.fromValue(transactionInfo.getStatus().getValue()))
+                )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
+                                ),
+                                ctx
+                        )
                 )
                 .map(ResponseEntity::ok);
     }
@@ -272,7 +273,16 @@ public class TransactionsController implements V2Api {
         }
     )
     ResponseEntity<ProblemJsonDto> validationExceptionHandler(Exception exception) {
-        log.warn("Got invalid input: {}", exception.getMessage());
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of(
+                                "exception_message",
+                                exception.getMessage()
+                        )
+                )
+                .logError(log, exception, "Got invalid input");
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(400)
@@ -288,7 +298,6 @@ public class TransactionsController implements V2Api {
         }
     )
     ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JwtIssuerResponseException exception) {
-        log.warn(exception.getMessage());
         HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -315,11 +324,17 @@ public class TransactionsController implements V2Api {
                 )
         );
 
-        log.error(
-                "Nodo error processing request with fault code: [" + faultCode + "] mapped to http status code: [" +
-                        response.getStatusCode() + "]",
-                e
-        );
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of(
+                                "fault_code",
+                                faultCode,
+                                "mapped_status_code",
+                                response.getStatusCode().toString()
+                        )
+                )
+                .logError(log, e, "Nodo error processing request");
         return response;
     }
 
@@ -329,7 +344,6 @@ public class TransactionsController implements V2Api {
         }
     )
     ResponseEntity<ProblemJsonDto> invalidNodoResponse(InvalidNodoResponseException exception) {
-        log.warn(exception.getMessage());
         HttpStatus httpStatus = HttpStatus.BAD_GATEWAY;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -344,7 +358,6 @@ public class TransactionsController implements V2Api {
     ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
                                                                                                 DigitalStampNotAllowedForClientException exception
     ) {
-        log.warn(exception.getMessage());
         HttpStatus httpStatus = HttpStatus.NOT_FOUND;
         return new ResponseEntity<>(
                 new ValidationFaultPaymentDataErrorProblemJsonDto()
