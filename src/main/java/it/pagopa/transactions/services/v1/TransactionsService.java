@@ -237,6 +237,12 @@ public class TransactionsService {
                 .doOnNext(
                         args -> LogTracingUtils.loggerTracingUtils()
                                 .success()
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                newTransactionRequestDto.getPaymentNotices().getFirst().getRptId()
+                                        )
+                                )
                                 .logInfo(log, "Transaction initialized")
                 )
                 .flatMap(
@@ -261,9 +267,18 @@ public class TransactionsService {
                                                        String transactionId,
                                                        UUID xUserId
     ) {
-        log.info("Get Transaction Invoked with id {} ", transactionId);
         return getBaseTransactionView(transactionId, xUserId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .switchIfEmpty(
+                        Mono.defer(() -> {
+                            var exc = new TransactionNotFoundException(transactionId);
+                            LogTracingUtils.loggerTracingUtils()
+                                    .failure()
+                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                    .logError(log, exc, "Transaction not found");
+
+                            return Mono.error(exc);
+                        })
+                )
                 .map(this::buildTransactionInfoDtoFromView);
     }
 
@@ -276,9 +291,10 @@ public class TransactionsService {
         return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .doOnError(
-                        (e) -> LogTracingUtils.loggerTracingUtils()
+                        e -> LogTracingUtils.loggerTracingUtils()
                                 .failure()
-                                .logError(log, e, "Unable to retrieve base transaction view")
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logError(log, e, "Unable to retrieve transaction view")
                 )
                 .map(this::buildTransactionOutcomeInfoDtoFromView);
     }
@@ -1099,6 +1115,12 @@ public class TransactionsService {
      */
     private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
         return transactionsViewRepository.findById(transactionId)
+                .doOnNext(transaction ->
+                        LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Retrieved transaction document")
+                )
                 .filter(transactionDocument -> switch (transactionDocument) {
                     case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
                     case Transaction t ->
@@ -1113,6 +1135,12 @@ public class TransactionsService {
                                                                                    UUID xUserId
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Retrieved transaction events")
+                )
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
                 .filterWhen(
@@ -1129,7 +1157,7 @@ public class TransactionsService {
                 .doOnError(
                         e -> LogTracingUtils.loggerTracingUtils()
                                 .failure()
-                                .logError(log, e, "Transaction not found")
+                                .logError(log, e, "Transaction events not found with this specific user id")
                 );
     }
 
@@ -1503,9 +1531,20 @@ public class TransactionsService {
                                                    AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Transaction events retrieved")
+                )
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .doOnError(
+                        e -> LogTracingUtils.loggerTracingUtils()
+                                .failure()
+                                .logError(log, e, "Transaction has no events")
+                )
                 .flatMap(
                         events -> transactionsUtils.reduceV2Events(events).map(
                                 transaction -> Tuples.of(transaction, events)
@@ -1528,12 +1567,6 @@ public class TransactionsService {
                                                         events
                                                 )
                                         )
-                                        .doOnNext(
-                                                transactionUserReceiptRequestedEvent -> LogTracingUtils
-                                                        .loggerTracingUtils()
-                                                        .success()
-                                                        .logInfo(log, "AddUserReceipt created")
-                                        )
                                         .flatMap(
                                                 event -> transactionUserReceiptProjectionHandlerV2
                                                         .handle((TransactionUserReceiptRequestedEvent) event)
@@ -1545,11 +1578,6 @@ public class TransactionsService {
                                                                         ).toList()
                                                                 )
                                                         )
-                                        )
-                                        .doOnNext(
-                                                transaction -> LogTracingUtils.loggerTracingUtils()
-                                                        .success()
-                                                        .logInfo(log, "AddUserReceipt created")
                                         )
                                         .map(this::buildTransactionInfoDtoV2)
                         )
@@ -1641,7 +1669,8 @@ public class TransactionsService {
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null));
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId())
+                            .map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null));
             case WalletAuthRequestDetailsDto wallet -> walletClient
                     .getWalletInfo(wallet.getWalletId())
                     .map(walletAuthDataDto -> {

@@ -1,6 +1,7 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PatchSessionRequestDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v1.dto.SessionPaymentMethodResponseDto;
@@ -45,6 +46,11 @@ public class EcommercePaymentMethodsClient {
     ) {
         return ecommercePaymentMethodsWebClientV2
                 .calculateFees(paymentMethodId, transactionId, calculateFeeRequestDto, maxOccurrences)
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Retrieved calculated fees")
+                )
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsClient::logWebClientException
@@ -64,6 +70,11 @@ public class EcommercePaymentMethodsClient {
                 : Transaction.ClientId.CHECKOUT;
 
         return ecommercePaymentMethodsWebClientV1.getPaymentMethod(paymentMethodId, client.name())
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Retrieved session payment method")
+                )
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsClient::logWebClientException
@@ -86,6 +97,11 @@ public class EcommercePaymentMethodsClient {
     ) {
         return ecommercePaymentMethodsWebClientV1
                 .getSessionPaymentMethod(paymentMethodId, orderId)
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Retrieved session payment method")
+                )
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsClient::logWebClientException

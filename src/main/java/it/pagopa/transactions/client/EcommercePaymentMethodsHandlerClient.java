@@ -1,6 +1,7 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
@@ -36,6 +37,11 @@ public class EcommercePaymentMethodsHandlerClient {
                 : Transaction.ClientId.fromString(xClientId);
 
         return ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(paymentMethodId, client.name())
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Retrieved payment method")
+                )
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsHandlerClient::logWebClientException

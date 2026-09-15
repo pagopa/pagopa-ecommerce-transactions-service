@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureRequested;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -33,6 +34,7 @@ import reactor.util.function.Tuples;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -117,11 +119,17 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         t -> !(t instanceof BaseTransactionWithRequestedAuthorization) ? Mono.just(t)
                                 .cast(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken.class)
                                 .doOnNext(
-                                        tx -> log.error(
-                                                "Error: requesting closure status update for transaction in state {}",
-                                                tx.getStatus()
-                                        )
-                                ).flatMap(
+                                        tx -> LogTracingUtils.loggerTracingUtils()
+                                                .failure()
+                                                .details(
+                                                        Map.of(
+                                                                "transaction_state",
+                                                                tx.getStatus().getValue()
+                                                        )
+                                                )
+                                                .logWarn(log, "Requesting closure status update for transaction")
+                                )
+                                .flatMap(
                                         tx -> Mono.error(
                                                 new ProcessingErrorException(
                                                         "Error processing sendPaymentResult for transaction "
@@ -135,14 +143,24 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                 it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization.class
                                         )
                                         .doOnNext(
-                                                tx -> log.error(
-                                                        "Error: requesting closure status update for transaction in state {}, Nodo closure outcome {}",
-                                                        tx.getStatus(),
-                                                        tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
-                                                                ? transactionClosed.getTransactionClosureData()
-                                                                        .getResponseOutcome()
-                                                                : "N/A"
-                                                )
+                                                tx -> LogTracingUtils.loggerTracingUtils()
+                                                        .failure()
+                                                        .details(
+                                                                Map.of(
+                                                                        "transaction_state",
+                                                                        tx.getStatus().getValue(),
+                                                                        "nodo_closure_outcome",
+                                                                        tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionClosed transactionClosed
+                                                                                ? transactionClosed
+                                                                                        .getTransactionClosureData()
+                                                                                        .getResponseOutcome().toString()
+                                                                                : "N/A"
+                                                                )
+                                                        )
+                                                        .logWarn(
+                                                                log,
+                                                                "Requesting closure status update for transaction"
+                                                        )
                                         )
                                         .flatMap(
                                                 tx -> validateAndHandleTransactionClosure(
@@ -158,17 +176,10 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         tx -> tx instanceof it.pagopa.ecommerce.commons.domain.v2.TransactionExpired txExpired
                                 && sendPaymentResultForTxExpiredEnabled ? txExpired.getTransactionAtPreviousState() : tx
                 )
-                .filter(
-                        this::isTransactionStatusValid
-                )
+                .filter(this::isTransactionStatusValid)
                 .switchIfEmpty(alreadyProcessedError)
                 .flatMap(t -> {
                     if (t.getStatus() != TransactionStatusDto.CLOSED) {
-                        log.info(
-                                "Writing transaction closure synthetic event for transaction with id: [{}] in status: [{}]",
-                                t.getTransactionId().value(),
-                                t.getStatus()
-                        );
                         TransactionClosureSyntheticEvent transactionClosureSyntheticEvent = new TransactionClosureSyntheticEvent(
                                 t.getTransactionId().value()
                         );
@@ -183,6 +194,12 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                     }
                     return Mono.just(t);
                 })
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Writing transaction closure synthetic event for transaction")
+                )
                 .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
                 .filterWhen(tx -> {
                     Set<String> eCommercePaymentTokens = tx.getPaymentNotices().stream()
@@ -192,14 +209,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                             .collect(Collectors.toSet());
                     boolean isOk = eCommercePaymentTokens.size() == addUserReceiptRequestPaymentTokens.size()
                             && eCommercePaymentTokens.containsAll(addUserReceiptRequestPaymentTokens);
-                    log.debug(
-                            "eCommerce transaction payment tokens: {}, send payment result payment tokens: {} -> isOk: [{}]",
-                            eCommercePaymentTokens,
-                            addUserReceiptRequestPaymentTokens,
-                            isOk
-                    );
                     if (!isOk) {
-
                         return Mono.error(
                                 new InvalidRequestException(
                                         "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send payment result payment tokens: %s"

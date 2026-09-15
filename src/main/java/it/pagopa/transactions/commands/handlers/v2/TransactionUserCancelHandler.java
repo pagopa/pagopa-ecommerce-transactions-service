@@ -49,12 +49,32 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
         return transaction
                 .filter(tx -> tx.getStatus().equals(TransactionStatusDto.ACTIVATED))
                 .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getData())))
+                .doOnError(
+                        e -> LogTracingUtils.loggerTracingUtils()
+                                .failure()
+                                .logError(log, e, "Transaction already processed")
+                )
                 .flatMap(
                         t -> {
                             it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent userCanceledEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent(
                                     t.getTransactionId().value()
                             );
                             return transactionEventUserCancelStoreRepository.insert(userCanceledEvent)
+                                    .doOnNext(
+                                            v -> LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                                    .logInfo(log, "Saved domain event")
+                                    )
+                                    .doOnError(
+                                            exception -> LogTracingUtils.loggerTracingUtils()
+                                                    .failure()
+                                                    .logError(
+                                                            log,
+                                                            exception,
+                                                            "Error when saving domain event"
+                                                    )
+                                    )
                                     .flatMap(
                                             event -> tracingUtils.traceMono(
                                                     this.getClass().getSimpleName(),
@@ -66,21 +86,22 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                                             )
                                             )
                                     )
-                                    .thenReturn(userCanceledEvent)
+                                    .doOnNext(
+                                            v -> LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                    .logInfo(log, "Published domain event")
+                                    )
                                     .doOnError(
                                             exception -> LogTracingUtils.loggerTracingUtils()
                                                     .failure()
                                                     .logError(
                                                             log,
                                                             exception,
-                                                            "Unable to generate TRANSACTION_USER_CANCELED event"
+                                                            "Error when publishing domain event"
                                                     )
                                     )
-                                    .doOnNext(
-                                            event -> LogTracingUtils.loggerTracingUtils()
-                                                    .success()
-                                                    .logInfo(log, "Generated event TRANSACTION_USER_CANCELED_EVENT")
-                                    );
+                                    .thenReturn(userCanceledEvent);
                         }
                 );
 
