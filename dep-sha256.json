@@ -1882,6 +1882,20 @@
       "groupId": "org.yaml",
       "version": "2.3",
       "sha256": "Y6dv5mtlI2C9TCwQfm8CWNqn1LtJIAi6jCb80jD_kUY="
+    },
+    {
+      "id": "io.micrometer:context-propagation:jar:1.2.1",
+      "artifactId": "context-propagation",
+      "groupId": "io.micrometer",
+      "version": "1.2.1",
+      "sha256": "W2niEAZAh5zPSyBnPO2G3lYLjiF7VVQvhaU9NWO3Kqo="
+    },
+    {
+      "id": "org.jspecify:jspecify:jar:1.0.0",
+      "artifactId": "jspecify",
+      "groupId": "org.jspecify",
+      "version": "1.0.0",
+      "sha256": "H61ua-dVd4Hk0zcp1Jrhzcj92m_kd7sMxozjUer9-6s="
     }
   ]
 }
