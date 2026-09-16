@@ -66,9 +66,10 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                                     .success()
                                                     .dependency(LogTracingUtils.MONGO_DEPENDENCY)
                                                     .attributes(
-                                                        Map.of(
-                                                            LogTracingUtils.AttributeKeys.CTX_EVENT_CODE, v.getEventCode()
-                                                        )
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                    v.getEventCode()
+                                                            )
                                                     )
                                                     .logInfo(log, "Saved domain event")
                                     )

@@ -30,17 +30,18 @@ public class JwtTokenIssuerClient {
         return jwtIssuerWebClient.createJwtToken(createTokenRequestDto)
                 .doOnError(
                         WebClientResponseException.class,
-                        err ->
-                                LogTracingUtils.loggerTracingUtils()
-                                        .failure()
-                                        .dependency("ecommerce-jwt-token-issuer")
-                                        .details(
-                                            Map.of(
-                                                "status_code", err.getStatusCode().toString(),
-                                                "response_body", err.getResponseBodyAsString()
-                                            )
+                        err -> LogTracingUtils.loggerTracingUtils()
+                                .failure()
+                                .dependency("ecommerce-jwt-token-issuer")
+                                .details(
+                                        Map.of(
+                                                "status_code",
+                                                err.getStatusCode().toString(),
+                                                "response_body",
+                                                err.getResponseBodyAsString()
                                         )
-                                        .logError(log, err, "Received bad response from jwt-issuer-service")
+                                )
+                                .logError(log, err, "Received bad response from jwt-issuer-service")
                 )
                 .doOnSuccess(
                         ignored -> LogTracingUtils.loggerTracingUtils()

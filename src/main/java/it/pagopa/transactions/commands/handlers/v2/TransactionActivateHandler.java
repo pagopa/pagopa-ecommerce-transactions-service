@@ -457,9 +457,10 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 .success()
                                 .dependency(LogTracingUtils.MONGO_DEPENDENCY)
                                 .details(
-                                    Map.of(
-                                        "event_name", e.getEventCode()
-                                    )
+                                        Map.of(
+                                                "event_name",
+                                                e.getEventCode()
+                                        )
                                 )
                                 .logInfo(log, "Saved domain event")
                 )
@@ -478,9 +479,12 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
                                                 .details(
                                                         Map.of(
-                                                                "send_reason", "New transaction activation event",
-                                                                "visibility_timeout", Duration.ofSeconds(paymentTokenTimeout).toString(),
-                                                                "ttl", Duration.ofSeconds(transientQueuesTTLSeconds).toString()
+                                                                "send_reason",
+                                                                "New transaction activation event",
+                                                                "visibility_timeout",
+                                                                Duration.ofSeconds(paymentTokenTimeout).toString(),
+                                                                "ttl",
+                                                                Duration.ofSeconds(transientQueuesTTLSeconds).toString()
                                                         )
                                                 )
                                                 .logInfo(log, "Event successfully sent to queue")

@@ -1171,6 +1171,12 @@ public class TransactionsService {
 
         Flux<? extends BaseTransactionEvent<?>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
+                .doOnNext(v ->
+                        LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Retrieved transaction events")
+                )
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .doOnError(e ->
                         LogTracingUtils.loggerTracingUtils()

@@ -166,6 +166,15 @@ public class TransactionsController implements TransactionsApi {
                                 request
                         )
                 )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
+                                ),
+                                ctx
+                        )
+                )
                 .map(ResponseEntity::ok)
                 .doOnNext(
                         request -> LogTracingUtils.loggerTracingUtils()
@@ -180,23 +189,33 @@ public class TransactionsController implements TransactionsApi {
                                                                                    Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
                                                                                    ServerWebExchange exchange
     ) {
-        return uuidUtils.uuidFromBase64(base64TransactionId).fold(
-                Mono::error,
-                transactionIdDecoded -> updateAuthorizationRequestDto
-                        .flatMap(
-                                updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
-                                        new TransactionId(transactionIdDecoded),
-                                        updateAuthorizationRequest,
-                                        exchange
-                                )
-                                        .doOnNext(
-                                                req -> LogTracingUtils.loggerTracingUtils()
-                                                        .success()
-                                                        .logInfo(log, "Transaction authorization updated")
+        return uuidUtils.uuidFromBase64(base64TransactionId)
+                .fold(
+                        Mono::error,
+                        transactionIdDecoded -> updateAuthorizationRequestDto
+                                .flatMap(
+                                        updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
+                                                new TransactionId(transactionIdDecoded),
+                                                updateAuthorizationRequest,
+                                                exchange
                                         )
-                        )
-                        .map(ResponseEntity::ok)
-        );
+                                                .doOnNext(
+                                                        req -> LogTracingUtils.loggerTracingUtils()
+                                                                .success()
+                                                                .logInfo(log, "Transaction authorization updated")
+                                                )
+                                )
+                                .contextWrite(
+                                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                                Map.of(
+                                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                        transactionIdDecoded.toString()
+                                                ),
+                                                ctx
+                                        )
+                                )
+                                .map(ResponseEntity::ok)
+                );
     }
 
     public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
@@ -218,16 +237,17 @@ public class TransactionsController implements TransactionsApi {
                             .success()
                             .dependency(LogTracingUtils.REDIS_DEPENDENCY)
                             .details(
-                                Map.of(
-                                    "document_id", lockDocument.id()
-                                )
+                                    Map.of(
+                                            "document_id",
+                                            lockDocument.id()
+                                    )
                             )
                             .attributes(
-                                Map.of(
-                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, domainTransactionId.value()
-                                )
+                                    Map.of(
+                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                            domainTransactionId.value()
+                                    )
                             );
-
 
                     return transactionsService.updateTransactionAuthorization(
                             domainTransactionId.uuid(),
@@ -241,14 +261,17 @@ public class TransactionsController implements TransactionsApi {
                                                     .success()
                                                     .dependency(LogTracingUtils.REDIS_DEPENDENCY)
                                                     .attributes(
-                                                        Map.of(
-                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, domainTransactionId.value()
-                                                        )
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                                    domainTransactionId.value()
+                                                            )
                                                     )
                                                     .details(
                                                             Map.of(
-                                                                    "lock_id", lockDocument.id(),
-                                                                    "lock_deleted", deleted.toString()
+                                                                    "lock_id",
+                                                                    lockDocument.id(),
+                                                                    "lock_deleted",
+                                                                    deleted.toString()
                                                             )
                                                     )
                                                     .logInfo(log, "Lock deletion status")
@@ -258,9 +281,10 @@ public class TransactionsController implements TransactionsApi {
                                                     .failure()
                                                     .dependency(LogTracingUtils.REDIS_DEPENDENCY)
                                                     .attributes(
-                                                        Map.of(
-                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, domainTransactionId.value()
-                                                        )
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                                    domainTransactionId.value()
+                                                            )
                                                     )
                                                     .details(
                                                             Map.of("lock_id", lockDocument.id())
@@ -317,6 +341,15 @@ public class TransactionsController implements TransactionsApi {
                                             .logError(log, exception, "Got error while trying to add user receipt");
                                 })
                                 .onErrorMap(SendPaymentResultException::new)
+                )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
+                                ),
+                                ctx
+                        )
                 )
                 .map(ResponseEntity::ok);
     }
@@ -446,18 +479,23 @@ public class TransactionsController implements TransactionsApi {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
                 .details(
-                    Map.of(
-                        "payment_type_code", exception.paymentTypeCode().orElse("{paymentTypeCode-not-found}"),
-                        "client_id", exception.clientId().orElse("{clientId-not-found}"),
-                        "is_wallet_payment", exception.walletPayment().orElse(false).toString()
-                    )
+                        Map.of(
+                                "payment_type_code",
+                                exception.paymentTypeCode().orElse("{paymentTypeCode-not-found}"),
+                                "client_id",
+                                exception.clientId().orElse("{clientId-not-found}"),
+                                "is_wallet_payment",
+                                exception.walletPayment().orElse(false).toString()
+                        )
                 )
                 .attributes(
-                    Map.of(
-                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, exception.getTransactionId().value(),
-                        LogTracingUtils.AttributeKeys.PSP_ID, exception.pspId().orElse(LogTracingUtils.AttributeKeys.PSP_ID.getDefaultValue())
+                        Map.of(
+                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                exception.getTransactionId().value(),
+                                LogTracingUtils.AttributeKeys.PSP_ID,
+                                exception.pspId().orElse(LogTracingUtils.AttributeKeys.PSP_ID.getDefaultValue())
 
-                    )
+                        )
                 )
                 .logError(log, exception, "Already processed");
 
@@ -787,9 +825,10 @@ public class TransactionsController implements TransactionsApi {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
                 .attributes(
-                    Map.of(
-                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, exception.getTransactionId().value()
-                    )
+                        Map.of(
+                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                exception.getTransactionId().value()
+                        )
                 )
                 .logError(log, exception, "Unable to acquire lock");
 
