@@ -467,7 +467,7 @@ class TransactionsControllerTest {
                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK);
 
         /* preconditions */
-        Mockito.when(transactionsService.addUserReceipt(transactionId, addUserReceiptRequest))
+        Mockito.when(transactionsService.addUserReceipt(new TransactionId(transactionId), addUserReceiptRequest))
                 .thenReturn(Mono.just(transactionInfo));
 
         /* test */
@@ -960,7 +960,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityForBadGatewayInSendPaymentResult() {
-        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+        Mockito.when(
+                transactionsService.addUserReceipt(eq(new TransactionId(TransactionTestUtils.TRANSACTION_ID)), any())
+        )
                 .thenReturn(Mono.error(new BadGatewayException("Bad gateway", HttpStatus.BAD_GATEWAY)));
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -997,7 +999,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnNotFoundInSendPaymentResultForNonExistingTransaction() {
-        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+        Mockito.when(
+                transactionsService.addUserReceipt(eq(new TransactionId(TransactionTestUtils.TRANSACTION_ID)), any())
+        )
                 .thenReturn(Mono.error(new TransactionNotFoundException(UUID.randomUUID().toString())));
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -1033,7 +1037,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityInSendPaymentResultForTransactionAlreadyProcessed() {
-        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+        Mockito.when(
+                transactionsService.addUserReceipt(eq(new TransactionId(TransactionTestUtils.TRANSACTION_ID)), any())
+        )
                 .thenReturn(
                         Mono.error(
                                 new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
@@ -1073,7 +1079,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityInSendPaymentResultForUncaughtError() {
-        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+        Mockito.when(
+                transactionsService.addUserReceipt(eq(new TransactionId(TransactionTestUtils.TRANSACTION_ID)), any())
+        )
                 .thenReturn(Mono.error(new RuntimeException("Spooky!")));
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -1227,7 +1235,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                transactionsService.addUserReceipt(transactionId, addUserReceiptRequestDto)
         )
                 .thenReturn(Mono.just(transactionInfo));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
@@ -1291,7 +1299,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                transactionsService.addUserReceipt(transactionId, addUserReceiptRequestDto)
         )
                 .thenReturn(Mono.error(raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
@@ -1372,7 +1380,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                transactionsService.addUserReceipt(transactionId, addUserReceiptRequestDto)
         )
                 .thenReturn(Mono.error((Throwable) raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));

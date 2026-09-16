@@ -305,7 +305,7 @@ public class TransactionsController implements TransactionsApi {
         return addUserReceiptRequestDto
                 .flatMap(
                         addUserReceiptRequest -> transactionsService
-                                .addUserReceipt(transactionId, addUserReceiptRequest)
+                                .addUserReceipt(new TransactionId(transactionId), addUserReceiptRequest)
                                 .map(
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)

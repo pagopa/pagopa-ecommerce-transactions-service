@@ -1162,7 +1162,7 @@ class TransactionServiceTests {
                 .thenReturn(Mono.just(transactionDocument));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
-                .addUserReceipt(transactionId.value(), addUserReceiptRequest).block();
+                .addUserReceipt(transactionId, addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
     }
@@ -1232,7 +1232,7 @@ class TransactionServiceTests {
                 .thenReturn(Mono.just(transactionDocument));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
-                .addUserReceipt(transactionId.value(), addUserReceiptRequest).block();
+                .addUserReceipt(transactionId, addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
     }
@@ -1258,7 +1258,8 @@ class TransactionServiceTests {
                 .thenReturn(Flux.empty());
 
         /* test */
-        StepVerifier.create(transactionsServiceV1.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
+        StepVerifier
+                .create(transactionsServiceV1.addUserReceipt(new TransactionId(TRANSACTION_ID), addUserReceiptRequest))
                 .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }

@@ -3,7 +3,6 @@ package it.pagopa.transactions.services.v1;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.opentelemetry.api.common.Attributes;
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
@@ -1341,7 +1340,8 @@ public class TransactionsService {
 
         return transactionsUtils
                 .reduceV2Events(events)
-                .cast(BaseTransactionWithPaymentToken.class).filter(
+                .cast(BaseTransactionWithPaymentToken.class)
+                .filter(
                         baseTransactionWithPaymentToken -> Set.of(
                                 TransactionStatusDto.AUTHORIZATION_REQUESTED,
                                 TransactionStatusDto.AUTHORIZATION_COMPLETED,
@@ -1529,10 +1529,10 @@ public class TransactionsService {
 
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
-                                                   String transactionId,
+                                                   TransactionId transactionId,
                                                    AddUserReceiptRequestDto addUserReceiptRequest
     ) {
-        return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
+        return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .doOnNext(
                         v -> LogTracingUtils.loggerTracingUtils()
                                 .success()
@@ -1541,7 +1541,7 @@ public class TransactionsService {
                 )
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .doOnError(
                         e -> LogTracingUtils.loggerTracingUtils()
                                 .failure()
@@ -1563,7 +1563,7 @@ public class TransactionsService {
                                                         baseTransaction.getPaymentNotices().stream()
                                                                 .map(PaymentNotice::rptId).toList(),
                                                         new AddUserReceiptData(
-                                                                new TransactionId(transactionId),
+                                                                transactionId,
                                                                 addUserReceiptRequest
                                                         ),
                                                         events

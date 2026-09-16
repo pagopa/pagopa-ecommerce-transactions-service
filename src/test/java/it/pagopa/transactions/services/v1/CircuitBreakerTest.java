@@ -337,7 +337,10 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.addUserReceipt("", new AddUserReceiptRequestDto())
+                        transactionsService.addUserReceipt(
+                                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                                new AddUserReceiptRequestDto()
+                        )
                 )
                 .expectError(thrownException.getClass())
                 .verify();
@@ -362,7 +365,10 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.addUserReceipt("", new AddUserReceiptRequestDto())
+                        transactionsService.addUserReceipt(
+                                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                                new AddUserReceiptRequestDto()
+                        )
                 )
                 .expectError(InvalidStatusException.class)
                 .verify();
