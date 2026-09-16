@@ -214,6 +214,21 @@ public class TransactionsController implements TransactionsApi {
                         return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
                     }
 
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                            .details(
+                                Map.of(
+                                    "document_id", lockDocument.id()
+                                )
+                            )
+                            .attributes(
+                                Map.of(
+                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, domainTransactionId.value()
+                                )
+                            );
+
+
                     return transactionsService.updateTransactionAuthorization(
                             domainTransactionId.uuid(),
                             updateAuthorizationRequestDto
@@ -428,6 +443,24 @@ public class TransactionsController implements TransactionsApi {
 
     @ExceptionHandler(AlreadyProcessedException.class)
     ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                    Map.of(
+                        "payment_type_code", exception.paymentTypeCode().orElse("{paymentTypeCode-not-found}"),
+                        "client_id", exception.clientId().orElse("{clientId-not-found}"),
+                        "is_wallet_payment", exception.walletPayment().orElse(false).toString()
+                    )
+                )
+                .attributes(
+                    Map.of(
+                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, exception.getTransactionId().value(),
+                        LogTracingUtils.AttributeKeys.PSP_ID, exception.pspId().orElse(LogTracingUtils.AttributeKeys.PSP_ID.getDefaultValue())
+
+                    )
+                )
+                .logError(log, exception, "Already processed");
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(409)

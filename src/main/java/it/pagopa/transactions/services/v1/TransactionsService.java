@@ -1175,6 +1175,7 @@ public class TransactionsService {
                 .doOnError(e ->
                         LogTracingUtils.loggerTracingUtils()
                                 .failure()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
                                 .logError(log, e, "Transaction not found")
                 )
                 .cache();
@@ -1186,12 +1187,7 @@ public class TransactionsService {
                 )
                 .next()
                 .map(authRequestedEvent -> ZonedDateTime.parse(authRequestedEvent.getCreationDate()))
-                .switchIfEmpty(Mono.error(new AlreadyProcessedException(transactionId)))
-                .doOnError(e ->
-                        LogTracingUtils.loggerTracingUtils()
-                                .failure()
-                                .logError(log, e, "Already processed")
-                );
+                .switchIfEmpty(Mono.error(new AlreadyProcessedException(transactionId)));
 
 
         Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction, ZonedDateTime>> transactionV2 = transactionsUtils

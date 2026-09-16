@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Map;
 
 @Component(TransactionUserCancelHandler.QUALIFIER_NAME)
 @Slf4j
@@ -64,6 +65,11 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                             v -> LogTracingUtils.loggerTracingUtils()
                                                     .success()
                                                     .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                                    .attributes(
+                                                        Map.of(
+                                                            LogTracingUtils.AttributeKeys.CTX_EVENT_CODE, v.getEventCode()
+                                                        )
+                                                    )
                                                     .logInfo(log, "Saved domain event")
                                     )
                                     .doOnError(
