@@ -276,7 +276,7 @@ public class TransactionsService {
         return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .doOnError(
-                        (e) -> LogTracingUtils.loggerTracingUtils()
+                        e -> LogTracingUtils.loggerTracingUtils()
                                 .failure()
                                 .logError(log, e, "Unable to retrieve base transaction view")
                 )
