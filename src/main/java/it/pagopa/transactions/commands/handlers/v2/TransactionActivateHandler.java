@@ -456,6 +456,11 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         e -> LogTracingUtils.loggerTracingUtils()
                                 .success()
                                 .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .details(
+                                    Map.of(
+                                        "event_name", e.getEventCode()
+                                    )
+                                )
                                 .logInfo(log, "Saved domain event")
                 )
                 .flatMap(
@@ -473,8 +478,9 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
                                                 .details(
                                                         Map.of(
-                                                                "send_reason",
-                                                                "New transaction activation event"
+                                                                "send_reason", "New transaction activation event",
+                                                                "visibility_timeout", Duration.ofSeconds(paymentTokenTimeout).toString(),
+                                                                "ttl", Duration.ofSeconds(transientQueuesTTLSeconds).toString()
                                                         )
                                                 )
                                                 .logInfo(log, "Event successfully sent to queue")
