@@ -174,11 +174,7 @@ public class TransactionsController implements TransactionsApi {
         return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument)
                 .flatMap(lockAcquired -> {
                     if (!lockAcquired) {
-                        var exc = new LockNotAcquiredException(domainTransactionId, lockDocument);
-                        LogTracingUtils.loggerTracingUtils()
-                                .failure()
-                                .logError(log, exc, "Unable to acquire lock");
-                        return Mono.error(exc);
+                        return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
                     }
 
                     return transactionsService.updateTransactionAuthorization(
@@ -191,12 +187,16 @@ public class TransactionsController implements TransactionsApi {
                                     .doOnNext(
                                             deleted -> LogTracingUtils.loggerTracingUtils()
                                                     .success()
+                                                    .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                                    .attributes(
+                                                        Map.of(
+                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, domainTransactionId.value()
+                                                        )
+                                                    )
                                                     .details(
                                                             Map.of(
-                                                                    "lock_id",
-                                                                    lockDocument.id(),
-                                                                    "lock_deleted",
-                                                                    deleted.toString()
+                                                                    "lock_id", lockDocument.id(),
+                                                                    "lock_deleted", deleted.toString()
                                                             )
                                                     )
                                                     .logInfo(log, "Lock deletion status")
@@ -204,6 +204,12 @@ public class TransactionsController implements TransactionsApi {
                                     .doOnError(
                                             error -> LogTracingUtils.loggerTracingUtils()
                                                     .failure()
+                                                    .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                                    .attributes(
+                                                        Map.of(
+                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, domainTransactionId.value()
+                                                        )
+                                                    )
                                                     .details(
                                                             Map.of("lock_id", lockDocument.id())
                                                     )
@@ -313,7 +319,6 @@ public class TransactionsController implements TransactionsApi {
                     Optional.empty()
             );
         };
-        log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcomeInfo);
         return outcomeInfo;
     }
 
@@ -692,6 +697,15 @@ public class TransactionsController implements TransactionsApi {
 
     @ExceptionHandler(LockNotAcquiredException.class)
     ResponseEntity<ProblemJsonDto> lockNotAcquiredExceptionHandler(LockNotAcquiredException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .attributes(
+                    Map.of(
+                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, exception.getTransactionId().value()
+                    )
+                )
+                .logError(log, exception, "Unable to acquire lock");
+
         HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
