@@ -224,47 +224,47 @@ public class TransactionsController implements TransactionsApi {
                             domainTransactionId.uuid(),
                             updateAuthorizationRequestDto
                     )
-                    .doFinally(
-                            s -> reactiveExclusiveLockDocumentWrapper
-                                    .deleteById(lockDocument.id())
-                                    .subscribeOn(Schedulers.boundedElastic())
-                                    .doOnNext(
-                                            deleted -> LogTracingUtils.loggerTracingUtils()
-                                                    .success()
-                                                    .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                                                    .attributes(
-                                                            Map.of(
-                                                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                                                    domainTransactionId.value()
+                            .doFinally(
+                                    s -> reactiveExclusiveLockDocumentWrapper
+                                            .deleteById(lockDocument.id())
+                                            .subscribeOn(Schedulers.boundedElastic())
+                                            .doOnNext(
+                                                    deleted -> LogTracingUtils.loggerTracingUtils()
+                                                            .success()
+                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                                            .attributes(
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                                            domainTransactionId.value()
+                                                                    )
                                                             )
-                                                    )
-                                                    .details(
-                                                            Map.of(
-                                                                    "lock_id",
-                                                                    lockDocument.id(),
-                                                                    "lock_deleted",
-                                                                    deleted.toString()
+                                                            .details(
+                                                                    Map.of(
+                                                                            "lock_id",
+                                                                            lockDocument.id(),
+                                                                            "lock_deleted",
+                                                                            deleted.toString()
+                                                                    )
                                                             )
-                                                    )
-                                                    .logInfo(log, "Lock deletion status")
-                                    )
-                                    .doOnError(
-                                            error -> LogTracingUtils.loggerTracingUtils()
-                                                    .failure()
-                                                    .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                                                    .attributes(
-                                                            Map.of(
-                                                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                                                    domainTransactionId.value()
+                                                            .logInfo(log, "Lock deletion status")
+                                            )
+                                            .doOnError(
+                                                    error -> LogTracingUtils.loggerTracingUtils()
+                                                            .failure()
+                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                                            .attributes(
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                                            domainTransactionId.value()
+                                                                    )
                                                             )
-                                                    )
-                                                    .details(
-                                                            Map.of("lock_id", lockDocument.id())
-                                                    )
-                                                    .logError(log, error, "Error on lock deletion")
-                                    )
-                                    .subscribe()
-                    );
+                                                            .details(
+                                                                    Map.of("lock_id", lockDocument.id())
+                                                            )
+                                                            .logError(log, error, "Error on lock deletion")
+                                            )
+                                            .subscribe()
+                            );
                 });
     }
 

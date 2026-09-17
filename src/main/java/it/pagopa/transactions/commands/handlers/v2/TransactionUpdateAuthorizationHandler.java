@@ -337,8 +337,13 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                 )
                 .map(e -> (TransactionAuthorizationRequestData) e.getData())
                 .map(TransactionAuthorizationRequestData::getTransactionGatewayAuthorizationRequestedData)
-                .filter(transactionGatewayAuthorizationRequestedData -> transactionGatewayAuthorizationRequestedData instanceof NpgTransactionGatewayAuthorizationRequestedData)
-                .map(data -> Optional.ofNullable(((NpgTransactionGatewayAuthorizationRequestedData) data).getWalletInfo()))
+                .filter(
+                        transactionGatewayAuthorizationRequestedData -> transactionGatewayAuthorizationRequestedData instanceof NpgTransactionGatewayAuthorizationRequestedData
+                )
+                .map(
+                        data -> Optional
+                                .ofNullable(((NpgTransactionGatewayAuthorizationRequestedData) data).getWalletInfo())
+                )
                 .flatMap(Optional::stream)
                 .findFirst();
     }
