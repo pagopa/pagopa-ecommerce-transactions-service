@@ -402,7 +402,7 @@ class TransactionServiceTests {
         TransactionNotFoundException exception = new TransactionNotFoundException(TRANSACTION_ID);
 
         assertEquals(
-                exception.getPaymentToken(),
+                exception.getTransactionId(),
                 TRANSACTION_ID
         );
     }

@@ -20,13 +20,11 @@ public class ConfidentialMailUtils {
     }
 
     public Mono<Email> toEmail(Confidential<Email> encrypted) {
-        return emailConfidentialDataManager.decrypt(encrypted, Email::new)
-                .doOnError(e -> log.error("Exception decrypting confidential data", e));
+        return emailConfidentialDataManager.decrypt(encrypted, Email::new);
     }
 
     public Mono<Confidential<Email>> toConfidential(Email clearText) {
-        return emailConfidentialDataManager.encrypt(clearText)
-                .doOnError(e -> log.error("Exception encrypting confidential data", e));
+        return emailConfidentialDataManager.encrypt(clearText);
     }
 
     public Mono<Confidential<Email>> toConfidential(String email) {

@@ -179,7 +179,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                                             )
                                                                                             .logInfo(
                                                                                                     log,
-                                                                                                    "PaymentRequestInfo cache updated"
+                                                                                                    "PaymentRequestInfo cache updated (cache miss)"
                                                                                             )
                                                                             )
                                                                             .thenReturn(p)
@@ -201,11 +201,6 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                             );
                         })
                         .switchIfEmpty(Mono.error(new DigitalStampNotAllowedForClientException(command.getClientId())))
-                        .doOnError(
-                                e -> LogTracingUtils.loggerTracingUtils()
-                                        .failure()
-                                        .logError(log, e, e.getMessage())
-                        )
                         .flatMap(
                                 paymentRequestInfos -> generateTransactionJwtToken(command, transactionId)
                                         .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
@@ -293,18 +288,24 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                             paymentTokenValidityTimeLeft.getSeconds()
                     )
             );
-            log.info(
-                    "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
-                    paymentRequestInfo.id().value(),
-                    paymentRequestInfo.paymentToken(),
-                    paymentTokenValidityTimeLeft
-            );
+            LogTracingUtils.loggerTracingUtils()
+                    .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                    .attributes(
+                            Map.of(
+                                    LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                    List.of(Objects.toString(paymentRequestInfo.paymentToken())).toString()
+                            )
+                    )
+                    .details(
+                            Map.of(
+                                    "payment_request_info",
+                                    paymentRequestInfo.id().value(),
+                                    "validity_time_left",
+                                    paymentTokenValidityTimeLeft.toString()
+                            )
+                    )
+                    .logInfo(log, "PaymentRequestInfo cache hit");
         } else {
-            log.error(
-                    "Cannot trace repeated transaction activation for {} with payment token: {}, missing transaction activation date",
-                    paymentRequestInfo.id().value(),
-                    paymentRequestInfo.paymentToken()
-            );
             openTelemetryUtils.addErrorSpanWithException(
                     "Transaction re-activated",
                     new IllegalArgumentException(

@@ -86,19 +86,14 @@ public class NodoOperations {
                 .flatMap(paymentRequestInfo -> {
                     if (clientId == Transaction.ClientId.WISP_REDIRECT
                             && paymentRequestInfo.creditorReferenceId() == null) {
-                        var exc = new InvalidNodoResponseException(
-                                String.format(
-                                        "Mandatory creditorReferenceId for client %s is missing",
-                                        clientId.name()
+                        return Mono.error(
+                                new InvalidNodoResponseException(
+                                        String.format(
+                                                "Mandatory creditorReferenceId for client %s is missing",
+                                                clientId.name()
+                                        )
                                 )
                         );
-
-                        LogTracingUtils.loggerTracingUtils()
-                                .failure()
-                                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                                .logError(log, exc, exc.getMessage());
-
-                        return Mono.error(exc);
                     } else {
                         return Mono.just(paymentRequestInfo);
                     }

@@ -12,7 +12,6 @@ import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionActivatedEvent;
-import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
@@ -73,7 +72,7 @@ class CircuitBreakerTest {
 
     private static final Map<String, Exception> exceptionMapper = Stream.of(
             new UnsatisfiablePspRequestException(
-                    new PaymentToken(""),
+                    new TransactionId(TransactionTestUtils.TRANSACTION_ID),
                     RequestAuthorizationRequestDto.LanguageEnum.IT,
                     0
             ),

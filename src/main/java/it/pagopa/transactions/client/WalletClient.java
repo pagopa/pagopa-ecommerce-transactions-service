@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +40,12 @@ public class WalletClient {
                 .doOnNext(
                         v -> LogTracingUtils.loggerTracingUtils()
                                 .success()
+                                .details(
+                                        Map.of(
+                                                "wallet_id",
+                                                walletId
+                                        )
+                                )
                                 .logInfo(log, "Retrieved wallet auth data")
                 )
                 .doOnError(
@@ -57,15 +65,27 @@ public class WalletClient {
                                    String orderId,
                                    WalletNotificationRequestDto walletNotificationRequestDto
     ) {
-        log.info(
-                "Performing wallet POST notification for walletId: [{}] with operation result: [{}]",
-                walletId,
-                walletNotificationRequestDto.getOperationResult()
-        );
         return walletWebClient
                 .notifyWalletInternal(UUID.fromString(walletId), orderId, walletNotificationRequestDto)
                 .doOnNext(
-                        ignored -> log.info("POST notification performed successfully for walletId: [{}]", walletId)
+                        ignored -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.WALLET_DEPENDENCY)
+                                .details(
+                                        Map.of(
+                                                "wallet_id",
+                                                walletId,
+                                                "operation_result",
+                                                walletNotificationRequestDto.getOperationResult().getValue()
+                                        )
+                                )
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID,
+                                                orderId
+                                        )
+                                )
+                                .logInfo(log, "POST notification performed successfully")
                 )
                 .doOnError(
                         WebClientResponseException.class,
@@ -91,10 +111,16 @@ public class WalletClient {
     }
 
     private static void logWebClientException(WebClientResponseException e) {
-        log.info(
-                "Got bad response from wallet-service [HTTP {}]: {}",
-                e.getStatusCode(),
-                e.getResponseBodyAsString()
-        );
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of(
+                                "status_code",
+                                Objects.toString(e.getStatusCode()),
+                                "response_body",
+                                e.getResponseBodyAsString()
+                        )
+                )
+                .logError(log, e, "Got bad response from wallet-service");
     }
 }

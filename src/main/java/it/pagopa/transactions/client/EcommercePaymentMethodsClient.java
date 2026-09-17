@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+import java.util.Objects;
+
 @Component
 @Slf4j
 public class EcommercePaymentMethodsClient {
@@ -128,10 +131,16 @@ public class EcommercePaymentMethodsClient {
     }
 
     private static void logWebClientException(WebClientResponseException e) {
-        log.info(
-                "Got bad response from payment-methods-service [HTTP {}]: {}",
-                e.getStatusCode(),
-                e.getResponseBodyAsString()
-        );
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of(
+                                "status_code",
+                                Objects.toString(e.getStatusCode()),
+                                "response_body",
+                                e.getResponseBodyAsString()
+                        )
+                )
+                .logError(log, e, "Got bad response from payment-methods-service");
     }
 }

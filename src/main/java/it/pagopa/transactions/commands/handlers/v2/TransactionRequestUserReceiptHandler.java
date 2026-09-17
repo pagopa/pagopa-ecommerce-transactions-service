@@ -5,6 +5,7 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureSyntheticEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureError;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureRequested;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
@@ -255,6 +256,31 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                  event,
                                  transactionClosed
                                 ) -> userReceiptAddedEventRepository.insert(event)
+                                        .doOnNext(e -> {
+                                            LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                                    .attributes(
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                    e.getEventCode()
+                                                            )
+                                                    )
+                                                    .logInfo(log, "Saved domain event");
+                                        })
+                                        .doOnError(
+                                                e -> LogTracingUtils.loggerTracingUtils()
+                                                        .failure()
+                                                        .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                                        .attributes(
+                                                                Map.of(
+                                                                        LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                        TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT
+                                                                                .toString()
+                                                                )
+                                                        )
+                                                        .logError(log, e, "Error on save domain event")
+                                        )
                                         .flatMap(
                                                 userReceiptEvent -> tracingUtils.traceMono(
                                                         this.getClass().getSimpleName(),
@@ -264,40 +290,85 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                                         Duration.ZERO,
                                                                         Duration.ofSeconds(transientQueuesTTLSeconds)
                                                                 )
-                                                ).doOnNext(
-                                                        queueResponse -> {
-                                                            log.info(
-                                                                    "Generated event {} for transactionId {}",
-                                                                    event.getEventCode(),
-                                                                    event.getTransactionId()
-                                                            );
-                                                            updateTransactionStatusTracerUtils
-                                                                    .traceStatusUpdateOperation(
-                                                                            new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
-                                                                                    UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
-
-                                                                                    transactionClosed
-                                                                                            .getTransactionAuthorizationRequestData()
-                                                                                            .getPspId(),
-
-                                                                                    transactionClosed
-                                                                                            .getTransactionAuthorizationRequestData()
-                                                                                            .getPaymentTypeCode(),
-                                                                                    transactionClosed.getClientId(),
-                                                                                    transactionsUtils.isWalletPayment(
-                                                                                            transactionClosed
-                                                                                    ).orElseThrow(),
-                                                                                    new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
-                                                                                            command.getData()
-                                                                                                    .addUserReceiptRequest()
-                                                                                                    .getOutcome()
-                                                                                                    .getValue(),
-                                                                                            Optional.empty()
+                                                )
+                                                        .doOnNext(
+                                                                queueResponse -> {
+                                                                    LogTracingUtils.loggerTracingUtils()
+                                                                            .success()
+                                                                            .dependency(
+                                                                                    LogTracingUtils.STORAGE_QUEUE_DEPENDENCY
+                                                                            )
+                                                                            .attributes(
+                                                                                    Map.of(
+                                                                                            LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                                            event.getEventCode()
                                                                                     )
                                                                             )
-                                                                    );
-                                                        }
-                                                )
+                                                                            .details(
+                                                                                    Map.of(
+                                                                                            "send_reason",
+                                                                                            "New transaction authorization event",
+                                                                                            "visibility_timeout",
+                                                                                            Duration.ZERO.toString(),
+                                                                                            "ttl",
+                                                                                            Duration.ofSeconds(
+                                                                                                    transientQueuesTTLSeconds
+                                                                                            ).toString()
+                                                                                    )
+                                                                            )
+                                                                            .logInfo(
+                                                                                    log,
+                                                                                    "Event successfully sent to queue"
+                                                                            );
+
+                                                                    updateTransactionStatusTracerUtils
+                                                                            .traceStatusUpdateOperation(
+                                                                                    new UpdateTransactionStatusTracerUtils.SendPaymentResultNodoStatusUpdate(
+                                                                                            UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
+
+                                                                                            transactionClosed
+                                                                                                    .getTransactionAuthorizationRequestData()
+                                                                                                    .getPspId(),
+
+                                                                                            transactionClosed
+                                                                                                    .getTransactionAuthorizationRequestData()
+                                                                                                    .getPaymentTypeCode(),
+                                                                                            transactionClosed
+                                                                                                    .getClientId(),
+                                                                                            transactionsUtils
+                                                                                                    .isWalletPayment(
+                                                                                                            transactionClosed
+                                                                                                    ).orElseThrow(),
+                                                                                            new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
+                                                                                                    command.getData()
+                                                                                                            .addUserReceiptRequest()
+                                                                                                            .getOutcome()
+                                                                                                            .getValue(),
+                                                                                                    Optional.empty()
+                                                                                            )
+                                                                                    )
+                                                                            );
+                                                                }
+                                                        )
+                                                        .doOnError(
+                                                                e -> LogTracingUtils.loggerTracingUtils()
+                                                                        .failure()
+                                                                        .dependency(
+                                                                                LogTracingUtils.STORAGE_QUEUE_DEPENDENCY
+                                                                        )
+                                                                        .attributes(
+                                                                                Map.of(
+                                                                                        LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                                        TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT
+                                                                                                .toString()
+                                                                                )
+                                                                        )
+                                                                        .logError(
+                                                                                log,
+                                                                                e,
+                                                                                "Error on queueing domain event"
+                                                                        )
+                                                        )
                                                         .thenReturn(userReceiptEvent)
                                         )
                         )

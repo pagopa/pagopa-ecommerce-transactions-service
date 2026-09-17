@@ -48,12 +48,6 @@ public class TransactionUserReceiptProjectionHandler
                                 .logInfo(log, "Retrieved transaction")
                 )
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getTransactionId())))
-                .doOnError(
-                        e -> LogTracingUtils.loggerTracingUtils()
-                                .failure()
-                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
-                                .logError(log, e, "Transaction not found")
-                )
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
                 .flatMap(transactionDocument -> updateAndSaveTransactionView(transactionDocument, data))
                 .doOnNext(

@@ -4,8 +4,10 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureRequestedEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionAuthorizationCompleted;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
@@ -23,6 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -57,7 +60,6 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
         );
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
-                .doOnNext(t -> log.error("Error: requesting async closure for transaction in state {}", t.getStatus()))
                 .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
 
         return transaction.filter(
@@ -81,10 +83,16 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                         Mono.just(command.getEvents().getLast())
                                                 .cast(TransactionClosureRequestedEvent.class)
                                                 .doOnNext(
-                                                        evt -> log.info(
-                                                                "event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} already present. Processing it.",
-                                                                evt.getTransactionId()
-                                                        )
+                                                        evt -> LogTracingUtils.loggerTracingUtils()
+                                                                .success()
+                                                                .attributes(
+                                                                        Map.of(
+                                                                                LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                                TransactionEventCode.TRANSACTION_CLOSURE_REQUESTED_EVENT
+                                                                                        .toString()
+                                                                        )
+                                                                )
+                                                                .logInfo(log, "Event already present. Processing it.")
                                                 )
                                                 .map(
                                                         e -> new ClosureRequestedEventData(
@@ -105,22 +113,47 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                                 closureRequestedEventData.visibilityTimeout(),
                                                 Duration.ofSeconds(transientQueuesTTLSeconds)
                                         )
-                        ).thenReturn(closureRequestedEventData.transactionClosureRequestedEvent())
-                                .doOnError(
-                                        exception -> log.error(
-                                                "Error to generate or processing event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {} - error {}",
-                                                closureRequestedEventData.transactionClosureRequestedEvent()
-                                                        .getTransactionId(),
-                                                exception.getMessage()
+                                        .doOnNext(
+                                                event -> LogTracingUtils.loggerTracingUtils()
+                                                        .success()
+                                                        .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                        .attributes(
+                                                                Map.of(
+                                                                        LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                        closureRequestedEventData
+                                                                                .transactionClosureRequestedEvent()
+                                                                                .getEventCode()
+                                                                )
+                                                        )
+                                                        .details(
+                                                                Map.of(
+                                                                        "send_reason",
+                                                                        "New transaction authorization event",
+                                                                        "visibility_timeout",
+                                                                        closureRequestedEventData.visibilityTimeout()
+                                                                                .toString(),
+                                                                        "ttl",
+                                                                        Duration.ofSeconds(transientQueuesTTLSeconds)
+                                                                                .toString()
+                                                                )
+                                                        )
+                                                        .logInfo(log, "Event successfully sent to queue")
                                         )
-                                )
-                                .doOnNext(
-                                        evt -> log.info(
-                                                "Generated and processed event TRANSACTION_CLOSURE_REQUESTED_EVENT for transactionId {}",
-                                                closureRequestedEventData.transactionClosureRequestedEvent()
-                                                        .getTransactionId()
+                                        .doOnError(
+                                                exception -> LogTracingUtils.loggerTracingUtils()
+                                                        .failure()
+                                                        .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                        .attributes(
+                                                                Map.of(
+                                                                        LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                        TransactionEventCode.TRANSACTION_CLOSURE_REQUESTED_EVENT
+                                                                                .toString()
+                                                                )
+                                                        )
+                                                        .logError(log, exception, "Error on queueing domain event")
                                         )
-                                )
+                        )
+                                .thenReturn(closureRequestedEventData.transactionClosureRequestedEvent())
 
                 );
 

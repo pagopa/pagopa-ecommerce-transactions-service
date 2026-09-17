@@ -4,10 +4,12 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.authorization.*;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestCardDetailsDto;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
@@ -36,7 +38,9 @@ import reactor.util.function.Tuples;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Component(TransactionUpdateAuthorizationHandler.QUALIFIER_NAME)
 @Slf4j
@@ -72,7 +76,20 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     public void subscribeToAuthorizationCommandSink() {
         authorizationCommandsSink
                 .asFlux()
-                .doOnSubscribe(s -> log.debug("Subscribed to authorization command sink with subscription: {}", s))
+                .doOnSubscribe(s -> {
+                    if (log.isDebugEnabled()) {
+                        LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .details(
+                                        Map.of(
+                                                "reactive_streams_subscription",
+                                                s.toString()
+                                        )
+                                )
+                                .logDebug(log, "Subscribed to authorization command sink");
+                    }
+                }
+                )
                 .flatMap(
                         command -> notifyWalletForContextualOnboarding(command)
                                 .retryWhen(
@@ -89,16 +106,41 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                                         .is4xxClientError())
                                                 )
                                                 .doBeforeRetry(
-                                                        signal -> log.warn(
-                                                                "Exception performing POST wallet notification",
-                                                                signal.failure()
-                                                        )
+                                                        signal -> LogTracingUtils.loggerTracingUtils()
+                                                                .failure()
+                                                                .dependency(LogTracingUtils.WALLET_DEPENDENCY)
+                                                                .details(
+                                                                        Map.of(
+                                                                                "wallet_id",
+                                                                                extractWalletInfo(command)
+                                                                                        .map(WalletInfo::getWalletId)
+                                                                                        .orElse("{walletId-not-found}")
+                                                                        )
+                                                                )
+                                                                .logError(
+                                                                        log,
+                                                                        signal.failure(),
+                                                                        "Exception performing POST wallet notification"
+                                                                )
                                                 )
-                                ).onErrorResume(exception -> {
-                                    log.error(
-                                            "Error performing POST wallet notification, wallet status may have not been updated correctly!",
-                                            exception
-                                    );
+                                )
+                                .onErrorResume(exception -> {
+                                    LogTracingUtils.loggerTracingUtils()
+                                            .failure()
+                                            .dependency(LogTracingUtils.WALLET_DEPENDENCY)
+                                            .details(
+                                                    Map.of(
+                                                            "wallet_id",
+                                                            extractWalletInfo(command)
+                                                                    .map(WalletInfo::getWalletId)
+                                                                    .orElse("{walletId-not-found}")
+                                                    )
+                                            )
+                                            .logError(
+                                                    log,
+                                                    exception,
+                                                    "Error performing POST wallet notification, wallet status may have not been updated correctly!"
+                                            );
                                     return Mono.empty();
                                 })
                 )
@@ -107,11 +149,20 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                 (
                                  walletInfo,
                                  walletNotificationRequest
-                                ) -> log.info(
-                                        "Post wallet performed successfully for walletId: [{}], with NPG operationResult: [{}]",
-                                        walletInfo.getWalletId(),
-                                        walletNotificationRequest.getOperationResult()
-                                )
+                                ) -> LogTracingUtils.loggerTracingUtils()
+                                        .success()
+                                        .dependency(LogTracingUtils.WALLET_DEPENDENCY)
+                                        .details(
+                                                Map.of(
+                                                        "wallet_id",
+                                                        walletInfo.getWalletId(),
+                                                        "npg_operation_id",
+                                                        Objects.toString(walletNotificationRequest.getOperationId()),
+                                                        "npg_operation_result",
+                                                        Objects.toString(walletNotificationRequest.getOperationResult())
+                                                )
+                                        )
+                                        .logInfo(log, "Post wallet notification performed successfully")
                         )
                 )
                 .subscribeOn(Schedulers.boundedElastic())
@@ -121,7 +172,20 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
     @Override
     public Mono<BaseTransactionEvent<?>> handle(TransactionUpdateAuthorizationCommand command) {
         TransactionId transactionId = command.getData().transactionId();
-        Mono<BaseTransactionEvent<?>> alreadyProcessedError = Mono.error(new AlreadyProcessedException(transactionId));
+        Mono<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction> transaction = transactionsUtils
+                .reduceV2Events(
+                    command.getEvents()
+                );
+
+        Mono<BaseTransactionEvent<?>> alreadyProcessedError = transaction.flatMap(tx ->
+                Mono.error(
+                        AlreadyProcessedException.builder()
+                                .transactionId(transactionId)
+                                .transactionStatus(tx.getStatus().toString())
+                                .build()
+
+                )
+        );
         UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
         AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = extractAuthRequestData
                 .from(updateAuthorizationRequest, transactionId);
@@ -156,8 +220,33 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                     Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(500))
                                             )
                                     ).thenReturn(authCommand)
-                                    .doOnNext(ignored -> log.info("POST wallet notification event emitted successfully for transaction with contextual onboarding with id: [{}]", authCommand.getData().transactionId().value()))
-                                    .doOnError(exception -> log.error("Exception emitting event for POST wallet notification for transaction with contextual onboarding with id: [%s]".formatted(authCommand.getData().transactionId().value()), exception))
+                                    .doOnNext(ignored -> {
+                                            if (log.isDebugEnabled()) {
+                                                LogTracingUtils.loggerTracingUtils()
+                                                        .success()
+                                                        .details(
+                                                                Map.of(
+                                                                        "wallet_id", extractWalletInfo(authCommand)
+                                                                                .map(WalletInfo::getWalletId)
+                                                                                .orElse("{walletId-not-found}")
+                                                                )
+                                                        )
+                                                        .logDebug(log, "POST wallet notification event emitted successfully");
+                                            }
+                                        }
+                                    )
+                                    .doOnError(exception ->
+                                            LogTracingUtils.loggerTracingUtils()
+                                                            .failure()
+                                                            .details(
+                                                                    Map.of(
+                                                                            "wallet_id", extractWalletInfo(authCommand)
+                                                                                    .map(WalletInfo::getWalletId)
+                                                                                    .orElse("{walletId-not-found}")
+                                                                    )
+                                                            )
+                                                            .logError(log, exception, "Exception emitting event for POST wallet notification")
+                                    )
                                     .onErrorReturn(authCommand)
                     )
                     .thenReturn(
@@ -171,7 +260,20 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                     )
                             )
                     )
-                    .flatMap(transactionEventStoreRepository::insert);
+                    .flatMap(event ->
+                            transactionEventStoreRepository.insert(event)
+                                    .doOnNext(e ->
+                                            LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                                    .attributes(
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE, e.getEventCode()
+                                                            )
+                                                    )
+                                                    .logInfo(log, "Saved domain event")
+                                    )
+                    );
         } else {
             return alreadyProcessedError;
         }
@@ -187,12 +289,12 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                 .cast(BaseTransactionWithRequestedAuthorization.class)
                 .filter(this::isNpgCardPaymentWithContextualOnboarding)
                 .flatMap(tx -> {
-                    NpgTransactionGatewayAuthorizationRequestedData npgAuthRequestedData = (NpgTransactionGatewayAuthorizationRequestedData) tx
-                            .getTransactionAuthorizationRequestData().getTransactionGatewayAuthorizationRequestedData();
-                    WalletInfo walletInfo = Objects.requireNonNull(
-                            npgAuthRequestedData.getWalletInfo(),
-                            "Null wallet info not valid for payment with contextual onboarding"
-                    );
+                    WalletInfo walletInfo = extractWalletInfo(command)
+                            .orElseThrow(
+                                    () -> new RuntimeException(
+                                            "Null wallet info not valid for payment with contextual onboarding"
+                                    )
+                            );
                     String walletId = walletInfo.getWalletId();
                     OutcomeNpgGatewayDto outcomeNpgGatewayDto = (OutcomeNpgGatewayDto) updateAuthRequest
                             .getOutcomeGateway();
@@ -224,6 +326,30 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                 });
     }
 
+    private Optional<WalletInfo> extractWalletInfo(
+                                                   TransactionUpdateAuthorizationCommand command
+    ) {
+        return command.getEvents()
+                .stream()
+                .filter(
+                        event -> event.getEventCode()
+                                .equals(TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT.toString())
+                )
+                .map(event -> {
+                    if (event.getData()instanceof TransactionAuthorizationRequestData data) {
+                        if (data.getTransactionGatewayAuthorizationRequestedData()instanceof NpgTransactionGatewayAuthorizationRequestedData d) {
+                            return Optional.ofNullable(d.getWalletInfo());
+                        } else {
+                            return Optional.<WalletInfo>empty();
+                        }
+                    } else {
+                        return Optional.<WalletInfo>empty();
+                    }
+                })
+                .flatMap(Optional::stream)
+                .findFirst();
+    }
+
     private boolean isNpgCardPaymentWithContextualOnboarding(BaseTransactionWithRequestedAuthorization transaction) {
         // payment with contextual onboarding performable only for NPG cards wallet
         // methods
@@ -238,13 +364,21 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                 && ((NpgTransactionGatewayAuthorizationRequestedData) gatewayData).getWalletInfo() != null;
         boolean isCardPayment = authorizationRequestedData.getPaymentTypeCode().equals("CP");
         boolean isNpgWithContextualOnboarding = isContextualOnboarding && isWalletPayment && isCardPayment;
-        log.info(
-                "is NPG card with contextual onboarding payment verification -> isNpgWithContextualOnboarding: [{}],  isContextualOnboarding: [{}], isWalletPayment: [{}],  isCardPayment: [{}]",
-                isNpgWithContextualOnboarding,
-                isContextualOnboarding,
-                isWalletPayment,
-                isCardPayment
-        );
+        LogTracingUtils.loggerTracingUtils()
+                .success()
+                .details(
+                        Map.of(
+                                "is_npg_with_contextual_onboarding",
+                                String.valueOf(isNpgWithContextualOnboarding),
+                                "is_contextual_onboarding",
+                                String.valueOf(isContextualOnboarding),
+                                "is_wallet_payment",
+                                String.valueOf(isWalletPayment),
+                                "is_card_payment",
+                                String.valueOf(isCardPayment)
+                        )
+                )
+                .logInfo(log, "Transaction payment method verified");
         return isNpgWithContextualOnboarding;
     }
 }

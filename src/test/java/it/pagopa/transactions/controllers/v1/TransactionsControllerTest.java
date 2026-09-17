@@ -374,7 +374,7 @@ class TransactionsControllerTest {
                 HttpStatus.CONFLICT
         );
         UnsatisfiablePspRequestException exception = new UnsatisfiablePspRequestException(
-                PAYMENT_TOKEN,
+                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
                 language,
                 requestedFee
         );

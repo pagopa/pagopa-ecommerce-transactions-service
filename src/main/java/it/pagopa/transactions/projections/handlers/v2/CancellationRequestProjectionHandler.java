@@ -50,11 +50,6 @@ public class CancellationRequestProjectionHandler
                                 )
                         )
                 )
-                .doOnError(
-                        e -> LogTracingUtils.loggerTracingUtils()
-                                .failure()
-                                .logError(log, e, "Transaction not found")
-                )
                 .flatMap(
                         transactionDocument -> updateAndSaveTransactionView(
                                 transactionDocument,

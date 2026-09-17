@@ -32,7 +32,7 @@ public class JwtTokenIssuerClient {
                         WebClientResponseException.class,
                         err -> LogTracingUtils.loggerTracingUtils()
                                 .failure()
-                                .dependency("ecommerce-jwt-token-issuer")
+                                .dependency(LogTracingUtils.JWT_ISSUER_DEPENDENCY)
                                 .details(
                                         Map.of(
                                                 "status_code",
@@ -46,7 +46,7 @@ public class JwtTokenIssuerClient {
                 .doOnSuccess(
                         ignored -> LogTracingUtils.loggerTracingUtils()
                                 .success()
-                                .dependency("ecommerce-jwt-token-issuer")
+                                .dependency(LogTracingUtils.JWT_ISSUER_DEPENDENCY)
                                 .logInfo(log, "JWT Token created")
                 )
                 .onErrorMap(
