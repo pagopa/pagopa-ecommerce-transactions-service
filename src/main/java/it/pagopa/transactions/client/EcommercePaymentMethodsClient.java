@@ -51,6 +51,7 @@ public class EcommercePaymentMethodsClient {
                 .calculateFees(paymentMethodId, transactionId, calculateFeeRequestDto, maxOccurrences)
                 .doOnNext(
                         v -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_SERVICE_DEPENDENCY)
                                 .success()
                                 .logInfo(log, "Retrieved calculated fees")
                 )
@@ -76,6 +77,7 @@ public class EcommercePaymentMethodsClient {
                 .doOnNext(
                         v -> LogTracingUtils.loggerTracingUtils()
                                 .success()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_SERVICE_DEPENDENCY)
                                 .logInfo(log, "Retrieved session payment method")
                 )
                 .doOnError(
@@ -103,6 +105,7 @@ public class EcommercePaymentMethodsClient {
                 .doOnNext(
                         v -> LogTracingUtils.loggerTracingUtils()
                                 .success()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_SERVICE_DEPENDENCY)
                                 .logInfo(log, "Retrieved session payment method")
                 )
                 .doOnError(
@@ -121,6 +124,12 @@ public class EcommercePaymentMethodsClient {
     ) {
         return ecommercePaymentMethodsWebClientV1
                 .updateSession(paymentMethodId, orderId, new PatchSessionRequestDto().transactionId(transactionId))
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_SERVICE_DEPENDENCY)
+                                .logInfo(log, "Updated session payment method")
+                )
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsClient::logWebClientException
@@ -133,6 +142,7 @@ public class EcommercePaymentMethodsClient {
     private static void logWebClientException(WebClientResponseException e) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
+                .dependency(LogTracingUtils.PAYMENT_METHODS_SERVICE_DEPENDENCY)
                 .details(
                         Map.of(
                                 "status_code",

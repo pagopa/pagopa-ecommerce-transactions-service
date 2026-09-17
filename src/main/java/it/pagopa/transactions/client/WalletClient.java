@@ -40,6 +40,7 @@ public class WalletClient {
                 .doOnNext(
                         v -> LogTracingUtils.loggerTracingUtils()
                                 .success()
+                                .dependency(LogTracingUtils.WALLET_DEPENDENCY)
                                 .details(
                                         Map.of(
                                                 "wallet_id",
@@ -113,6 +114,7 @@ public class WalletClient {
     private static void logWebClientException(WebClientResponseException e) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
+                .dependency(LogTracingUtils.WALLET_DEPENDENCY)
                 .details(
                         Map.of(
                                 "status_code",

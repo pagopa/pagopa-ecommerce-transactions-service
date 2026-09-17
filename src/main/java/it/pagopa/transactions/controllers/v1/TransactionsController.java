@@ -223,7 +223,8 @@ public class TransactionsController implements TransactionsApi {
                     return transactionsService.updateTransactionAuthorization(
                             domainTransactionId.uuid(),
                             updateAuthorizationRequestDto
-                    ).doFinally(
+                    )
+                    .doFinally(
                             s -> reactiveExclusiveLockDocumentWrapper
                                     .deleteById(lockDocument.id())
                                     .subscribeOn(Schedulers.boundedElastic())

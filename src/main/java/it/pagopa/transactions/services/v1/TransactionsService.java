@@ -1319,14 +1319,6 @@ public class TransactionsService {
                         )
                                 .contains(baseTransactionWithPaymentToken.getStatus())
                 )
-                .doOnNext(
-                        transactionWithPaymentToken -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .details(
-                                        Map.of("status", transactionWithPaymentToken.getStatus().getValue())
-                                )
-                                .logInfo(log, "UpdateTransactionAuthorization requested")
-                )
                 .flatMap(
                         tr -> {
                             if (tr.getStatus().equals(TransactionStatusDto.AUTHORIZATION_COMPLETED)
