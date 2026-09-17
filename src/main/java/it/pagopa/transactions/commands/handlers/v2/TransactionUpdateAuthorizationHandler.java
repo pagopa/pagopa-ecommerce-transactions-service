@@ -335,17 +335,10 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                         event -> event.getEventCode()
                                 .equals(TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT.toString())
                 )
-                .map(event -> {
-                    if (event.getData()instanceof TransactionAuthorizationRequestData data) {
-                        if (data.getTransactionGatewayAuthorizationRequestedData()instanceof NpgTransactionGatewayAuthorizationRequestedData d) {
-                            return Optional.ofNullable(d.getWalletInfo());
-                        } else {
-                            return Optional.<WalletInfo>empty();
-                        }
-                    } else {
-                        return Optional.<WalletInfo>empty();
-                    }
-                })
+                .map(e -> (TransactionAuthorizationRequestData) e.getData())
+                .map(TransactionAuthorizationRequestData::getTransactionGatewayAuthorizationRequestedData)
+                .filter(transactionGatewayAuthorizationRequestedData -> transactionGatewayAuthorizationRequestedData instanceof NpgTransactionGatewayAuthorizationRequestedData)
+                .map(data -> Optional.ofNullable(((NpgTransactionGatewayAuthorizationRequestedData) data).getWalletInfo()))
                 .flatMap(Optional::stream)
                 .findFirst();
     }
