@@ -26,6 +26,14 @@ public class MDCFilter implements WebFilter {
     public static final String HEADER_USER_ID = "x-user-id";
     public static final String HEADER_CLIENT_ID = "x-client-id";
 
+    private static final Set<String> contextBound = Set.of(
+            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID.getKey(),
+            LogTracingUtils.AttributeKeys.CTX_RPT_IDS.getKey(),
+            LogTracingUtils.AttributeKeys.CORRELATION_ID.getKey(),
+            LogTracingUtils.AttributeKeys.CTX_USER_ID.getKey(),
+            LogTracingUtils.AttributeKeys.CTX_CLIENT_ID.getKey()
+    );
+
     @Override
     public Mono<Void> filter(
                              ServerWebExchange exchange,
@@ -104,6 +112,7 @@ public class MDCFilter implements WebFilter {
     public void initMdcMicrometerRegistry() {
         Hooks.enableAutomaticContextPropagation();
         Arrays.stream(LogTracingUtils.AttributeKeys.values())
+                .filter(e -> contextBound.contains(e.getKey()))
                 .forEach(
                         entry -> ContextRegistry.getInstance()
                                 .registerThreadLocalAccessor(
