@@ -49,7 +49,7 @@ public class AuthRequestDataUtils {
                     yield new AuthRequestData(t.getAuthorizationCode(), npgResultToOutcome(t.getOperationResult()), t.getRrn(), t.getErrorCode());
             }
             case OutcomeRedirectGatewayDto t -> {
-                    dependency = "LogTracingUtils.REDIRECT_DEPENDENCY";
+                    dependency = LogTracingUtils.REDIRECT_DEPENDENCY;
                     authorizationOutcome = Objects.toString(t.getOutcome());
                     yield new AuthRequestData(t.getAuthorizationCode(), redirectResultToOutcome(t.getOutcome()), null, t.getErrorCode());
             }
@@ -59,6 +59,7 @@ public class AuthRequestDataUtils {
 
         LogTracingUtils.loggerTracingUtils()
                 .success()
+                .dependency(dependency)
                 .details(
                         Map.of(
                             "authorization_outcome", authorizationOutcome,
