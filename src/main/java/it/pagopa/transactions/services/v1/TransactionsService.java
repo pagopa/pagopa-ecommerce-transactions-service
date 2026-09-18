@@ -1365,9 +1365,10 @@ public class TransactionsService {
                                 tr -> LogTracingUtils.loggerTracingUtils()
                                         .success()
                                         .details(
-                                            Map.of(
-                                                "transaction_status", tr.getStatus().getValue()
-                                            )
+                                                Map.of(
+                                                        "transaction_status",
+                                                        tr.getStatus().getValue()
+                                                )
                                         )
                                         .logInfo(
                                                 log,

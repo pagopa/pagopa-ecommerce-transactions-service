@@ -40,11 +40,11 @@ public class ClosureRequestedProjectionHandler implements
             return Mono.empty();
         }
         return transactionsViewRepository.findById(transactionClosureRequestedEvent.getTransactionId())
-                .doOnNext(tx ->
-                    LogTracingUtils.loggerTracingUtils()
-                        .dependency(LogTracingUtils.MONGO_DEPENDENCY)
-                        .success()
-                        .logInfo(log, "Transaction retrieved")
+                .doOnNext(
+                        tx -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .success()
+                                .logInfo(log, "Transaction retrieved")
 
                 )
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
@@ -73,8 +73,8 @@ public class ClosureRequestedProjectionHandler implements
                         .toEpochMilli()
         );
         return transactionsViewRepository.save(transactionDocument)
-                .doOnNext(tx ->
-                        LogTracingUtils.loggerTracingUtils()
+                .doOnNext(
+                        tx -> LogTracingUtils.loggerTracingUtils()
                                 .dependency(LogTracingUtils.MONGO_DEPENDENCY)
                                 .success()
                                 .logInfo(log, "Transaction updated")
