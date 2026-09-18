@@ -124,7 +124,7 @@ public class EcommercePaymentMethodsClient {
     ) {
         return ecommercePaymentMethodsWebClientV1
                 .updateSession(paymentMethodId, orderId, new PatchSessionRequestDto().transactionId(transactionId))
-                .doOnNext(
+                .doOnSuccess(
                         v -> LogTracingUtils.loggerTracingUtils()
                                 .success()
                                 .dependency(LogTracingUtils.PAYMENT_METHODS_SERVICE_DEPENDENCY)

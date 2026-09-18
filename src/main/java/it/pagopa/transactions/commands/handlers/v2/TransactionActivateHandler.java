@@ -11,6 +11,7 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
@@ -494,10 +495,16 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         exception -> LogTracingUtils.loggerTracingUtils()
                                                 .failure()
                                                 .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                .attributes(
+                                                        Map.of(
+                                                                LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                TransactionEventCode.TRANSACTION_ACTIVATED_EVENT.toString()
+                                                        )
+                                                )
                                                 .logError(
                                                         log,
                                                         exception,
-                                                        "Error generating transaction activation event"
+                                                        "Error sending transaction activation event"
                                                 )
                                 )
                                 .thenReturn(e)

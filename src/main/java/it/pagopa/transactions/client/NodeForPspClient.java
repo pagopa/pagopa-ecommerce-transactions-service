@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 
 import jakarta.xml.bind.JAXBElement;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -91,13 +92,11 @@ public class NodeForPspClient {
                         activateResponse -> LogTracingUtils.loggerTracingUtils()
                                 .success()
                                 .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                                .details(
-                                        Map.of(
-                                                "notice_number",
-                                                request.getValue().getQrCode().getNoticeNumber(),
-                                                "payment_token",
-                                                Objects.toString(activateResponse.getPaymentToken())
-                                        )
+                                .attributes(
+                                    Map.of(
+                                            LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS, List.of(activateResponse.getPaymentToken()).toString(),
+                                            LogTracingUtils.AttributeKeys.CTX_RPT_IDS, List.of("%s%s".formatted(request.getValue().getQrCode().getFiscalCode(), request.getValue().getQrCode().getNoticeNumber())).toString()
+                                    )
                                 )
                                 .logInfo(log, "ActivatePaymentNoticeV2 completed")
                 )
@@ -106,6 +105,11 @@ public class NodeForPspClient {
                         error -> {
                             LogTracingUtils.loggerTracingUtils()
                                     .failure()
+                                    .attributes(
+                                            Map.of(
+                                                    LogTracingUtils.AttributeKeys.CTX_RPT_IDS, List.of("%s%s".formatted(request.getValue().getQrCode().getFiscalCode(), request.getValue().getQrCode().getNoticeNumber())).toString()
+                                            )
+                                    )
                                     .dependency(LogTracingUtils.NODO_DEPENDENCY)
                                     .logError(log, error, "ActivatePaymentNoticeV2 ResponseStatusException");
                             return new BadGatewayException(

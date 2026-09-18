@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
@@ -71,6 +72,12 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                     .doOnError(
                                             exception -> LogTracingUtils.loggerTracingUtils()
                                                     .failure()
+                                                    .attributes(
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT.toString()
+                                                            )
+                                                    )
                                                     .logError(
                                                             log,
                                                             exception,
@@ -97,10 +104,16 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                     .doOnError(
                                             exception -> LogTracingUtils.loggerTracingUtils()
                                                     .failure()
+                                                    .attributes(
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT.toString()
+                                                            )
+                                                    )
                                                     .logError(
                                                             log,
                                                             exception,
-                                                            "Error when publishing domain event"
+                                                            "Error sending transaction user cancelled event"
                                                     )
                                     )
                                     .thenReturn(userCanceledEvent);

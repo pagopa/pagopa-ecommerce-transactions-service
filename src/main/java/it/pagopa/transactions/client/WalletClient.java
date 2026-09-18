@@ -68,7 +68,7 @@ public class WalletClient {
     ) {
         return walletWebClient
                 .notifyWalletInternal(UUID.fromString(walletId), orderId, walletNotificationRequestDto)
-                .doOnNext(
+                .doOnSuccess(
                         ignored -> LogTracingUtils.loggerTracingUtils()
                                 .success()
                                 .dependency(LogTracingUtils.WALLET_DEPENDENCY)

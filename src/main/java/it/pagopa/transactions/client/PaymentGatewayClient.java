@@ -568,6 +568,7 @@ public class PaymentGatewayClient {
                                                                             touchpoint.name()
                                                                     )
                                                             )
+                                                            .logInfo(log, "Requested redirect url")
                                             )
                                             .onErrorMap(
                                                     NodeForwarderClientException.class,

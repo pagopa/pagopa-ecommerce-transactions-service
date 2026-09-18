@@ -869,12 +869,7 @@ public class TransactionsService {
                                 )
                         )
                 )
-                .map(authSessionData -> Tuples.of(transaction, authSessionData))
-                .doOnNext(
-                        tuple -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "Authorization request processed successfully")
-                );
+                .map(authSessionData -> Tuples.of(transaction, authSessionData));
     }
 
     /**
