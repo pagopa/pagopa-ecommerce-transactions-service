@@ -16,6 +16,10 @@ import java.util.Objects;
 @Configuration
 @Slf4j
 public class CircuitBreakerConfig {
+
+    public static final String CREATION_TIME_KEY = "creation_time";
+    public static final String EVENT_TYPE_KEY = "event_type";
+
     @Bean
     public RegistryEventConsumer<CircuitBreaker> circuitBreakerEventConsumer() {
 
@@ -28,9 +32,9 @@ public class CircuitBreakerConfig {
                                         Map.of(
                                                 "name",
                                                 event.getCircuitBreakerName(),
-                                                "creation_time",
+                                                CREATION_TIME_KEY,
                                                 Objects.toString(event.getCreationTime()),
-                                                "event_type",
+                                                EVENT_TYPE_KEY,
                                                 Objects.toString(event.getEventType())
                                         )
                                 )
@@ -47,9 +51,9 @@ public class CircuitBreakerConfig {
                                         Map.of(
                                                 "name",
                                                 event.getCircuitBreakerName(),
-                                                "creation_time",
+                                                CREATION_TIME_KEY,
                                                 Objects.toString(event.getCreationTime()),
-                                                "event_type",
+                                                EVENT_TYPE_KEY,
                                                 Objects.toString(event.getEventType())
                                         )
                                 )
@@ -68,9 +72,9 @@ public class CircuitBreakerConfig {
                                         Map.of(
                                                 "name",
                                                 event.getCircuitBreakerName(),
-                                                "creation_time",
+                                                CREATION_TIME_KEY,
                                                 Objects.toString(event.getCreationTime()),
-                                                "event_type",
+                                                EVENT_TYPE_KEY,
                                                 Objects.toString(event.getEventType())
                                         )
                                 )

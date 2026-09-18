@@ -53,6 +53,8 @@ public class TransactionsController implements V2Api {
     @Value("${security.apiKey.primary}")
     private String primaryKey;
 
+    private static final String BAD_GATEWAY_DESC = "Bad gateway";
+
     @Override
     public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(
                                                                        String transactionId,
@@ -233,12 +235,12 @@ public class TransactionsController implements V2Api {
     ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
-                .logError(log, exception, "Bad gateway");
+                .logError(log, exception, BAD_GATEWAY_DESC);
 
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(502)
-                        .title("Bad gateway")
+                        .title(BAD_GATEWAY_DESC)
                         .detail(exception.getDetail()),
                 HttpStatus.BAD_GATEWAY
         );
@@ -341,7 +343,7 @@ public class TransactionsController implements V2Api {
                 faultCode,
                 new ResponseEntity<>(
                         new GatewayFaultPaymentProblemJsonDto()
-                                .title("Bad gateway")
+                                .title(BAD_GATEWAY_DESC)
                                 .faultCodeCategory(
                                         GatewayFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.GENERIC_ERROR
                                 )
@@ -439,7 +441,7 @@ public class TransactionsController implements V2Api {
                 new ResponseEntity<>(
                         new it.pagopa.generated.transactions.v2.server.model.ProblemJsonDto()
                                 .status(502)
-                                .title("Bad Gateway")
+                                .title(BAD_GATEWAY_DESC)
                                 .detail("Upstream service temporary unavailable. Open circuit breaker."),
                         HttpStatus.BAD_GATEWAY
                 )

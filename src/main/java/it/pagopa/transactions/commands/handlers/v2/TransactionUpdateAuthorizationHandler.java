@@ -49,6 +49,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
 
     public static final String QUALIFIER_NAME = "transactionUpdateAuthorizationHandlerV2";
     public static final String WALLET_ID = "wallet_id";
+    public static final String WALLET_ID_NOT_FOUND = "{walletId-not-found}";
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData> transactionEventStoreRepository;
     private final WalletClient walletClient;
     private final Sinks.Many<TransactionUpdateAuthorizationCommand> authorizationCommandsSink = Sinks.many().unicast()
@@ -115,7 +116,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                                                 WALLET_ID,
                                                                                 extractWalletInfo(command)
                                                                                         .map(WalletInfo::getWalletId)
-                                                                                        .orElse("{walletId-not-found}")
+                                                                                        .orElse(WALLET_ID_NOT_FOUND)
                                                                         )
                                                                 )
                                                                 .logError(
@@ -134,7 +135,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                             WALLET_ID,
                                                             extractWalletInfo(command)
                                                                     .map(WalletInfo::getWalletId)
-                                                                    .orElse("{walletId-not-found}")
+                                                                    .orElse(WALLET_ID_NOT_FOUND)
                                                     )
                                             )
                                             .logError(
@@ -229,7 +230,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                                 Map.of(
                                                                         WALLET_ID, extractWalletInfo(authCommand)
                                                                                 .map(WalletInfo::getWalletId)
-                                                                                .orElse("{walletId-not-found}")
+                                                                                .orElse(WALLET_ID_NOT_FOUND)
                                                                 )
                                                         )
                                                         .logDebug(log, "POST wallet notification event emitted successfully");
@@ -243,7 +244,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                                     Map.of(
                                                                             WALLET_ID, extractWalletInfo(authCommand)
                                                                                     .map(WalletInfo::getWalletId)
-                                                                                    .orElse("{walletId-not-found}")
+                                                                                    .orElse(WALLET_ID_NOT_FOUND)
                                                                     )
                                                             )
                                                             .logError(log, exception, "Exception emitting event for POST wallet notification")

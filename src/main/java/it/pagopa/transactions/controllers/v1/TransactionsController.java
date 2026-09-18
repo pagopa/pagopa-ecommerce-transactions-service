@@ -68,6 +68,9 @@ public class TransactionsController implements TransactionsApi {
     @Value("${security.apiKey.primary}")
     private String primaryKey;
 
+    private static final String TRANSACTION_NOT_FOUND_DESC = "Transaction not found";
+    private static final String BAD_GATEWAY_DESC = "Bad gateway";
+
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
                                                                           ClientIdDto xClientId,
@@ -418,7 +421,7 @@ public class TransactionsController implements TransactionsApi {
                 .map(ResponseEntity::ok);
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(TransactionNotFoundException.class)
+    @ExceptionHandler(TransactionNotFoundException.class)
     public ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -430,18 +433,18 @@ public class TransactionsController implements TransactionsApi {
                                 Objects.toString(exception.getUserId())
                         )
                 )
-                .logError(log, exception, "Transaction not found");
+                .logError(log, exception, TRANSACTION_NOT_FOUND_DESC);
 
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(404)
-                        .title("Transaction not found")
+                        .title(TRANSACTION_NOT_FOUND_DESC)
                         .detail("Transaction for payment token '%s' not found".formatted(exception.getTransactionId())),
                 HttpStatus.NOT_FOUND
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(UnsatisfiablePspRequestException.class)
+    @ExceptionHandler(UnsatisfiablePspRequestException.class)
     public ResponseEntity<ProblemJsonDto> unsatisfiablePspRequestHandler(UnsatisfiablePspRequestException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -477,7 +480,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(AlreadyProcessedException.class)
+    @ExceptionHandler(AlreadyProcessedException.class)
     public ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -515,22 +518,22 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(BadGatewayException.class)
+    @ExceptionHandler(BadGatewayException.class)
     public ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
-                .logError(log, exception, "Bad gateway");
+                .logError(log, exception, BAD_GATEWAY_DESC);
 
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(502)
-                        .title("Bad gateway")
+                        .title(BAD_GATEWAY_DESC)
                         .detail(exception.getDetail()),
                 HttpStatus.BAD_GATEWAY
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(NotImplementedException.class)
+    @ExceptionHandler(NotImplementedException.class)
     public ResponseEntity<ProblemJsonDto> notImplemented(NotImplementedException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -545,7 +548,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(GatewayTimeoutException.class)
+    @ExceptionHandler(GatewayTimeoutException.class)
     public ResponseEntity<ProblemJsonDto> gatewayTimeoutHandler(GatewayTimeoutException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -604,7 +607,7 @@ public class TransactionsController implements TransactionsApi {
         }
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(WebExchangeBindException.class)
+    @ExceptionHandler(WebExchangeBindException.class)
     public ResponseEntity<ProblemJsonDto> validationExceptionHandler(
                                                                      WebExchangeBindException exception,
                                                                      ServerWebExchange exchange
@@ -629,7 +632,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(SendPaymentResultException.class)
+    @ExceptionHandler(SendPaymentResultException.class)
     public ResponseEntity<ProblemJsonDto> sendPaymentResultExceptionHandler(SendPaymentResultException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -642,7 +645,7 @@ public class TransactionsController implements TransactionsApi {
         ProblemJsonDto responseBody = switch (exception.cause) {
             case TransactionNotFoundException e -> new ProblemJsonDto()
                     .status(404)
-                    .title("Transaction not found")
+                    .title(TRANSACTION_NOT_FOUND_DESC)
                     .detail(e.getMessage());
             case AlreadyProcessedException e -> new ProblemJsonDto()
                     .status(422)
@@ -650,7 +653,7 @@ public class TransactionsController implements TransactionsApi {
                     .detail(e.getMessage());
             case BadGatewayException e -> new ProblemJsonDto()
                     .status(422)
-                    .title("Bad gateway")
+                    .title(BAD_GATEWAY_DESC)
                     .detail(e.getMessage());
             default -> new ProblemJsonDto()
                     .status(422)
@@ -664,7 +667,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(
+    @ExceptionHandler(
         {
                 InvalidRequestException.class,
                 ConstraintViolationException.class,
@@ -690,7 +693,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(PaymentMethodNotFoundException.class)
+    @ExceptionHandler(PaymentMethodNotFoundException.class)
     public ResponseEntity<ProblemJsonDto> paymentMethodNotFoundException(PaymentMethodNotFoundException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -711,7 +714,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(TransactionAmountMismatchException.class)
+    @ExceptionHandler(TransactionAmountMismatchException.class)
     public ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(
                                                                      TransactionAmountMismatchException exception,
                                                                      ServerWebExchange exchange
@@ -739,7 +742,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(PaymentNoticeAllCCPMismatchException.class)
+    @ExceptionHandler(PaymentNoticeAllCCPMismatchException.class)
     public ResponseEntity<ProblemJsonDto> paymentNoticeAllCCPMismatchErrorHandler(
                                                                                   PaymentNoticeAllCCPMismatchException exception,
                                                                                   ServerWebExchange exchange
@@ -773,7 +776,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(
+    @ExceptionHandler(
         {
                 JwtIssuerResponseException.class
         }
@@ -802,7 +805,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler({
+    @ExceptionHandler({
             NodoErrorException.class,
     })
     public ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
@@ -846,11 +849,11 @@ public class TransactionsController implements TransactionsApi {
                                     .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
                                     .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.CONFLICT);
             default -> new ResponseEntity<>(
-                    new ProblemJsonDto().title("Bad gateway"), HttpStatus.BAD_GATEWAY);
+                    new ProblemJsonDto().title(BAD_GATEWAY_DESC), HttpStatus.BAD_GATEWAY);
         };
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(
+    @ExceptionHandler(
         {
                 InvalidNodoResponseException.class,
         }
@@ -874,7 +877,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(DigitalStampNotAllowedForClientException.class)
+    @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
     public ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
                                                                                                        DigitalStampNotAllowedForClientException exception
     ) {
@@ -897,7 +900,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(NpgNotRetryableErrorException.class)
+    @ExceptionHandler(NpgNotRetryableErrorException.class)
     public ResponseEntity<ProblemJsonDto> npgNotRetryableErrorException(NpgNotRetryableErrorException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -924,7 +927,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(LockNotAcquiredException.class)
+    @ExceptionHandler(LockNotAcquiredException.class)
     public ResponseEntity<ProblemJsonDto> lockNotAcquiredExceptionHandler(LockNotAcquiredException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -952,7 +955,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(Exception.class)
+    @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemJsonDto> genericException(Exception exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
@@ -967,7 +970,7 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(
+    @ExceptionHandler(
         {
                 CallNotPermittedException.class
         }
@@ -983,7 +986,7 @@ public class TransactionsController implements TransactionsApi {
                 new ResponseEntity<>(
                         new ProblemJsonDto()
                                 .status(502)
-                                .title("Bad Gateway")
+                                .title(BAD_GATEWAY_DESC)
                                 .detail("Upstream service temporary unavailable. Open circuit breaker."),
                         HttpStatus.BAD_GATEWAY
                 )

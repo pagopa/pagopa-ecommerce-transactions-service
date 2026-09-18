@@ -362,7 +362,6 @@ class TransactionsControllerTest {
 
     @Test
     void testUnsatisfiablePspRequestExceptionHandler() {
-        final PaymentToken PAYMENT_TOKEN = new PaymentToken("aaa");
         final RequestAuthorizationRequestDto.LanguageEnum language = RequestAuthorizationRequestDto.LanguageEnum.IT;
         final int requestedFee = 10;
 
