@@ -207,8 +207,10 @@ public class TransactionsService {
                         .orElse(null)
         );
 
+        List<RptId> rptIds = newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList();
+
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
-                newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
+                rptIds,
                 new NewTransactionRequestData(
                         newTransactionRequestDto.getIdCart(),
                         confidentialMailUtils.toConfidential(newTransactionRequestDto.getEmail()),

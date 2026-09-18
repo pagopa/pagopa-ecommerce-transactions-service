@@ -79,11 +79,24 @@ public class TransactionsController implements TransactionsApi {
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
-                .flatMap(ntr -> transactionsService.newTransaction(ntr, xClientId, transactionId))
-                .doOnNext(
-                        ignored -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "New transaction created successfully")
+                .flatMap(ntr ->
+                        transactionsService
+                                .newTransaction(ntr, xClientId, transactionId)
+                                .doOnNext(
+                                        response -> LogTracingUtils.loggerTracingUtils()
+                                                .success()
+                                                .attributes(
+                                                        Map.of(
+                                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS, ntr.getPaymentNotices().stream().map(PaymentNoticeInfoDto::getRptId).toList().toString()
+                                                        )
+                                                )
+                                                .details(
+                                                        Map.of(
+                                                                "id_cart", Objects.toString(response.getIdCart())
+                                                        )
+                                                )
+                                                .logInfo(log, "New transaction created successfully")
+                                )
                 )
                 .contextWrite(
                         ctx -> LogTracingUtils.enrichContextForEvent(

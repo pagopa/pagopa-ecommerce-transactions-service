@@ -156,26 +156,26 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                     p -> reactivePaymentRequestInfoRedisTemplateWrapper
                                                                             .save(p)
                                                                             .doOnNext(
-                                                                                    ignored -> LogTracingUtils
+                                                                                    deleted -> LogTracingUtils
                                                                                             .loggerTracingUtils()
                                                                                             .success()
                                                                                             .dependency(
                                                                                                     LogTracingUtils.REDIS_DEPENDENCY
                                                                                             )
+                                                                                            .details(
+                                                                                                Map.of(
+                                                                                                        "deleted", deleted.toString()
+                                                                                                )
+                                                                                            )
                                                                                             .attributes(
                                                                                                     Map.of(
+                                                                                                            LogTracingUtils.AttributeKeys.CTX_RPT_IDS, List.of(p.id().value()).toString(),
                                                                                                             LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
                                                                                                             List.of(
                                                                                                                     Objects.toString(
                                                                                                                             p.paymentToken()
                                                                                                                     )
                                                                                                             ).toString()
-                                                                                                    )
-                                                                                            )
-                                                                                            .details(
-                                                                                                    Map.of(
-                                                                                                            "payment_request_info_id",
-                                                                                                            p.id().value()
                                                                                                     )
                                                                                             )
                                                                                             .logInfo(

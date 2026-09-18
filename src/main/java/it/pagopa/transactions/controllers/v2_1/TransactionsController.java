@@ -30,6 +30,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -65,12 +66,23 @@ public class TransactionsController implements V21Api {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
                 .flatMap(
-                        ntr -> transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId)
-                )
-                .doOnNext(
-                        ignored -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "New transaction created successfully")
+                        ntr -> transactionsService
+                                .newTransaction(ntr, xClientId, correlationId, transactionId, xUserId)
+                                .doOnNext(
+                                        response -> LogTracingUtils.loggerTracingUtils()
+                                                .success()
+                                                .attributes(
+                                                        Map.of(
+                                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS, ntr.getPaymentNotices().stream().map(it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto::getRptId).toList().toString()
+                                                        )
+                                                )
+                                                .details(
+                                                        Map.of(
+                                                                "id_cart", Objects.toString(response.getIdCart())
+                                                        )
+                                                )
+                                                .logInfo(log, "New transaction created successfully")
+                                )
                 )
                 .contextWrite(
                         ctx -> LogTracingUtils.enrichContextForEvent(
