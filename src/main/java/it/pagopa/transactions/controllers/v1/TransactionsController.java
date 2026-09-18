@@ -456,7 +456,7 @@ public class TransactionsController implements TransactionsApi {
                 new ProblemJsonDto()
                         .status(404)
                         .title(TRANSACTION_NOT_FOUND_DESC)
-                        .detail("Transaction for payment token '%s' not found".formatted(exception.getTransactionId())),
+.detail("Transaction with id '%s' not found".formatted(exception.getTransactionId())),
                 HttpStatus.NOT_FOUND
         );
     }
