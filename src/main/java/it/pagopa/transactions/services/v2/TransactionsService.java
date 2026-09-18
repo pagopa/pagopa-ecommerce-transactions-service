@@ -207,7 +207,6 @@ public class TransactionsService {
                                 return NewTransactionResponseDto.ClientIdEnum
                                         .fromValue(value.getEffectiveClient().name());
                             } catch (IllegalArgumentException e) {
-                                log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);
                             }
                         }
@@ -221,17 +220,7 @@ public class TransactionsService {
                                                                                                         UUID xUserId
     ) {
         return getBaseTransactionView(transactionId, xUserId)
-                .switchIfEmpty(
-                        Mono.defer(() -> {
-                            var exc = new TransactionNotFoundException(transactionId);
-                            LogTracingUtils.loggerTracingUtils()
-                                    .failure()
-                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
-                                    .logError(log, exc, "Transaction not found");
-
-                            return Mono.error(exc);
-                        })
-                )
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId, xUserId)))
                 .map(this::buildTransactionInfoDtoFromView);
     }
 

@@ -58,7 +58,7 @@ class TransactionsUtilsTest {
         StepVerifier.create(transactionsUtils.reduceEventsV1(transactionId))
                 .expectErrorMatches(
                         ex -> ex instanceof TransactionNotFoundException transactionNotFoundException
-                                && transactionNotFoundException.getPaymentToken()
+                                && transactionNotFoundException.getTransactionId()
                                         .equals(transactionId.value().toString())
                 )
                 .verify();

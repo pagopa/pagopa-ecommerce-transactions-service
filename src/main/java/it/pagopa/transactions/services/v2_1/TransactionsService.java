@@ -186,20 +186,11 @@ public class TransactionsService {
                                 return NewTransactionResponseDto.ClientIdEnum
                                         .fromValue(clientId.getEffectiveClient().name());
                             } catch (IllegalArgumentException e) {
-                                LogTracingUtils.loggerTracingUtils()
-                                        .failure()
-                                        .logError(log, e, "Unknown input origin");
                                 throw new InvalidRequestException("Unknown input origin", e);
                             }
                         }
                 )
-                .orElseThrow(() -> {
-                    var exc = new InvalidRequestException("Null value as input origin");
-                    LogTracingUtils.loggerTracingUtils()
-                            .failure()
-                            .logError(log, exc, "ClientId is null");
-                    return exc;
-                });
+                .orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
 }

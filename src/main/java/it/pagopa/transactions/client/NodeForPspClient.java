@@ -113,23 +113,10 @@ public class NodeForPspClient {
                                     HttpStatus.valueOf(error.getStatusCode().value())
                             );
                         }
-                )
-                .doOnError(
-                        Exception.class,
-                        error -> LogTracingUtils.loggerTracingUtils()
-                                .failure()
-                                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                                .logError(log, error, "ActivatePaymentNoticeV2 Generic Error")
                 );
     }
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
-        log.info(
-                "ClosePaymentV2 init for transactionId [{}]: paymentTokens [{}] - outcome: [{}]",
-                request.getTransactionId(),
-                request.getPaymentTokens(),
-                request.getOutcome().getValue()
-        );
         return nodoWebClient.post()
                 .uri(
                         uriBuilder -> uriBuilder.path(nodoPerPmUri)
@@ -156,23 +143,37 @@ public class NodeForPspClient {
                 )
                 .bodyToMono(ClosePaymentResponseDto.class)
                 .doOnSuccess(
-                        closePaymentResponse -> log
-                                .info(
-                                        "ClosePaymentV2 completed for transactionId [{}]: paymentTokens {} - outcome: {}",
-                                        request.getTransactionId(),
-                                        request.getPaymentTokens(),
-                                        closePaymentResponse.getOutcome()
+                        closePaymentResponse -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                .details(
+                                        Map.of("outcome", closePaymentResponse.getOutcome().getValue())
                                 )
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                request.getTransactionId(),
+                                                LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                                request.getPaymentTokens().toString()
+                                        )
+                                )
+                                .logInfo(log, "ClosePaymentV2 completed")
                 )
                 .onErrorMap(
                         ResponseStatusException.class,
                         error -> {
-
-                            log.error(
-                                    "ClosePaymentV2 Response Status Error for transactionId [{}]: {}",
-                                    request.getTransactionId(),
-                                    error
-                            );
+                            LogTracingUtils.loggerTracingUtils()
+                                    .failure()
+                                    .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                    .attributes(
+                                            Map.of(
+                                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                    request.getTransactionId(),
+                                                    LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                                    request.getPaymentTokens().toString()
+                                            )
+                                    )
+                                    .logError(log, error, "ClosePaymentV2 Response Status Error");
 
                             try {
 
@@ -189,7 +190,6 @@ public class NodeForPspClient {
                             }
 
                         }
-                )
-                .doOnError(Exception.class, error -> log.error("ClosePaymentV2 Generic Error:", error));
+                );
     }
 }

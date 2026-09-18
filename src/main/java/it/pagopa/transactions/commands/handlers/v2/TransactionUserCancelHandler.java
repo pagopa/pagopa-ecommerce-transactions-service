@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Map;
 
 @Component(TransactionUserCancelHandler.QUALIFIER_NAME)
 @Slf4j
@@ -55,6 +56,27 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                     t.getTransactionId().value()
                             );
                             return transactionEventUserCancelStoreRepository.insert(userCanceledEvent)
+                                    .doOnNext(
+                                            v -> LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                                    .attributes(
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                    v.getEventCode()
+                                                            )
+                                                    )
+                                                    .logInfo(log, "Saved domain event")
+                                    )
+                                    .doOnError(
+                                            exception -> LogTracingUtils.loggerTracingUtils()
+                                                    .failure()
+                                                    .logError(
+                                                            log,
+                                                            exception,
+                                                            "Error when saving domain event"
+                                                    )
+                                    )
                                     .flatMap(
                                             event -> tracingUtils.traceMono(
                                                     this.getClass().getSimpleName(),
@@ -66,21 +88,22 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                                             )
                                             )
                                     )
-                                    .thenReturn(userCanceledEvent)
+                                    .doOnNext(
+                                            v -> LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                    .logInfo(log, "Published domain event")
+                                    )
                                     .doOnError(
                                             exception -> LogTracingUtils.loggerTracingUtils()
                                                     .failure()
                                                     .logError(
                                                             log,
                                                             exception,
-                                                            "Unable to generate TRANSACTION_USER_CANCELED event"
+                                                            "Error when publishing domain event"
                                                     )
                                     )
-                                    .doOnNext(
-                                            event -> LogTracingUtils.loggerTracingUtils()
-                                                    .success()
-                                                    .logInfo(log, "Generated event TRANSACTION_USER_CANCELED_EVENT")
-                                    );
+                                    .thenReturn(userCanceledEvent);
                         }
                 );
 
