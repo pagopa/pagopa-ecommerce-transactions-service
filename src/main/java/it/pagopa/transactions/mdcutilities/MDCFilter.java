@@ -31,7 +31,8 @@ public class MDCFilter implements WebFilter {
             LogTracingUtils.AttributeKeys.CTX_RPT_IDS.getKey(),
             LogTracingUtils.AttributeKeys.CORRELATION_ID.getKey(),
             LogTracingUtils.AttributeKeys.CTX_USER_ID.getKey(),
-            LogTracingUtils.AttributeKeys.CTX_CLIENT_ID.getKey()
+            LogTracingUtils.AttributeKeys.CTX_CLIENT_ID.getKey(),
+            LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID.getKey()
     );
 
     @Override

@@ -48,6 +48,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         implements ApplicationListener<ApplicationReadyEvent> {
 
     public static final String QUALIFIER_NAME = "transactionUpdateAuthorizationHandlerV2";
+    public static final String WALLET_ID = "wallet_id";
     private final TransactionsEventStoreRepository<it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationCompletedData> transactionEventStoreRepository;
     private final WalletClient walletClient;
     private final Sinks.Many<TransactionUpdateAuthorizationCommand> authorizationCommandsSink = Sinks.many().unicast()
@@ -111,7 +112,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                                 .dependency(LogTracingUtils.WALLET_DEPENDENCY)
                                                                 .details(
                                                                         Map.of(
-                                                                                "wallet_id",
+                                                                                WALLET_ID,
                                                                                 extractWalletInfo(command)
                                                                                         .map(WalletInfo::getWalletId)
                                                                                         .orElse("{walletId-not-found}")
@@ -130,7 +131,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                             .dependency(LogTracingUtils.WALLET_DEPENDENCY)
                                             .details(
                                                     Map.of(
-                                                            "wallet_id",
+                                                            WALLET_ID,
                                                             extractWalletInfo(command)
                                                                     .map(WalletInfo::getWalletId)
                                                                     .orElse("{walletId-not-found}")
@@ -154,7 +155,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                         .dependency(LogTracingUtils.WALLET_DEPENDENCY)
                                         .details(
                                                 Map.of(
-                                                        "wallet_id",
+                                                        WALLET_ID,
                                                         walletInfo.getWalletId(),
                                                         "npg_operation_id",
                                                         Objects.toString(walletNotificationRequest.getOperationId()),
@@ -226,7 +227,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                         .success()
                                                         .details(
                                                                 Map.of(
-                                                                        "wallet_id", extractWalletInfo(authCommand)
+                                                                        WALLET_ID, extractWalletInfo(authCommand)
                                                                                 .map(WalletInfo::getWalletId)
                                                                                 .orElse("{walletId-not-found}")
                                                                 )
@@ -240,7 +241,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                             .failure()
                                                             .details(
                                                                     Map.of(
-                                                                            "wallet_id", extractWalletInfo(authCommand)
+                                                                            WALLET_ID, extractWalletInfo(authCommand)
                                                                                     .map(WalletInfo::getWalletId)
                                                                                     .orElse("{walletId-not-found}")
                                                                     )
