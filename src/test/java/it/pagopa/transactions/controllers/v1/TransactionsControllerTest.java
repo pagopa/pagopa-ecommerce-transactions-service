@@ -316,7 +316,7 @@ class TransactionsControllerTest {
                                         .title("Transaction not found")
                                         .status(404)
                                         .detail(
-                                                "Transaction for payment token '%s' not found".formatted(transactionId)
+                                                "Transaction with id '%s' not found".formatted(transactionId)
                                         ),
                                 p
                         )
