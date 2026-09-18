@@ -42,6 +42,7 @@ public class EcommercePaymentMethodsHandlerClient {
         return ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(paymentMethodId, client.name())
                 .doOnNext(
                         v -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_HANDLER_DEPENDENCY)
                                 .success()
                                 .logInfo(log, "Retrieved payment method")
                 )
@@ -62,6 +63,7 @@ public class EcommercePaymentMethodsHandlerClient {
 
     private static void logWebClientException(WebClientResponseException e) {
         LogTracingUtils.loggerTracingUtils()
+                .dependency(LogTracingUtils.PAYMENT_METHODS_HANDLER_DEPENDENCY)
                 .failure()
                 .details(
                         Map.of(
