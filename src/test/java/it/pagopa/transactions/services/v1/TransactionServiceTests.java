@@ -7,6 +7,7 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
 import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveUniqueIdTemplateWrapper;
@@ -308,7 +309,7 @@ class TransactionServiceTests {
         TransactionNotFoundException exception = new TransactionNotFoundException(TRANSACTION_ID);
 
         assertEquals(
-                exception.getPaymentToken(),
+                exception.getTransactionId(),
                 TRANSACTION_ID
         );
     }
@@ -358,7 +359,8 @@ class TransactionServiceTests {
                 .thenReturn(Flux.empty());
 
         /* test */
-        StepVerifier.create(transactionsServiceV1.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
+        StepVerifier
+                .create(transactionsServiceV1.addUserReceipt(new TransactionId(TRANSACTION_ID), addUserReceiptRequest))
                 .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
@@ -626,6 +628,20 @@ class TransactionServiceTests {
         StepVerifier
                 .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
                 .expectError(IllegalStateException.class)
+                .verify();
+    }
+
+    @Test
+    void getTransactionOutcomeThrowsExceptionForTransactionsNotFound() {
+        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.empty());
+        assertThrows(
+                TransactionNotFoundException.class,
+                () -> transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null).block()
+        );
+
+        StepVerifier
+                .create(transactionsServiceV1.getTransactionOutcome(TRANSACTION_ID, null))
+                .expectError(TransactionNotFoundException.class)
                 .verify();
     }
 

@@ -3,7 +3,6 @@ package it.pagopa.transactions.services.v1;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.opentelemetry.api.common.Attributes;
-import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
@@ -13,6 +12,7 @@ import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
@@ -207,8 +207,11 @@ public class TransactionsService {
                         .orElse(null)
         );
 
+        List<RptId> rptIds = newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId()))
+                .toList();
+
         TransactionActivateCommand transactionActivateCommand = new TransactionActivateCommand(
-                newTransactionRequestDto.getPaymentNotices().stream().map(p -> new RptId(p.getRptId())).toList(),
+                rptIds,
                 new NewTransactionRequestData(
                         newTransactionRequestDto.getIdCart(),
                         confidentialMailUtils.toConfidential(newTransactionRequestDto.getEmail()),
@@ -232,17 +235,17 @@ public class TransactionsService {
                 transactionId,
                 null
         );
-        log.info(
-                "Initializing transaction for rptIds: {}. ClientId: {}",
-                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
-                clientId
-        );
         return transactionActivateHandlerV2.handle(transactionActivateCommand)
                 .doOnNext(
-                        args -> log.info(
-                                "Transaction initialized for rptIds: {}",
-                                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList()
-                        )
+                        args -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                newTransactionRequestDto.getPaymentNotices().getFirst().getRptId()
+                                        )
+                                )
+                                .logInfo(log, "Transaction initialized")
                 )
                 .flatMap(
                         es -> {
@@ -266,7 +269,6 @@ public class TransactionsService {
                                                        String transactionId,
                                                        UUID xUserId
     ) {
-        log.info("Get Transaction Invoked with id {} ", transactionId);
         return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(this::buildTransactionInfoDtoFromView);
@@ -278,7 +280,6 @@ public class TransactionsService {
                                                                  String transactionId,
                                                                  UUID xUserId
     ) {
-        log.info("Get transaction outcome invoked with id {} ", transactionId);
         return getBaseTransactionView(transactionId, xUserId)
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
                 .map(this::buildTransactionOutcomeInfoDtoFromView);
@@ -625,9 +626,6 @@ public class TransactionsService {
                                                                       RequestAuthorizationRequestDto authRequest,
                                                                       String paymentGatewayId
     ) {
-
-        log.info("Requesting authorization for transactionId: {}", transaction.getTransactionId().value());
-
         AuthorizationRequestData authData = createAuthRequestData(
                 transaction,
                 authRequestSessionData,
@@ -647,6 +645,11 @@ public class TransactionsService {
                         authResponse -> invalidatePaymentRequestCache(transaction)
                                 .collectList()
                                 .thenReturn(authResponse)
+                )
+                .doOnNext(
+                        res -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Requested authorization successfully")
                 );
     }
 
@@ -716,9 +719,6 @@ public class TransactionsService {
     ) {
         return requestAuthHandlerV2
                 .handleWithCreationDate(transactionRequestAuthCommand)
-                .doOnNext(
-                        responseAndDate -> logAuthRequested(transactionDocument.getTransactionId().value())
-                )
                 .flatMap(
                         TupleUtils.function(
                                 (
@@ -734,15 +734,6 @@ public class TransactionsService {
                                         .thenReturn(authorizationResponseDto)
                         )
                 );
-    }
-
-    /**
-     * Logs that authorization has been requested for a transaction
-     *
-     * @param transactionId The ID of the transaction
-     */
-    private void logAuthRequested(String transactionId) {
-        log.info("Requested authorization for transaction: {}", transactionId);
     }
 
     /**
@@ -766,9 +757,25 @@ public class TransactionsService {
      */
     private Mono<Boolean> invalidateRptIdCache(PaymentNotice paymentNotice) {
 
-        return reactivePaymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.rptId().value()).doOnNext(
-                outcome -> log.info("Invalidate cache for RptId : {} -> {}", paymentNotice.rptId().value(), outcome)
-        );
+        return reactivePaymentRequestInfoRedisTemplateWrapper.deleteById(paymentNotice.rptId().value())
+                .doOnNext(
+                        outcome -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                List.of(paymentNotice.rptId().value()).toString()
+                                        )
+                                )
+                                .details(
+                                        Map.of(
+                                                "delete_outcome",
+                                                outcome.toString()
+                                        )
+                                )
+                                .logInfo(log, "RptId cache invalidated")
+                );
     }
 
     /**
@@ -844,8 +851,6 @@ public class TransactionsService {
                                                                                                                                           it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
                                                                                                                                           RequestAuthorizationRequestDto authRequest
     ) {
-        log.info("Authorization psp validation for transactionId: {}", transaction.getTransactionId());
-
         String clientId = transaction.getClientId().toString();
 
         return retrieveInformationFromAuthorizationRequest(authRequest, clientId)
@@ -859,9 +864,12 @@ public class TransactionsService {
                 .map(data -> createAuthSessionData(authRequest, data))
                 .filter(authSessionData -> authSessionData.bundle().isPresent())
                 .switchIfEmpty(
-                        createUnsatisfiablePspRequestError(
-                                transaction.getTransactionId().value(),
-                                authRequest
+                        Mono.error(
+                                new UnsatisfiablePspRequestException(
+                                        new TransactionId(transaction.getTransactionId().value()),
+                                        authRequest.getLanguage(),
+                                        authRequest.getFee()
+                                )
                         )
                 )
                 .map(authSessionData -> Tuples.of(transaction, authSessionData));
@@ -1039,26 +1047,6 @@ public class TransactionsService {
     }
 
     /**
-     * Creates an error for unsatisfiable PSP request
-     *
-     * @param transactionId The transaction ID
-     * @param authRequest   The authorization request
-     * @return A Mono error with UnsatisfiablePspRequestException
-     */
-    private <T> Mono<T> createUnsatisfiablePspRequestError(
-                                                           String transactionId,
-                                                           RequestAuthorizationRequestDto authRequest
-    ) {
-        return Mono.error(
-                new UnsatisfiablePspRequestException(
-                        new PaymentToken(transactionId),
-                        authRequest.getLanguage(),
-                        authRequest.getFee()
-                )
-        );
-    }
-
-    /**
      * Validates transaction details against the authorization request
      *
      * @param transaction The transaction to validate
@@ -1069,85 +1057,28 @@ public class TransactionsService {
                                                                                                          it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
                                                                                                          RequestAuthorizationRequestDto authRequest
     ) {
-        String transactionId = transaction.getTransactionId().value();
-        log.info("Authorization request amount validation for transactionId: {}", transactionId);
-
-        if (hasAmountMismatch(authRequest, transaction)) {
-            return createAmountMismatchError(authRequest, transaction);
-        } else if (hasAllCCPMismatch(authRequest, transaction)) {
-            return createAllCCPMismatchError(authRequest, transaction);
-        }
-        return Mono.just(transaction);
-    }
-
-    /**
-     * Checks if there's a mismatch between the transaction amount and the requested
-     * amount
-     *
-     * @param authRequest The authorization request
-     * @param transaction The transaction to check
-     * @return true if there's a mismatch, false otherwise
-     */
-    private boolean hasAmountMismatch(
-                                      RequestAuthorizationRequestDto authRequest,
-                                      it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction
-    ) {
-        return !transactionsUtils.getTransactionTotalAmount(transaction)
+        boolean hasAmountMismatch = !transactionsUtils.getTransactionTotalAmount(transaction)
                 .equals(authRequest.getAmount());
-    }
+        boolean hasAllCCPMismatch = !transactionsUtils.isAllCcp(transaction, 0).equals(authRequest.getIsAllCCP());
 
-    /**
-     * Checks if there's a mismatch in the allCCP flag between the transaction and
-     * the request
-     *
-     * @param authRequest The authorization request
-     * @param transaction The transaction to check
-     * @return true if there's a mismatch, false otherwise
-     */
-    private boolean hasAllCCPMismatch(
-                                      RequestAuthorizationRequestDto authRequest,
-                                      it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction
-    ) {
-        return !transactionsUtils.isAllCcp(transaction, 0).equals(authRequest.getIsAllCCP());
-    }
+        if (hasAmountMismatch) {
+            return Mono.error(
+                    new TransactionAmountMismatchException(
+                            authRequest.getAmount(),
+                            transactionsUtils.getTransactionTotalAmount(transaction)
+                    )
+            );
+        } else if (hasAllCCPMismatch) {
+            return Mono.error(
+                    new PaymentNoticeAllCCPMismatchException(
+                            transactionsUtils.getRptId(transaction, 0),
+                            authRequest.getIsAllCCP(),
+                            transactionsUtils.isAllCcp(transaction, 0)
+                    )
+            );
+        }
 
-    /**
-     * Creates an error for amount mismatch
-     *
-     * @param authRequest The authorization request
-     * @param transaction The transaction
-     * @return A Mono error with appropriate exception
-     */
-    private <T> Mono<T> createAmountMismatchError(
-                                                  RequestAuthorizationRequestDto authRequest,
-                                                  it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction
-    ) {
-        return Mono.error(
-                new TransactionAmountMismatchException(
-                        authRequest.getAmount(),
-                        transactionsUtils.getTransactionTotalAmount(transaction)
-                )
-        );
-    }
-
-    /**
-     * Creates an error for allCCP mismatch
-     *
-     * @param authRequest The authorization request
-     * @param transaction The transaction
-     * @return A Mono error with appropriate exception
-     */
-    private <T> Mono<T> createAllCCPMismatchError(
-                                                  RequestAuthorizationRequestDto authRequest,
-                                                  it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction
-    ) {
-        return Mono.error(
-                new PaymentNoticeAllCCPMismatchException(
-                        transactionsUtils.getRptId(transaction, 0),
-                        authRequest.getIsAllCCP(),
-                        transactionsUtils.isAllCcp(transaction, 0)
-                )
-        );
+        return Mono.just(transaction);
     }
 
     /**
@@ -1159,6 +1090,12 @@ public class TransactionsService {
      */
     private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
         return transactionsViewRepository.findById(transactionId)
+                .doOnNext(transaction ->
+                        LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Retrieved transaction document")
+                )
                 .filter(transactionDocument -> switch (transactionDocument) {
                     case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
                     case Transaction t ->
@@ -1173,6 +1110,12 @@ public class TransactionsService {
                                                                                    UUID xUserId
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Retrieved transaction events")
+                )
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
                 .filterWhen(
@@ -1195,10 +1138,15 @@ public class TransactionsService {
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
-        log.info("UpdateTransactionAuthorization decoded transaction id: [{}]", transactionId.value());
 
         Flux<? extends BaseTransactionEvent<?>> events = eventsRepository
                 .findByTransactionIdOrderByCreationDateAsc(transactionId.value())
+                .doOnNext(v ->
+                        LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Retrieved transaction events")
+                )
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .cache();
 
@@ -1352,22 +1300,14 @@ public class TransactionsService {
 
         return transactionsUtils
                 .reduceV2Events(events)
-                .cast(BaseTransactionWithPaymentToken.class).filter(
+                .cast(BaseTransactionWithPaymentToken.class)
+                .filter(
                         baseTransactionWithPaymentToken -> Set.of(
                                 TransactionStatusDto.AUTHORIZATION_REQUESTED,
                                 TransactionStatusDto.AUTHORIZATION_COMPLETED,
                                 TransactionStatusDto.CLOSURE_REQUESTED
                         )
                                 .contains(baseTransactionWithPaymentToken.getStatus())
-                )
-                .doOnNext(
-                        transactionWithPaymentToken -> log.info(
-                                "UpdateTransactionAuthorization requested for transaction with status: {} for rptIds: {}",
-                                transactionWithPaymentToken.getStatus().getValue(),
-                                transactionUpdateAuthorizationCommand
-                                        .getRptIds().stream().map(RptId::value)
-                                        .toList()
-                        )
                 )
                 .flatMap(
                         tr -> {
@@ -1385,13 +1325,6 @@ public class TransactionsService {
                                         .flatMap(
                                                 t -> transactionUpdateAuthorizationHandlerV2
                                                         .handle(transactionUpdateAuthorizationCommand)
-                                                        .doOnError(
-                                                                AlreadyProcessedException.class,
-                                                                exception -> log.error(
-                                                                        "UpdateTransactionAuthorization Error: requesting authorization update for transaction in state [{}]",
-                                                                        t.getStatus()
-                                                                )
-                                                        )
                                         )
                                         .cast(TransactionAuthorizationCompletedEvent.class)
                                         .flatMap(
@@ -1427,10 +1360,18 @@ public class TransactionsService {
                 .map(this::buildTransactionInfoDtoV2)
                 .switchIfEmpty(
                         Mono.just(buildTransactionInfoDtoV2(transaction)).doOnNext(
-                                tr -> log.info(
-                                        "Skipping UpdateTransactionAuthorization request since transaction with id {} is not in one of the allowed state",
-                                        transaction.getTransactionId().value()
-                                )
+                                tr -> LogTracingUtils.loggerTracingUtils()
+                                        .success()
+                                        .details(
+                                                Map.of(
+                                                        "transaction_status",
+                                                        tr.getStatus().getValue()
+                                                )
+                                        )
+                                        .logInfo(
+                                                log,
+                                                "Skipping UpdateTransactionAuthorization request since the transaction is not in one of the allowed states"
+                                        )
                         )
                 );
     }
@@ -1448,14 +1389,6 @@ public class TransactionsService {
 
         return transactionSendClosureRequestHandler
                 .handle(transactionClosureRequestCommand)
-                .doOnNext(
-                        closureSentRequestedEvent -> log.info(
-                                "Requested async transaction closure for transactionId: {} rptIds: {} status: {}",
-                                transactionClosureRequestCommand.getData().value(),
-                                transactionClosureRequestCommand.getRptIds().stream().map(RptId::value).toList(),
-                                transaction.getStatus().getValue()
-                        )
-                )
                 .flatMap(
                         closureRequestedEvent -> closureRequestedProjectionHandler.handle(
                                 (TransactionClosureRequestedEvent) closureRequestedEvent
@@ -1478,6 +1411,17 @@ public class TransactionsService {
                                                         Mono.just(transaction)
                                                 )
                                 )
+                )
+                .doOnNext(
+                        closureSentRequestedEvent -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .details(
+                                        Map.of(
+                                                "status",
+                                                transaction.getStatus().getValue()
+                                        )
+                                )
+                                .logInfo(log, "Transaction closure requested successfully")
                 );
     }
 
@@ -1527,13 +1471,19 @@ public class TransactionsService {
 
     @Retry(name = "addUserReceipt")
     public Mono<TransactionInfoDto> addUserReceipt(
-                                                   String transactionId,
+                                                   TransactionId transactionId,
                                                    AddUserReceiptRequestDto addUserReceiptRequest
     ) {
-        return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId)
+        return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Transaction events retrieved")
+                )
                 .collectList()
                 .filter(Predicate.not(List::isEmpty))
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
+                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .flatMap(
                         events -> transactionsUtils.reduceV2Events(events).map(
                                 transaction -> Tuples.of(transaction, events)
@@ -1550,17 +1500,10 @@ public class TransactionsService {
                                                         baseTransaction.getPaymentNotices().stream()
                                                                 .map(PaymentNotice::rptId).toList(),
                                                         new AddUserReceiptData(
-                                                                new TransactionId(transactionId),
+                                                                transactionId,
                                                                 addUserReceiptRequest
                                                         ),
                                                         events
-                                                )
-                                        )
-                                        .doOnNext(
-                                                transactionUserReceiptRequestedEvent -> log.info(
-                                                        "AddUserReceipt [{}] for transactionId: [{}]",
-                                                        TransactionEventCode.TRANSACTION_USER_RECEIPT_REQUESTED_EVENT,
-                                                        transactionUserReceiptRequestedEvent.getTransactionId()
                                                 )
                                         )
                                         .flatMap(
@@ -1574,13 +1517,6 @@ public class TransactionsService {
                                                                         ).toList()
                                                                 )
                                                         )
-                                        )
-                                        .doOnNext(
-                                                transaction -> log.info(
-                                                        "AddUserReceipt transaction status updated [{}] for transactionId: [{}]",
-                                                        transaction.getStatus(),
-                                                        transaction.getTransactionId()
-                                                )
                                         )
                                         .map(this::buildTransactionInfoDtoV2)
                         )
@@ -1645,7 +1581,6 @@ public class TransactionsService {
                             try {
                                 return NewTransactionResponseDto.ClientIdEnum.fromValue(value.name());
                             } catch (IllegalArgumentException e) {
-                                log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);
                             }
                         }
@@ -1662,7 +1597,6 @@ public class TransactionsService {
                                 return NewTransactionResponseDto.ClientIdEnum
                                         .fromValue(value.getEffectiveClient().name());
                             } catch (IllegalArgumentException e) {
-                                log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);
                             }
                         }
@@ -1672,7 +1606,8 @@ public class TransactionsService {
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId()).map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null));
+                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId())
+                            .map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null));
             case WalletAuthRequestDetailsDto wallet -> walletClient
                     .getWalletInfo(wallet.getWalletId())
                     .map(walletAuthDataDto -> {
@@ -1721,7 +1656,6 @@ public class TransactionsService {
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.INVALID_REQUEST;
             default -> UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR;
         };
-        log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcome);
         return outcome;
     }
 

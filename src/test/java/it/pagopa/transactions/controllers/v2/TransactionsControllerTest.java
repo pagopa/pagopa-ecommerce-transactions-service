@@ -41,7 +41,6 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -89,12 +88,6 @@ class TransactionsControllerTest {
     @Mock
     ServerWebExchange mockExchange;
 
-    @Mock
-    ServerHttpRequest mockRequest;
-
-    @Mock
-    HttpHeaders mockHeaders;
-
     private final CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
             Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
     );
@@ -132,23 +125,6 @@ class TransactionsControllerTest {
                                     )
                     )
                     .thenReturn(Mono.just(response));
-
-            Mockito.when(mockExchange.getRequest())
-                    .thenReturn(mockRequest);
-
-            Mockito.when(mockExchange.getRequest().getMethod())
-                    .thenReturn(HttpMethod.POST);
-
-            Mockito.when(mockExchange.getRequest().getURI())
-                    .thenReturn(
-                            URI.create(
-                                    String.join(
-                                            "/",
-                                            "https://localhost/transactions",
-                                            transactionId.value()
-                                    )
-                            )
-                    );
 
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
                     .newTransaction(
