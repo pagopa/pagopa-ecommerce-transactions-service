@@ -163,13 +163,17 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                                                     LogTracingUtils.REDIS_DEPENDENCY
                                                                                             )
                                                                                             .details(
-                                                                                                Map.of(
-                                                                                                        "deleted", deleted.toString()
-                                                                                                )
+                                                                                                    Map.of(
+                                                                                                            "deleted",
+                                                                                                            deleted.toString()
+                                                                                                    )
                                                                                             )
                                                                                             .attributes(
                                                                                                     Map.of(
-                                                                                                            LogTracingUtils.AttributeKeys.CTX_RPT_IDS, List.of(p.id().value()).toString(),
+                                                                                                            LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                                                                            List.of(
+                                                                                                                    p.id().value()
+                                                                                                            ).toString(),
                                                                                                             LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
                                                                                                             List.of(
                                                                                                                     Objects.toString(
@@ -498,7 +502,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                 .attributes(
                                                         Map.of(
                                                                 LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
-                                                                TransactionEventCode.TRANSACTION_ACTIVATED_EVENT.toString()
+                                                                TransactionEventCode.TRANSACTION_ACTIVATED_EVENT
+                                                                        .toString()
                                                         )
                                                 )
                                                 .logError(

@@ -93,10 +93,17 @@ public class NodeForPspClient {
                                 .success()
                                 .dependency(LogTracingUtils.NODO_DEPENDENCY)
                                 .attributes(
-                                    Map.of(
-                                            LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS, List.of(activateResponse.getPaymentToken()).toString(),
-                                            LogTracingUtils.AttributeKeys.CTX_RPT_IDS, List.of("%s%s".formatted(request.getValue().getQrCode().getFiscalCode(), request.getValue().getQrCode().getNoticeNumber())).toString()
-                                    )
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                                List.of(activateResponse.getPaymentToken()).toString(),
+                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                List.of(
+                                                        "%s%s".formatted(
+                                                                request.getValue().getQrCode().getFiscalCode(),
+                                                                request.getValue().getQrCode().getNoticeNumber()
+                                                        )
+                                                ).toString()
+                                        )
                                 )
                                 .logInfo(log, "ActivatePaymentNoticeV2 completed")
                 )
@@ -107,7 +114,13 @@ public class NodeForPspClient {
                                     .failure()
                                     .attributes(
                                             Map.of(
-                                                    LogTracingUtils.AttributeKeys.CTX_RPT_IDS, List.of("%s%s".formatted(request.getValue().getQrCode().getFiscalCode(), request.getValue().getQrCode().getNoticeNumber())).toString()
+                                                    LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                    List.of(
+                                                            "%s%s".formatted(
+                                                                    request.getValue().getQrCode().getFiscalCode(),
+                                                                    request.getValue().getQrCode().getNoticeNumber()
+                                                            )
+                                                    ).toString()
                                             )
                                     )
                                     .dependency(LogTracingUtils.NODO_DEPENDENCY)

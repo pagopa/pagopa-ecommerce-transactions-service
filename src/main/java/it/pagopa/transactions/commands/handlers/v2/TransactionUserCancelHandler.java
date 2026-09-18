@@ -75,7 +75,8 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                                     .attributes(
                                                             Map.of(
                                                                     LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
-                                                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT.toString()
+                                                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT
+                                                                            .toString()
                                                             )
                                                     )
                                                     .logError(
@@ -107,7 +108,8 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                                     .attributes(
                                                             Map.of(
                                                                     LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
-                                                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT.toString()
+                                                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT
+                                                                            .toString()
                                                             )
                                                     )
                                                     .logError(

@@ -73,12 +73,16 @@ public class TransactionsController implements V21Api {
                                                 .success()
                                                 .attributes(
                                                         Map.of(
-                                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS, ntr.getPaymentNotices().stream().map(it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto::getRptId).toList().toString()
+                                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                                ntr.getPaymentNotices().stream().map(
+                                                                        it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto::getRptId
+                                                                ).toList().toString()
                                                         )
                                                 )
                                                 .details(
                                                         Map.of(
-                                                                "id_cart", Objects.toString(response.getIdCart())
+                                                                "id_cart",
+                                                                Objects.toString(response.getIdCart())
                                                         )
                                                 )
                                                 .logInfo(log, "New transaction created successfully")
