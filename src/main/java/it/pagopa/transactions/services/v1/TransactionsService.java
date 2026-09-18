@@ -730,11 +730,6 @@ public class TransactionsService {
                                         )
                                         .thenReturn(authorizationResponseDto)
                         )
-                )
-                .doOnNext(
-                        responseAndDate -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "Authorization requested successfully for transaction")
                 );
     }
 
@@ -1085,9 +1080,6 @@ public class TransactionsService {
             );
         }
 
-        LogTracingUtils.loggerTracingUtils()
-                .success()
-                .logInfo(log, "Authorization request amount validated successfully");
         return Mono.just(transaction);
     }
 
@@ -1372,6 +1364,11 @@ public class TransactionsService {
                         Mono.just(buildTransactionInfoDtoV2(transaction)).doOnNext(
                                 tr -> LogTracingUtils.loggerTracingUtils()
                                         .success()
+                                        .details(
+                                            Map.of(
+                                                "transaction_status", tr.getStatus().getValue()
+                                            )
+                                        )
                                         .logInfo(
                                                 log,
                                                 "Skipping UpdateTransactionAuthorization request since the transaction is not in one of the allowed states"
