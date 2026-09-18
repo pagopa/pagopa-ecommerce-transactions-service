@@ -137,6 +137,11 @@ public class TransactionsController implements TransactionsApi {
                                 request
                         )
                 )
+                .doOnNext(
+                        request -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Completed RequestTransactionAuthorization request")
+                )
                 .contextWrite(
                         ctx -> LogTracingUtils.enrichContextForEvent(
                                 Map.of(
@@ -146,12 +151,7 @@ public class TransactionsController implements TransactionsApi {
                                 ctx
                         )
                 )
-                .map(ResponseEntity::ok)
-                .doOnNext(
-                        request -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "Completed RequestTransactionAuthorization request")
-                );
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -218,7 +218,8 @@ public class TransactionsController implements TransactionsApi {
                                             LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
                                             domainTransactionId.value()
                                     )
-                            );
+                            )
+                            .logInfo(log, "Lock acquired");
 
                     return transactionsService.updateTransactionAuthorization(
                             domainTransactionId.uuid(),
@@ -246,7 +247,7 @@ public class TransactionsController implements TransactionsApi {
                                                                             deleted.toString()
                                                                     )
                                                             )
-                                                            .logInfo(log, "Lock deletion status")
+                                                            .logInfo(log, "Lock deleted")
                                             )
                                             .doOnError(
                                                     error -> LogTracingUtils.loggerTracingUtils()
