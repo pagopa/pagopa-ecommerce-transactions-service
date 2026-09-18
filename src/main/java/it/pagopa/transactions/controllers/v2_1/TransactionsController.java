@@ -74,9 +74,9 @@ public class TransactionsController implements V21Api {
                                                 .attributes(
                                                         Map.of(
                                                                 LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
-                                                                ntr.getPaymentNotices().stream().map(
-                                                                        it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto::getRptId
-                                                                ).toList().toString()
+                                                                ntr.getPaymentNotices().stream()
+                                                                        .map(PaymentNoticeInfoDto::getRptId).toList()
+                                                                        .toString()
                                                         )
                                                 )
                                                 .details(

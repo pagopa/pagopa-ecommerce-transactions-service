@@ -95,7 +95,8 @@ public class NodeForPspClient {
                                 .attributes(
                                         Map.of(
                                                 LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
-                                                List.of(activateResponse.getPaymentToken()).toString(),
+                                                List.of(Objects.toString(activateResponse.getPaymentToken()))
+                                                        .toString(),
                                                 LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
                                                 List.of(
                                                         "%s%s".formatted(
