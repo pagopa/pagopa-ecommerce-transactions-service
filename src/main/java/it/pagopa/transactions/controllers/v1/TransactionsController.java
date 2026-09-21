@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
@@ -13,7 +14,6 @@ import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorDto;
 import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.mdcutilities.TransactionTracingUtils;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -30,16 +30,15 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.util.context.Context;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -69,29 +68,8 @@ public class TransactionsController implements TransactionsApi {
     @Value("${security.apiKey.primary}")
     private String primaryKey;
 
-    @ExceptionHandler(
-        {
-                CallNotPermittedException.class
-        }
-    )
-    public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(CallNotPermittedException error) {
-        log.error("Error - OPEN circuit breaker", error);
-        return Mono.just(
-                new ResponseEntity<>(
-                        new ProblemJsonDto()
-                                .status(502)
-                                .title("Bad Gateway")
-                                .detail("Upstream service temporary unavailable. Open circuit breaker."),
-                        HttpStatus.BAD_GATEWAY
-                )
-        ).doOnNext(
-                ignored -> openTelemetryUtils.addErrorSpanWithException(
-                        SpanLabelOpenTelemetry.CIRCUIT_BREAKER_OPEN_SPAN_NAME
-                                .formatted(error.getCausingCircuitBreakerName()),
-                        error
-                )
-        );
-    }
+    private static final String TRANSACTION_NOT_FOUND_DESC = "Transaction not found";
+    private static final String BAD_GATEWAY_DESC = "Bad gateway";
 
     @Override
     public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
@@ -101,19 +79,39 @@ public class TransactionsController implements TransactionsApi {
     ) {
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
         return newTransactionRequest
-                .flatMap(ntr -> transactionsService.newTransaction(ntr, xClientId, transactionId))
-                .map(ResponseEntity::ok)
+                .flatMap(
+                        ntr -> transactionsService
+                                .newTransaction(ntr, xClientId, transactionId)
+                                .doOnNext(
+                                        response -> LogTracingUtils.loggerTracingUtils()
+                                                .success()
+                                                .attributes(
+                                                        Map.of(
+                                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                                ntr.getPaymentNotices().stream()
+                                                                        .map(PaymentNoticeInfoDto::getRptId).toList()
+                                                                        .toString()
+                                                        )
+                                                )
+                                                .details(
+                                                        Map.of(
+                                                                "id_cart",
+                                                                Objects.toString(response.getIdCart())
+                                                        )
+                                                )
+                                                .logInfo(log, "New transaction created successfully")
+                                )
+                )
                 .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        transactionId,
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId.value()
                                 ),
-                                context
+                                ctx
                         )
-                );
+                )
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -123,19 +121,21 @@ public class TransactionsController implements TransactionsApi {
                                                                        ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionInfo(transactionId, xUserId)
-                .doOnNext(t -> log.info("GetTransactionInfo for transactionId completed: [{}]", transactionId))
-                .map(ResponseEntity::ok)
+                .doOnNext(
+                        t -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "GetTransactionInfo completed")
+                )
                 .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
                                 ),
-                                context
+                                ctx
                         )
-                );
+                )
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -148,79 +148,30 @@ public class TransactionsController implements TransactionsApi {
                                                                                                  ServerWebExchange exchange
     ) {
         return requestAuthorizationRequestDto
-                .doOnNext(logTransactionRequestFor(transactionId))
-                .flatMap(request -> authorizeTransaction(transactionId, xUserId, xPgsId, lang, request))
-                .map(ResponseEntity::ok)
-                .contextWrite(context -> addTransactionContext(context, transactionId, exchange));
-    }
-
-    /**
-     * Creates a consumer that logs a transaction request for a specific transaction
-     * ID.
-     *
-     * @param transactionId The ID of the transaction being requested
-     * @return A consumer that logs the transaction request
-     */
-    private Consumer<RequestAuthorizationRequestDto> logTransactionRequestFor(String transactionId) {
-        return request -> logTransactionRequest(transactionId);
-    }
-
-    private void logTransactionRequest(String transactionId) {
-        log.info("RequestTransactionAuthorization for transactionId: [{}]", transactionId);
-    }
-
-    /**
-     * Creates a function that authorizes a transaction with the specified
-     * parameters.
-     *
-     * @param transactionId The ID of the transaction to authorize
-     * @param xUserId       The user ID for the authorization
-     * @param xPgsId        The payment gateway ID
-     * @param lang          The language code
-     * @return A function that processes the authorization request
-     */
-    private Mono<RequestAuthorizationResponseDto> authorizeTransaction(
-                                                                       String transactionId,
-                                                                       UUID xUserId,
-                                                                       String xPgsId,
-                                                                       String lang,
-                                                                       RequestAuthorizationRequestDto request
-    ) {
-        return transactionsService.requestTransactionAuthorization(
-                transactionId,
-                xUserId,
-                xPgsId,
-                lang,
-                request
-        );
-    }
-
-    /**
-     * Creates a function that adds transaction context to a reactor context.
-     *
-     * @param transactionId The ID of the transaction
-     * @param exchange      The server web exchange
-     * @return A function that adds transaction context
-     */
-    private Context addTransactionContext(
-                                          Context context,
-                                          String transactionId,
-                                          ServerWebExchange exchange
-    ) {
-        TransactionTracingUtils.TransactionInfo transactionInfo = createTransactionInfo(transactionId, exchange);
-        return TransactionTracingUtils.setTransactionInfoIntoReactorContext(transactionInfo, context);
-    }
-
-    private TransactionTracingUtils.TransactionInfo createTransactionInfo(
-                                                                          String transactionId,
-                                                                          ServerWebExchange exchange
-    ) {
-        return new TransactionTracingUtils.TransactionInfo(
-                new TransactionId(transactionId),
-                new HashSet<>(),
-                exchange.getRequest().getMethod().name(),
-                exchange.getRequest().getURI().getPath()
-        );
+                .flatMap(
+                        request -> transactionsService.requestTransactionAuthorization(
+                                transactionId,
+                                xUserId,
+                                xPgsId,
+                                lang,
+                                request
+                        )
+                )
+                .doOnNext(
+                        request -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "Completed RequestTransactionAuthorization request")
+                )
+                .contextWrite(
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
+                                ),
+                                ctx
+                        )
+                )
+                .map(ResponseEntity::ok);
     }
 
     @Override
@@ -229,24 +180,33 @@ public class TransactionsController implements TransactionsApi {
                                                                                    Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
                                                                                    ServerWebExchange exchange
     ) {
-        return uuidUtils.uuidFromBase64(base64TransactionId).fold(
-                Mono::error,
-                transactionIdDecoded -> {
-                    log.info(
-                            "UpdateTransactionAuthorization for transactionId: [{}], decoded transaction id: [{}]",
-                            base64TransactionId,
-                            transactionIdDecoded
-                    );
-                    return updateAuthorizationRequestDto.flatMap(
-                            updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
-                                    new TransactionId(transactionIdDecoded),
-                                    updateAuthorizationRequest,
-                                    exchange
-                            )
-                    )
-                            .map(ResponseEntity::ok);
-                }
-        );
+        return uuidUtils.uuidFromBase64(base64TransactionId)
+                .fold(
+                        Mono::error,
+                        transactionIdDecoded -> updateAuthorizationRequestDto
+                                .flatMap(
+                                        updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
+                                                new TransactionId(transactionIdDecoded),
+                                                updateAuthorizationRequest,
+                                                exchange
+                                        )
+                                                .doOnNext(
+                                                        req -> LogTracingUtils.loggerTracingUtils()
+                                                                .success()
+                                                                .logInfo(log, "Transaction authorization updated")
+                                                )
+                                )
+                                .contextWrite(
+                                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                                Map.of(
+                                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                        transactionIdDecoded.toString()
+                                                ),
+                                                ctx
+                                        )
+                                )
+                                .map(ResponseEntity::ok)
+                );
     }
 
     public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
@@ -260,51 +220,73 @@ public class TransactionsController implements TransactionsApi {
         );
         return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument)
                 .flatMap(lockAcquired -> {
-                    log.info(
-                            "UpdateTransactionAuthorization lock acquired for transactionId: [{}] with key: [{}]: [{}]",
-                            domainTransactionId.value(),
-                            lockDocument.id(),
-                            lockAcquired
-                    );
                     if (!lockAcquired) {
                         return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
                     }
 
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                            .details(
+                                    Map.of(
+                                            "document_id",
+                                            lockDocument.id()
+                                    )
+                            )
+                            .attributes(
+                                    Map.of(
+                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                            domainTransactionId.value()
+                                    )
+                            )
+                            .logInfo(log, "Lock acquired");
+
                     return transactionsService.updateTransactionAuthorization(
                             domainTransactionId.uuid(),
                             updateAuthorizationRequestDto
-                    ).doFinally(
-                            s -> reactiveExclusiveLockDocumentWrapper
-                                    .deleteById(lockDocument.id())
-                                    .subscribeOn(Schedulers.boundedElastic())
-                                    .doOnNext(
-                                            deleted -> log
-                                                    .info(
-                                                            "Lock with id: [{}], deleted: [{}]",
-                                                            lockDocument.id(),
-                                                            deleted
-                                                    )
-                                    )
-                                    .doOnError(
-                                            error -> log.error(
-                                                    "Error deleting lock with id: [%s]".formatted(lockDocument.id()),
-                                                    error
+                    )
+                            .doFinally(
+                                    s -> reactiveExclusiveLockDocumentWrapper
+                                            .deleteById(lockDocument.id())
+                                            .subscribeOn(Schedulers.boundedElastic())
+                                            .doOnNext(
+                                                    deleted -> LogTracingUtils.loggerTracingUtils()
+                                                            .success()
+                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                                            .attributes(
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                                            domainTransactionId.value()
+                                                                    )
+                                                            )
+                                                            .details(
+                                                                    Map.of(
+                                                                            "lock_id",
+                                                                            lockDocument.id(),
+                                                                            "lock_deleted",
+                                                                            deleted.toString()
+                                                                    )
+                                                            )
+                                                            .logInfo(log, "Lock deleted")
                                             )
-                                    )
-                                    .subscribe()
-                    );
-                })
-                .contextWrite(
-                        ctx -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        domainTransactionId,
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
-                                ),
-                                ctx
-                        )
-                );
+                                            .doOnError(
+                                                    error -> LogTracingUtils.loggerTracingUtils()
+                                                            .failure()
+                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                                            .attributes(
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                                            domainTransactionId.value()
+                                                                    )
+                                                            )
+                                                            .details(
+                                                                    Map.of("lock_id", lockDocument.id())
+                                                            )
+                                                            .logError(log, error, "Error on lock deletion")
+                                            )
+                                            .subscribe()
+                            );
+                });
     }
 
     @Override
@@ -314,10 +296,9 @@ public class TransactionsController implements TransactionsApi {
                                                                           ServerWebExchange exchange
     ) {
         return addUserReceiptRequestDto
-                .doOnNext(t -> log.info("AddUserReceipt for transactionId: [{}]", transactionId))
                 .flatMap(
                         addUserReceiptRequest -> transactionsService
-                                .addUserReceipt(transactionId, addUserReceiptRequest)
+                                .addUserReceipt(new TransactionId(transactionId), addUserReceiptRequest)
                                 .map(
                                         _v -> new AddUserReceiptResponseDto()
                                                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK)
@@ -348,22 +329,22 @@ public class TransactionsController implements TransactionsApi {
                                                 );
                                     }
 
-                                    log.error("Got error while trying to add user receipt", exception);
+                                    LogTracingUtils.loggerTracingUtils()
+                                            .failure()
+                                            .logError(log, exception, "Got error while trying to add user receipt");
                                 })
                                 .onErrorMap(SendPaymentResultException::new)
                 )
-                .map(ResponseEntity::ok)
                 .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
                                 ),
-                                context
+                                ctx
                         )
-                );
+                )
+                .map(ResponseEntity::ok);
     }
 
     /**
@@ -411,7 +392,6 @@ public class TransactionsController implements TransactionsApi {
                     Optional.empty()
             );
         };
-        log.error("Exception processing request. [{}] mapped to [{}]", throwable, outcomeInfo);
         return outcomeInfo;
     }
 
@@ -423,14 +403,12 @@ public class TransactionsController implements TransactionsApi {
     ) {
         return transactionsService.cancelTransaction(transactionId, xUserId)
                 .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
                                 ),
-                                context
+                                ctx
                         )
                 )
                 .thenReturn(ResponseEntity.accepted().build());
@@ -443,34 +421,66 @@ public class TransactionsController implements TransactionsApi {
                                                                                   ServerWebExchange exchange
     ) {
         return transactionsService.getTransactionOutcome(transactionId, xUserId)
-                .doOnNext(t -> log.info("Get TransactionOutcomeInfo for transactionId completed: [{}]", transactionId))
-                .map(ResponseEntity::ok)
+                .doOnNext(
+                        t -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .logInfo(log, "TransactionOutcomeInfo completed")
+                )
                 .contextWrite(
-                        context -> TransactionTracingUtils.setTransactionInfoIntoReactorContext(
-                                new TransactionTracingUtils.TransactionInfo(
-                                        new TransactionId(transactionId),
-                                        new HashSet<>(),
-                                        exchange.getRequest().getMethod().name(),
-                                        exchange.getRequest().getURI().getPath()
+                        ctx -> LogTracingUtils.enrichContextForEvent(
+                                Map.of(
+                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                        transactionId
                                 ),
-                                context
+                                ctx
                         )
-                );
+                )
+                .map(ResponseEntity::ok);
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
-    ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
+    public ResponseEntity<ProblemJsonDto> transactionNotFoundHandler(TransactionNotFoundException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .attributes(
+                        Map.of(
+                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                exception.getTransactionId(),
+                                LogTracingUtils.AttributeKeys.CTX_USER_ID,
+                                Objects.toString(exception.getUserId())
+                        )
+                )
+                .logError(log, exception, TRANSACTION_NOT_FOUND_DESC);
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(404)
-                        .title("Transaction not found")
-                        .detail("Transaction for payment token '%s' not found".formatted(exception.getPaymentToken())),
+                        .title(TRANSACTION_NOT_FOUND_DESC)
+                        .detail("Transaction with id '%s' not found".formatted(exception.getTransactionId())),
                 HttpStatus.NOT_FOUND
         );
     }
 
     @ExceptionHandler(UnsatisfiablePspRequestException.class)
-    ResponseEntity<ProblemJsonDto> unsatisfiablePspRequestHandler(UnsatisfiablePspRequestException exception) {
+    public ResponseEntity<ProblemJsonDto> unsatisfiablePspRequestHandler(UnsatisfiablePspRequestException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .attributes(
+                        Map.of(
+                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                exception.getTransactionId().value()
+                        )
+                )
+                .details(
+                        Map.of(
+                                "fee",
+                                String.valueOf(exception.getRequestedFee() / 100),
+                                "language",
+                                exception.getLanguage().toString()
+                        )
+                )
+                .logError(log, exception, "Cannot find a PSP with the requested parameters");
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(409)
@@ -480,7 +490,7 @@ public class TransactionsController implements TransactionsApi {
                                         .formatted(
                                                 exception.getRequestedFee() / 100,
                                                 exception.getLanguage(),
-                                                exception.getPaymentToken().value()
+                                                exception.getTransactionId().value()
                                         )
                         ),
                 HttpStatus.CONFLICT
@@ -488,7 +498,31 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(AlreadyProcessedException.class)
-    ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
+    public ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of(
+                                "payment_type_code",
+                                exception.paymentTypeCode().orElse("{paymentTypeCode-not-found}"),
+                                "is_wallet_payment",
+                                exception.walletPayment().orElse(false).toString(),
+                                "transaction_status",
+                                exception.transactionStatus().orElse("{transactionStatus-not-found}")
+                        )
+                )
+                .attributes(
+                        Map.of(
+                                LogTracingUtils.AttributeKeys.CTX_CLIENT_ID,
+                                exception.clientId().orElse("{clientId-not-found}"),
+                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                exception.getTransactionId().value(),
+                                LogTracingUtils.AttributeKeys.PSP_ID,
+                                exception.pspId().orElse(LogTracingUtils.AttributeKeys.PSP_ID.getDefaultValue())
+                        )
+                )
+                .logError(log, exception, "Already processed");
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(409)
@@ -502,18 +536,26 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(BadGatewayException.class)
-    ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
+    public ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .logError(log, exception, BAD_GATEWAY_DESC);
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(502)
-                        .title("Bad gateway")
+                        .title(BAD_GATEWAY_DESC)
                         .detail(exception.getDetail()),
                 HttpStatus.BAD_GATEWAY
         );
     }
 
     @ExceptionHandler(NotImplementedException.class)
-    ResponseEntity<ProblemJsonDto> notImplemented(NotImplementedException exception) {
+    public ResponseEntity<ProblemJsonDto> notImplemented(NotImplementedException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .logError(log, exception, "Not implemented");
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(501)
@@ -524,7 +566,11 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(GatewayTimeoutException.class)
-    ResponseEntity<ProblemJsonDto> gatewayTimeoutHandler(GatewayTimeoutException exception) {
+    public ResponseEntity<ProblemJsonDto> gatewayTimeoutHandler(GatewayTimeoutException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .logError(log, exception, "Gateway timeout");
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(504)
@@ -579,15 +625,20 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(WebExchangeBindException.class)
-    ResponseEntity<ProblemJsonDto> validationExceptionHandler(
-                                                              WebExchangeBindException exception,
-                                                              ServerWebExchange exchange
+    public ResponseEntity<ProblemJsonDto> validationExceptionHandler(
+                                                                     WebExchangeBindException exception,
+                                                                     ServerWebExchange exchange
     ) {
         traceInvalidRequestException(exchange.getRequest());
         String errorMessage = exception.getAllErrors().stream().map(ObjectError::toString)
                 .collect(Collectors.joining(", "));
 
-        log.warn("Got invalid input: {}", errorMessage);
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of("message", errorMessage)
+                )
+                .logError(log, exception, "Got invalid input");
 
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -599,13 +650,19 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(SendPaymentResultException.class)
-    ResponseEntity<ProblemJsonDto> sendPaymentResultExceptionHandler(SendPaymentResultException exception) {
-        log.warn("Got error during sendPaymentResult", exception);
+    public ResponseEntity<ProblemJsonDto> sendPaymentResultExceptionHandler(SendPaymentResultException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                .details(
+                        Map.of("cause", exception.cause.toString())
+                )
+                .logError(log, exception, "Got error processing sendPaymentResult");
 
         ProblemJsonDto responseBody = switch (exception.cause) {
             case TransactionNotFoundException e -> new ProblemJsonDto()
                     .status(404)
-                    .title("Transaction not found")
+                    .title(TRANSACTION_NOT_FOUND_DESC)
                     .detail(e.getMessage());
             case AlreadyProcessedException e -> new ProblemJsonDto()
                     .status(422)
@@ -613,7 +670,7 @@ public class TransactionsController implements TransactionsApi {
                     .detail(e.getMessage());
             case BadGatewayException e -> new ProblemJsonDto()
                     .status(422)
-                    .title("Bad gateway")
+                    .title(BAD_GATEWAY_DESC)
                     .detail(e.getMessage());
             default -> new ProblemJsonDto()
                     .status(422)
@@ -631,14 +688,18 @@ public class TransactionsController implements TransactionsApi {
         {
                 InvalidRequestException.class,
                 ConstraintViolationException.class,
-                ServerWebInputException.class
+                ServerWebInputException.class,
+                MethodArgumentTypeMismatchException.class
         }
     )
-    ResponseEntity<ProblemJsonDto> validationExceptionHandler(
-                                                              Exception exception,
-                                                              ServerWebExchange exchange
+    public ResponseEntity<ProblemJsonDto> validationExceptionHandler(
+                                                                     Exception exception,
+                                                                     ServerWebExchange exchange
     ) {
-        log.warn("Got invalid input: {}", exception.getMessage());
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .logError(log, exception, "Got invalid input");
+
         traceInvalidRequestException(exchange.getRequest());
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -650,7 +711,17 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(PaymentMethodNotFoundException.class)
-    ResponseEntity<ProblemJsonDto> paymentMethodNotFoundException(PaymentMethodNotFoundException exception) {
+    public ResponseEntity<ProblemJsonDto> paymentMethodNotFoundException(PaymentMethodNotFoundException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .attributes(
+                        Map.of(LogTracingUtils.AttributeKeys.CTX_CLIENT_ID, exception.clientId)
+                )
+                .details(
+                        Map.of("payment_method_id", exception.paymentMethodId)
+                )
+                .logError(log, exception, "Payment method not found");
+
         return new ResponseEntity<>(
                 new ProblemJsonDto()
                         .status(404)
@@ -661,17 +732,22 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(TransactionAmountMismatchException.class)
-    ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(
-                                                              TransactionAmountMismatchException exception,
-                                                              ServerWebExchange exchange
+    public ResponseEntity<ProblemJsonDto> amountMismatchErrorHandler(
+                                                                     TransactionAmountMismatchException exception,
+                                                                     ServerWebExchange exchange
     ) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .details(
+                        Map.of(
+                                "request_amount",
+                                Objects.toString(exception.getRequestAmount()),
+                                "transaction_amount",
+                                Objects.toString(exception.getTransactionAmount())
+                        )
+                )
+                .logError(log, exception, "Got invalid input on authorization request");
 
-        log.warn(
-                "Got invalid input: {}. Request amount: [{}], transaction amount: [{}]",
-                exception.getMessage(),
-                exception.getRequestAmount(),
-                exception.getTransactionAmount()
-        );
         traceInvalidRequestException(exchange.getRequest());
         HttpStatus httpStatus = HttpStatus.CONFLICT;
         return new ResponseEntity<>(
@@ -684,17 +760,28 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(PaymentNoticeAllCCPMismatchException.class)
-    ResponseEntity<ProblemJsonDto> paymentNoticeAllCCPMismatchErrorHandler(
-                                                                           PaymentNoticeAllCCPMismatchException exception,
-                                                                           ServerWebExchange exchange
+    public ResponseEntity<ProblemJsonDto> paymentNoticeAllCCPMismatchErrorHandler(
+                                                                                  PaymentNoticeAllCCPMismatchException exception,
+                                                                                  ServerWebExchange exchange
     ) {
-        log.warn(
-                "Got invalid input: {}. RptID: [{}] request allCCP: [{}], payment notice allCCP: [{}]",
-                exception.getMessage(),
-                exception.getRptId(),
-                exception.getRequestAllCCP(),
-                exception.getPaymentNoticeAllCCP()
-        );
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .attributes(
+                        Map.of(
+                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                exception.getRptId()
+                        )
+                )
+                .details(
+                        Map.of(
+                                "request_all_ccp",
+                                Objects.toString(exception.getRequestAllCCP()),
+                                "payment_notice_all_ccp",
+                                Objects.toString(exception.getPaymentNoticeAllCCP())
+                        )
+                )
+                .logError(log, exception, "Got invalid input on authorization request");
+
         traceInvalidRequestException(exchange.getRequest());
         HttpStatus httpStatus = HttpStatus.CONFLICT;
         return new ResponseEntity<>(
@@ -711,8 +798,20 @@ public class TransactionsController implements TransactionsApi {
                 JwtIssuerResponseException.class
         }
     )
-    ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JwtIssuerResponseException exception) {
-        log.warn(exception.getMessage());
+    public ResponseEntity<ProblemJsonDto> jwtTokenGenerationError(JwtIssuerResponseException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .dependency(LogTracingUtils.JWT_ISSUER_DEPENDENCY)
+                .details(
+                        Map.of(
+                                "status",
+                                exception.status.toString(),
+                                "reason",
+                                exception.reason
+                        )
+                )
+                .logError(log, exception, "Error while interacting with jwt-issuer");
+
         HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -726,7 +825,14 @@ public class TransactionsController implements TransactionsApi {
     @ExceptionHandler({
             NodoErrorException.class,
     })
-    ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
+    public ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                .details(
+                        Map.of("fault_code", exception.getFaultCode())
+                )
+                .logError(log, exception, "Error while interacting with NODO - ActivatePaymentNoticeV2");
 
         return switch (exception.getFaultCode()) {
             case String s when Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
@@ -760,7 +866,7 @@ public class TransactionsController implements TransactionsApi {
                                     .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
                                     .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.CONFLICT);
             default -> new ResponseEntity<>(
-                    new ProblemJsonDto().title("Bad gateway"), HttpStatus.BAD_GATEWAY);
+                    new ProblemJsonDto().title(BAD_GATEWAY_DESC), HttpStatus.BAD_GATEWAY);
         };
     }
 
@@ -769,8 +875,15 @@ public class TransactionsController implements TransactionsApi {
                 InvalidNodoResponseException.class,
         }
     )
-    ResponseEntity<ProblemJsonDto> invalidNodoResponse(InvalidNodoResponseException exception) {
-        log.warn(exception.getMessage());
+    public ResponseEntity<ProblemJsonDto> invalidNodoResponse(InvalidNodoResponseException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                .details(
+                        Map.of("error_description", exception.getErrorDescription())
+                )
+                .logError(log, exception, "Error while interacting with NODO");
+
         HttpStatus httpStatus = HttpStatus.BAD_GATEWAY;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -782,10 +895,17 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
-    ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
-                                                                                                DigitalStampNotAllowedForClientException exception
+    public ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
+                                                                                                       DigitalStampNotAllowedForClientException exception
     ) {
-        log.warn(exception.getMessage());
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                .attributes(
+                        Map.of(LogTracingUtils.AttributeKeys.CTX_CLIENT_ID, exception.getClientId())
+                )
+                .logError(log, exception, "This client can't pay notices with digital stamps");
+
         return new ResponseEntity<>(
                 new ValidationFaultPaymentDataErrorProblemJsonDto()
                         .title("Payment Status Fault")
@@ -798,8 +918,22 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(NpgNotRetryableErrorException.class)
-    ResponseEntity<ProblemJsonDto> npgNotRetryableErrorException(NpgNotRetryableErrorException exception) {
-        log.warn(exception.getMessage());
+    public ResponseEntity<ProblemJsonDto> npgNotRetryableErrorException(NpgNotRetryableErrorException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .dependency(LogTracingUtils.NPG_DEPENDENCY)
+                .details(
+                        Map.of(
+                                "status_code",
+                                exception.getHttpStatus().toString(),
+                                "status_message",
+                                exception.getHttpStatus().getReasonPhrase(),
+                                "detail",
+                                exception.getDetail()
+                        )
+                )
+                .logError(log, exception, "Error while interacting with NPG");
+
         HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -811,7 +945,23 @@ public class TransactionsController implements TransactionsApi {
     }
 
     @ExceptionHandler(LockNotAcquiredException.class)
-    ResponseEntity<ProblemJsonDto> lockNotAcquiredExceptionHandler(LockNotAcquiredException exception) {
+    public ResponseEntity<ProblemJsonDto> lockNotAcquiredExceptionHandler(LockNotAcquiredException exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .attributes(
+                        Map.of(
+                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                exception.getTransactionId().value()
+                        )
+                )
+                .details(
+                        Map.of(
+                                "document_lock_id",
+                                exception.getExclusiveLockDocument().id()
+                        )
+                )
+                .logError(log, exception, "Unable to acquire lock");
+
         HttpStatus httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
         return new ResponseEntity<>(
                 new ProblemJsonDto()
@@ -822,11 +972,54 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemJsonDto> genericException(Exception exception) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .logError(log, exception, "Unhandled exception");
+
+        return new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(500)
+                        .title("Internal Server Error")
+                        .detail(exception.getMessage()),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
+
+    @ExceptionHandler(
+        {
+                CallNotPermittedException.class
+        }
+    )
+    public Mono<ResponseEntity<ProblemJsonDto>> openStateHandler(
+                                                                 CallNotPermittedException error
+    ) {
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .logError(log, error, "OPEN circuit breaker");
+
+        return Mono.just(
+                new ResponseEntity<>(
+                        new ProblemJsonDto()
+                                .status(502)
+                                .title(BAD_GATEWAY_DESC)
+                                .detail("Upstream service temporary unavailable. Open circuit breaker."),
+                        HttpStatus.BAD_GATEWAY
+                )
+        ).doOnNext(
+                ignored -> openTelemetryUtils.addErrorSpanWithException(
+                        SpanLabelOpenTelemetry.CIRCUIT_BREAKER_OPEN_SPAN_NAME
+                                .formatted(error.getCausingCircuitBreakerName()),
+                        error
+                )
+        );
+    }
+
     @Warmup
     public void postNewTransactionWarmupMethod() {
         IntStream.range(0, 3).forEach(
                 idx -> {
-                    log.info("Performing warmup iteration: {}", idx);
                     NewTransactionResponseDto newTransactionResponseDto = WebClient
                             .create()
                             .post()

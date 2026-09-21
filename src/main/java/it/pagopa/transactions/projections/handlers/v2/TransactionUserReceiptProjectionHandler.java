@@ -1,6 +1,7 @@
 package it.pagopa.transactions.projections.handlers.v2;
 
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -40,9 +41,21 @@ public class TransactionUserReceiptProjectionHandler
             return Mono.empty();
         }
         return transactionsViewRepository.findById(data.getTransactionId())
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Retrieved transaction")
+                )
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(data.getTransactionId())))
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
-                .flatMap(transactionDocument -> updateAndSaveTransactionView(transactionDocument, data));
+                .flatMap(transactionDocument -> updateAndSaveTransactionView(transactionDocument, data))
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .logInfo(log, "Transaction updated")
+                );
     }
 
     private Mono<it.pagopa.ecommerce.commons.documents.v2.Transaction> updateAndSaveTransactionView(

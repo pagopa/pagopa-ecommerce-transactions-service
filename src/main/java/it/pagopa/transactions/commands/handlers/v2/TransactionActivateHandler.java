@@ -1,5 +1,7 @@
 package it.pagopa.transactions.commands.handlers.v2;
 
+import com.azure.cosmos.implementation.apachecommons.collections.CollectionUtils;
+import io.micrometer.common.util.StringUtils;
 import io.opentelemetry.api.common.Attributes;
 import it.pagopa.ecommerce.commons.client.JwtIssuerClient;
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
@@ -9,13 +11,14 @@ import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.documents.v2.activation.EmptyTransactionGatewayActivationData;
 import it.pagopa.ecommerce.commons.documents.v2.activation.NpgTransactionGatewayActivationData;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.IdempotencyKey;
-import it.pagopa.ecommerce.commons.domain.v2.PaymentTransferInfo;
 import it.pagopa.ecommerce.commons.domain.v2.RptId;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.exceptions.JwtIssuerClientException;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequestDto;
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.v2.ReactivePaymentRequestInfoRedisTemplateWrapper;
@@ -95,13 +98,6 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         final NewTransactionRequestData newTransactionRequestDto = command.getData();
         final List<it.pagopa.ecommerce.commons.domain.v2.PaymentNotice> paymentNotices = newTransactionRequestDto
                 .paymentNoticeList();
-        final boolean multiplePaymentNotices = paymentNotices.size() > 1;
-        log.info(
-                "Parallel processed Nodo activation requests : [{}]. Multiple payment notices: [{}]. Id cart: [{}]",
-                nodoParallelRequests,
-                multiplePaymentNotices,
-                Optional.ofNullable(newTransactionRequestDto.idCard()).orElse("id cart not found")
-        );
         boolean allowDigitalStamp = command.getClientId().equals(Transaction.ClientId.CHECKOUT_CART.toString())
                 || command.getClientId().equals(Transaction.ClientId.WISP_REDIRECT.toString());
 
@@ -136,7 +132,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                     final RptId rptId = paymentNotice.rptId();
 
                                     return Optional.of(partialPaymentRequestInfo)
-                                            .filter(requestInfo -> isValidPaymentToken(requestInfo.paymentToken()))
+                                            .filter(requestInfo -> StringUtils.isNotBlank(requestInfo.paymentToken()))
                                             .map(
                                                     requestInfo -> Mono.just(requestInfo)
                                                             .doOnSuccess(
@@ -158,12 +154,38 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                             )
                                                             .flatMap(
                                                                     p -> reactivePaymentRequestInfoRedisTemplateWrapper
-                                                                            .save(p).doOnNext(
-                                                                                    ignored -> log.info(
-                                                                                            "PaymentRequestInfo cache update for [{}] with paymentToken [{}]",
-                                                                                            p.id(),
-                                                                                            p.paymentToken()
-                                                                                    )
+                                                                            .save(p)
+                                                                            .doOnNext(
+                                                                                    deleted -> LogTracingUtils
+                                                                                            .loggerTracingUtils()
+                                                                                            .success()
+                                                                                            .dependency(
+                                                                                                    LogTracingUtils.REDIS_DEPENDENCY
+                                                                                            )
+                                                                                            .details(
+                                                                                                    Map.of(
+                                                                                                            "deleted",
+                                                                                                            deleted.toString()
+                                                                                                    )
+                                                                                            )
+                                                                                            .attributes(
+                                                                                                    Map.of(
+                                                                                                            LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                                                                            List.of(
+                                                                                                                    p.id().value()
+                                                                                                            ).toString(),
+                                                                                                            LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                                                                                            List.of(
+                                                                                                                    Objects.toString(
+                                                                                                                            p.paymentToken()
+                                                                                                                    )
+                                                                                                            ).toString()
+                                                                                                    )
+                                                                                            )
+                                                                                            .logInfo(
+                                                                                                    log,
+                                                                                                    "PaymentRequestInfo cache updated (cache miss)"
+                                                                                            )
                                                                             )
                                                                             .thenReturn(p)
 
@@ -178,7 +200,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                 return true;
                             }
                             return paymentRequestInfoList.stream().allMatch(
-                                    paymentRequestInfo -> paymentRequestInfo.transferList().stream()
+                                    paymentRequestInfo -> CollectionUtils.emptyIfNull(paymentRequestInfo.transferList())
+                                            .stream()
                                             .allMatch(t -> Boolean.FALSE.equals(t.digitalStamp()))
                             );
                         })
@@ -186,7 +209,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         .flatMap(
                                 paymentRequestInfos -> generateTransactionJwtToken(command, transactionId)
                                         .map(token -> Tuples.of(token.getToken(), paymentRequestInfos))
-                        ).flatMap(
+                        )
+                        .flatMap(
                                 args -> {
                                     String authToken = args.getT1();
                                     List<PaymentRequestInfo> paymentRequestsInfo = args.getT2();
@@ -234,7 +258,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         .audience(JwtIssuerClient.ECOMMERCE_AUDIENCE)
                                         .privateClaims(claimsMap)
                         )
-                ).doOnError(
+                )
+                .doOnError(
                         c -> Mono.error(
                                 new JwtIssuerClientException(
                                         "Error while generating jwt token for ecommerce",
@@ -268,18 +293,24 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                             paymentTokenValidityTimeLeft.getSeconds()
                     )
             );
-            log.info(
-                    "PaymentRequestInfo cache hit for {} with valid paymentToken {}. Validity left time: {}",
-                    paymentRequestInfo.id().value(),
-                    paymentRequestInfo.paymentToken(),
-                    paymentTokenValidityTimeLeft
-            );
+            LogTracingUtils.loggerTracingUtils()
+                    .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                    .attributes(
+                            Map.of(
+                                    LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                    List.of(Objects.toString(paymentRequestInfo.paymentToken())).toString()
+                            )
+                    )
+                    .details(
+                            Map.of(
+                                    "payment_request_info",
+                                    paymentRequestInfo.id().value(),
+                                    "validity_time_left",
+                                    paymentTokenValidityTimeLeft.toString()
+                            )
+                    )
+                    .logInfo(log, "PaymentRequestInfo cache hit");
         } else {
-            log.error(
-                    "Cannot trace repeated transaction activation for {} with payment token: {}, missing transaction activation date",
-                    paymentRequestInfo.id().value(),
-                    paymentRequestInfo.paymentToken()
-            );
             openTelemetryUtils.addErrorSpanWithException(
                     "Transaction re-activated",
                     new IllegalArgumentException(
@@ -301,11 +332,24 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                     boolean isIdempotencyKeyValid = isValidIdempotencyKey(
                             requestInfo.idempotencyKey()
                     );
-                    log.info(
-                            "PaymentRequestInfo cache hit for {}. Is valid idempotency key: {}",
-                            requestInfo.id().value(),
-                            isIdempotencyKeyValid
-                    );
+
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                            .attributes(
+                                    Map.of(
+                                            LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                            List.of(rptId.value()).toString()
+                                    )
+                            )
+                            .details(
+                                    Map.of(
+                                            "is_idempotency_key_valid",
+                                            String.valueOf(isIdempotencyKeyValid)
+                                    )
+                            )
+                            .logInfo(log, "PaymentRequestInfo cache hit");
+
                     if (isIdempotencyKeyValid) {
                         return requestInfo;
                     } else {
@@ -333,32 +377,43 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                     }
                 }
                 )
-                .defaultIfEmpty(
-                        new PaymentRequestInfo(
-                                rptId,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                new IdempotencyKey(
-                                        nodoOperations
-                                                .getEcommerceFiscalCode(),
-                                        nodoOperations
-                                                .generateRandomStringToIdempotencyKey()
-                                ),
-                                new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
-                                null,
-                                paymentNotice.creditorReferenceId()
-                        )
-                )
-                .doOnNext(p -> log.info("PaymentRequestInfo cache miss for {}", p.id().value()));
-    }
+                .switchIfEmpty(
+                        Mono.defer(() -> {
+                            LogTracingUtils.loggerTracingUtils()
+                                    .success()
+                                    .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                    .attributes(
+                                            Map.of(
+                                                    LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                    List.of(rptId.value()).toString()
+                                            )
+                                    )
+                                    .logInfo(log, "PaymentRequestInfo cache miss");
 
-    private boolean isValidPaymentToken(String paymentToken) {
-        return paymentToken != null && !paymentToken.isBlank();
+                            return Mono.just(
+                                    new PaymentRequestInfo(
+                                            rptId,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            new IdempotencyKey(
+                                                    nodoOperations
+                                                            .getEcommerceFiscalCode(),
+                                                    nodoOperations
+                                                            .generateRandomStringToIdempotencyKey()
+                                            ),
+                                            new ArrayList<>(TRANSFER_LIST_MAX_SIZE),
+                                            null,
+                                            paymentNotice.creditorReferenceId()
+                                    )
+                            );
+                        }
+                        )
+                );
     }
 
     private boolean isValidIdempotencyKey(IdempotencyKey idempotencyKey) {
@@ -403,6 +458,18 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
         );
 
         return transactionActivatedEvent.flatMap(transactionEventActivatedStoreRepository::insert)
+                .doOnSuccess(
+                        e -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .details(
+                                        Map.of(
+                                                "event_name",
+                                                e.getEventCode()
+                                        )
+                                )
+                                .logInfo(log, "Saved domain event")
+                )
                 .flatMap(
                         e -> tracingUtils.traceMono(
                                 this.getClass().getSimpleName(),
@@ -411,19 +478,41 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         Duration.ofSeconds(paymentTokenTimeout),
                                         Duration.ofSeconds(transientQueuesTTLSeconds)
                                 )
-                        ).doOnError(
-                                exception -> log.error(
-                                        "Error to generate event TRANSACTION_ACTIVATED_EVENT for transactionId {} - error {}",
-                                        transactionId.value(),
-                                        exception.getMessage()
-                                )
                         )
-                                .doOnNext(
-                                        event -> log.info(
-                                                "Generated event TRANSACTION_ACTIVATED_EVENT for transactionId {}",
-                                                transactionId.value()
-                                        )
-                                ).thenReturn(e)
+                                .doOnSuccess(
+                                        event -> LogTracingUtils.loggerTracingUtils()
+                                                .success()
+                                                .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                .details(
+                                                        Map.of(
+                                                                "send_reason",
+                                                                "New transaction activation event",
+                                                                "visibility_timeout",
+                                                                Duration.ofSeconds(paymentTokenTimeout).toString(),
+                                                                "ttl",
+                                                                Duration.ofSeconds(transientQueuesTTLSeconds).toString()
+                                                        )
+                                                )
+                                                .logInfo(log, "Event successfully sent to queue")
+                                )
+                                .doOnError(
+                                        exception -> LogTracingUtils.loggerTracingUtils()
+                                                .failure()
+                                                .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                .attributes(
+                                                        Map.of(
+                                                                LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                TransactionEventCode.TRANSACTION_ACTIVATED_EVENT
+                                                                        .toString()
+                                                        )
+                                                )
+                                                .logError(
+                                                        log,
+                                                        exception,
+                                                        "Error sending transaction activation event"
+                                                )
+                                )
+                                .thenReturn(e)
 
                 );
     }
@@ -436,7 +525,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                         paymentRequestInfo.description(),
                         paymentRequestInfo.amount(),
                         null,
-                        paymentRequestInfo.transferList().stream().map(
+                        CollectionUtils.emptyIfNull(paymentRequestInfo.transferList()).stream().map(
                                 transfer -> new PaymentTransferInformation(
                                         transfer.paFiscalCode(),
                                         transfer.digitalStamp(),
@@ -444,7 +533,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                         transfer.transferCategory()
                                 )
                         ).toList(),
-                        paymentRequestInfo.isAllCCP(),
+                        Boolean.TRUE.equals(paymentRequestInfo.isAllCCP()),
                         paymentRequestInfo.paName(),
                         paymentRequestInfo.creditorReferenceId()
                 )

@@ -10,6 +10,7 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRequest
 import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
@@ -32,10 +33,7 @@ import reactor.util.function.Tuples;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -126,7 +124,29 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
     ) {
         return Mono.justOrEmpty(authorizationData.contextualOnboardDetails())
                 .filter(t -> authorizationData.isWalletPaymentWithContextualOnboarding())
-                .doOnNext(ignored -> log.info("Contextual Onboard Authorization"))
+                .doOnNext(
+                        details -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .details(
+                                        Map.of(
+                                                "session_id",
+                                                authorizationData.sessionId().orElseThrow()
+                                        )
+                                )
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CORRELATION_ID,
+                                                correlationId,
+                                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                authorizationData.transactionId().value(),
+                                                LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID,
+                                                details.orderId(),
+                                                LogTracingUtils.AttributeKeys.CTX_USER_ID,
+                                                userId.toString()
+                                        )
+                                )
+                                .logInfo(log, "Contextual Onboard Authorization")
+                )
                 .map(details -> Tuples.of(details.orderId(), authorizationData.sessionId().orElseThrow()))
                 .switchIfEmpty(
                         paymentGatewayClient
@@ -238,11 +258,17 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                     String returnUrl = orderIdAndFieldsDto.getT2().getUrl();
                     boolean isReturnUrlValued = returnUrl != null && !returnUrl.isEmpty();
                     if (!isReturnUrlValued) {
-                        log.error(
-                                "NPG order/build APM response error: return url is not valid: [{}]. The payment was performed using wallet: [{}]",
-                                returnUrl,
-                                isWalletPayment
-                        );
+                        LogTracingUtils.loggerTracingUtils()
+                                .failure()
+                                .details(
+                                        Map.of(
+                                                "return_url",
+                                                Objects.toString(returnUrl),
+                                                "is_wallet_payment",
+                                                String.valueOf(isWalletPayment)
+                                        )
+                                )
+                                .logError(log, "Invalid NPG order/build APM response.returnUrl");
                     }
                     return isReturnUrlValued;
                 })
@@ -308,7 +334,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                     Optional<String> confirmPaymentSessionId = Optional
                                             .ofNullable(npgResponse.getFieldSet())
                                             .map(FieldsDto::getSessionId);
-                                    log.info("NGP auth completed session id: {}", confirmPaymentSessionId);
                                     Mono<String> authUrl = switch (npgResponse.getState()) {
                                         case GDI_VERIFICATION -> {
                                             if (npgResponse.getFieldSet() == null
@@ -478,6 +503,25 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
                                                                                String correlationId
     ) {
         return paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId)
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.NPG_DEPENDENCY)
+                                .details(
+                                        Map.of(
+                                                "payment_session_id",
+                                                Optional.ofNullable(v.getFieldSet()).map(FieldsDto::getSessionId)
+                                                        .orElse("{paymentSessionId-not-found}")
+                                        )
+                                )
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CORRELATION_ID,
+                                                correlationId
+                                        )
+                                )
+                                .logInfo(log, "Card authorization requested")
+                )
                 .map(npgStateResponse -> {
                     if (npgStateResponse.getState() == null) {
                         return Either.left(
@@ -502,14 +546,6 @@ public abstract class TransactionRequestAuthorizationHandlerCommon
         } else {
             logo = asset;
         }
-        log.debug(
-                "Payment method with payment type code: [{}], brand: [{}]. Received asset: [{}], brandAssets: [{}] mapped to logo -> [{}]",
-                paymentTypeCode,
-                brand,
-                asset,
-                brandAssets,
-                logo
-        );
         return URI.create(logo);
     }
 

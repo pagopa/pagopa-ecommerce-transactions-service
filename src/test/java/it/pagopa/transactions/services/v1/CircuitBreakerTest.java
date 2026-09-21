@@ -6,7 +6,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
-import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
@@ -79,7 +78,7 @@ class CircuitBreakerTest {
 
     private static final Map<String, Exception> exceptionMapper = Stream.of(
             new UnsatisfiablePspRequestException(
-                    new PaymentToken(""),
+                    new TransactionId(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID),
                     RequestAuthorizationRequestDto.LanguageEnum.IT,
                     0
             ),
@@ -337,7 +336,10 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.addUserReceipt("", new AddUserReceiptRequestDto())
+                        transactionsService.addUserReceipt(
+                                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                                new AddUserReceiptRequestDto()
+                        )
                 )
                 .expectError(thrownException.getClass())
                 .verify();
@@ -362,7 +364,10 @@ class CircuitBreakerTest {
 
         StepVerifier
                 .create(
-                        transactionsService.addUserReceipt("", new AddUserReceiptRequestDto())
+                        transactionsService.addUserReceipt(
+                                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
+                                new AddUserReceiptRequestDto()
+                        )
                 )
                 .expectError(InvalidStatusException.class)
                 .verify();

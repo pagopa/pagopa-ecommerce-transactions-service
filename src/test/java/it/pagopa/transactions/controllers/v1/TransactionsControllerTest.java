@@ -149,15 +149,6 @@ class TransactionsControllerTest {
                     )
                     .thenReturn(Mono.just(response));
 
-            Mockito.when(mockExchange.getRequest())
-                    .thenReturn(mockRequest);
-
-            Mockito.when(mockExchange.getRequest().getMethod())
-                    .thenReturn(HttpMethod.POST);
-
-            Mockito.when(mockExchange.getRequest().getURI())
-                    .thenReturn(URI.create("https://localhost/transactions"));
-
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
                     .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), mockExchange).block();
 
@@ -187,15 +178,6 @@ class TransactionsControllerTest {
         Mockito.lenient().when(transactionsService.getTransactionInfo(transactionId, null))
                 .thenReturn(Mono.just(response));
 
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.GET);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
-
         ResponseEntity<TransactionInfoDto> responseEntity = transactionsController
                 .getTransactionInfo(transactionId, null, mockExchange).block();
 
@@ -214,15 +196,6 @@ class TransactionsControllerTest {
         Mockito.lenient().when(transactionsService.cancelTransaction(transactionId, null))
                 .thenReturn(Mono.empty());
 
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.DELETE);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
-
         ResponseEntity<Void> responseEntity = transactionsController
                 .requestTransactionUserCancellation(transactionId, null, mockExchange).block();
 
@@ -240,15 +213,6 @@ class TransactionsControllerTest {
         /* preconditions */
         Mockito.when(transactionsService.cancelTransaction(transactionId, null))
                 .thenReturn(Mono.error(new TransactionNotFoundException(transactionId)));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.DELETE);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId)));
 
         /* test */
 
@@ -352,7 +316,7 @@ class TransactionsControllerTest {
                                         .title("Transaction not found")
                                         .status(404)
                                         .detail(
-                                                "Transaction for payment token '%s' not found".formatted(transactionId)
+                                                "Transaction with id '%s' not found".formatted(transactionId)
                                         ),
                                 p
                         )
@@ -398,7 +362,6 @@ class TransactionsControllerTest {
 
     @Test
     void testUnsatisfiablePspRequestExceptionHandler() {
-        final PaymentToken PAYMENT_TOKEN = new PaymentToken("aaa");
         final RequestAuthorizationRequestDto.LanguageEnum language = RequestAuthorizationRequestDto.LanguageEnum.IT;
         final int requestedFee = 10;
 
@@ -410,7 +373,7 @@ class TransactionsControllerTest {
                 HttpStatus.CONFLICT
         );
         UnsatisfiablePspRequestException exception = new UnsatisfiablePspRequestException(
-                PAYMENT_TOKEN,
+                new TransactionId(TransactionTestUtils.TRANSACTION_ID),
                 language,
                 requestedFee
         );
@@ -503,19 +466,8 @@ class TransactionsControllerTest {
                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK);
 
         /* preconditions */
-        Mockito.when(transactionsService.addUserReceipt(transactionId, addUserReceiptRequest))
+        Mockito.when(transactionsService.addUserReceipt(new TransactionId(transactionId), addUserReceiptRequest))
                 .thenReturn(Mono.just(transactionInfo));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.POST);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(String.join("/", "https://localhost/transactions", transactionId, "user-receipts"))
-                );
 
         /* test */
         ResponseEntity<AddUserReceiptResponseDto> response = transactionsController
@@ -1007,7 +959,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityForBadGatewayInSendPaymentResult() {
-        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+        Mockito.when(
+                transactionsService.addUserReceipt(eq(new TransactionId(TransactionTestUtils.TRANSACTION_ID)), any())
+        )
                 .thenReturn(Mono.error(new BadGatewayException("Bad gateway", HttpStatus.BAD_GATEWAY)));
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -1044,7 +998,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnNotFoundInSendPaymentResultForNonExistingTransaction() {
-        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+        Mockito.when(
+                transactionsService.addUserReceipt(eq(new TransactionId(TransactionTestUtils.TRANSACTION_ID)), any())
+        )
                 .thenReturn(Mono.error(new TransactionNotFoundException(UUID.randomUUID().toString())));
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -1080,7 +1036,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityInSendPaymentResultForTransactionAlreadyProcessed() {
-        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+        Mockito.when(
+                transactionsService.addUserReceipt(eq(new TransactionId(TransactionTestUtils.TRANSACTION_ID)), any())
+        )
                 .thenReturn(
                         Mono.error(
                                 new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
@@ -1120,7 +1078,9 @@ class TransactionsControllerTest {
 
     @Test
     void shouldReturnUnprocessableEntityInSendPaymentResultForUncaughtError() {
-        Mockito.when(transactionsService.addUserReceipt(eq(TransactionTestUtils.TRANSACTION_ID), any()))
+        Mockito.when(
+                transactionsService.addUserReceipt(eq(new TransactionId(TransactionTestUtils.TRANSACTION_ID)), any())
+        )
                 .thenReturn(Mono.error(new RuntimeException("Spooky!")));
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
@@ -1274,27 +1234,10 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                transactionsService.addUserReceipt(transactionId, addUserReceiptRequestDto)
         )
                 .thenReturn(Mono.just(transactionInfo));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.POST);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "user-receipts"
-                                )
-                        )
-                );
         Hooks.onOperatorDebug();
         /* test */
 
@@ -1355,27 +1298,10 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                transactionsService.addUserReceipt(transactionId, addUserReceiptRequestDto)
         )
                 .thenReturn(Mono.error(raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.POST);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "user-receipts"
-                                )
-                        )
-                );
 
         /* test */
         StepVerifier.create(
@@ -1453,27 +1379,10 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(
-                transactionsService.addUserReceipt(transactionId.value(), addUserReceiptRequestDto)
+                transactionsService.addUserReceipt(transactionId, addUserReceiptRequestDto)
         )
                 .thenReturn(Mono.error((Throwable) raisedException));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.POST);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(
-                        URI.create(
-                                String.join(
-                                        "/",
-                                        "https://localhost/transactions",
-                                        transactionId.value(),
-                                        "user-receipts"
-                                )
-                        )
-                );
 
         /* test */
         StepVerifier.create(
@@ -1644,15 +1553,6 @@ class TransactionsControllerTest {
 
         Mockito.lenient().when(transactionsService.getTransactionOutcome(eq(transactionId), any()))
                 .thenReturn(Mono.just(response));
-
-        Mockito.when(mockExchange.getRequest())
-                .thenReturn(mockRequest);
-
-        Mockito.when(mockExchange.getRequest().getMethod())
-                .thenReturn(HttpMethod.GET);
-
-        Mockito.when(mockExchange.getRequest().getURI())
-                .thenReturn(URI.create(String.join("/", "https://localhost/transactions", transactionId, "outcomes")));
 
         ResponseEntity<TransactionOutcomeInfoDto> responseEntity = transactionsController
                 .getTransactionOutcomes(transactionId, null, mockExchange).block();
