@@ -4,6 +4,7 @@ import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactio
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.transactions.server.model.OutcomeRedirectGatewayDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -84,21 +86,35 @@ public record UpdateAuthorizationStatusData(
                         .getTransactionAuthorizationRequestData().getAuthorizationRequestId();
                 long timeout = authRequestedData.getTransactionOutcomeTimeoutMillis();
                 if (!pspId.equals(expectedPspId)) {
-                    logger.error(
-                            "Invalid redirect authorization outcome psp id received. Expected: [{}], received: [{}]",
-                            expectedPspId,
-                            pspId
-                    );
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.REDIRECT_DEPENDENCY)
+                            .details(
+                                    Map.of(
+                                            "expected",
+                                            expectedPspId,
+                                            "received",
+                                            pspId
+                                    )
+                            )
+                            .logError(logger, "Invalid redirect authorization outcome psp id received");
                     throw new InvalidRequestException(
                             requestValidationErrorHeader.formatted("psp id mismatch")
                     );
                 }
                 if (!pspTransactionId.equals(expectedPspTransactionId)) {
-                    logger.error(
-                            "Invalid redirect authorization outcome psp transaction id received. Expected: [{}], received: [{}]",
-                            expectedPspTransactionId,
-                            pspTransactionId
-                    );
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.REDIRECT_DEPENDENCY)
+                            .details(
+                                    Map.of(
+                                            "expected",
+                                            expectedPspTransactionId,
+                                            "received",
+                                            pspTransactionId
+                                    )
+                            )
+                            .logError(logger, "Invalid redirect authorization outcome psp transaction id received");
                     throw new InvalidRequestException(
                             requestValidationErrorHeader.formatted("psp transaction id mismatch")
                     );
@@ -107,14 +123,22 @@ public record UpdateAuthorizationStatusData(
                 Instant authCompletedThreshold = authRequestedInstant.plus(Duration.ofMillis(timeout));
                 Instant now = Instant.now();
                 boolean isOnTime = !now.isAfter(authCompletedThreshold);
-                logger.info(
-                        "Redirect authorization outcome received at: [{}]. Authorization requested at: [{}], psp received timeout: [{}] -> is on time: [{}]",
-                        now,
-                        authRequestedInstant,
-                        timeout,
-                        isOnTime
-                );
+
                 if (!isOnTime) {
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.REDIRECT_DEPENDENCY)
+                            .details(
+                                    Map.of(
+                                            "now",
+                                            now.toString(),
+                                            "auth_requested_at",
+                                            authRequestedInstant.toString(),
+                                            "psp_timeout_threshold",
+                                            authCompletedThreshold.toString()
+                                    )
+                            )
+                            .logError(logger, "Redirect authorization outcome received after timeout");
 
                     throw new InvalidRequestException(
                             requestValidationErrorHeader

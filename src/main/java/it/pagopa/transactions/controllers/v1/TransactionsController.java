@@ -1020,7 +1020,6 @@ public class TransactionsController implements TransactionsApi {
     public void postNewTransactionWarmupMethod() {
         IntStream.range(0, 3).forEach(
                 idx -> {
-                    log.info("Performing warmup iteration: {}", idx);
                     NewTransactionResponseDto newTransactionResponseDto = WebClient
                             .create()
                             .post()
