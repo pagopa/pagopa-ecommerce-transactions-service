@@ -314,7 +314,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                                             .details(
                                                                                     Map.of(
                                                                                             "send_reason",
-                                                                                            "New transaction authorization event",
+                                                                                            "New add user receipt event",
                                                                                             "visibility_timeout",
                                                                                             Duration.ZERO.toString(),
                                                                                             "ttl",

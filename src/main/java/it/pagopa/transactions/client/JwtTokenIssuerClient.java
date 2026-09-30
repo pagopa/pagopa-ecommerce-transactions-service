@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -47,6 +48,16 @@ public class JwtTokenIssuerClient {
                         ignored -> LogTracingUtils.loggerTracingUtils()
                                 .success()
                                 .dependency(LogTracingUtils.JWT_ISSUER_DEPENDENCY)
+                                .details(
+                                        Map.of(
+                                                "requested_audience",
+                                                createTokenRequestDto.getAudience(),
+                                                "requested_duration",
+                                                createTokenRequestDto.getDuration().toString(),
+                                                "requested_private_claims",
+                                                Objects.toString(createTokenRequestDto.getPrivateClaims())
+                                        )
+                                )
                                 .logInfo(log, "JWT Token created")
                 )
                 .onErrorMap(

@@ -53,6 +53,16 @@ public class EcommercePaymentMethodsClient {
                         v -> LogTracingUtils.loggerTracingUtils()
                                 .dependency(LogTracingUtils.PAYMENT_METHODS_SERVICE_DEPENDENCY)
                                 .success()
+                                .details(
+                                        Map.of(
+                                                "psp_ids",
+                                                Objects.toString(calculateFeeRequestDto.getIdPspList()),
+                                                "is_all_ccp",
+                                                Objects.toString(calculateFeeRequestDto.getIsAllCCP()),
+                                                "touchpoint",
+                                                calculateFeeRequestDto.getTouchpoint()
+                                        )
+                                )
                                 .logInfo(log, "Retrieved calculated fees")
                 )
                 .doOnError(
