@@ -186,21 +186,28 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         );
                         List<BaseTransactionEvent<?>> events = (List<BaseTransactionEvent<?>>) command.getEvents();
                         events.addLast(transactionClosureSyntheticEvent);
-                        return closureSyntheticEventRepository.insert(transactionClosureSyntheticEvent).then(
-                                transactionsUtils
-                                        .reduceV2Events(
-                                                events
-                                        )
-                        );
+                        return closureSyntheticEventRepository.insert(transactionClosureSyntheticEvent)
+                                .doOnNext(
+                                        v -> LogTracingUtils.loggerTracingUtils()
+                                                .success()
+                                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                                .attributes(
+                                                        Map.of(
+                                                                LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                v.getEventCode()
+                                                        )
+                                                )
+                                                .logInfo(log, "Saved domain event")
+                                )
+                                .then(
+                                        transactionsUtils
+                                                .reduceV2Events(
+                                                        events
+                                                )
+                                );
                     }
                     return Mono.just(t);
                 })
-                .doOnNext(
-                        v -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
-                                .logInfo(log, "Writing transaction closure synthetic event for transaction")
-                )
                 .cast(it.pagopa.ecommerce.commons.domain.v2.TransactionClosed.class)
                 .filterWhen(tx -> {
                     Set<String> eCommercePaymentTokens = tx.getPaymentNotices().stream()

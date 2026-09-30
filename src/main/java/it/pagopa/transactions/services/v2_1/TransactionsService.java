@@ -6,7 +6,6 @@ import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.Confidential;
 import it.pagopa.ecommerce.commons.domain.v2.*;
-import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -21,8 +20,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -94,17 +91,6 @@ public class TransactionsService {
         );
 
         return transactionActivateHandlerV2.handle(transactionActivateCommand)
-                .doOnNext(
-                        args -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .attributes(
-                                        Map.of(
-                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
-                                                newTransactionRequestDto.getPaymentNotices().getFirst().getRptId()
-                                        )
-                                )
-                                .logInfo(log, "Transaction initialized")
-                )
                 .flatMap(
                         es -> {
                             final Mono<BaseTransactionEvent<?>> transactionActivatedEvent = es

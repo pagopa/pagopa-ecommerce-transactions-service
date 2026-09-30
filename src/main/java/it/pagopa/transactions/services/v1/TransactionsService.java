@@ -645,11 +645,6 @@ public class TransactionsService {
                         authResponse -> invalidatePaymentRequestCache(transaction)
                                 .collectList()
                                 .thenReturn(authResponse)
-                )
-                .doOnNext(
-                        res -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "Requested authorization successfully")
                 );
     }
 
@@ -1475,13 +1470,13 @@ public class TransactionsService {
                                                    AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
+                .collectList()
                 .doOnNext(
                         v -> LogTracingUtils.loggerTracingUtils()
                                 .success()
                                 .dependency(LogTracingUtils.MONGO_DEPENDENCY)
                                 .logInfo(log, "Transaction events retrieved")
                 )
-                .collectList()
                 .filter(Predicate.not(List::isEmpty))
                 .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId.value())))
                 .flatMap(
