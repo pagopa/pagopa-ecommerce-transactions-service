@@ -1,6 +1,7 @@
 package it.pagopa.transactions.projections.handlers.v2;
 
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.projections.handlers.ProjectionHandler;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -38,6 +40,13 @@ public class ClosureRequestedProjectionHandler implements
             return Mono.empty();
         }
         return transactionsViewRepository.findById(transactionClosureRequestedEvent.getTransactionId())
+                .doOnNext(
+                        tx -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .success()
+                                .logInfo(log, "Transaction retrieved")
+
+                )
                 .cast(it.pagopa.ecommerce.commons.documents.v2.Transaction.class)
                 .switchIfEmpty(
                         Mono.error(
@@ -63,7 +72,14 @@ public class ClosureRequestedProjectionHandler implements
                 ZonedDateTime.parse(transactionClosureRequestedEvent.getCreationDate()).toInstant()
                         .toEpochMilli()
         );
-        return transactionsViewRepository.save(transactionDocument);
+        return transactionsViewRepository.save(transactionDocument)
+                .doOnNext(
+                        tx -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                .success()
+                                .logInfo(log, "Transaction updated")
+
+                );
 
     }
 

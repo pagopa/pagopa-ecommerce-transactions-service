@@ -2,6 +2,7 @@ package it.pagopa.transactions.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentRequestV2Dto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ClosePaymentResponseDto;
 import it.pagopa.generated.ecommerce.nodo.v2.dto.ErrorDto;
@@ -23,6 +24,10 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import jakarta.xml.bind.JAXBElement;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -62,12 +67,6 @@ public class NodeForPspClient {
                                                                          JAXBElement<ActivatePaymentNoticeV2Request> request,
                                                                          String transactionId
     ) {
-        log.info(
-                "ActivatePaymentNoticeV2 init for noticeNumber [{}]; idPSP: [{}], IdemPK: [{}]",
-                request.getValue().getQrCode().getNoticeNumber(),
-                request.getValue().getIdPSP(),
-                request.getValue().getIdempotencyKey()
-        );
         return nodoWebClient.post()
                 .uri(nodoPerPspUri)
                 .header("Content-Type", MediaType.TEXT_XML_VALUE)
@@ -90,33 +89,52 @@ public class NodeForPspClient {
                 )
                 .bodyToMono(ActivatePaymentNoticeV2Response.class)
                 .doOnSuccess(
-                        activateResponse -> log.info(
-                                "ActivatePaymentNoticeV2 completed for noticeNumber [{}], paymentToken [{}]",
-                                request.getValue().getQrCode().getNoticeNumber(),
-                                activateResponse.getPaymentToken()
-
-                        )
+                        activateResponse -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                                List.of(Objects.toString(activateResponse.getPaymentToken()))
+                                                        .toString(),
+                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                List.of(
+                                                        "%s%s".formatted(
+                                                                request.getValue().getQrCode().getFiscalCode(),
+                                                                request.getValue().getQrCode().getNoticeNumber()
+                                                        )
+                                                ).toString()
+                                        )
+                                )
+                                .logInfo(log, "ActivatePaymentNoticeV2 completed")
                 )
                 .onErrorMap(
                         ResponseStatusException.class,
                         error -> {
-                            log.error("ActivatePaymentNoticeV2 ResponseStatus Error:", error);
+                            LogTracingUtils.loggerTracingUtils()
+                                    .failure()
+                                    .attributes(
+                                            Map.of(
+                                                    LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
+                                                    List.of(
+                                                            "%s%s".formatted(
+                                                                    request.getValue().getQrCode().getFiscalCode(),
+                                                                    request.getValue().getQrCode().getNoticeNumber()
+                                                            )
+                                                    ).toString()
+                                            )
+                                    )
+                                    .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                    .logError(log, error, "ActivatePaymentNoticeV2 ResponseStatusException");
                             return new BadGatewayException(
-                                    error.getReason(),
+                                    Objects.toString(error.getReason()),
                                     HttpStatus.valueOf(error.getStatusCode().value())
                             );
                         }
-                )
-                .doOnError(Exception.class, error -> log.error("ActivatePaymentNoticeV2 Generic Error:", error));
+                );
     }
 
     public Mono<ClosePaymentResponseDto> closePaymentV2(ClosePaymentRequestV2Dto request) {
-        log.info(
-                "ClosePaymentV2 init for transactionId [{}]: paymentTokens [{}] - outcome: [{}]",
-                request.getTransactionId(),
-                request.getPaymentTokens(),
-                request.getOutcome().getValue()
-        );
         return nodoWebClient.post()
                 .uri(
                         uriBuilder -> uriBuilder.path(nodoPerPmUri)
@@ -143,23 +161,37 @@ public class NodeForPspClient {
                 )
                 .bodyToMono(ClosePaymentResponseDto.class)
                 .doOnSuccess(
-                        closePaymentResponse -> log
-                                .info(
-                                        "ClosePaymentV2 completed for transactionId [{}]: paymentTokens {} - outcome: {}",
-                                        request.getTransactionId(),
-                                        request.getPaymentTokens(),
-                                        closePaymentResponse.getOutcome()
+                        closePaymentResponse -> LogTracingUtils.loggerTracingUtils()
+                                .success()
+                                .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                .details(
+                                        Map.of("outcome", closePaymentResponse.getOutcome().getValue())
                                 )
+                                .attributes(
+                                        Map.of(
+                                                LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                request.getTransactionId(),
+                                                LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                                request.getPaymentTokens().toString()
+                                        )
+                                )
+                                .logInfo(log, "ClosePaymentV2 completed")
                 )
                 .onErrorMap(
                         ResponseStatusException.class,
                         error -> {
-
-                            log.error(
-                                    "ClosePaymentV2 Response Status Error for transactionId [{}]: {}",
-                                    request.getTransactionId(),
-                                    error
-                            );
+                            LogTracingUtils.loggerTracingUtils()
+                                    .failure()
+                                    .dependency(LogTracingUtils.NODO_DEPENDENCY)
+                                    .attributes(
+                                            Map.of(
+                                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                    request.getTransactionId(),
+                                                    LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                                    request.getPaymentTokens().toString()
+                                            )
+                                    )
+                                    .logError(log, error, "ClosePaymentV2 Response Status Error");
 
                             try {
 
@@ -176,7 +208,6 @@ public class NodeForPspClient {
                             }
 
                         }
-                )
-                .doOnError(Exception.class, error -> log.error("ClosePaymentV2 Generic Error:", error));
+                );
     }
 }

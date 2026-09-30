@@ -2,7 +2,9 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Map;
 
 @Component(TransactionUserCancelHandler.QUALIFIER_NAME)
 @Slf4j
@@ -54,6 +57,34 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                     t.getTransactionId().value()
                             );
                             return transactionEventUserCancelStoreRepository.insert(userCanceledEvent)
+                                    .doOnNext(
+                                            v -> LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .dependency(LogTracingUtils.MONGO_DEPENDENCY)
+                                                    .attributes(
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                    v.getEventCode()
+                                                            )
+                                                    )
+                                                    .logInfo(log, "Saved domain event")
+                                    )
+                                    .doOnError(
+                                            exception -> LogTracingUtils.loggerTracingUtils()
+                                                    .failure()
+                                                    .attributes(
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT
+                                                                            .toString()
+                                                            )
+                                                    )
+                                                    .logError(
+                                                            log,
+                                                            exception,
+                                                            "Error when saving domain event"
+                                                    )
+                                    )
                                     .flatMap(
                                             event -> tracingUtils.traceMono(
                                                     this.getClass().getSimpleName(),
@@ -65,20 +96,29 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
                                                             )
                                             )
                                     )
-                                    .thenReturn(userCanceledEvent)
-                                    .doOnError(
-                                            exception -> log.error(
-                                                    "Error to generate event TRANSACTION_USER_CANCELED_EVENT for transactionId {} - error {}",
-                                                    userCanceledEvent.getTransactionId(),
-                                                    exception.getMessage()
-                                            )
-                                    )
                                     .doOnNext(
-                                            event -> log.info(
-                                                    "Generated event TRANSACTION_USER_CANCELED_EVENT for transactionId {}",
-                                                    event.getTransactionId()
-                                            )
-                                    );
+                                            v -> LogTracingUtils.loggerTracingUtils()
+                                                    .success()
+                                                    .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                    .logInfo(log, "Published domain event")
+                                    )
+                                    .doOnError(
+                                            exception -> LogTracingUtils.loggerTracingUtils()
+                                                    .failure()
+                                                    .attributes(
+                                                            Map.of(
+                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                    TransactionEventCode.TRANSACTION_USER_CANCELED_EVENT
+                                                                            .toString()
+                                                            )
+                                                    )
+                                                    .logError(
+                                                            log,
+                                                            exception,
+                                                            "Error sending transaction user cancelled event"
+                                                    )
+                                    )
+                                    .thenReturn(userCanceledEvent);
                         }
                 );
 

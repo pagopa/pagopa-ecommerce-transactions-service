@@ -2,6 +2,7 @@ package it.pagopa.transactions.client;
 
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
@@ -11,10 +12,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Map;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -41,6 +42,12 @@ public class EcommercePaymentMethodsHandlerClient {
                 : Transaction.ClientId.fromString(xClientId);
 
         return ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(paymentMethodId, client.name())
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_HANDLER_DEPENDENCY)
+                                .success()
+                                .logInfo(log, "Retrieved payment method")
+                )
                 .doOnError(
                         WebClientResponseException.class,
                         EcommercePaymentMethodsHandlerClient::logWebClientException
@@ -282,10 +289,17 @@ public class EcommercePaymentMethodsHandlerClient {
     }
 
     private static void logWebClientException(WebClientResponseException e) {
-        log.info(
-                "Got bad response from payment-methods-handler [HTTP {}]: {}",
-                e.getStatusCode(),
-                e.getResponseBodyAsString()
-        );
+        LogTracingUtils.loggerTracingUtils()
+                .dependency(LogTracingUtils.PAYMENT_METHODS_HANDLER_DEPENDENCY)
+                .failure()
+                .details(
+                        Map.of(
+                                "status_code",
+                                Objects.toString(e.getStatusCode()),
+                                "response_body",
+                                e.getResponseBodyAsString()
+                        )
+                )
+                .logError(log, e, "Got bad response from payment-methods-handler");
     }
 }

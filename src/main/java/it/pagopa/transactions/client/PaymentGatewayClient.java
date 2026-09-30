@@ -15,8 +15,8 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRespons
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
-import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.ecommerce.commons.utils.RedirectUrlMappingConf;
 import it.pagopa.ecommerce.commons.utils.bean.redirect.configuration.RedirectUrlMappingCriteria;
@@ -176,7 +176,7 @@ public class PaymentGatewayClient {
                             Either<NpgApiKeyConfigurationException, String> buildApiKey = isApmPayment
                                     ? npgApiKeyConfiguration.getApiKeyForPaymentMethod(
                                             NpgClient.PaymentMethod
-                                                    .valueOf(authorizationData.paymentMethodName()),
+                                                    .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                             authorizationData.pspId()
                                     )
                                     : Either.right(npgApiKeyConfiguration.getDefaultApiKey());
@@ -193,7 +193,7 @@ public class PaymentGatewayClient {
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .valueOf(authorizationData.paymentMethodName()),
+                                                            .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                                     apiKey,
                                                     isWalletPayment ? authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -201,7 +201,7 @@ public class PaymentGatewayClient {
                                                             )
                                                     ) : null,
                                                     authorizationData.paymentNotices().stream()
-                                                            .mapToInt(
+                                                            .mapToLong(
                                                                     paymentNotice -> paymentNotice.transactionAmount()
                                                                             .value()
                                                             ).sum()
@@ -218,7 +218,7 @@ public class PaymentGatewayClient {
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .valueOf(authorizationData.paymentMethodName()),
+                                                            .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                                     apiKey,
                                                     authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -237,11 +237,6 @@ public class PaymentGatewayClient {
                                 .getStatusCode()
                                 .map(statusCode -> {
                                     List<String> errorCodes = exception.getErrors();
-                                    log.error(
-                                            "KO performing NPG buildForm: HTTP status code: [%s], errorCodes: %s"
-                                                    .formatted(statusCode, errorCodes),
-                                            exception
-                                    );
                                     if (errorCodes.stream()
                                             .anyMatch(npgAuthorizationRetryExcludedErrorCodes::contains)) {
                                         return new NpgNotRetryableErrorException(
@@ -288,13 +283,22 @@ public class PaymentGatewayClient {
                             boolean isOk = sessionIdValid && securityTokenValid && Objects
                                     .equals(fields.getState(), expectedResponseState);
                             if (!isOk) {
-                                log.error(
-                                        "NPG order/build response error! Received state: [{}], expected state: [{}]. Session id is valid: [{}], security token is valid: [{}]",
-                                        receivedState,
-                                        expectedResponseState,
-                                        sessionIdValid,
-                                        securityTokenValid
-                                );
+                                LogTracingUtils.loggerTracingUtils()
+                                        .success()
+                                        .dependency(LogTracingUtils.NPG_DEPENDENCY)
+                                        .details(
+                                                Map.of(
+                                                        "received_state",
+                                                        Objects.toString(receivedState),
+                                                        "expected_response_state",
+                                                        Objects.toString(expectedResponseState),
+                                                        "session_id_valid",
+                                                        String.valueOf(sessionIdValid),
+                                                        "security_token_valid",
+                                                        String.valueOf(securityTokenValid)
+                                                )
+                                        )
+                                        .logError(log, "Received not valid NPG order/build response!");
                             }
                             return isOk;
                         }
@@ -367,7 +371,7 @@ public class PaymentGatewayClient {
 
     private BigDecimal calculateGrandTotal(AuthorizationRequestData data) {
         long totalAmount = data.paymentNotices().stream()
-                .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value())
+                .mapToLong(paymentNotice -> paymentNotice.transactionAmount().value())
                 .sum();
         return BigDecimal.valueOf(totalAmount + data.fee());
     }
@@ -380,12 +384,6 @@ public class PaymentGatewayClient {
         return exception.getStatusCode()
                 .map(statusCode -> {
                     List<String> errorCodes = exception.getErrors();
-                    log.error(
-                            "KO performing NPG confirmPayment: HTTP status code: [{}], errorCodes: {}",
-                            statusCode,
-                            errorCodes,
-                            exception
-                    );
                     if (errorCodes.stream().anyMatch(npgAuthorizationRetryExcludedErrorCodes::contains)) {
                         return new NpgNotRetryableErrorException(
                                 "Npg received error codes: " + errorCodes + ", retry excluded error codes: "
@@ -497,7 +495,7 @@ public class PaymentGatewayClient {
                                             authorizationData
                                                     .paymentNotices()
                                                     .stream()
-                                                    .mapToInt(
+                                                    .mapToLong(
                                                             p -> p.transactionAmount().value()
                                                     )
                                                     .sum()
@@ -551,7 +549,28 @@ public class PaymentGatewayClient {
                                                     proxyPspUrl.url(),
                                                     authorizationData.transactionId().value(),
                                                     RedirectUrlResponseDto.class
-                                            ).onErrorMap(
+                                            )
+                                            .doOnSuccess(
+                                                    response -> LogTracingUtils.loggerTracingUtils()
+                                                            .success()
+                                                            .dependency(LogTracingUtils.REDIRECT_DEPENDENCY)
+                                                            .details(
+                                                                    Map.of(
+                                                                            "authorization_data",
+                                                                            authorizationData.toString()
+                                                                    )
+                                                            )
+                                                            .attributes(
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.PSP_ID,
+                                                                            authorizationData.pspId(),
+                                                                            LogTracingUtils.AttributeKeys.CTX_CLIENT_ID,
+                                                                            touchpoint.name()
+                                                                    )
+                                                            )
+                                                            .logInfo(log, "Requested redirect url")
+                                            )
+                                            .onErrorMap(
                                                     NodeForwarderClientException.class,
                                                     exception -> {
                                                         String pspId = authorizationData.pspId();
@@ -562,14 +581,6 @@ public class PaymentGatewayClient {
                                                                         e -> ((WebClientResponseException) e)
                                                                                 .getStatusCode()
                                                                 );
-                                                        log.error(
-                                                                "Error communicating with PSP: [%s] to retrieve redirection URL. Received HTTP status code: %s"
-                                                                        .formatted(
-                                                                                pspId,
-                                                                                responseHttpStatus
-                                                                        ),
-                                                                exception
-                                                        );
                                                         if (responseHttpStatus.isPresent()) {
                                                             HttpStatus httpStatus = HttpStatus
                                                                     .valueOf(responseHttpStatus.get().value());

@@ -28,6 +28,7 @@ import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
+import it.pagopa.transactions.exceptions.DigitalStampNotAllowedForClientException;
 import it.pagopa.transactions.exceptions.InvalidNodoResponseException;
 import it.pagopa.transactions.projections.TransactionsProjection;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -67,6 +68,8 @@ class TransactionActivateHandlerTest {
 
     private final TransactionsEventStoreRepository<TransactionActivatedData> transactionEventActivatedStoreRepository = Mockito
             .mock(TransactionsEventStoreRepository.class);
+
+    private static final Long MOCK_AMOUNT = 1200L;
 
     private final NodoOperations nodoOperations = Mockito.mock(NodoOperations.class);
 
@@ -146,7 +149,7 @@ class TransactionActivateHandlerTest {
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
         requestDto.setOrderId(ORDER_ID);
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -329,7 +332,7 @@ class TransactionActivateHandlerTest {
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -479,7 +482,7 @@ class TransactionActivateHandlerTest {
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail(EMAIL_STRING);
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -599,7 +602,7 @@ class TransactionActivateHandlerTest {
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
         paymentNoticeInfoDto.setRptId(rptId.value());
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         requestDto.setEmail("jhon.doe@email.com");
 
@@ -688,7 +691,7 @@ class TransactionActivateHandlerTest {
                 new NewTransactionResponseDto()
                         .addPaymentsItem(
                                 new PaymentInfoDto()
-                                        .amount(1)
+                                        .amount(MOCK_AMOUNT)
                                         .rptId(TEST_RPTID)
                                         .paymentToken(TEST_TOKEN)
                                         .reason("")
@@ -701,7 +704,7 @@ class TransactionActivateHandlerTest {
                 new NewTransactionResponseDto()
                         .addPaymentsItem(
                                 new PaymentInfoDto()
-                                        .amount(1)
+                                        .amount(MOCK_AMOUNT)
                                         .rptId(TEST_RPTID)
                                         .paymentToken(TEST_TOKEN)
                                         .reason("")
@@ -725,14 +728,14 @@ class TransactionActivateHandlerTest {
         String paName = "paName";
         String paTaxcode = "77777777777";
         String description = "Description";
-        Integer amount = 1000;
+
         TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         NewTransactionRequestDto requestDto = new NewTransactionRequestDto();
         PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto();
         requestDto.addPaymentNoticesItem(paymentNoticeInfoDto);
         paymentNoticeInfoDto.setRptId(rptId.value());
         requestDto.setEmail("jhon.doe@email.com");
-        paymentNoticeInfoDto.setAmount(1200);
+        paymentNoticeInfoDto.setAmount(MOCK_AMOUNT);
         TransactionActivateCommand command = new TransactionActivateCommand(
                 List.of(rptId),
                 new NewTransactionRequestData(
@@ -764,12 +767,12 @@ class TransactionActivateHandlerTest {
                 paTaxcode,
                 paName,
                 description,
-                amount,
+                MOCK_AMOUNT,
                 dueDate,
                 null,
                 null,
                 idempotencyKey,
-                List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, amount, null)),
+                List.of(new PaymentTransferInfo(rptId.value().substring(0, 11), false, MOCK_AMOUNT, null)),
                 false,
                 null
         );
@@ -1290,12 +1293,208 @@ class TransactionActivateHandlerTest {
     }
 
     @Test
+    void shouldRejectDigitalStampPaymentForNonEcFrontendClient() {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+        PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
+        RptId rptId = new RptId(paymentNotice.getRptId());
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(paymentNotice.getAmount());
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(paymentNoticeInfoDto)
+                .email(EMAIL_STRING);
+
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                List.of(rptId),
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
+                        null,
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false,
+                                        null,
+                                        null
+                                )
+                        ).toList()
+                ),
+                Transaction.ClientId.IO.name(),
+                transactionId,
+                userId
+        );
+
+        // Nodo returns a notice carrying a digital stamp transfer (digitalStamp ==
+        // true)
+        PaymentRequestInfo paymentRequestInfoActivation = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                paymentNotice.getDescription(),
+                paymentNotice.getAmount(),
+                dueDate,
+                paymentNotice.getPaymentToken(),
+                ZonedDateTime.now().toString(),
+                idempotencyKey,
+                List.of(
+                        new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null),
+                        new PaymentTransferInfo(rptId.getFiscalCode(), true, paymentNotice.getAmount(), null)
+                ),
+                false,
+                null
+        );
+
+        /* preconditions */
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.save(any()))
+                .thenReturn(Mono.just(true));
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
+        )
+                .thenReturn(Mono.just(paymentRequestInfoActivation));
+        Mockito.when(nodoOperations.getEcommerceFiscalCode()).thenReturn("77700000000");
+        Mockito.when(nodoOperations.generateRandomStringToIdempotencyKey()).thenReturn("aabbccddee");
+
+        /* run test */
+        StepVerifier.create(handler.handle(command))
+                .expectError(DigitalStampNotAllowedForClientException.class)
+                .verify();
+
+        /* asserts: rejection happens before token generation and event enqueue */
+        Mockito.verify(jwtTokenIssuerClient, Mockito.never()).createJWTToken(any());
+        Mockito.verify(transactionActivatedQueueAsyncClient, Mockito.never())
+                .sendMessageWithResponse(any(QueueEvent.class), any(), any());
+    }
+
+    @Test
+    void shouldAllowDigitalStampPaymentForCheckoutCartClient() {
+        assertDigitalStampPaymentAllowedForClient(Transaction.ClientId.CHECKOUT_CART.name());
+    }
+
+    @Test
+    void shouldAllowDigitalStampPaymentForWispRedirectClient() {
+        assertDigitalStampPaymentAllowedForClient(Transaction.ClientId.WISP_REDIRECT.name());
+    }
+
+    private void assertDigitalStampPaymentAllowedForClient(String clientId) {
+        TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
+        PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
+        TransactionId transactionId = new TransactionId(TRANSACTION_ID);
+        RptId rptId = new RptId(paymentNotice.getRptId());
+        IdempotencyKey idempotencyKey = new IdempotencyKey("32009090901", "aabbccddee");
+        String paName = "paName";
+        String paTaxcode = rptId.getFiscalCode();
+
+        PaymentNoticeInfoDto paymentNoticeInfoDto = new PaymentNoticeInfoDto()
+                .rptId(rptId.value())
+                .amount(paymentNotice.getAmount());
+
+        NewTransactionRequestDto requestDto = new NewTransactionRequestDto()
+                .addPaymentNoticesItem(paymentNoticeInfoDto)
+                .email(EMAIL_STRING);
+
+        TransactionActivateCommand command = new TransactionActivateCommand(
+                List.of(rptId),
+                new NewTransactionRequestData(
+                        requestDto.getIdCart(),
+                        confidentialDataManager.encrypt(new Email(requestDto.getEmail())),
+                        null,
+                        null,
+                        requestDto.getPaymentNotices().stream().map(
+                                el -> new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
+                                        null,
+                                        new RptId(el.getRptId()),
+                                        new TransactionAmount(el.getAmount()),
+                                        null,
+                                        null,
+                                        null,
+                                        false,
+                                        null,
+                                        null
+                                )
+                        ).toList()
+                ),
+                clientId,
+                transactionId,
+                userId
+        );
+
+        // Nodo returns a notice carrying a digital stamp transfer (digitalStamp ==
+        // true)
+        PaymentRequestInfo paymentRequestInfoActivation = new PaymentRequestInfo(
+                rptId,
+                paTaxcode,
+                paName,
+                paymentNotice.getDescription(),
+                paymentNotice.getAmount(),
+                dueDate,
+                paymentNotice.getPaymentToken(),
+                ZonedDateTime.now().toString(),
+                idempotencyKey,
+                List.of(
+                        new PaymentTransferInfo(rptId.getFiscalCode(), false, paymentNotice.getAmount(), null),
+                        new PaymentTransferInfo(rptId.getFiscalCode(), true, paymentNotice.getAmount(), null)
+                ),
+                false,
+                null
+        );
+
+        /* preconditions */
+        Mockito.when(
+                jwtTokenIssuerClient.createJWTToken(
+                        any(CreateTokenRequestDto.class)
+                )
+        ).thenReturn(Mono.just(new CreateTokenResponseDto().token("TEST_TOKEN")));
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.findById(rptId.value()))
+                .thenReturn(Mono.empty());
+        Mockito.when(paymentRequestInfoRedisTemplateWrapper.save(any()))
+                .thenReturn(Mono.just(true));
+        Mockito.when(
+                nodoOperations.activatePaymentRequest(any(), any(), any(), any(), any(), any(), eq(null), any())
+        )
+                .thenReturn(Mono.just(paymentRequestInfoActivation));
+        Mockito.when(nodoOperations.getEcommerceFiscalCode()).thenReturn("77700000000");
+        Mockito.when(nodoOperations.generateRandomStringToIdempotencyKey()).thenReturn("aabbccddee");
+        Mockito.when(
+                transactionActivatedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+
+        /* run test */
+        Tuple2<Mono<BaseTransactionEvent<?>>, String> response = handler
+                .handle(command).block();
+
+        /* asserts: digital stamp is accepted for EC frontend clients */
+        assertNotNull(response);
+        TransactionActivatedEvent event = (TransactionActivatedEvent) response.getT1().block();
+        assertNotNull(event.getTransactionId());
+        assertNotNull(event.getEventCode());
+    }
+
+    @Test
     void shouldHandleCommandForInvalidIdempotencyKeyCachedPaymentRequest() {
         TransactionActivatedEvent transactionActivatedEvent = transactionActivateEvent();
         PaymentNotice paymentNotice = transactionActivatedEvent.getData().getPaymentNotices().get(0);
         TransactionId transactionId = new TransactionId(TRANSACTION_ID);
         RptId rptId = new RptId(paymentNotice.getRptId());
-        Integer amount = paymentNotice.getAmount();
+        Long amount = paymentNotice.getAmount();
         String paName = "paName";
         String paTaxcode = rptId.getFiscalCode();
         String ecommerceFiscalCode = "77700000000";

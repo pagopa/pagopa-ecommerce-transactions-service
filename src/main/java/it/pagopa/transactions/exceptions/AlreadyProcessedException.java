@@ -2,6 +2,7 @@ package it.pagopa.transactions.exceptions;
 
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
+import lombok.Builder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -9,6 +10,7 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
+@Builder
 @ResponseStatus(value = HttpStatus.CONFLICT)
 public class AlreadyProcessedException extends Exception implements TransactionContext {
     @NotNull
@@ -23,6 +25,8 @@ public class AlreadyProcessedException extends Exception implements TransactionC
     private final Boolean walletPayment;
     @Nullable
     private final UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult;
+    @Nullable
+    private final String transactionStatus;
 
     public AlreadyProcessedException(TransactionId transactionId) {
         this.transactionId = transactionId;
@@ -31,6 +35,7 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         this.clientId = null;
         this.walletPayment = null;
         this.gatewayOutcomeResult = null;
+        this.transactionStatus = null;
     }
 
     public AlreadyProcessedException(
@@ -41,12 +46,33 @@ public class AlreadyProcessedException extends Exception implements TransactionC
             Boolean walletPayment,
             UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult
     ) {
+        this(
+                transactionId,
+                pspId,
+                paymentTypeCode,
+                clientId,
+                walletPayment,
+                gatewayOutcomeResult,
+                null
+        );
+    }
+
+    public AlreadyProcessedException(
+            TransactionId transactionId,
+            String pspId,
+            String paymentTypeCode,
+            String clientId,
+            Boolean walletPayment,
+            UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult,
+            String transactionStatus
+    ) {
         this.transactionId = transactionId;
         this.pspId = pspId;
         this.paymentTypeCode = paymentTypeCode;
         this.clientId = clientId;
         this.walletPayment = walletPayment;
         this.gatewayOutcomeResult = gatewayOutcomeResult;
+        this.transactionStatus = transactionStatus;
     }
 
     @Override
@@ -77,5 +103,9 @@ public class AlreadyProcessedException extends Exception implements TransactionC
     @Override
     public Optional<UpdateTransactionStatusTracerUtils.GatewayOutcomeResult> gatewayOutcomeResult() {
         return Optional.ofNullable(gatewayOutcomeResult);
+    }
+
+    public Optional<String> transactionStatus() {
+        return Optional.ofNullable(transactionStatus);
     }
 }
