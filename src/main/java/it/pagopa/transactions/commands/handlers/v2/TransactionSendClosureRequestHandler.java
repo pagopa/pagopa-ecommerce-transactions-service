@@ -128,7 +128,7 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
                                                         .details(
                                                                 Map.of(
                                                                         "send_reason",
-                                                                        "New transaction authorization event",
+                                                                        "New transaction closure request event",
                                                                         "visibility_timeout",
                                                                         closureRequestedEventData.visibilityTimeout()
                                                                                 .toString(),

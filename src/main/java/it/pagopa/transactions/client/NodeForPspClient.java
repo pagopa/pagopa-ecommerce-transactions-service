@@ -88,26 +88,6 @@ public class NodeForPspClient {
                                 )
                 )
                 .bodyToMono(ActivatePaymentNoticeV2Response.class)
-                .doOnSuccess(
-                        activateResponse -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                                .attributes(
-                                        Map.of(
-                                                LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
-                                                List.of(Objects.toString(activateResponse.getPaymentToken()))
-                                                        .toString(),
-                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
-                                                List.of(
-                                                        "%s%s".formatted(
-                                                                request.getValue().getQrCode().getFiscalCode(),
-                                                                request.getValue().getQrCode().getNoticeNumber()
-                                                        )
-                                                ).toString()
-                                        )
-                                )
-                                .logInfo(log, "ActivatePaymentNoticeV2 completed")
-                )
                 .onErrorMap(
                         ResponseStatusException.class,
                         error -> {

@@ -156,7 +156,7 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                     p -> reactivePaymentRequestInfoRedisTemplateWrapper
                                                                             .save(p)
                                                                             .doOnNext(
-                                                                                    deleted -> LogTracingUtils
+                                                                                    created -> LogTracingUtils
                                                                                             .loggerTracingUtils()
                                                                                             .success()
                                                                                             .dependency(
@@ -164,8 +164,8 @@ public class TransactionActivateHandler extends TransactionActivateHandlerCommon
                                                                                             )
                                                                                             .details(
                                                                                                     Map.of(
-                                                                                                            "deleted",
-                                                                                                            deleted.toString()
+                                                                                                            "created",
+                                                                                                            created.toString()
                                                                                                     )
                                                                                             )
                                                                                             .attributes(
