@@ -26,20 +26,22 @@ public class CircuitBreakerConfig {
         return new RegistryEventConsumer<CircuitBreaker>() {
             @Override
             public void onEntryAddedEvent(EntryAddedEvent<CircuitBreaker> entryAddedEvent) {
-                entryAddedEvent.getAddedEntry().getEventPublisher().onEvent(
-                        event -> LogTracingUtils.loggerTracingUtils()
-                                .details(
-                                        Map.of(
-                                                "name",
-                                                event.getCircuitBreakerName(),
-                                                CREATION_TIME_KEY,
-                                                Objects.toString(event.getCreationTime()),
-                                                EVENT_TYPE_KEY,
-                                                Objects.toString(event.getEventType())
-                                        )
-                                )
-                                .logInfo(log, "CircuitBreaker event added")
-                );
+                if (log.isDebugEnabled()) {
+                    entryAddedEvent.getAddedEntry().getEventPublisher().onEvent(
+                            event -> LogTracingUtils.loggerTracingUtils()
+                                    .details(
+                                            Map.of(
+                                                    "name",
+                                                    event.getCircuitBreakerName(),
+                                                    CREATION_TIME_KEY,
+                                                    Objects.toString(event.getCreationTime()),
+                                                    EVENT_TYPE_KEY,
+                                                    Objects.toString(event.getEventType())
+                                            )
+                                    )
+                                    .logDebug(log, "CircuitBreaker event added")
+                    );
+                }
             }
 
             @Override
