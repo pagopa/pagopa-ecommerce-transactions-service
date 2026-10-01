@@ -50,11 +50,11 @@ public class JwtTokenIssuerClient {
                                 .dependency(LogTracingUtils.JWT_ISSUER_DEPENDENCY)
                                 .details(
                                         Map.of(
-                                                "requested_audience",
+                                                "audience",
                                                 createTokenRequestDto.getAudience(),
-                                                "requested_duration",
+                                                "duration",
                                                 createTokenRequestDto.getDuration().toString(),
-                                                "requested_private_claims",
+                                                "private_claims",
                                                 Objects.toString(createTokenRequestDto.getPrivateClaims())
                                         )
                                 )
