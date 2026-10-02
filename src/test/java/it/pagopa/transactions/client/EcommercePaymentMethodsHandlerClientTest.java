@@ -753,10 +753,10 @@ class EcommercePaymentMethodsHandlerClientTest {
         /* preconditions */
         when(
                 ecommercePaymentMethodsHandlerWebClientV1.updateSession(
-                        eq(paymentMethodId),
-                        eq(orderId),
-                        eq(clientId),
-                        eq(new PatchSessionRequestDto().transactionId(transactionId))
+                        paymentMethodId,
+                        orderId,
+                        clientId,
+                        new PatchSessionRequestDto().transactionId(transactionId)
                 )
         ).thenReturn(Mono.empty());
 
@@ -779,10 +779,10 @@ class EcommercePaymentMethodsHandlerClientTest {
         /* preconditions */
         when(
                 ecommercePaymentMethodsHandlerWebClientV1.updateSession(
-                        eq(paymentMethodId),
-                        eq(orderId),
-                        eq(clientId),
-                        eq(new PatchSessionRequestDto().transactionId(transactionId))
+                        paymentMethodId,
+                        orderId,
+                        clientId,
+                        new PatchSessionRequestDto().transactionId(transactionId)
                 )
         ).thenReturn(
                 Mono.error(

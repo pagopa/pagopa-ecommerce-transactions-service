@@ -845,7 +845,7 @@ class TransactionServiceTests {
                 Mono.just(calculateFeeResponseDto)
         );
 
-        Mockito.when(
+        when(
                 ecommercePaymentMethodsHandlerClient
                         .getPaymentMethod(eq(authorizationRequest.getPaymentInstrumentId()), any())
         )

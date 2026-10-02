@@ -485,10 +485,10 @@ class TransactionRequestAuthorizationHandlerTest {
         // the payment-methods-handler must be used, not the legacy payment-methods
         // client
         verify(paymentMethodsHandlerClient, times(1)).updateSession(
-                eq(authorizationData.paymentInstrumentId()),
-                eq(orderId),
-                eq(transactionId.value()),
-                eq(it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT.name())
+                authorizationData.paymentInstrumentId(),
+                orderId,
+                transactionId.value(),
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT.name()
         );
         verify(paymentMethodsClient, times(0)).updateSession(any(), any(), any());
     }

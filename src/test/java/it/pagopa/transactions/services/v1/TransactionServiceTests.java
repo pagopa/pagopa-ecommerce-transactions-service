@@ -588,10 +588,10 @@ class TransactionServiceTests {
                 "Error while invoke method retrieve card data"
         );
 
-        Mockito.when(ecommercePaymentMethodsHandlerClient.retrieveCardData(any(), any(), any()))
+        when(ecommercePaymentMethodsHandlerClient.retrieveCardData(any(), any(), any()))
                 .thenReturn(Mono.error(exception));
 
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+        when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
                 .thenReturn(Flux.just(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionActivateEvent()));
 
         /* test */
@@ -611,7 +611,7 @@ class TransactionServiceTests {
 
         // verify the handler (and not the legacy client) was used to retrieve card data
         verify(ecommercePaymentMethodsHandlerClient, times(1))
-                .retrieveCardData(eq("paymentInstrumentId"), eq("orderId"), eq("CHECKOUT"));
+                .retrieveCardData("paymentInstrumentId", "orderId", "CHECKOUT");
         verify(ecommercePaymentMethodsClient, times(0)).retrieveCardData(any(), any());
     }
 
@@ -638,10 +638,10 @@ class TransactionServiceTests {
                 "Error while invoke method retrieve card data"
         );
 
-        Mockito.when(ecommercePaymentMethodsClient.retrieveCardData(any(), any()))
+        when(ecommercePaymentMethodsClient.retrieveCardData(any(), any()))
                 .thenReturn(Mono.error(exception));
 
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+        when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
                 .thenReturn(Flux.just(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionActivateEvent()));
 
         /* test */
@@ -661,14 +661,14 @@ class TransactionServiceTests {
 
         // verify the legacy client (and not the handler) was used to retrieve card data
         verify(ecommercePaymentMethodsClient, times(1))
-                .retrieveCardData(eq("paymentInstrumentId"), eq("orderId"));
+                .retrieveCardData("paymentInstrumentId", "orderId");
         verify(ecommercePaymentMethodsHandlerClient, times(0)).retrieveCardData(any(), any(), any());
     }
 
     @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
         String transactionId = UUID.randomUUID().toString();
-        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+        when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
                 .thenReturn(Flux.empty());
         StepVerifier.create(transactionsServiceV1.cancelTransaction(transactionId, null))
                 .expectError(TransactionNotFoundException.class).verify();
