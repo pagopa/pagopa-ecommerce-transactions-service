@@ -25,6 +25,7 @@ import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsHandlerClient;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -102,6 +103,9 @@ class TransactionRequestAuthorizationHandlerTest {
     private EcommercePaymentMethodsClient paymentMethodsClient;
 
     @Mock
+    private EcommercePaymentMethodsHandlerClient paymentMethodsHandlerClient;
+
+    @Mock
     private TransactionTemplateWrapper transactionTemplateWrapper;
 
     @Captor
@@ -145,6 +149,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 CHECKOUT_NPG_GDI_PATH,
                 CHECKOUT_OUTCOME_PATH,
                 paymentMethodsClient,
+                paymentMethodsHandlerClient,
+                false,
                 transactionTemplateWrapper,
                 transactionAuthorizationRequestedQueueAsyncClient,
                 transientQueueEventsTtlSeconds,
