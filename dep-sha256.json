@@ -309,11 +309,11 @@
       "sha256": "T-tKHPs6GEvPXxmeIJk13plEsYto0MD0PmBqrJ3lH78="
     },
     {
-      "id": "it.pagopa:pagopa-ecommerce-commons:jar:3.11.2",
+      "id": "it.pagopa:pagopa-ecommerce-commons:jar:3.11.5",
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
-      "version": "3.11.2",
-      "sha256": "F04KEoMclPAUnWx8pGxjRbIJaRolBko3l5_LFX-k0nw="
+      "version": "3.11.5",
+      "sha256": "zXphyiR_c1_2AaKxf4CmQ1CuJVN0MwUvagYRHFglFJI="
     },
     {
       "id": "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.18.3",
@@ -1688,11 +1688,11 @@
       "sha256": "deQif7fcX5fD1Gic0cJDn02wvRjOovokLEZWzZPFmao="
     },
     {
-      "id": "it.pagopa:pagopa-ecommerce-commons:test-jar:tests:3.11.2",
+      "id": "it.pagopa:pagopa-ecommerce-commons:test-jar:tests:3.11.5",
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
-      "version": "3.11.2",
-      "sha256": "RS-oM_LZt4Qakzv3gH6cEwtWlTMQ1bWUrVMVUmRqKJc="
+      "version": "3.11.5",
+      "sha256": "B2RGzSkVUnhVi9BhfZ-_IBSG9tW5skxDVI1dzywYbVE="
     },
     {
       "id": "io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.119.Final",
