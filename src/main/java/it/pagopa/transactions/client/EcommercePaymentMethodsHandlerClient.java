@@ -105,8 +105,8 @@ public class EcommercePaymentMethodsHandlerClient {
     /**
      * Associate a transaction ID to an existing NPG session using the
      * payment-methods-handler service. Calls the handler's PATCH
-     * /payment-methods/{id}/sessions/{orderId} endpoint directly, bypassing the
-     * old payment-methods-service.
+     * /payment-methods/{id}/sessions/{orderId} endpoint directly, bypassing the old
+     * payment-methods-service.
      *
      * @param paymentMethodId the payment method ID
      * @param orderId         the NPG session order ID

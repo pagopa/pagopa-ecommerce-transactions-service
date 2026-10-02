@@ -645,7 +645,7 @@ public class TransactionsService {
                         authResponse -> invalidatePaymentRequestCache(transaction)
                                 .collectList()
                                 .thenReturn(authResponse)
-                                );
+                );
     }
 
     /**
