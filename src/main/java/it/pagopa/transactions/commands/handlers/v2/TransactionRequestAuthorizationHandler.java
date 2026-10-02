@@ -27,6 +27,7 @@ import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsHandlerClient;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -68,6 +69,10 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
 
     private final EcommercePaymentMethodsClient paymentMethodsClient;
 
+    private final EcommercePaymentMethodsHandlerClient paymentMethodsHandlerClient;
+
+    private final boolean ecommercePaymentMethodsHandlerEnabled;
+
     protected final TracingUtils tracingUtils;
     protected final OpenTelemetryUtils openTelemetryUtils;
     private final QueueAsyncClient transactionAuthorizationRequestedQueueAsyncClientV2;
@@ -89,6 +94,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             @Value("${checkout.npg.gdi.url}") String checkoutNpgGdiUrl,
             @Value("${checkout.outcome.url}") String checkoutOutcomeUrl,
             EcommercePaymentMethodsClient paymentMethodsClient,
+            EcommercePaymentMethodsHandlerClient paymentMethodsHandlerClient,
+            @Value("${ecommercePaymentMethodsHandler.enabled}") boolean ecommercePaymentMethodsHandlerEnabled,
             TransactionTemplateWrapper transactionTemplateWrapper,
             @Qualifier(
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
@@ -125,6 +132,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.transactionEventStoreRepository = transactionEventStoreRepository;
         this.transactionsUtils = transactionsUtils;
         this.paymentMethodsClient = paymentMethodsClient;
+        this.paymentMethodsHandlerClient = paymentMethodsHandlerClient;
+        this.ecommercePaymentMethodsHandlerEnabled = ecommercePaymentMethodsHandlerEnabled;
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
@@ -200,11 +209,18 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                 .orElse(Mono.empty());
         return transactionActivated
                 .flatMap(t -> switch (command.getData().authDetails()) {
-                    case CardsAuthRequestDetailsDto authRequestDetails -> paymentMethodsClient.updateSession(
-                            command.getData().paymentInstrumentId(),
-                            authRequestDetails.getOrderId(),
-                            command.getData().transactionId().value()
-                    ).thenReturn(t);
+                    case CardsAuthRequestDetailsDto authRequestDetails -> (ecommercePaymentMethodsHandlerEnabled
+                            ? paymentMethodsHandlerClient.updateSession(
+                                    command.getData().paymentInstrumentId(),
+                                    authRequestDetails.getOrderId(),
+                                    command.getData().transactionId().value(),
+                                    t.getClientId().getEffectiveClient().name()
+                            )
+                            : paymentMethodsClient.updateSession(
+                                    command.getData().paymentInstrumentId(),
+                                    authRequestDetails.getOrderId(),
+                                    command.getData().transactionId().value()
+                            )).thenReturn(t);
                     default -> Mono.just(t);
                 })
                 .flatMap(t -> {

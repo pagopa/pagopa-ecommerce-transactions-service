@@ -3,7 +3,9 @@ package it.pagopa.transactions.client;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.*;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
+import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PatchSessionRequestDto;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PaymentMethodResponseDto;
+import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.SessionPaymentMethodResponseDto;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +62,88 @@ public class EcommercePaymentMethodsHandlerClient {
                                 return new InvalidRequestException("Error while invoke method retrieve card data");
                             }
                         }
+                );
+    }
+
+    /**
+     * Retrieve card data for an NPG session using the payment-methods-handler
+     * service. Calls the handler's GET /payment-methods/{id}/sessions/{orderId}
+     * endpoint directly, bypassing the old payment-methods-service.
+     *
+     * @param paymentMethodId the payment method ID
+     * @param orderId         the NPG session order ID
+     * @param xClientId       the client ID (IO, CHECKOUT, CHECKOUT_CART)
+     * @return the session payment method (card) data
+     */
+    public Mono<SessionPaymentMethodResponseDto> retrieveCardData(
+                                                                  String paymentMethodId,
+                                                                  String orderId,
+                                                                  String xClientId
+    ) {
+        // payment methods handler only supports CHECKOUT_CART, CHECKOUT and IO.
+        final var client = Transaction.ClientId.fromString(xClientId) == Transaction.ClientId.WISP_REDIRECT
+                ? Transaction.ClientId.CHECKOUT_CART
+                : Transaction.ClientId.fromString(xClientId);
+
+        return ecommercePaymentMethodsHandlerWebClientV1
+                .getSessionPaymentMethod(paymentMethodId, orderId, client.name())
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_HANDLER_DEPENDENCY)
+                                .success()
+                                .logInfo(log, "Retrieved session payment method")
+                )
+                .doOnError(
+                        WebClientResponseException.class,
+                        EcommercePaymentMethodsHandlerClient::logWebClientException
+                )
+                .onErrorMap(
+                        err -> new InvalidRequestException("Error while invoke method retrieve card data")
+                );
+    }
+
+    /**
+     * Associate a transaction ID to an existing NPG session using the
+     * payment-methods-handler service. Calls the handler's PATCH
+     * /payment-methods/{id}/sessions/{orderId} endpoint directly, bypassing the
+     * old payment-methods-service.
+     *
+     * @param paymentMethodId the payment method ID
+     * @param orderId         the NPG session order ID
+     * @param transactionId   the transaction ID to associate with the session
+     * @param xClientId       the client ID (IO, CHECKOUT, CHECKOUT_CART)
+     * @return a completion signal
+     */
+    public Mono<Void> updateSession(
+                                    String paymentMethodId,
+                                    String orderId,
+                                    String transactionId,
+                                    String xClientId
+    ) {
+        // payment methods handler only supports CHECKOUT_CART, CHECKOUT and IO.
+        final var client = Transaction.ClientId.fromString(xClientId) == Transaction.ClientId.WISP_REDIRECT
+                ? Transaction.ClientId.CHECKOUT_CART
+                : Transaction.ClientId.fromString(xClientId);
+
+        return ecommercePaymentMethodsHandlerWebClientV1
+                .updateSession(
+                        paymentMethodId,
+                        orderId,
+                        client.name(),
+                        new PatchSessionRequestDto().transactionId(transactionId)
+                )
+                .doOnSuccess(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_HANDLER_DEPENDENCY)
+                                .success()
+                                .logInfo(log, "Updated session payment method")
+                )
+                .doOnError(
+                        WebClientResponseException.class,
+                        EcommercePaymentMethodsHandlerClient::logWebClientException
+                )
+                .onErrorMap(
+                        err -> new InvalidRequestException("Error while invoke method update session")
                 );
     }
 
