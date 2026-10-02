@@ -665,6 +665,175 @@ class EcommercePaymentMethodsHandlerClientTest {
     }
 
     @Test
+    void shouldRetrieveCardData() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String clientId = "CHECKOUT";
+
+        SessionPaymentMethodResponseDto response = new SessionPaymentMethodResponseDto()
+                .bin("12345678")
+                .sessionId("sessionId")
+                .brand("VISA")
+                .expiringDate("0226")
+                .lastFourDigits("1234");
+
+        /* preconditions */
+        when(ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(paymentMethodId, orderId, clientId))
+                .thenReturn(Mono.just(response));
+
+        /* test */
+        StepVerifier.create(ecommercePaymentMethodsHandlerClient.retrieveCardData(paymentMethodId, orderId, clientId))
+                .expectNext(response)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldThrowInvalidRequestExceptionOnRetrieveCardDataError() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String clientId = "CHECKOUT";
+
+        /* preconditions */
+        when(ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(paymentMethodId, orderId, clientId))
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        500,
+                                        "Internal Server Error",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
+                        )
+                );
+
+        /* test */
+        StepVerifier.create(ecommercePaymentMethodsHandlerClient.retrieveCardData(paymentMethodId, orderId, clientId))
+                .expectError(InvalidRequestException.class)
+                .verify();
+    }
+
+    @ParameterizedTest
+    @EnumSource(Transaction.ClientId.class)
+    void shouldMapClientIdCorrectlyOnRetrieveCardData(Transaction.ClientId clientId) {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+
+        SessionPaymentMethodResponseDto response = new SessionPaymentMethodResponseDto()
+                .bin("12345678")
+                .sessionId("sessionId")
+                .brand("VISA");
+
+        when(ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(any(), any(), any()))
+                .thenReturn(Mono.just(response));
+
+        /* test */
+        ecommercePaymentMethodsHandlerClient.retrieveCardData(paymentMethodId, orderId, clientId.name()).block();
+
+        /* asserts */
+        final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ecommercePaymentMethodsHandlerWebClientV1)
+                .getSessionPaymentMethod(eq(paymentMethodId), eq(orderId), clientIdCaptor.capture());
+
+        switch (clientId) {
+            case CHECKOUT -> assertEquals("CHECKOUT", clientIdCaptor.getValue());
+            case IO -> assertEquals("IO", clientIdCaptor.getValue());
+            case CHECKOUT_CART, WISP_REDIRECT -> assertEquals("CHECKOUT_CART", clientIdCaptor.getValue());
+        }
+    }
+
+    @Test
+    void shouldUpdateSession() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String transactionId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
+
+        /* preconditions */
+        when(
+                ecommercePaymentMethodsHandlerWebClientV1.updateSession(
+                        eq(paymentMethodId),
+                        eq(orderId),
+                        eq(clientId),
+                        eq(new PatchSessionRequestDto().transactionId(transactionId))
+                )
+        ).thenReturn(Mono.empty());
+
+        /* test */
+        StepVerifier
+                .create(
+                        ecommercePaymentMethodsHandlerClient
+                                .updateSession(paymentMethodId, orderId, transactionId, clientId)
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldThrowInvalidRequestExceptionOnUpdateSessionError() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String transactionId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
+
+        /* preconditions */
+        when(
+                ecommercePaymentMethodsHandlerWebClientV1.updateSession(
+                        eq(paymentMethodId),
+                        eq(orderId),
+                        eq(clientId),
+                        eq(new PatchSessionRequestDto().transactionId(transactionId))
+                )
+        ).thenReturn(
+                Mono.error(
+                        WebClientResponseException.create(
+                                500,
+                                "Internal Server Error",
+                                HttpHeaders.EMPTY,
+                                null,
+                                Charset.defaultCharset(),
+                                null
+                        )
+                )
+        );
+
+        /* test */
+        StepVerifier
+                .create(
+                        ecommercePaymentMethodsHandlerClient
+                                .updateSession(paymentMethodId, orderId, transactionId, clientId)
+                )
+                .expectError(InvalidRequestException.class)
+                .verify();
+    }
+
+    @ParameterizedTest
+    @EnumSource(Transaction.ClientId.class)
+    void shouldMapClientIdCorrectlyOnUpdateSession(Transaction.ClientId clientId) {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String transactionId = UUID.randomUUID().toString();
+
+        when(ecommercePaymentMethodsHandlerWebClientV1.updateSession(any(), any(), any(), any()))
+                .thenReturn(Mono.empty());
+
+        /* test */
+        ecommercePaymentMethodsHandlerClient.updateSession(paymentMethodId, orderId, transactionId, clientId.name())
+                .block();
+
+        /* asserts */
+        final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ecommercePaymentMethodsHandlerWebClientV1)
+                .updateSession(eq(paymentMethodId), eq(orderId), clientIdCaptor.capture(), any());
+
+        switch (clientId) {
+            case CHECKOUT -> assertEquals("CHECKOUT", clientIdCaptor.getValue());
+            case IO -> assertEquals("IO", clientIdCaptor.getValue());
+            case CHECKOUT_CART, WISP_REDIRECT -> assertEquals("CHECKOUT_CART", clientIdCaptor.getValue());
+        }
+    }
+
+    @Test
     void shouldMapPaymentTypeCodeToNpgServiceName() {
         assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("CP")).isEqualTo("CARDS");
         assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("BPAY"))

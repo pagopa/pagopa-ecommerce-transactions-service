@@ -535,6 +535,137 @@ class TransactionServiceTests {
     }
 
     @Test
+    void shouldRetrieveCardDataFromPaymentMethodsHandlerWhenHandlerEnabled() {
+        TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new TransactionsService(
+                transactionActivateHandlerV2,
+                null, // requestAuthHandlerV2,
+                transactionUpdateAuthorizationHandlerV2,
+                null, // transactionSendClosureRequestHandler,
+                null, // transactionRequestUserReceiptHandlerV2,
+                transactionCancelHandlerV2,
+                null, // authorizationProjectionHandlerV2,
+                authorizationUpdateProjectionHandlerV2,
+                closureRequestedProjectionHandler,
+                cancellationRequestProjectionHandlerV2,
+                transactionUserReceiptProjectionHandlerV2,
+                null, // transactionsActivationProjectionHandlerV2,
+                repository,
+                ecommercePaymentMethodsClient,
+                ecommercePaymentMethodsHandlerClient,
+                walletClient,
+                uuidUtils,
+                transactionsUtils,
+                transactionsEventStoreRepository,
+                15, // paymentTokenValidity,
+                null, // reactivePaymentRequestInfoRedisTemplateWrapper,
+                confidentialMailUtils,
+                updateTransactionStatusTracerUtils,
+                new HashMap<>(),
+                new HashSet<>(),
+                new HashSet<>(),
+                true,
+                openTelemetryUtils
+        );
+
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+        transaction.setClientId(Transaction.ClientId.CHECKOUT);
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(transaction.getPaymentNotices().stream().mapToLong(PaymentNotice::getAmount).sum())
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .fee(0)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(new CardsAuthRequestDetailsDto().detailType("cards").orderId("orderId"));
+
+        /* preconditions */
+
+        InvalidRequestException exception = new InvalidRequestException(
+                "Error while invoke method retrieve card data"
+        );
+
+        Mockito.when(ecommercePaymentMethodsHandlerClient.retrieveCardData(any(), any(), any()))
+                .thenReturn(Mono.error(exception));
+
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+                .thenReturn(Flux.just(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionActivateEvent()));
+
+        /* test */
+
+        StepVerifier.create(
+                transactionsServiceV1paymentMethodHandlerEnabled
+                        .requestTransactionAuthorization(
+                                TRANSACTION_ID,
+                                UUID.fromString(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.USER_ID),
+                                null,
+                                null,
+                                authorizationRequest
+                        )
+        )
+                .expectError(InvalidRequestException.class)
+                .verify();
+
+        // verify the handler (and not the legacy client) was used to retrieve card data
+        verify(ecommercePaymentMethodsHandlerClient, times(1))
+                .retrieveCardData(eq("paymentInstrumentId"), eq("orderId"), eq("CHECKOUT"));
+        verify(ecommercePaymentMethodsClient, times(0)).retrieveCardData(any(), any());
+    }
+
+    @Test
+    void shouldRetrieveCardDataFromLegacyClientWhenHandlerDisabled() {
+        Transaction transaction = TransactionTestUtils.transactionDocument(
+                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
+                ZonedDateTime.now()
+        );
+        transaction.setClientId(Transaction.ClientId.CHECKOUT);
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(transaction.getPaymentNotices().stream().mapToLong(PaymentNotice::getAmount).sum())
+                .paymentInstrumentId("paymentInstrumentId")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT)
+                .fee(0)
+                .pspId("PSP_CODE")
+                .isAllCCP(false)
+                .details(new CardsAuthRequestDetailsDto().detailType("cards").orderId("orderId"));
+
+        /* preconditions */
+
+        InvalidRequestException exception = new InvalidRequestException(
+                "Error while invoke method retrieve card data"
+        );
+
+        Mockito.when(ecommercePaymentMethodsClient.retrieveCardData(any(), any()))
+                .thenReturn(Mono.error(exception));
+
+        Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
+                .thenReturn(Flux.just(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.transactionActivateEvent()));
+
+        /* test */
+
+        StepVerifier.create(
+                transactionsServiceV1
+                        .requestTransactionAuthorization(
+                                TRANSACTION_ID,
+                                UUID.fromString(it.pagopa.ecommerce.commons.v2.TransactionTestUtils.USER_ID),
+                                null,
+                                null,
+                                authorizationRequest
+                        )
+        )
+                .expectError(InvalidRequestException.class)
+                .verify();
+
+        // verify the legacy client (and not the handler) was used to retrieve card data
+        verify(ecommercePaymentMethodsClient, times(1))
+                .retrieveCardData(eq("paymentInstrumentId"), eq("orderId"));
+        verify(ecommercePaymentMethodsHandlerClient, times(0)).retrieveCardData(any(), any(), any());
+    }
+
+    @Test
     void shouldExecuteTransactionUserCancelKONotFound() {
         String transactionId = UUID.randomUUID().toString();
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
