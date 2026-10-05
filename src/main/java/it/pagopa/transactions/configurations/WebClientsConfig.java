@@ -246,10 +246,11 @@ public class WebClientsConfig {
                         )
                 ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
-        WebClient webClient = it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient.buildWebClientBuilder()
-                .clientConnector(
-                        new ReactorClientHttpConnector(httpClient)
-                ).baseUrl(ecommercePaymentMethodsHandlerUri).build();
+        WebClient webClient = it.pagopa.generated.ecommerce.paymentmethodshandler.v1.ApiClient
+                .buildWebClientBuilder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .baseUrl(ecommercePaymentMethodsHandlerUri)
+                .build();
 
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.ApiClient(
                 webClient
