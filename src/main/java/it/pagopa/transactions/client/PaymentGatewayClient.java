@@ -581,18 +581,20 @@ public class PaymentGatewayClient {
                                                                         e -> ((WebClientResponseException) e)
                                                                                 .getStatusCode()
                                                                 );
-                                                        // Get the response body as string if available
-                                                        Optional<String> bodyResponseString = Optional
-                                                                .ofNullable(exception.getCause())
-                                                                .filter(WebClientResponseException.class::isInstance)
-                                                                .map(
-                                                                        e -> ((WebClientResponseException) e)
-                                                                                .getResponseBodyAsString()
-                                                                );
                                                         if (responseHttpStatus.isPresent()) {
                                                             HttpStatus httpStatus = HttpStatus
                                                                     .valueOf(responseHttpStatus.get().value());
                                                             if (httpStatus.is4xxClientError()) {
+                                                                // Get the response body as string if available
+                                                                Optional<String> bodyResponseString = Optional
+                                                                        .ofNullable(exception.getCause())
+                                                                        .filter(
+                                                                                WebClientResponseException.class::isInstance
+                                                                        )
+                                                                        .map(
+                                                                                e -> ((WebClientResponseException) e)
+                                                                                        .getResponseBodyAsString()
+                                                                        );
                                                                 return new AlreadyProcessedException(
                                                                         authorizationData.transactionId(),
                                                                         String.valueOf(httpStatus.value()),
