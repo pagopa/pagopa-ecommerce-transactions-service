@@ -176,7 +176,11 @@ public class TransactionsController implements V2Api {
                                 "is_wallet_payment",
                                 exception.walletPayment().orElse(false).toString(),
                                 "transaction_status",
-                                exception.transactionStatus().orElse("{transactionStatus-not-found}")
+                                exception.transactionStatus().orElse("{transactionStatus-not-found}"),
+                                "upstream_http_status",
+                                exception.upstreamHttpStatus().orElse("{httpStatus-not-found}"),
+                                "upstream_http_response_body",
+                                exception.upstreamResponseBody().orElse("{httpResponseBody-not-found}")
                         )
                 )
                 .attributes(

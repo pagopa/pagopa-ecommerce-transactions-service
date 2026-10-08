@@ -581,12 +581,22 @@ public class PaymentGatewayClient {
                                                                         e -> ((WebClientResponseException) e)
                                                                                 .getStatusCode()
                                                                 );
+                                                        // Get the response body as string if available
+                                                        Optional<String> bodyResponseString = Optional
+                                                                .ofNullable(exception.getCause())
+                                                                .filter(WebClientResponseException.class::isInstance)
+                                                                .map(
+                                                                        e -> ((WebClientResponseException) e)
+                                                                                .getResponseBodyAsString()
+                                                                );
                                                         if (responseHttpStatus.isPresent()) {
                                                             HttpStatus httpStatus = HttpStatus
                                                                     .valueOf(responseHttpStatus.get().value());
                                                             if (httpStatus.is4xxClientError()) {
                                                                 return new AlreadyProcessedException(
-                                                                        authorizationData.transactionId()
+                                                                        authorizationData.transactionId(),
+                                                                        String.valueOf(httpStatus.value()),
+                                                                        bodyResponseString.orElse(null)
                                                                 );
                                                             } else if (httpStatus.is5xxServerError()) {
                                                                 return new BadGatewayException(

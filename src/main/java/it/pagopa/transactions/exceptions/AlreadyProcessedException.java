@@ -27,9 +27,31 @@ public class AlreadyProcessedException extends Exception implements TransactionC
     private final UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult;
     @Nullable
     private final String transactionStatus;
+    @Nullable
+    private final String upstreamHttpStatus;
+    @Nullable
+    private final String upstreamResponseBody;
 
     public AlreadyProcessedException(TransactionId transactionId) {
         this.transactionId = transactionId;
+        this.pspId = null;
+        this.paymentTypeCode = null;
+        this.clientId = null;
+        this.walletPayment = null;
+        this.gatewayOutcomeResult = null;
+        this.transactionStatus = null;
+        this.upstreamHttpStatus = null;
+        this.upstreamResponseBody = null;
+    }
+
+    public AlreadyProcessedException(
+            TransactionId transactionId,
+            String upstreamHttpStatus,
+            String upstreamResponseBody
+    ) {
+        this.transactionId = transactionId;
+        this.upstreamHttpStatus = upstreamHttpStatus;
+        this.upstreamResponseBody = upstreamResponseBody;
         this.pspId = null;
         this.paymentTypeCode = null;
         this.clientId = null;
@@ -53,6 +75,8 @@ public class AlreadyProcessedException extends Exception implements TransactionC
                 clientId,
                 walletPayment,
                 gatewayOutcomeResult,
+                null,
+                null,
                 null
         );
     }
@@ -64,7 +88,9 @@ public class AlreadyProcessedException extends Exception implements TransactionC
             String clientId,
             Boolean walletPayment,
             UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult,
-            String transactionStatus
+            String transactionStatus,
+            String upstreamHttpStatus,
+            String upstreamResponseBody
     ) {
         this.transactionId = transactionId;
         this.pspId = pspId;
@@ -73,6 +99,8 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         this.walletPayment = walletPayment;
         this.gatewayOutcomeResult = gatewayOutcomeResult;
         this.transactionStatus = transactionStatus;
+        this.upstreamHttpStatus = upstreamHttpStatus;
+        this.upstreamResponseBody = upstreamResponseBody;
     }
 
     @Override
@@ -107,5 +135,13 @@ public class AlreadyProcessedException extends Exception implements TransactionC
 
     public Optional<String> transactionStatus() {
         return Optional.ofNullable(transactionStatus);
+    }
+
+    public Optional<String> upstreamHttpStatus() {
+        return Optional.ofNullable(upstreamHttpStatus);
+    }
+
+    public Optional<String> upstreamResponseBody() {
+        return Optional.ofNullable(upstreamResponseBody);
     }
 }
