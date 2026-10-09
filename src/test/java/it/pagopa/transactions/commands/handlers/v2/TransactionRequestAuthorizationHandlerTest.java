@@ -1464,7 +1464,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(error -> error instanceof ConflictStatusException)
+                .expectError(ConflictStatusException.class)
                 .verify();
 
         verify(transactionEventStoreRepository, times(0))
