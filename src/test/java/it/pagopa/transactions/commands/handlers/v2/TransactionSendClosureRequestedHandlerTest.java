@@ -18,7 +18,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -175,7 +175,7 @@ class TransactionSendClosureRequestedHandlerTest {
     }
 
     @Test
-    void shouldNotSaveClosureRequestedEventWithErrorAlreadyProcessedException() {
+    void shouldNotSaveClosureRequestedEventWithErrorConflictStatusException() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
 
         NpgTransactionGatewayAuthorizationData authorizationData = new NpgTransactionGatewayAuthorizationData();
@@ -202,7 +202,7 @@ class TransactionSendClosureRequestedHandlerTest {
         );
         /* TEST EXECUTION */
         StepVerifier.create(transactionSendClosureRequestHandler.handle(transactionClosureRequestCommand))
-                .expectError(AlreadyProcessedException.class)
+                .expectError(ConflictStatusException.class)
                 .verify();
 
         verify(transactionEventClosureRequestedRepository, times(0))

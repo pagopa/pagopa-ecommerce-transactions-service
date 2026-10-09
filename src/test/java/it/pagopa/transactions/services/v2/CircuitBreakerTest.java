@@ -78,7 +78,7 @@ class CircuitBreakerTest {
             ),
             new PaymentNoticeAllCCPMismatchException("rptId", true, true),
             new TransactionNotFoundException(""),
-            new AlreadyProcessedException(
+            new ConflictStatusException(
                     new TransactionId(it.pagopa.ecommerce.commons.v1.TransactionTestUtils.TRANSACTION_ID)
             ),
             new NotImplementedException(""),

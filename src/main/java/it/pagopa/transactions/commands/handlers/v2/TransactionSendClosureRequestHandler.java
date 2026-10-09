@@ -13,7 +13,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.transactions.commands.TransactionClosureRequestCommand;
 import it.pagopa.transactions.commands.data.ClosureRequestedEventData;
 import it.pagopa.transactions.commands.handlers.TransactionSendClosureRequestHandlerCommon;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuples;
 
 import java.time.Duration;
 import java.util.Map;
@@ -60,7 +59,7 @@ public class TransactionSendClosureRequestHandler extends TransactionSendClosure
         );
 
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
+                .flatMap(t -> Mono.error(new ConflictStatusException(t.getTransactionId())));
 
         return transaction.filter(
                 t -> Set.of(TransactionStatusDto.AUTHORIZATION_COMPLETED, TransactionStatusDto.CLOSURE_REQUESTED)

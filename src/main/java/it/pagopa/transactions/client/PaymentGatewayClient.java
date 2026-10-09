@@ -27,7 +27,7 @@ import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
@@ -585,8 +585,20 @@ public class PaymentGatewayClient {
                                                             HttpStatus httpStatus = HttpStatus
                                                                     .valueOf(responseHttpStatus.get().value());
                                                             if (httpStatus.is4xxClientError()) {
-                                                                return new AlreadyProcessedException(
-                                                                        authorizationData.transactionId()
+                                                                // Get the response body as string if available
+                                                                Optional<String> bodyResponseString = Optional
+                                                                        .ofNullable(exception.getCause())
+                                                                        .filter(
+                                                                                WebClientResponseException.class::isInstance
+                                                                        )
+                                                                        .map(
+                                                                                e -> ((WebClientResponseException) e)
+                                                                                        .getResponseBodyAsString()
+                                                                        );
+                                                                return new ConflictStatusException(
+                                                                        authorizationData.transactionId(),
+                                                                        String.valueOf(httpStatus.value()),
+                                                                        bodyResponseString.orElse(null)
                                                                 );
                                                             } else if (httpStatus.is5xxServerError()) {
                                                                 return new BadGatewayException(

@@ -26,7 +26,7 @@ import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
@@ -2263,8 +2263,8 @@ class PaymentGatewayClientTest {
 
     private static Stream<Arguments> errorRetrievingRedirectionUrl() {
         return Stream.of(
-                Arguments.of(HttpStatus.BAD_REQUEST, AlreadyProcessedException.class),
-                Arguments.of(HttpStatus.UNAUTHORIZED, AlreadyProcessedException.class),
+                Arguments.of(HttpStatus.BAD_REQUEST, ConflictStatusException.class),
+                Arguments.of(HttpStatus.UNAUTHORIZED, ConflictStatusException.class),
                 Arguments.of(HttpStatus.INTERNAL_SERVER_ERROR, BadGatewayException.class),
                 Arguments.of(HttpStatus.GATEWAY_TIMEOUT, BadGatewayException.class)
         );
