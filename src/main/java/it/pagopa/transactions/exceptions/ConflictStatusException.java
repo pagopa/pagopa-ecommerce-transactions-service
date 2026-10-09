@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Builder
 @ResponseStatus(value = HttpStatus.CONFLICT)
-public class AlreadyProcessedException extends Exception implements TransactionContext {
+public class ConflictStatusException extends Exception implements TransactionContext {
     @NotNull
     private final TransactionId transactionId;
     @Nullable
@@ -28,11 +28,11 @@ public class AlreadyProcessedException extends Exception implements TransactionC
     @Nullable
     private final String transactionStatus;
     @Nullable
-    private final String upstreamHttpStatus;
+    private final String downstreamHttpStatus;
     @Nullable
-    private final String upstreamResponseBody;
+    private final String downstreamResponseBody;
 
-    public AlreadyProcessedException(TransactionId transactionId) {
+    public ConflictStatusException(TransactionId transactionId) {
         this.transactionId = transactionId;
         this.pspId = null;
         this.paymentTypeCode = null;
@@ -40,18 +40,18 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         this.walletPayment = null;
         this.gatewayOutcomeResult = null;
         this.transactionStatus = null;
-        this.upstreamHttpStatus = null;
-        this.upstreamResponseBody = null;
+        this.downstreamHttpStatus = null;
+        this.downstreamResponseBody = null;
     }
 
-    public AlreadyProcessedException(
+    public ConflictStatusException(
             TransactionId transactionId,
-            String upstreamHttpStatus,
-            String upstreamResponseBody
+            String downstreamHttpStatus,
+            String downstreamResponseBody
     ) {
         this.transactionId = transactionId;
-        this.upstreamHttpStatus = upstreamHttpStatus;
-        this.upstreamResponseBody = upstreamResponseBody;
+        this.downstreamHttpStatus = downstreamHttpStatus;
+        this.downstreamResponseBody = downstreamResponseBody;
         this.pspId = null;
         this.paymentTypeCode = null;
         this.clientId = null;
@@ -60,7 +60,7 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         this.transactionStatus = null;
     }
 
-    public AlreadyProcessedException(
+    public ConflictStatusException(
             TransactionId transactionId,
             String pspId,
             String paymentTypeCode,
@@ -81,7 +81,7 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         );
     }
 
-    public AlreadyProcessedException(
+    public ConflictStatusException(
             TransactionId transactionId,
             String pspId,
             String paymentTypeCode,
@@ -89,8 +89,8 @@ public class AlreadyProcessedException extends Exception implements TransactionC
             Boolean walletPayment,
             UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult,
             String transactionStatus,
-            String upstreamHttpStatus,
-            String upstreamResponseBody
+            String downstreamHttpStatus,
+            String downstreamResponseBody
     ) {
         this.transactionId = transactionId;
         this.pspId = pspId;
@@ -99,8 +99,8 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         this.walletPayment = walletPayment;
         this.gatewayOutcomeResult = gatewayOutcomeResult;
         this.transactionStatus = transactionStatus;
-        this.upstreamHttpStatus = upstreamHttpStatus;
-        this.upstreamResponseBody = upstreamResponseBody;
+        this.downstreamHttpStatus = downstreamHttpStatus;
+        this.downstreamResponseBody = downstreamResponseBody;
     }
 
     @Override
@@ -137,11 +137,11 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         return Optional.ofNullable(transactionStatus);
     }
 
-    public Optional<String> upstreamHttpStatus() {
-        return Optional.ofNullable(upstreamHttpStatus);
+    public Optional<String> downstreamHttpStatus() {
+        return Optional.ofNullable(downstreamHttpStatus);
     }
 
-    public Optional<String> upstreamResponseBody() {
-        return Optional.ofNullable(upstreamResponseBody);
+    public Optional<String> downstreamResponseBody() {
+        return Optional.ofNullable(downstreamResponseBody);
     }
 }

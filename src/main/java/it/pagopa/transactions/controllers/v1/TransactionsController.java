@@ -355,7 +355,7 @@ public class TransactionsController implements TransactionsApi {
      */
     private SendPaymentResultOutcomeInfo exceptionToUpdateSendPaymentResultOutcomeInfo(Throwable throwable) {
         SendPaymentResultOutcomeInfo outcomeInfo = switch (throwable) {
-            case AlreadyProcessedException exception -> new SendPaymentResultOutcomeInfo(
+            case ConflictStatusException exception -> new SendPaymentResultOutcomeInfo(
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
                     Optional.of(exception.getTransactionId()),
                     exception.pspId(),
@@ -497,8 +497,8 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @ExceptionHandler(AlreadyProcessedException.class)
-    public ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
+    @ExceptionHandler(ConflictStatusException.class)
+    public ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(ConflictStatusException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
                 .details(
@@ -509,10 +509,10 @@ public class TransactionsController implements TransactionsApi {
                                 exception.walletPayment().orElse(false).toString(),
                                 "transaction_status",
                                 exception.transactionStatus().orElse("{transactionStatus-not-found}"),
-                                "upstream_http_status",
-                                exception.upstreamHttpStatus().orElse("{httpStatus-not-found}"),
-                                "upstream_http_response_body",
-                                exception.upstreamResponseBody().orElse("{httpResponseBody-not-found}")
+                                "downstream_http_status",
+                                exception.downstreamHttpStatus().orElse("{httpStatus-not-found}"),
+                                "downstream_http_response_body",
+                                exception.downstreamResponseBody().orElse("{httpResponseBody-not-found}")
                         )
                 )
                 .attributes(
@@ -668,7 +668,7 @@ public class TransactionsController implements TransactionsApi {
                     .status(404)
                     .title(TRANSACTION_NOT_FOUND_DESC)
                     .detail(e.getMessage());
-            case AlreadyProcessedException e -> new ProblemJsonDto()
+            case ConflictStatusException e -> new ProblemJsonDto()
                     .status(422)
                     .title("Operation conflict")
                     .detail(e.getMessage());

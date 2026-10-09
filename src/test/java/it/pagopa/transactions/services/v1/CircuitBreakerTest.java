@@ -84,7 +84,7 @@ class CircuitBreakerTest {
             ),
             new PaymentNoticeAllCCPMismatchException("rptId", true, true),
             new TransactionNotFoundException(""),
-            new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID)),
+            new ConflictStatusException(new TransactionId(TransactionTestUtils.TRANSACTION_ID)),
             new NotImplementedException(""),
             new InvalidRequestException(""),
             new TransactionAmountMismatchException(10L, 11L),

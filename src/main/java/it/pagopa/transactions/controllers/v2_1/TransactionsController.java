@@ -100,8 +100,8 @@ public class TransactionsController implements V21Api {
                 .map(ResponseEntity::ok);
     }
 
-    @ExceptionHandler(AlreadyProcessedException.class)
-    ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
+    @ExceptionHandler(ConflictStatusException.class)
+    ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(ConflictStatusException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
                 .details(
@@ -112,10 +112,10 @@ public class TransactionsController implements V21Api {
                                 exception.walletPayment().orElse(false).toString(),
                                 "transaction_status",
                                 exception.transactionStatus().orElse("{transactionStatus-not-found}"),
-                                "upstream_http_status",
-                                exception.upstreamHttpStatus().orElse("{httpStatus-not-found}"),
-                                "upstream_http_response_body",
-                                exception.upstreamResponseBody().orElse("{httpResponseBody-not-found}")
+                                "downstream_http_status",
+                                exception.downstreamHttpStatus().orElse("{httpStatus-not-found}"),
+                                "downstream_http_response_body",
+                                exception.downstreamResponseBody().orElse("{httpResponseBody-not-found}")
                         )
                 )
                 .attributes(
