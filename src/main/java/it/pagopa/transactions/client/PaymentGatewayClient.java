@@ -570,6 +570,10 @@ public class PaymentGatewayClient {
                                                             )
                                                             .logInfo(log, "Requested redirect url")
                                             )
+                                            .doOnError(
+                                                    NodeForwarderClientException.class,
+                                                    PaymentGatewayClient::logNodeForwarderClientException
+                                            )
                                             .onErrorMap(
                                                     NodeForwarderClientException.class,
                                                     exception -> {
@@ -627,6 +631,30 @@ public class PaymentGatewayClient {
                         }
                 );
 
+    }
+
+    private static void logNodeForwarderClientException(NodeForwarderClientException e) {
+        Optional<WebClientResponseException> response = Optional.ofNullable(e.getCause())
+                .filter(WebClientResponseException.class::isInstance)
+                .map(WebClientResponseException.class::cast);
+        String httpStatus = response.map(WebClientResponseException::getStatusCode)
+                .map(String::valueOf)
+                .orElse("{httpStatus-not-found}");
+        String responseBody = response.map(WebClientResponseException::getResponseBodyAsString)
+                .orElse("{httpResponseBody-not-found}");
+
+        LogTracingUtils.loggerTracingUtils()
+                .failure()
+                .dependency(LogTracingUtils.REDIRECT_DEPENDENCY)
+                .details(
+                        Map.of(
+                                "downstream_http_status",
+                                httpStatus,
+                                "downstream_http_response_body",
+                                responseBody
+                        )
+                )
+                .logError(log, e, "Got bad response from redirect-service");
     }
 
     private String shortenRedirectPaName(@Nullable String paName) {
