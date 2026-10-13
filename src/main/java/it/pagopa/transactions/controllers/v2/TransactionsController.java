@@ -239,6 +239,14 @@ public class TransactionsController implements V2Api {
     ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
+                .details(
+                        Map.of(
+                                "downstream_http_status",
+                                exception.downstreamHttpStatus().orElse("{httpStatus-not-found}"),
+                                "downstream_http_response_body",
+                                exception.downstreamResponseBody().orElse("{httpResponseBody-not-found}")
+                        )
+                )
                 .logError(log, exception, BAD_GATEWAY_DESC);
 
         return new ResponseEntity<>(
