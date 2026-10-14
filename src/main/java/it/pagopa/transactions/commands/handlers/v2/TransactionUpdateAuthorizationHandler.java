@@ -17,7 +17,7 @@ import it.pagopa.transactions.client.WalletClient;
 import it.pagopa.transactions.commands.TransactionUpdateAuthorizationCommand;
 import it.pagopa.transactions.commands.handlers.TransactionUpdateAuthorizationHandlerCommon;
 import it.pagopa.transactions.configurations.WalletConfig;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.WalletErrorResponseException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -181,7 +181,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
 
         Mono<BaseTransactionEvent<?>> alreadyProcessedError = transaction.flatMap(tx ->
                 Mono.error(
-                        AlreadyProcessedException.builder()
+                        ConflictStatusException.builder()
                                 .transactionId(transactionId)
                                 .transactionStatus(tx.getStatus().toString())
                                 .build()

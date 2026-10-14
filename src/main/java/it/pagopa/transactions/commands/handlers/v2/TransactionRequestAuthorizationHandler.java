@@ -33,7 +33,7 @@ import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationOutput;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.commands.handlers.TransactionRequestAuthorizationHandlerCommon;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.LockNotAcquiredException;
@@ -46,7 +46,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -57,7 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component("TransactionRequestAuthorizationHandlerV2")
 @Slf4j
@@ -148,7 +146,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         );
         Mono<? extends BaseTransaction> alreadyProcessedError = transaction
                 .cast(BaseTransaction.class)
-                .flatMap(t -> Mono.error(new AlreadyProcessedException(t.getTransactionId())));
+                .flatMap(t -> Mono.error(new ConflictStatusException(t.getTransactionId())));
         Mono<TransactionActivated> transactionActivated = transaction
                 .filter(t -> t.getStatus() == TransactionStatusDto.ACTIVATED)
                 .switchIfEmpty(alreadyProcessedError)

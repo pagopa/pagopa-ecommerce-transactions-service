@@ -8,7 +8,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -23,7 +23,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -37,7 +37,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -51,7 +51,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -68,7 +68,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -83,7 +83,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -97,7 +97,7 @@ resilience4j.retry:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -120,7 +120,7 @@ resilience4j.circuitbreaker:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -132,7 +132,7 @@ resilience4j.circuitbreaker:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
@@ -145,7 +145,7 @@ resilience4j.circuitbreaker:
         - it.pagopa.transactions.exceptions.UnsatisfiablePspRequestException
         - it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException
         - it.pagopa.transactions.exceptions.TransactionNotFoundException
-        - it.pagopa.transactions.exceptions.AlreadyProcessedException
+        - it.pagopa.transactions.exceptions.ConflictStatusException
         - it.pagopa.transactions.exceptions.NotImplementedException
         - it.pagopa.transactions.exceptions.InvalidRequestException
         - it.pagopa.transactions.exceptions.TransactionAmountMismatchException
