@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.http.*;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -154,7 +153,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void testAlreadyProcessedTransactionExceptionHandler() {
+    void testConflictStatusExceptionHandler() {
         final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         ResponseEntity responseCheck = new ResponseEntity<>(
@@ -164,7 +163,7 @@ class TransactionsControllerTest {
                         .detail("Transaction for RPT id '' has been already processed"),
                 HttpStatus.CONFLICT
         );
-        AlreadyProcessedException exception = new AlreadyProcessedException(transactionId);
+        ConflictStatusException exception = new ConflictStatusException(transactionId);
 
         ResponseEntity<ProblemJsonDto> response = transactionsController.alreadyProcessedHandler(exception);
 
