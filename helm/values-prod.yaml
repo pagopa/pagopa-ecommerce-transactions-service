@@ -82,8 +82,8 @@ microservice-chart:
     cooldownPeriod: 30 # seconds
     triggers:
       - type: cpu
+        metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'
         metadata:
-          type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
           value: "70"
     advanced:
       horizontalPodAutoscalerConfig:
