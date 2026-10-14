@@ -163,7 +163,7 @@ components:
       example:
         idTransaction: 3fa85f6457174562b3fc2c963f66afa6
         idPsp: idPsp
-        amount: 99999999
+        amount: 99999999999
         urlBack: https://psp.site/payment
         description: payment description
         idPaymentMethod: RBPIC
@@ -199,9 +199,9 @@ components:
     AmountEuroCents:
       description: Amount for payments, in euro cents
       type: integer
-      format: int32
+      format: int64
       minimum: 0
-      maximum: 99999999
+      maximum: 99999999999
     PagopaIdTransaction:
       description: Uniquely identify a transaction
       type: string

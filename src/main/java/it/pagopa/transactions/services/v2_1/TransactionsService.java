@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -90,19 +89,8 @@ public class TransactionsService {
                 transactionId,
                 userId
         );
-        log.info(
-                "Initializing transaction for rptIds: {}. ClientId: {}",
-                transactionActivateCommand.getRptIds().stream().map(RptId::value).toList(),
-                clientId
-        );
 
         return transactionActivateHandlerV2.handle(transactionActivateCommand)
-                .doOnNext(
-                        args -> log.info(
-                                "Transaction initialized for rptId [{}]",
-                                newTransactionRequestDto.getPaymentNotices().get(0).getRptId()
-                        )
-                )
                 .flatMap(
                         es -> {
                             final Mono<BaseTransactionEvent<?>> transactionActivatedEvent = es
@@ -184,11 +172,11 @@ public class TransactionsService {
                                 return NewTransactionResponseDto.ClientIdEnum
                                         .fromValue(clientId.getEffectiveClient().name());
                             } catch (IllegalArgumentException e) {
-                                log.error("Unknown input origin ", e);
                                 throw new InvalidRequestException("Unknown input origin", e);
                             }
                         }
-                ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
+                )
+                .orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
 }

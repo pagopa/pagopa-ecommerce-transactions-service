@@ -12,7 +12,7 @@ import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.ecommerce.commons.queues.TracingUtilsTests;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -171,7 +171,7 @@ class TransactionUserCancelHandlerTest {
     }
 
     @Test
-    void shouldSaveCancelEventWithErrorAlreadyProcessedException() {
+    void shouldSaveCancelEventWithErrorConflictStatusException() {
         String transactionId = TransactionTestUtils.TRANSACTION_ID;
         TransactionUserCancelCommand transactionUserCancelCommand = new TransactionUserCancelCommand(
                 null,
@@ -193,7 +193,7 @@ class TransactionUserCancelHandlerTest {
 
         /* TEST EXECUTION */
         StepVerifier.create(transactionUserCancelHandler.handle(transactionUserCancelCommand))
-                .expectError(AlreadyProcessedException.class)
+                .expectError(ConflictStatusException.class)
                 .verify();
 
         verify(transactionEventUserCancelStoreRepository, times(0)).save(any());

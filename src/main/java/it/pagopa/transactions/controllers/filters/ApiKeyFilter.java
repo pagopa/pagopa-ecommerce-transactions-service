@@ -1,5 +1,6 @@
 package it.pagopa.transactions.controllers.filters;
 
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,10 +55,15 @@ public class ApiKeyFilter implements WebFilter {
                     .map(validKeys.keySet()::contains)
                     .orElse(false);
             if (!isAuthorized) {
-                log.error(
-                        "Unauthorized request for path: [{}], missing or invalid input [\"x-api-key\"] header",
-                        requestPath
-                );
+                LogTracingUtils.loggerTracingUtils()
+                        .failure()
+                        .details(
+                                Map.of(
+                                        "request_path",
+                                        requestPath
+                                )
+                        )
+                        .logError(log, "Unauthorized request, missing or invalid 'x-api-key' header");
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
@@ -71,7 +77,19 @@ public class ApiKeyFilter implements WebFilter {
                                       String requestPath
     ) {
         ApiKeyType matchedKeyType = requestApiKey.map(validKeys::get).orElse(ApiKeyType.UNKNOWN);
-        log.debug("Matched key: [{}] for path: [{}]", matchedKeyType, requestPath);
+        if (log.isDebugEnabled()) {
+            LogTracingUtils.loggerTracingUtils()
+                    .success()
+                    .details(
+                            Map.of(
+                                    "matched_key",
+                                    matchedKeyType.toString(),
+                                    "request_path",
+                                    requestPath
+                            )
+                    )
+                    .logDebug(log, "ApiKey matched");
+        }
     }
 
     private Optional<String> getRequestApiKey(ServerWebExchange exchange) {

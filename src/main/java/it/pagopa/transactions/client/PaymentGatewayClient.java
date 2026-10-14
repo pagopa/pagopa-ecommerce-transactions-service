@@ -15,16 +15,19 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRespons
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
+import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
-import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
+import it.pagopa.ecommerce.commons.utils.RedirectUrlMappingConf;
+import it.pagopa.ecommerce.commons.utils.bean.redirect.configuration.RedirectUrlMappingCriteria;
+import it.pagopa.ecommerce.commons.utils.bean.redirect.configuration.RedirectUrlMappingEntry;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
@@ -66,7 +69,7 @@ public class PaymentGatewayClient {
     private final int npgJwtKeyValidityTime;
     private final int jwtEcommerceValidityTimeInSeconds;
     private final NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient;
-    private final RedirectKeysConfiguration redirectKeysConfig;
+    private final RedirectUrlMappingConf redirectUrlMappingConfig;
 
     private final Set<String> npgAuthorizationRetryExcludedErrorCodes;
 
@@ -88,7 +91,7 @@ public class PaymentGatewayClient {
             @Value("${npg.notification.jwt.validity.time}") int npgJwtKeyValidityTime,
             @Value("${payment.token.validity}") int jwtEcommerceValidityTimeInSeconds,
             NodeForwarderClient<RedirectUrlRequestDto, RedirectUrlResponseDto> nodeForwarderRedirectApiClient,
-            RedirectKeysConfiguration redirectKeysConfig,
+            RedirectUrlMappingConf redirectUrlMappingConfig,
             NpgApiKeyConfiguration npgApiKeyConfiguration,
             @Value(
                 "${npg.authorization.retry.excluded.error.codes}"
@@ -104,7 +107,7 @@ public class PaymentGatewayClient {
         this.uniqueIdUtils = uniqueIdUtils;
         this.npgJwtKeyValidityTime = npgJwtKeyValidityTime;
         this.nodeForwarderRedirectApiClient = nodeForwarderRedirectApiClient;
-        this.redirectKeysConfig = redirectKeysConfig;
+        this.redirectUrlMappingConfig = redirectUrlMappingConfig;
         this.jwtEcommerceValidityTimeInSeconds = jwtEcommerceValidityTimeInSeconds;
         this.npgApiKeyConfiguration = npgApiKeyConfiguration;
         this.npgAuthorizationRetryExcludedErrorCodes = npgAuthorizationRetryExcludedErrorCodes;
@@ -173,7 +176,7 @@ public class PaymentGatewayClient {
                             Either<NpgApiKeyConfigurationException, String> buildApiKey = isApmPayment
                                     ? npgApiKeyConfiguration.getApiKeyForPaymentMethod(
                                             NpgClient.PaymentMethod
-                                                    .valueOf(authorizationData.paymentMethodName()),
+                                                    .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                             authorizationData.pspId()
                                     )
                                     : Either.right(npgApiKeyConfiguration.getDefaultApiKey());
@@ -190,7 +193,7 @@ public class PaymentGatewayClient {
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .valueOf(authorizationData.paymentMethodName()),
+                                                            .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                                     apiKey,
                                                     isWalletPayment ? authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -198,7 +201,7 @@ public class PaymentGatewayClient {
                                                             )
                                                     ) : null,
                                                     authorizationData.paymentNotices().stream()
-                                                            .mapToInt(
+                                                            .mapToLong(
                                                                     paymentNotice -> paymentNotice.transactionAmount()
                                                                             .value()
                                                             ).sum()
@@ -215,7 +218,7 @@ public class PaymentGatewayClient {
                                                     orderId,
                                                     null,
                                                     NpgClient.PaymentMethod
-                                                            .valueOf(authorizationData.paymentMethodName()),
+                                                            .fromMethodTypeCode(authorizationData.paymentTypeCode()),
                                                     apiKey,
                                                     authorizationData.contractId().orElseThrow(
                                                             () -> new InternalServerErrorException(
@@ -234,11 +237,6 @@ public class PaymentGatewayClient {
                                 .getStatusCode()
                                 .map(statusCode -> {
                                     List<String> errorCodes = exception.getErrors();
-                                    log.error(
-                                            "KO performing NPG buildForm: HTTP status code: [%s], errorCodes: %s"
-                                                    .formatted(statusCode, errorCodes),
-                                            exception
-                                    );
                                     if (errorCodes.stream()
                                             .anyMatch(npgAuthorizationRetryExcludedErrorCodes::contains)) {
                                         return new NpgNotRetryableErrorException(
@@ -285,13 +283,22 @@ public class PaymentGatewayClient {
                             boolean isOk = sessionIdValid && securityTokenValid && Objects
                                     .equals(fields.getState(), expectedResponseState);
                             if (!isOk) {
-                                log.error(
-                                        "NPG order/build response error! Received state: [{}], expected state: [{}]. Session id is valid: [{}], security token is valid: [{}]",
-                                        receivedState,
-                                        expectedResponseState,
-                                        sessionIdValid,
-                                        securityTokenValid
-                                );
+                                LogTracingUtils.loggerTracingUtils()
+                                        .success()
+                                        .dependency(LogTracingUtils.NPG_DEPENDENCY)
+                                        .details(
+                                                Map.of(
+                                                        "received_state",
+                                                        Objects.toString(receivedState),
+                                                        "expected_response_state",
+                                                        Objects.toString(expectedResponseState),
+                                                        "session_id_valid",
+                                                        String.valueOf(sessionIdValid),
+                                                        "security_token_valid",
+                                                        String.valueOf(securityTokenValid)
+                                                )
+                                        )
+                                        .logError(log, "Received not valid NPG order/build response!");
                             }
                             return isOk;
                         }
@@ -364,7 +371,7 @@ public class PaymentGatewayClient {
 
     private BigDecimal calculateGrandTotal(AuthorizationRequestData data) {
         long totalAmount = data.paymentNotices().stream()
-                .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value())
+                .mapToLong(paymentNotice -> paymentNotice.transactionAmount().value())
                 .sum();
         return BigDecimal.valueOf(totalAmount + data.fee());
     }
@@ -377,12 +384,6 @@ public class PaymentGatewayClient {
         return exception.getStatusCode()
                 .map(statusCode -> {
                     List<String> errorCodes = exception.getErrors();
-                    log.error(
-                            "KO performing NPG confirmPayment: HTTP status code: [{}], errorCodes: {}",
-                            statusCode,
-                            errorCodes,
-                            exception
-                    );
                     if (errorCodes.stream().anyMatch(npgAuthorizationRetryExcludedErrorCodes::contains)) {
                         return new NpgNotRetryableErrorException(
                                 "Npg received error codes: " + errorCodes + ", retry excluded error codes: "
@@ -494,7 +495,7 @@ public class PaymentGatewayClient {
                                             authorizationData
                                                     .paymentNotices()
                                                     .stream()
-                                                    .mapToInt(
+                                                    .mapToLong(
                                                             p -> p.transactionAmount().value()
                                                     )
                                                     .sum()
@@ -526,11 +527,18 @@ public class PaymentGatewayClient {
                                     )
                                     .idPaymentMethod(paymentTypeCode)
                                     .paName(shortenRedirectPaName(paName));// optional
-                            Either<RedirectConfigurationException, URI> pspConfiguredUrl = redirectKeysConfig
-                                    .getRedirectUrlForPsp(
-                                            touchpoint.name(),
-                                            authorizationData.pspId(),
-                                            authorizationData.paymentTypeCode()
+                            Either<RedirectConfigurationException, RedirectUrlMappingEntry> pspConfiguredUrl = redirectUrlMappingConfig
+                                    .getRedirectUrlForCriteria(
+                                            Map.of(
+                                                    RedirectUrlMappingCriteria.TOUCHPOINT,
+                                                    touchpoint.name(),
+                                                    RedirectUrlMappingCriteria.PSP_ID,
+                                                    authorizationData.pspId(),
+                                                    RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                                    authorizationData.paymentTypeCode(),
+                                                    RedirectUrlMappingCriteria.PSP_CHANNEL_ID,
+                                                    Objects.toString(authorizationData.pspChannelCode())
+                                            )
                                     );
 
                             return pspConfiguredUrl.fold(
@@ -538,46 +546,68 @@ public class PaymentGatewayClient {
                                     proxyPspUrl -> nodeForwarderRedirectApiClient
                                             .proxyRequest(
                                                     request,
-                                                    proxyPspUrl,
+                                                    proxyPspUrl.url(),
                                                     authorizationData.transactionId().value(),
                                                     RedirectUrlResponseDto.class
-                                            ).onErrorMap(
+                                            )
+                                            .doOnSuccess(
+                                                    response -> LogTracingUtils.loggerTracingUtils()
+                                                            .success()
+                                                            .dependency(LogTracingUtils.REDIRECT_DEPENDENCY)
+                                                            .details(
+                                                                    Map.of(
+                                                                            "authorization_data",
+                                                                            authorizationData.toString()
+                                                                    )
+                                                            )
+                                                            .attributes(
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.PSP_ID,
+                                                                            authorizationData.pspId(),
+                                                                            LogTracingUtils.AttributeKeys.CTX_CLIENT_ID,
+                                                                            touchpoint.name()
+                                                                    )
+                                                            )
+                                                            .logInfo(log, "Requested redirect url")
+                                            )
+                                            .onErrorMap(
                                                     NodeForwarderClientException.class,
                                                     exception -> {
                                                         String pspId = authorizationData.pspId();
-                                                        Optional<HttpStatusCode> responseHttpStatus = Optional
+                                                        Optional<WebClientResponseException> response = Optional
                                                                 .ofNullable(exception.getCause())
                                                                 .filter(WebClientResponseException.class::isInstance)
-                                                                .map(
-                                                                        e -> ((WebClientResponseException) e)
-                                                                                .getStatusCode()
-                                                                );
-                                                        log.error(
-                                                                "Error communicating with PSP: [%s] to retrieve redirection URL. Received HTTP status code: %s"
-                                                                        .formatted(
-                                                                                pspId,
-                                                                                responseHttpStatus
-                                                                        ),
-                                                                exception
-                                                        );
+                                                                .map(WebClientResponseException.class::cast);
+                                                        Optional<HttpStatusCode> responseHttpStatus = response
+                                                                .map(WebClientResponseException::getStatusCode);
                                                         if (responseHttpStatus.isPresent()) {
                                                             HttpStatus httpStatus = HttpStatus
                                                                     .valueOf(responseHttpStatus.get().value());
+                                                            Optional<String> bodyResponseString = response
+                                                                    .map(
+                                                                            WebClientResponseException::getResponseBodyAsString
+                                                                    );
                                                             if (httpStatus.is4xxClientError()) {
-                                                                return new AlreadyProcessedException(
-                                                                        authorizationData.transactionId()
+                                                                return new ConflictStatusException(
+                                                                        authorizationData.transactionId(),
+                                                                        String.valueOf(httpStatus.value()),
+                                                                        bodyResponseString.orElse(null)
                                                                 );
                                                             } else if (httpStatus.is5xxServerError()) {
                                                                 return new BadGatewayException(
                                                                         "KO performing redirection URL api call for PSP: [%s]"
                                                                                 .formatted(pspId),
-                                                                        httpStatus
+                                                                        httpStatus,
+                                                                        String.valueOf(httpStatus.value()),
+                                                                        bodyResponseString.orElse(null)
                                                                 );
                                                             } else {
                                                                 return new BadGatewayException(
                                                                         "Unhandled error performing redirection URL api call for PSP: [%s]"
                                                                                 .formatted(pspId),
-                                                                        null
+                                                                        null,
+                                                                        String.valueOf(httpStatus.value()),
+                                                                        bodyResponseString.orElse(null)
                                                                 );
                                                             }
                                                         } else {

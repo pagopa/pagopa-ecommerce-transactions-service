@@ -201,6 +201,7 @@ class TransactionServiceTests {
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
     final String USER_ID = TransactionTestUtils.USER_ID;
+    private static final Long MOCK_AMOUNT = 100L;
 
     private static final String expectedOperationTimestamp = "2023-01-01T01:02:03";
 
@@ -401,7 +402,7 @@ class TransactionServiceTests {
         TransactionNotFoundException exception = new TransactionNotFoundException(TRANSACTION_ID);
 
         assertEquals(
-                exception.getPaymentToken(),
+                exception.getTransactionId(),
                 TRANSACTION_ID
         );
     }
@@ -411,7 +412,7 @@ class TransactionServiceTests {
         UUID walletId = UUID.randomUUID();
         String contractId = "contractId";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
@@ -521,7 +522,7 @@ class TransactionServiceTests {
     void shouldRedirectToAuthorizationURIForValidRequestWithNPGCardsDetailFor() {
         String orderId = "orderId";
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
@@ -631,7 +632,7 @@ class TransactionServiceTests {
     @Test
     void shouldRedirectToAuthorizationURIForValidRequestWithApmMethod() {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
@@ -784,7 +785,7 @@ class TransactionServiceTests {
         );
 
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
@@ -909,7 +910,7 @@ class TransactionServiceTests {
     @Test
     void shouldReturnNotFoundForNonExistingRequest() {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .fee(0)
                 .paymentInstrumentId("paymentInstrumentId")
                 .isAllCCP(false)
@@ -1161,7 +1162,7 @@ class TransactionServiceTests {
                 .thenReturn(Mono.just(transactionDocument));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
-                .addUserReceipt(transactionId.value(), addUserReceiptRequest).block();
+                .addUserReceipt(transactionId, addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
     }
@@ -1231,7 +1232,7 @@ class TransactionServiceTests {
                 .thenReturn(Mono.just(transactionDocument));
         /* test */
         TransactionInfoDto transactionInfoResponse = transactionsServiceV1
-                .addUserReceipt(transactionId.value(), addUserReceiptRequest).block();
+                .addUserReceipt(transactionId, addUserReceiptRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
     }
@@ -1257,7 +1258,8 @@ class TransactionServiceTests {
                 .thenReturn(Flux.empty());
 
         /* test */
-        StepVerifier.create(transactionsServiceV1.addUserReceipt(TRANSACTION_ID, addUserReceiptRequest))
+        StepVerifier
+                .create(transactionsServiceV1.addUserReceipt(new TransactionId(TRANSACTION_ID), addUserReceiptRequest))
                 .expectErrorMatches(TransactionNotFoundException.class::isInstance)
                 .verify();
     }
@@ -1265,7 +1267,7 @@ class TransactionServiceTests {
     @Test
     void shouldReturnBadRequestForMismatchingFlagAllCCP() {
         RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")
@@ -1658,7 +1660,7 @@ class TransactionServiceTests {
                                                  it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
     ) {
         final var authorizationRequest = new RequestAuthorizationRequestDto()
-                .amount(100)
+                .amount(MOCK_AMOUNT)
                 .paymentInstrumentId("paymentInstrumentId")
                 .language(RequestAuthorizationRequestDto.LanguageEnum.IT).fee(200)
                 .pspId("PSP_CODE")

@@ -1,5 +1,6 @@
 package it.pagopa.transactions.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.client.NodeForwarderClient;
@@ -16,17 +17,16 @@ import it.pagopa.ecommerce.commons.generated.jwtissuer.v1.dto.CreateTokenRespons
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.FieldsDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.StateResponseDto;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.WorkflowStateDto;
-import it.pagopa.ecommerce.commons.utils.NpgApiKeyConfiguration;
-import it.pagopa.ecommerce.commons.utils.NpgPspApiKeysConfig;
-import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
-import it.pagopa.ecommerce.commons.utils.RedirectKeysConfiguration;
+import it.pagopa.ecommerce.commons.utils.*;
+import it.pagopa.ecommerce.commons.utils.bean.redirect.configuration.RedirectUrlMappingCriteria;
+import it.pagopa.ecommerce.commons.utils.bean.redirect.configuration.RedirectUrlMappingEntry;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlRequestDto;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
@@ -72,7 +72,7 @@ class PaymentGatewayClientTest {
 
     public static final String MOCK_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJJc3N1ZXIiOiJJc3N1ZXIiLCJwYXltZW50TWV0aG9kSWQiOiJwYXltZW50SW5zdHJ1bWVudElkIiwiZXhwIjo0OTA0MjgzMDU0LCJpYXQiOjE3NDg2MDk0NTQsInRyYW5zYWN0aW9uSWQiOiI4OWU5NWRhYmRiYjM0MTQzOTJlNmUwNmY2NDgzMmViYSJ9.BT_DJ5PD3P_2-T9EEV24mTVX4RQLobuHPxaE9X7trwY";
     public static final String MOCK_JWT_WITH_ORDERID = "eyJhbGciOiJIUzI1NiJ9.eyJJc3N1ZXIiOiJJc3N1ZXIiLCJvcmRlcklkIjoib3JkZXJJZEdlbmVyYXRlZCIsInBheW1lbnRNZXRob2RJZCI6InBheW1lbnRJbnN0cnVtZW50SWQiLCJleHAiOjQ5MDQyODMwNTQsImlhdCI6MTc0ODYwOTQ1NCwidHJhbnNhY3Rpb25JZCI6Ijg5ZTk1ZGFiZGJiMzQxNDM5MmU2ZTA2ZjY0ODMyZWJhIn0.gwP3cZ7w2lrgOv8FACpGclDljWp-PomIc0DAfa3wjeg";
-
+    private static final Long MOCK_AMOUNT = 100L;
     private PaymentGatewayClient client;
 
     @Mock
@@ -132,22 +132,35 @@ class PaymentGatewayClientTest {
                     Collectors.toMap(Function.identity(), "Redirect payment type code description %s"::formatted)
             );
 
-    private final Set<String> pspTypeCodesPspIdSet = redirectPaymentTypeCodes.stream()
-            .map("pspId-%s"::formatted).collect(Collectors.toSet());
-
-    private final Map<String, String> redirectBeApiCallUriMap = redirectPaymentTypeCodes.stream()
+    private final List<RedirectUrlMappingEntry> redirectBeApiCallUriMap = redirectPaymentTypeCodes.stream()
             .collect(
-                    Collectors.toMap("pspId-%s"::formatted, "http://redirect/%s"::formatted)
-            );
+                    Collectors.toMap("%s"::formatted, "http://redirect/%s"::formatted)
+            ).entrySet().stream().map(
+                    entry -> new RedirectUrlMappingEntry(
+                            URI.create(entry.getValue()),
+                            new EnumMap<>(Map.of(RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE, entry.getKey()))
+                    )
+            ).toList();
 
-    private final RedirectKeysConfiguration configurationKeysConfig = new RedirectKeysConfiguration(
-            redirectBeApiCallUriMap,
-            pspTypeCodesPspIdSet
+    private final String redirectUrlJsonConfiguration = objectMapper.writeValueAsString(
+            redirectBeApiCallUriMap
+    );
+
+    private final String expectedMatchingCriteriaJsonConfiguration = objectMapper.writeValueAsString(
+            redirectBeApiCallUriMap.stream().map(RedirectUrlMappingEntry::matchingCriteria).toList()
+    );
+
+    private final RedirectUrlMappingConf redirectUrlMappingConf = new RedirectUrlMappingConf(
+            redirectUrlJsonConfiguration,
+            expectedMatchingCriteriaJsonConfiguration
     );
 
     private final Set<String> npgAuthorizationRetryExcludedErrorCodes = Set.of("GW0035", "GW0004");
 
     private final NpgApiKeyConfiguration npgApiKeyHandler = Mockito.mock(NpgApiKeyConfiguration.class);
+
+    PaymentGatewayClientTest() throws JsonProcessingException {
+    }
 
     @BeforeEach
     public void init() {
@@ -161,7 +174,7 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                configurationKeysConfig,
+                redirectUrlMappingConf,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 redirectPaymentTypeCodeDescription,
@@ -179,10 +192,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -240,10 +253,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -299,7 +312,7 @@ class PaymentGatewayClientTest {
                 transaction
                         .getPaymentNotices()
                         .stream()
-                        .mapToInt(paymentNotice -> paymentNotice.transactionAmount().value())
+                        .mapToLong(paymentNotice -> paymentNotice.transactionAmount().value())
                         .sum() + authorizationData.fee()
         );
         verify(npgClient, times(1))
@@ -322,10 +335,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -416,10 +429,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -499,10 +512,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -589,10 +602,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -772,10 +785,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -895,10 +908,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1007,10 +1020,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1121,10 +1134,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1319,10 +1332,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1363,8 +1376,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString(),
                 Optional.of(contextualOnboardDetails)
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
@@ -1491,10 +1504,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1535,8 +1548,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString(),
                 Optional.of(contextualOnboardDetails)
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
@@ -1655,10 +1668,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -1698,8 +1711,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString(),
                 Optional.of(contextualOnboardDetails)
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(notice -> notice.transactionAmount())
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         Mockito.when(uniqueIdUtils.generateUniqueId()).thenReturn(Mono.just(orderId));
         FieldsDto npgBuildSessionResponse = new FieldsDto().sessionId(sessionId)
                 .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN)
@@ -1848,8 +1861,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString(),
                 Optional.empty()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
@@ -1949,7 +1962,7 @@ class PaymentGatewayClientTest {
                         new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode("paymentContextCode"),
                                 List.of(
@@ -2000,8 +2013,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString(),
                 Optional.of(contextualOnboardDetails)
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
@@ -2097,7 +2110,7 @@ class PaymentGatewayClientTest {
                         new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode("paymentContextCode"),
                                 List.of(
@@ -2115,7 +2128,7 @@ class PaymentGatewayClientTest {
                         new it.pagopa.ecommerce.commons.domain.v2.PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111112"),
-                                new TransactionAmount(200),
+                                new TransactionAmount(200L),
                                 new TransactionDescription("description2"),
                                 new PaymentContextCode("paymentContextCode2"),
                                 List.of(
@@ -2165,8 +2178,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString(),
                 Optional.empty()
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
@@ -2250,8 +2263,8 @@ class PaymentGatewayClientTest {
 
     private static Stream<Arguments> errorRetrievingRedirectionUrl() {
         return Stream.of(
-                Arguments.of(HttpStatus.BAD_REQUEST, AlreadyProcessedException.class),
-                Arguments.of(HttpStatus.UNAUTHORIZED, AlreadyProcessedException.class),
+                Arguments.of(HttpStatus.BAD_REQUEST, ConflictStatusException.class),
+                Arguments.of(HttpStatus.UNAUTHORIZED, ConflictStatusException.class),
                 Arguments.of(HttpStatus.INTERNAL_SERVER_ERROR, BadGatewayException.class),
                 Arguments.of(HttpStatus.GATEWAY_TIMEOUT, BadGatewayException.class)
         );
@@ -2291,8 +2304,8 @@ class PaymentGatewayClientTest {
                 Optional.of(contextualOnboardDetails)
         );
         String idPaymentMethod = "RBPS";
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(idPaymentMethod)
                 .paymentMethod("Redirect payment type code description RBPS")
@@ -2403,8 +2416,8 @@ class PaymentGatewayClientTest {
                 Optional.of(contextualOnboardDetails)
         );
         String idPaymentMethod = "RBPS";
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .paymentMethod("Redirect payment type code description RBPS")
                 .idPaymentMethod(idPaymentMethod)
@@ -2489,7 +2502,7 @@ class PaymentGatewayClientTest {
                 10,
                 "paymentInstrumentId",
                 "pspId",
-                "RBPS",
+                "unknown",
                 "brokerName",
                 "pspChannelCode",
                 "REDIRECT",
@@ -2508,10 +2521,6 @@ class PaymentGatewayClientTest {
         );
 
         Hooks.onOperatorDebug();
-        Map<String, String> redirectUrlMapping = new HashMap<>(redirectBeApiCallUriMap);
-        Set<String> codeListTypeMapping = new HashSet<>(pspTypeCodesPspIdSet);
-        redirectUrlMapping.remove("pspId-RBPS");
-        codeListTypeMapping.remove("pspId-RBPS");
         PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 objectMapper,
                 mockUuidUtils,
@@ -2522,7 +2531,7 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                new RedirectKeysConfiguration(redirectUrlMapping, codeListTypeMapping),
+                redirectUrlMappingConf,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 redirectPaymentTypeCodeDescription,
@@ -2563,10 +2572,10 @@ class PaymentGatewayClientTest {
                         new PaymentNotice(
                                 new PaymentToken("paymentToken"),
                                 new RptId("77777777777111111111111111111"),
-                                new TransactionAmount(100),
+                                new TransactionAmount(MOCK_AMOUNT),
                                 new TransactionDescription("description"),
                                 new PaymentContextCode(null),
-                                List.of(new PaymentTransferInfo("77777777777", false, 100, null)),
+                                List.of(new PaymentTransferInfo("77777777777", false, MOCK_AMOUNT, null)),
                                 false,
                                 new CompanyName("companyName"),
                                 null
@@ -2700,22 +2709,60 @@ class PaymentGatewayClientTest {
                                                                     String pspId,
                                                                     String paymentMethodId,
                                                                     URI expectedUri
-    ) {
-        Map<String, String> redirectUrlMapping = Map.of(
-                "CHECKOUT-psp1-RBPR",
-                "http://localhost:8096/redirections1/CHECKOUT",
-                "IO-psp1-RBPR",
-                "http://localhost:8096/redirections1/IO",
-                "psp2-RBPB",
-                "http://localhost:8096/redirections2",
-                "RBPS",
-                "http://localhost:8096/redirections3"
+    ) throws JsonProcessingException {
+        List<RedirectUrlMappingEntry> redirectUrlMappingEntries = List.of(
+                new RedirectUrlMappingEntry(
+                        URI.create("http://localhost:8096/redirections1/CHECKOUT"),
+                        new EnumMap<>(
+                                Map.of(
+                                        RedirectUrlMappingCriteria.TOUCHPOINT,
+                                        "CHECKOUT",
+                                        RedirectUrlMappingCriteria.PSP_ID,
+                                        "psp1",
+                                        RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                        "RBPR"
+                                )
+                        )
+                ),
+                new RedirectUrlMappingEntry(
+                        URI.create("http://localhost:8096/redirections1/IO"),
+                        new EnumMap<>(
+                                Map.of(
+                                        RedirectUrlMappingCriteria.TOUCHPOINT,
+                                        "IO",
+                                        RedirectUrlMappingCriteria.PSP_ID,
+                                        "psp1",
+                                        RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                        "RBPR"
+                                )
+                        )
+                ),
+                new RedirectUrlMappingEntry(
+                        URI.create("http://localhost:8096/redirections2"),
+                        new EnumMap<>(
+                                Map.of(
+                                        RedirectUrlMappingCriteria.PSP_ID,
+                                        "psp2",
+                                        RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                        "RBPB"
+                                )
+                        )
+                ),
+                new RedirectUrlMappingEntry(
+                        URI.create("http://localhost:8096/redirections3"),
+                        new EnumMap<>(
+                                Map.of(
+                                        RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                        "RBPS"
+                                )
+                        )
+                )
         );
-        Set<String> redirectCodeTypeList = Set.of(
-                "CHECKOUT-psp1-RBPR",
-                "IO-psp1-RBPR",
-                "psp2-RBPB",
-                "RBPS"
+        List<EnumMap<RedirectUrlMappingCriteria, String>> expectedMatchingCriteria = redirectUrlMappingEntries.stream()
+                .map(RedirectUrlMappingEntry::matchingCriteria).toList();
+        RedirectUrlMappingConf customConf = new RedirectUrlMappingConf(
+                objectMapper.writeValueAsString(redirectUrlMappingEntries),
+                objectMapper.writeValueAsString(expectedMatchingCriteria)
         );
         PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 objectMapper,
@@ -2727,7 +2774,7 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
+                customConf,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 redirectPaymentTypeCodeDescription,
@@ -2791,26 +2838,65 @@ class PaymentGatewayClientTest {
     }
 
     @Test
-    void shouldReturnErrorDuringSearchRedirectURLforInvalidSearchKey() {
-        Map<String, String> redirectUrlMapping = Map.of(
-                "CHECKOUT-psp1-RBPR",
-                "http://localhost:8096/redirections1/CHECKOUT",
-                "IO-psp1-RBPR",
-                "http://localhost:8096/redirections1/IO",
-                "psp2-RBPB",
-                "http://localhost:8096/redirections2",
-                "RBPS",
-                "http://localhost:8096/redirections3"
+    void shouldReturnErrorDuringSearchRedirectURLforInvalidSearchKey() throws JsonProcessingException {
+        List<RedirectUrlMappingEntry> redirectUrlMappingEntries = List.of(
+                new RedirectUrlMappingEntry(
+                        URI.create("http://localhost:8096/redirections1/CHECKOUT"),
+                        new EnumMap<>(
+                                Map.of(
+                                        RedirectUrlMappingCriteria.TOUCHPOINT,
+                                        "CHECKOUT",
+                                        RedirectUrlMappingCriteria.PSP_ID,
+                                        "psp1",
+                                        RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                        "RBPR"
+                                )
+                        )
+                ),
+                new RedirectUrlMappingEntry(
+                        URI.create("http://localhost:8096/redirections1/IO"),
+                        new EnumMap<>(
+                                Map.of(
+                                        RedirectUrlMappingCriteria.TOUCHPOINT,
+                                        "IO",
+                                        RedirectUrlMappingCriteria.PSP_ID,
+                                        "psp1",
+                                        RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                        "RBPR"
+                                )
+                        )
+                ),
+                new RedirectUrlMappingEntry(
+                        URI.create("http://localhost:8096/redirections2"),
+                        new EnumMap<>(
+                                Map.of(
+                                        RedirectUrlMappingCriteria.PSP_ID,
+                                        "psp2",
+                                        RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                        "RBPB"
+                                )
+                        )
+                ),
+                new RedirectUrlMappingEntry(
+                        URI.create("http://localhost:8096/redirections3"),
+                        new EnumMap<>(
+                                Map.of(
+                                        RedirectUrlMappingCriteria.PAYMENT_TYPE_CODE,
+                                        "RBPS"
+                                )
+                        )
+                )
         );
-        Set<String> redirectCodeTypeList = Set.of(
-                "CHECKOUT-psp1-RBPR",
-                "IO-psp1-RBPR",
-                "psp2-RBPB",
-                "RBPS"
+        List<EnumMap<RedirectUrlMappingCriteria, String>> expectedMatchingCriteria = redirectUrlMappingEntries.stream()
+                .map(RedirectUrlMappingEntry::matchingCriteria).toList();
+        RedirectUrlMappingConf customConf = new RedirectUrlMappingConf(
+                objectMapper.writeValueAsString(redirectUrlMappingEntries),
+                objectMapper.writeValueAsString(expectedMatchingCriteria)
         );
         RedirectUrlRequestDto.TouchpointEnum touchpoint = RedirectUrlRequestDto.TouchpointEnum.CHECKOUT;
         String pspId = "pspId";
         String redirectPaymentMethodId = "RBPP";
+        String pspChannelCode = "pspChannelCode";
         PaymentGatewayClient redirectClient = new PaymentGatewayClient(
                 objectMapper,
                 mockUuidUtils,
@@ -2821,7 +2907,7 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                new RedirectKeysConfiguration(redirectUrlMapping, redirectCodeTypeList),
+                customConf,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 redirectPaymentTypeCodeDescription,
@@ -2839,7 +2925,7 @@ class PaymentGatewayClientTest {
                 pspId,
                 redirectPaymentMethodId,
                 "brokerName",
-                "pspChannelCode",
+                pspChannelCode,
                 redirectPaymentMethodId,
                 "paymentMethodDescription",
                 "pspBusinessName",
@@ -2865,16 +2951,14 @@ class PaymentGatewayClientTest {
                 redirectClient.requestRedirectUrlAuthorization(authorizationData, touchpoint, UUID.fromString(USER_ID))
         )
                 .consumeErrorWith(
-                        exp -> assertEquals(
-                                "Error parsing Redirect PSP BACKEND_URLS configuration, cause: Missing key for redirect return url with following search parameters: touchpoint: [%s] pspId: [%s] paymentTypeCode: [%s]"
-                                        .formatted(
-
-                                                touchpoint,
-                                                pspId,
-                                                redirectPaymentMethodId
-                                        ),
-                                exp.getMessage()
-                        )
+                        exp -> {
+                            assertTrue(
+                                    exp.getMessage().startsWith(
+                                            "Error parsing Redirect PSP BACKEND_URLS configuration, cause: No configuration found for the provided matching criteria: "
+                                    )
+                            );
+                            assertInstanceOf(RedirectConfigurationException.class, exp);
+                        }
                 )
                 .verify();
         verify(nodeForwarderClient, times(0)).proxyRequest(
@@ -2918,8 +3002,8 @@ class PaymentGatewayClientTest {
                 UUID.randomUUID().toString(),
                 Optional.of(contextualOnboardDetails)
         );
-        int totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
-                .mapToInt(TransactionAmount::value).sum() + authorizationData.fee();
+        long totalAmount = authorizationData.paymentNotices().stream().map(PaymentNotice::transactionAmount)
+                .mapToLong(TransactionAmount::value).sum() + authorizationData.fee();
         RedirectUrlRequestDto redirectUrlRequestDto = new RedirectUrlRequestDto()
                 .idPaymentMethod(paymentTypeCode)
                 .amount(totalAmount)
@@ -2968,7 +3052,7 @@ class PaymentGatewayClientTest {
                 TOKEN_VALIDITY_TIME_SECONDS,
                 TOKEN_VALIDITY_TIME_SECONDS,
                 nodeForwarderClient,
-                configurationKeysConfig,
+                redirectUrlMappingConf,
                 npgApiKeyHandler,
                 npgAuthorizationRetryExcludedErrorCodes,
                 Map.of(),

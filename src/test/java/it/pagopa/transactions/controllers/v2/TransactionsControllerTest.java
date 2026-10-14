@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.data.redis.AutoConfigureDataRedis;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.http.*;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -41,7 +40,6 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -89,12 +87,6 @@ class TransactionsControllerTest {
     @Mock
     ServerWebExchange mockExchange;
 
-    @Mock
-    ServerHttpRequest mockRequest;
-
-    @Mock
-    HttpHeaders mockHeaders;
-
     private final CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
             Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
     );
@@ -114,7 +106,7 @@ class TransactionsControllerTest {
             newTransactionRequestDto.orderId("orderId");
             NewTransactionResponseDto response = new NewTransactionResponseDto();
             PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-            paymentInfoDto.setAmount(10);
+            paymentInfoDto.setAmount(10L);
             paymentInfoDto.setReason("Reason");
             paymentInfoDto.setPaymentToken("payment_token");
             paymentInfoDto.setRptId(RPTID);
@@ -132,23 +124,6 @@ class TransactionsControllerTest {
                                     )
                     )
                     .thenReturn(Mono.just(response));
-
-            Mockito.when(mockExchange.getRequest())
-                    .thenReturn(mockRequest);
-
-            Mockito.when(mockExchange.getRequest().getMethod())
-                    .thenReturn(HttpMethod.POST);
-
-            Mockito.when(mockExchange.getRequest().getURI())
-                    .thenReturn(
-                            URI.create(
-                                    String.join(
-                                            "/",
-                                            "https://localhost/transactions",
-                                            transactionId.value()
-                                    )
-                            )
-                    );
 
             ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
                     .newTransaction(
@@ -177,7 +152,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void testAlreadyProcessedTransactionExceptionHandler() {
+    void testConflictStatusExceptionHandler() {
         final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         ResponseEntity responseCheck = new ResponseEntity<>(
@@ -187,7 +162,7 @@ class TransactionsControllerTest {
                         .detail("Transaction for RPT id '' has been already processed"),
                 HttpStatus.CONFLICT
         );
-        AlreadyProcessedException exception = new AlreadyProcessedException(transactionId);
+        ConflictStatusException exception = new ConflictStatusException(transactionId);
 
         ResponseEntity<ProblemJsonDto> response = transactionsController.alreadyProcessedHandler(exception);
 
@@ -223,6 +198,26 @@ class TransactionsControllerTest {
         ResponseEntity<ProblemJsonDto> response = transactionsController.gatewayTimeoutHandler(exception);
 
         assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+    }
+
+    @Test
+    void testDigitalStampNotAllowedForClientExceptionHandler() {
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> responseCheck = new ResponseEntity<>(
+                new ValidationFaultPaymentDataErrorProblemJsonDto()
+                        .title("Payment Status Fault")
+                        .faultCodeCategory(
+                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
+                        )
+                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
+                HttpStatus.NOT_FOUND
+        );
+        DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
+
+        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> response = transactionsController
+                .digitalStampNotAllowedHandler(exception);
+
+        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
+        assertEquals(responseCheck.getBody(), response.getBody());
     }
 
     @Test

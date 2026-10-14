@@ -93,7 +93,6 @@ public class TransactionsActivationProjectionHandler
         if (transactionsviewUpdateEnabled) {
             return transactionsViewRepository
                     .save(transactionDocument)
-                    .doOnNext(t -> log.info("Transactions update view for transactionId: {}", t.getTransactionId()))
                     .thenReturn(transaction);
         } else {
             return Mono.just(transaction);

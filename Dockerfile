@@ -20,6 +20,7 @@ RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
 COPY src src
 COPY api-spec api-spec
 COPY eclipse-style.xml eclipse-style.xml
+ENV ACTIVE_PROFILE=k8s
 RUN --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
     ./mvnw compile spring-boot:process-aot install -DskipTests
 

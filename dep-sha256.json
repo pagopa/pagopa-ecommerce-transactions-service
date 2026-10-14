@@ -309,11 +309,11 @@
       "sha256": "T-tKHPs6GEvPXxmeIJk13plEsYto0MD0PmBqrJ3lH78="
     },
     {
-      "id": "it.pagopa:pagopa-ecommerce-commons:jar:3.3.1",
+      "id": "it.pagopa:pagopa-ecommerce-commons:jar:3.12.0",
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
-      "version": "3.3.1",
-      "sha256": "uCJDT2Y_KiNHqblx-LVcwVxnArKV7kRTeTuOt8RyI1o="
+      "version": "3.12.0",
+      "sha256": "UmRbXttB8wXULJ0Uz3nlgjze-JGshSxAvNQl2xZpGkc="
     },
     {
       "id": "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.18.3",
@@ -1394,13 +1394,6 @@
       "sha256": "BWvE0-XlPOghRQ-pez-eD43eElz22miENTux8JWC4dk="
     },
     {
-      "id": "commons-lang:commons-lang:jar:2.6",
-      "artifactId": "commons-lang",
-      "groupId": "commons-lang",
-      "version": "2.6",
-      "sha256": "UPEbCfh3wpTVbyRGP0fSj5Kc9QRPZIZhwPDPuumi9Jw="
-    },
-    {
       "id": "org.jacoco:jacoco-maven-plugin:jar:0.8.13",
       "artifactId": "jacoco-maven-plugin",
       "groupId": "org.jacoco",
@@ -1695,11 +1688,11 @@
       "sha256": "deQif7fcX5fD1Gic0cJDn02wvRjOovokLEZWzZPFmao="
     },
     {
-      "id": "it.pagopa:pagopa-ecommerce-commons:test-jar:tests:3.3.1",
+      "id": "it.pagopa:pagopa-ecommerce-commons:test-jar:tests:3.12.0",
       "artifactId": "pagopa-ecommerce-commons",
       "groupId": "it.pagopa",
-      "version": "3.3.1",
-      "sha256": "bG4DTXUtpuLNE3xccCRhTV1V7Gdi_-5QXf9ptYOxr-M="
+      "version": "3.12.0",
+      "sha256": "_1i-uA9hXp04NpTBEBNX1XPImQlZdEDAalgL5GLpSiw="
     },
     {
       "id": "io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.119.Final",
@@ -1889,6 +1882,20 @@
       "groupId": "org.yaml",
       "version": "2.3",
       "sha256": "Y6dv5mtlI2C9TCwQfm8CWNqn1LtJIAi6jCb80jD_kUY="
+    },
+    {
+      "id": "io.micrometer:context-propagation:jar:1.2.1",
+      "artifactId": "context-propagation",
+      "groupId": "io.micrometer",
+      "version": "1.2.1",
+      "sha256": "W2niEAZAh5zPSyBnPO2G3lYLjiF7VVQvhaU9NWO3Kqo="
+    },
+    {
+      "id": "org.jspecify:jspecify:jar:1.0.0",
+      "artifactId": "jspecify",
+      "groupId": "org.jspecify",
+      "version": "1.0.0",
+      "sha256": "H61ua-dVd4Hk0zcp1Jrhzcj92m_kd7sMxozjUer9-6s="
     }
   ]
 }
