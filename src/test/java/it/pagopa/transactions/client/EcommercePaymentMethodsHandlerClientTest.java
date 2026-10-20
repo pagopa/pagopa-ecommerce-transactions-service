@@ -6,6 +6,7 @@ import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseD
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentNoticeDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.TransferListItemDto;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.*;
+import it.pagopa.transactions.client.mappers.PaymentMethodsHandlerMapper;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -32,11 +36,13 @@ import static org.mockito.Mockito.when;
 
 class EcommercePaymentMethodsHandlerClientTest {
 
-    private final it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1 = Mockito
-            .mock(it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi.class);
-
+    private final PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1 = mock(
+            PaymentMethodsHandlerApi.class
+    );
+    private final PaymentMethodsHandlerMapper mapper = spy(new PaymentMethodsHandlerMapper());
     private final EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient = new EcommercePaymentMethodsHandlerClient(
-            ecommercePaymentMethodsHandlerWebClientV1
+            ecommercePaymentMethodsHandlerWebClientV1,
+            mapper
     );
 
     @Test
@@ -146,7 +152,10 @@ class EcommercePaymentMethodsHandlerClientTest {
         when(ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(any(), any()))
                 .thenReturn(Mono.just(testPaymentMethodResponseDto));
 
-        assertThat(ecommercePaymentMethodsHandlerClient.getPaymentMethod(paymentMethodId, clientId.name()).block())
+        assertThat(
+                ecommercePaymentMethodsHandlerClient.getPaymentMethod(paymentMethodId, clientId.name())
+                        .block()
+        )
                 .satisfies(it -> assertThat(it.getId()).isEqualTo(paymentMethodId));
 
         final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
@@ -175,9 +184,13 @@ class EcommercePaymentMethodsHandlerClientTest {
                                 .primaryCreditorInstitution("77777777777")
                                 .addTransferListItem(
                                         new TransferListItemDto()
-                                                .creditorInstitution("77777777777")
+                                                .creditorInstitution(
+                                                        "77777777777"
+                                                )
                                                 .digitalStamp(false)
-                                                .transferCategory("PO")
+                                                .transferCategory(
+                                                        "PO"
+                                                )
                                 )
                 )
                 .bin("123456")
@@ -186,8 +199,9 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .isAllCCP(false);
 
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
-                .paymentMethodName("VISA")
+                .paymentMethodName("Carte")
                 .paymentMethodDescription("Carte di credito")
+                .paymentTypeCode("CP")
                 .paymentMethodStatus(
                         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
                 )
@@ -219,22 +233,34 @@ class EcommercePaymentMethodsHandlerClientTest {
                         any(it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeRequestDto.class),
                         eq(maxOccurrences)
                 )
-        ).thenReturn(Mono.just(handlerResponse));
+        )
+                .thenReturn(Mono.just(handlerResponse));
 
         /* test */
         CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
-                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
+                .calculateFee(
+                        paymentMethodId,
+                        transactionId,
+                        feeRequest,
+                        maxOccurrences,
+                        clientId,
+                        language
+                )
                 .block();
 
         /* asserts */
         assertThat(result).isNotNull();
-        assertThat(result.getPaymentMethodName()).isEqualTo("VISA");
+        // paymentMethodName is derived from the AFM payment type code "CP" -> "CARDS",
+        // not from the localized paymentMethodName
+        assertThat(result.getPaymentMethodName()).isEqualTo("CARDS");
         assertThat(result.getPaymentMethodDescription()).isEqualTo("Carte di credito");
         assertThat(result.getAsset()).isEqualTo("asset-url");
         assertThat(result.getBundles()).hasSize(1);
         assertThat(result.getBundles().get(0).getIdPsp()).isEqualTo("pspId");
         assertThat(result.getBundles().get(0).getTaxPayerFee()).isEqualTo(100L);
         assertThat(result.getBundles().get(0).getPspBusinessName()).isEqualTo("pspBusinessNameTest");
+        verify(mapper).toHandlerFeeRequest(feeRequest);
+        verify(mapper).fromHandlerFeeResponse(handlerResponse);
     }
 
     @Test
@@ -263,18 +289,19 @@ class EcommercePaymentMethodsHandlerClientTest {
                         any(),
                         any()
                 )
-        ).thenReturn(
-                Mono.error(
-                        WebClientResponseException.create(
-                                500,
-                                "Internal Server Error",
-                                HttpHeaders.EMPTY,
-                                null,
-                                Charset.defaultCharset(),
-                                null
+        )
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        500,
+                                        "Internal Server Error",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
                         )
-                )
-        );
+                );
 
         /* test */
         StepVerifier.create(
@@ -322,7 +349,14 @@ class EcommercePaymentMethodsHandlerClientTest {
 
         /* test */
         ecommercePaymentMethodsHandlerClient
-                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId.name(), language)
+                .calculateFee(
+                        paymentMethodId,
+                        transactionId,
+                        feeRequest,
+                        maxOccurrences,
+                        clientId.name(),
+                        language
+                )
                 .block();
 
         /* asserts */
@@ -376,7 +410,14 @@ class EcommercePaymentMethodsHandlerClientTest {
 
         /* test - pass null language */
         ecommercePaymentMethodsHandlerClient
-                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, null)
+                .calculateFee(
+                        paymentMethodId,
+                        transactionId,
+                        feeRequest,
+                        maxOccurrences,
+                        clientId,
+                        null
+                )
                 .block();
 
         /* asserts */
@@ -385,283 +426,6 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .calculateFees(any(), any(), languageCaptor.capture(), any(), any());
 
         assertEquals("IT", languageCaptor.getValue());
-    }
-
-    @Test
-    void shouldMapPaymentNoticesCorrectly() {
-        String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
-        String clientId = "CHECKOUT";
-        String language = "IT";
-        Integer maxOccurrences = 5;
-
-        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeDto()
-                                .paymentAmount(1500L)
-                                .primaryCreditorInstitution("12345678901")
-                                .addTransferListItem(
-                                        new TransferListItemDto()
-                                                .creditorInstitution("12345678901")
-                                                .digitalStamp(true)
-                                                .transferCategory("TAX")
-                                )
-                )
-                .bin("654321")
-                .touchpoint("IO")
-                .idPspList(List.of("psp1", "psp2"))
-                .isAllCCP(true);
-
-        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
-                .paymentMethodName("test")
-                .paymentMethodDescription("desc")
-                .paymentMethodStatus(
-                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
-                )
-                .asset("asset")
-                .bundles(List.of());
-
-        final var requestCaptor = ArgumentCaptor.forClass(
-                it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeRequestDto.class
-        );
-
-        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
-                .thenReturn(Mono.just(handlerResponse));
-
-        /* test */
-        ecommercePaymentMethodsHandlerClient
-                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
-                .block();
-
-        /* asserts */
-        verify(ecommercePaymentMethodsHandlerWebClientV1)
-                .calculateFees(any(), any(), any(), requestCaptor.capture(), any());
-
-        var capturedRequest = requestCaptor.getValue();
-        assertThat(capturedRequest.getTouchpoint()).isEqualTo("IO");
-        assertThat(capturedRequest.getBin()).isEqualTo("654321");
-        assertThat(capturedRequest.getIdPspList()).containsExactly("psp1", "psp2");
-        assertThat(capturedRequest.getIsAllCCP()).isTrue();
-        assertThat(capturedRequest.getPaymentNotices()).hasSize(1);
-
-        var notice = capturedRequest.getPaymentNotices().get(0);
-        assertThat(notice.getPaymentAmount()).isEqualTo(1500L);
-        assertThat(notice.getPrimaryCreditorInstitution()).isEqualTo("12345678901");
-        assertThat(notice.getTransferList()).hasSize(1);
-        assertThat(notice.getTransferList().get(0).getCreditorInstitution()).isEqualTo("12345678901");
-        assertThat(notice.getTransferList().get(0).getDigitalStamp()).isTrue();
-        assertThat(notice.getTransferList().get(0).getTransferCategory()).isEqualTo("TAX");
-    }
-
-    @Test
-    void shouldHandleMaintenanceStatusByDefaultingToDisabled() {
-        String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
-        String clientId = "CHECKOUT";
-        String language = "IT";
-        Integer maxOccurrences = 5;
-
-        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeDto()
-                                .paymentAmount(1000L)
-                                .primaryCreditorInstitution("77777777777")
-                                .addTransferListItem(
-                                        new TransferListItemDto()
-                                                .creditorInstitution("77777777777")
-                                                .digitalStamp(false)
-                                                .transferCategory("PO")
-                                )
-                )
-                .touchpoint("CHECKOUT")
-                .isAllCCP(false);
-
-        // Handler returns MAINTENANCE which has no equivalent in v2
-        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
-                .paymentMethodName("test")
-                .paymentMethodDescription("desc")
-                .paymentMethodStatus(
-                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.MAINTENANCE
-                )
-                .asset("asset")
-                .bundles(List.of());
-
-        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
-                .thenReturn(Mono.just(handlerResponse));
-
-        /* test */
-        CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
-                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
-                .block();
-
-        /* asserts */
-        assertThat(result).isNotNull();
-        assertThat(result.getPaymentMethodStatus())
-                .isEqualTo(it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentMethodStatusDto.DISABLED);
-    }
-
-    @Test
-    void shouldHandleNullPaymentMethodStatus() {
-        String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
-        String clientId = "CHECKOUT";
-        String language = "IT";
-        Integer maxOccurrences = 5;
-
-        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeDto()
-                                .paymentAmount(1000L)
-                                .primaryCreditorInstitution("77777777777")
-                                .addTransferListItem(
-                                        new TransferListItemDto()
-                                                .creditorInstitution("77777777777")
-                                                .digitalStamp(false)
-                                                .transferCategory("PO")
-                                )
-                )
-                .touchpoint("CHECKOUT")
-                .isAllCCP(false);
-
-        // Handler returns null status
-        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
-                .paymentMethodName("test")
-                .paymentMethodDescription("desc")
-                .paymentMethodStatus(null)
-                .asset("asset")
-                .bundles(List.of());
-
-        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
-                .thenReturn(Mono.just(handlerResponse));
-
-        /* test */
-        CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
-                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
-                .block();
-
-        /* asserts */
-        assertThat(result).isNotNull();
-        assertThat(result.getPaymentMethodStatus()).isNull();
-    }
-
-    @Test
-    void shouldHandleNullBundlesInResponse() {
-        String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
-        String clientId = "CHECKOUT";
-        String language = "IT";
-        Integer maxOccurrences = 5;
-
-        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeDto()
-                                .paymentAmount(1000L)
-                                .primaryCreditorInstitution("77777777777")
-                                .addTransferListItem(
-                                        new TransferListItemDto()
-                                                .creditorInstitution("77777777777")
-                                                .digitalStamp(false)
-                                                .transferCategory("PO")
-                                )
-                )
-                .touchpoint("CHECKOUT")
-                .isAllCCP(false);
-
-        // Handler returns null bundles
-        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
-                .paymentMethodName("test")
-                .paymentMethodDescription("desc")
-                .paymentMethodStatus(
-                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
-                )
-                .asset("asset")
-                .bundles(null);
-
-        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
-                .thenReturn(Mono.just(handlerResponse));
-
-        /* test */
-        CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
-                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
-                .block();
-
-        /* asserts */
-        assertThat(result).isNotNull();
-        assertThat(result.getBundles()).isEmpty();
-    }
-
-    @Test
-    void shouldMapAfmPaymentMethodNameToNpgEnum() {
-        String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
-        String clientId = "IO";
-        String language = "IT";
-        Integer maxOccurrences = 5;
-
-        CalculateFeeRequestDto feeRequest = new CalculateFeeRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeDto()
-                                .paymentAmount(1000L)
-                                .primaryCreditorInstitution("77777777777")
-                                .addTransferListItem(
-                                        new TransferListItemDto()
-                                                .creditorInstitution("77777777777")
-                                                .digitalStamp(false)
-                                                .transferCategory("PO")
-                                )
-                )
-                .touchpoint("IO")
-                .isAllCCP(false);
-
-        // Handler returns AFM-style payment method names
-        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
-                .paymentMethodName("test")
-                .paymentMethodDescription("desc")
-                .paymentMethodStatus(
-                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
-                )
-                .asset("asset")
-                .bundles(
-                        List.of(
-                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
-                                        .idPsp("psp1")
-                                        .paymentMethod("Carte")
-                                        .taxPayerFee(100L),
-                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
-                                        .idPsp("psp2")
-                                        .paymentMethod("Bancomat Pay")
-                                        .taxPayerFee(50L),
-                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
-                                        .idPsp("psp3")
-                                        .paymentMethod("PayPal")
-                                        .taxPayerFee(75L),
-                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
-                                        .idPsp("psp4")
-                                        .paymentMethod("UNKNOWN_METHOD")
-                                        .taxPayerFee(200L),
-                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
-                                        .idPsp("psp5")
-                                        .paymentMethod(null)
-                                        .taxPayerFee(0L)
-                        )
-                );
-
-        when(ecommercePaymentMethodsHandlerWebClientV1.calculateFees(any(), any(), any(), any(), any()))
-                .thenReturn(Mono.just(handlerResponse));
-
-        /* test */
-        CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
-                .calculateFee(paymentMethodId, transactionId, feeRequest, maxOccurrences, clientId, language)
-                .block();
-
-        /* asserts */
-        assertThat(result).isNotNull();
-        assertThat(result.getBundles()).hasSize(5);
-        assertThat(result.getBundles().get(0).getPaymentMethod()).isEqualTo("CARDS");
-        assertThat(result.getBundles().get(1).getPaymentMethod()).isEqualTo("BANCOMATPAY");
-        assertThat(result.getBundles().get(2).getPaymentMethod()).isEqualTo("PAYPAL");
-        assertThat(result.getBundles().get(3).getPaymentMethod()).isEqualTo("UNKNOWN_METHOD"); // fallback
-        assertThat(result.getBundles().get(4).getPaymentMethod()).isNull(); // null stays null
     }
 
     @Test
@@ -678,11 +442,23 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .lastFourDigits("1234");
 
         /* preconditions */
-        when(ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(paymentMethodId, orderId, clientId))
+        when(
+                ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(
+                        paymentMethodId,
+                        orderId,
+                        clientId
+                )
+        )
                 .thenReturn(Mono.just(response));
 
         /* test */
-        StepVerifier.create(ecommercePaymentMethodsHandlerClient.retrieveCardData(paymentMethodId, orderId, clientId))
+        StepVerifier.create(
+                ecommercePaymentMethodsHandlerClient.retrieveCardData(
+                        paymentMethodId,
+                        orderId,
+                        clientId
+                )
+        )
                 .expectNext(response)
                 .verifyComplete();
     }
@@ -694,7 +470,13 @@ class EcommercePaymentMethodsHandlerClientTest {
         String clientId = "CHECKOUT";
 
         /* preconditions */
-        when(ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(paymentMethodId, orderId, clientId))
+        when(
+                ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(
+                        paymentMethodId,
+                        orderId,
+                        clientId
+                )
+        )
                 .thenReturn(
                         Mono.error(
                                 WebClientResponseException.create(
@@ -709,7 +491,13 @@ class EcommercePaymentMethodsHandlerClientTest {
                 );
 
         /* test */
-        StepVerifier.create(ecommercePaymentMethodsHandlerClient.retrieveCardData(paymentMethodId, orderId, clientId))
+        StepVerifier.create(
+                ecommercePaymentMethodsHandlerClient.retrieveCardData(
+                        paymentMethodId,
+                        orderId,
+                        clientId
+                )
+        )
                 .expectError(InvalidRequestException.class)
                 .verify();
     }
@@ -729,7 +517,8 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .thenReturn(Mono.just(response));
 
         /* test */
-        ecommercePaymentMethodsHandlerClient.retrieveCardData(paymentMethodId, orderId, clientId.name()).block();
+        ecommercePaymentMethodsHandlerClient.retrieveCardData(paymentMethodId, orderId, clientId.name())
+                .block();
 
         /* asserts */
         final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
@@ -758,13 +547,19 @@ class EcommercePaymentMethodsHandlerClientTest {
                         clientId,
                         new PatchSessionRequestDto().transactionId(transactionId)
                 )
-        ).thenReturn(Mono.empty());
+        )
+                .thenReturn(Mono.empty());
 
         /* test */
         StepVerifier
                 .create(
                         ecommercePaymentMethodsHandlerClient
-                                .updateSession(paymentMethodId, orderId, transactionId, clientId)
+                                .updateSession(
+                                        paymentMethodId,
+                                        orderId,
+                                        transactionId,
+                                        clientId
+                                )
                 )
                 .verifyComplete();
     }
@@ -784,24 +579,30 @@ class EcommercePaymentMethodsHandlerClientTest {
                         clientId,
                         new PatchSessionRequestDto().transactionId(transactionId)
                 )
-        ).thenReturn(
-                Mono.error(
-                        WebClientResponseException.create(
-                                500,
-                                "Internal Server Error",
-                                HttpHeaders.EMPTY,
-                                null,
-                                Charset.defaultCharset(),
-                                null
+        )
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        500,
+                                        "Internal Server Error",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
                         )
-                )
-        );
+                );
 
         /* test */
         StepVerifier
                 .create(
                         ecommercePaymentMethodsHandlerClient
-                                .updateSession(paymentMethodId, orderId, transactionId, clientId)
+                                .updateSession(
+                                        paymentMethodId,
+                                        orderId,
+                                        transactionId,
+                                        clientId
+                                )
                 )
                 .expectError(InvalidRequestException.class)
                 .verify();
@@ -818,7 +619,8 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .thenReturn(Mono.empty());
 
         /* test */
-        ecommercePaymentMethodsHandlerClient.updateSession(paymentMethodId, orderId, transactionId, clientId.name())
+        ecommercePaymentMethodsHandlerClient
+                .updateSession(paymentMethodId, orderId, transactionId, clientId.name())
                 .block();
 
         /* asserts */
@@ -835,11 +637,14 @@ class EcommercePaymentMethodsHandlerClientTest {
 
     @Test
     void shouldMapPaymentTypeCodeToNpgServiceName() {
-        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("CP")).isEqualTo("CARDS");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("CP"))
+                .isEqualTo("CARDS");
         assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("BPAY"))
                 .isEqualTo("BANCOMATPAY");
-        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("MYBK")).isEqualTo("MYBANK");
-        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("PPAL")).isEqualTo("PAYPAL");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("MYBK"))
+                .isEqualTo("MYBANK");
+        assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("PPAL"))
+                .isEqualTo("PAYPAL");
         assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("APPL"))
                 .isEqualTo("APPLEPAY");
         assertThat(EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName("SATY"))
