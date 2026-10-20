@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -172,7 +171,6 @@ class EcommercePaymentMethodsHandlerClientTest {
     @Test
     void shouldReturnCalculateFeeResponse() {
         String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
         String clientId = "CHECKOUT";
         String language = "IT";
         Integer maxOccurrences = 5;
@@ -240,7 +238,6 @@ class EcommercePaymentMethodsHandlerClientTest {
         CalculateFeeResponseDto result = ecommercePaymentMethodsHandlerClient
                 .calculateFee(
                         paymentMethodId,
-                        transactionId,
                         feeRequest,
                         maxOccurrences,
                         clientId,
@@ -266,7 +263,6 @@ class EcommercePaymentMethodsHandlerClientTest {
     @Test
     void shouldThrowInvalidRequestExceptionOnCalculateFeeError() {
         String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
         String clientId = "CHECKOUT";
         String language = "IT";
         Integer maxOccurrences = 5;
@@ -307,7 +303,6 @@ class EcommercePaymentMethodsHandlerClientTest {
         StepVerifier.create(
                 ecommercePaymentMethodsHandlerClient.calculateFee(
                         paymentMethodId,
-                        transactionId,
                         feeRequest,
                         maxOccurrences,
                         clientId,
@@ -322,7 +317,6 @@ class EcommercePaymentMethodsHandlerClientTest {
     @EnumSource(Transaction.ClientId.class)
     void shouldMapClientIdCorrectlyOnCalculateFee(Transaction.ClientId clientId) {
         String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
         String language = "EN";
         Integer maxOccurrences = 10;
 
@@ -351,7 +345,6 @@ class EcommercePaymentMethodsHandlerClientTest {
         ecommercePaymentMethodsHandlerClient
                 .calculateFee(
                         paymentMethodId,
-                        transactionId,
                         feeRequest,
                         maxOccurrences,
                         clientId.name(),
@@ -383,7 +376,6 @@ class EcommercePaymentMethodsHandlerClientTest {
     @Test
     void shouldDefaultToITWhenLanguageIsNull() {
         String paymentMethodId = UUID.randomUUID().toString();
-        String transactionId = UUID.randomUUID().toString();
         String clientId = "CHECKOUT";
         Integer maxOccurrences = 5;
 
@@ -412,7 +404,6 @@ class EcommercePaymentMethodsHandlerClientTest {
         ecommercePaymentMethodsHandlerClient
                 .calculateFee(
                         paymentMethodId,
-                        transactionId,
                         feeRequest,
                         maxOccurrences,
                         clientId,

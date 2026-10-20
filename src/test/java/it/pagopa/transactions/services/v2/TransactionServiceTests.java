@@ -844,7 +844,6 @@ class TransactionServiceTests {
                 ecommercePaymentMethodsHandlerClient.calculateFee(
                         eq(authorizationRequest.getPaymentInstrumentId()),
                         any(),
-                        any(),
                         eq(Integer.MAX_VALUE),
                         any(),
                         any()
@@ -902,7 +901,7 @@ class TransactionServiceTests {
         // handler-enabled path must use the handler's calculateFee, never the legacy
         // client
         verify(ecommercePaymentMethodsHandlerClient, times(1))
-                .calculateFee(any(), any(), any(), any(), any(), any());
+                .calculateFee(any(), any(), any(), any(), any());
         verify(ecommercePaymentMethodsClient, never()).calculateFee(any(), any(), any(), any());
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();

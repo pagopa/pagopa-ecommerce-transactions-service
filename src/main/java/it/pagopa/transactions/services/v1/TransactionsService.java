@@ -898,7 +898,6 @@ public class TransactionsService {
         Mono<CalculateFeeResponseDto> feesMono = ecommercePaymentMethodsHandlerEnabled
                 ? ecommercePaymentMethodsHandlerClient.calculateFee(
                         authRequest.getPaymentInstrumentId(),
-                        transaction.getTransactionId().value(),
                         feeRequest,
                         Integer.MAX_VALUE,
                         transactionsUtils.getEffectiveClientId(transaction),

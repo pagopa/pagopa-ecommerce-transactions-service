@@ -96,11 +96,8 @@ public class EcommercePaymentMethodsHandlerClient {
                 .onErrorMap(err -> new InvalidRequestException("Error while invoke method update session"));
     }
 
-    @SuppressWarnings("unused") // transactionId kept for interface parity with EcommercePaymentMethodsClient
-                                // and old payment-methods-service
     public Mono<CalculateFeeResponseDto> calculateFee(
                                                       String paymentMethodId,
-                                                      String transactionId,
                                                       CalculateFeeRequestDto calculateFeeRequestDto,
                                                       Integer maxOccurrences,
                                                       String xClientId,
