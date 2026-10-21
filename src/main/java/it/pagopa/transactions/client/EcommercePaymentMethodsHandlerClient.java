@@ -109,9 +109,9 @@ public class EcommercePaymentMethodsHandlerClient {
         return ecommercePaymentMethodsHandlerWebClientV1.calculateFees(
                 paymentMethodId,
                 clientId,
-                language != null ? language : "IT",
                 handlerRequest,
-                maxOccurrences
+                maxOccurrences,
+                language != null ? language : "IT"
         )
                 .doOnNext(v -> logSuccess("Calculated payment method fees"))
                 .map(mapper::fromHandlerFeeResponse)

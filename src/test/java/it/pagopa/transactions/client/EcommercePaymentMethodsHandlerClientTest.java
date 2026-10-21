@@ -227,9 +227,9 @@ class EcommercePaymentMethodsHandlerClientTest {
                 ecommercePaymentMethodsHandlerWebClientV1.calculateFees(
                         eq(paymentMethodId),
                         eq(clientId),
-                        eq(language),
                         any(it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeRequestDto.class),
-                        eq(maxOccurrences)
+                        eq(maxOccurrences),
+                        eq(language)
                 )
         )
                 .thenReturn(Mono.just(handlerResponse));
@@ -359,9 +359,9 @@ class EcommercePaymentMethodsHandlerClientTest {
                 .calculateFees(
                         eq(paymentMethodId),
                         clientIdCaptor.capture(),
-                        languageCaptor.capture(),
                         any(),
-                        eq(maxOccurrences)
+                        eq(maxOccurrences),
+                        languageCaptor.capture()
                 );
 
         assertEquals(language, languageCaptor.getValue());
@@ -414,7 +414,7 @@ class EcommercePaymentMethodsHandlerClientTest {
         /* asserts */
         final var languageCaptor = ArgumentCaptor.forClass(String.class);
         verify(ecommercePaymentMethodsHandlerWebClientV1)
-                .calculateFees(any(), any(), languageCaptor.capture(), any(), any());
+                .calculateFees(any(), any(), any(), any(), languageCaptor.capture());
 
         assertEquals("IT", languageCaptor.getValue());
     }
