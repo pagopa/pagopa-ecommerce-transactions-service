@@ -35,10 +35,16 @@ public class WebClientsConfig {
                                    @Value("${nodo.connectionTimeout}") int nodoConnectionTimeout
     ) {
 
-        HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nodoConnectionTimeout)
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, nodoConnectionTimeout)
                 .doOnConnected(
                         connection -> connection
-                                .addHandlerLast(new ReadTimeoutHandler(nodoReadTimeout, TimeUnit.MILLISECONDS))
+                                .addHandlerLast(
+                                        new ReadTimeoutHandler(
+                                                nodoReadTimeout,
+                                                TimeUnit.MILLISECONDS
+                                        )
+                                )
                 )
                 .resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
@@ -49,12 +55,15 @@ public class WebClientsConfig {
             clientCodecConfigurer.customCodecs().register(StringDecoder.allMimeTypes());
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapDecoder());
             clientCodecConfigurer.customCodecs().register(new Jaxb2SoapEncoder());
-            clientCodecConfigurer.customCodecs().register(new Jackson2JsonDecoder(mapper, MediaType.APPLICATION_JSON));
-            clientCodecConfigurer.customCodecs().register(new Jackson2JsonEncoder(mapper, MediaType.APPLICATION_JSON));
+            clientCodecConfigurer.customCodecs()
+                    .register(new Jackson2JsonDecoder(mapper, MediaType.APPLICATION_JSON));
+            clientCodecConfigurer.customCodecs()
+                    .register(new Jackson2JsonEncoder(mapper, MediaType.APPLICATION_JSON));
         }).build();
 
         return WebClient.builder().baseUrl(nodoHostname)
-                .clientConnector(new ReactorClientHttpConnector(httpClient)).exchangeStrategies(exchangeStrategies)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .exchangeStrategies(exchangeStrategies)
                 .build();
     }
 
@@ -92,12 +101,14 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
+                )
+                .resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         WebClient webClient = it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient.buildWebClientBuilder()
                 .clientConnector(
                         new ReactorClientHttpConnector(httpClient)
-                ).baseUrl(ecommercePaymentMethodsUri).build();
+                )
+                .baseUrl(ecommercePaymentMethodsUri).build();
 
         it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient(
                 webClient
@@ -108,18 +119,14 @@ public class WebClientsConfig {
 
     @Bean(name = "walletWebClient")
     public it.pagopa.generated.wallet.v1.api.WalletsApi walletWebClient(
-                                                                        @Value(
-                                                                            "${wallet.uri}"
-                                                                        ) String walletUri,
+                                                                        @Value("${wallet.uri}") String walletUri,
                                                                         @Value(
                                                                             "${wallet.readTimeout}"
                                                                         ) int walletReadTimeout,
                                                                         @Value(
                                                                             "${wallet.connectionTimeout}"
                                                                         ) int walletConnectionTimeout,
-                                                                        @Value(
-                                                                            "${wallet.apiKey}"
-                                                                        ) String apiKey
+                                                                        @Value("${wallet.apiKey}") String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, walletConnectionTimeout)
@@ -130,12 +137,14 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
+                )
+                .resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         WebClient webClient = it.pagopa.generated.wallet.v1.ApiClient.buildWebClientBuilder()
                 .clientConnector(
                         new ReactorClientHttpConnector(httpClient)
-                ).baseUrl(walletUri).build();
+                )
+                .baseUrl(walletUri).build();
 
         it.pagopa.generated.wallet.v1.ApiClient apiClient = new it.pagopa.generated.wallet.v1.ApiClient(
                 webClient
@@ -206,12 +215,14 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
+                )
+                .resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
         WebClient webClient = it.pagopa.generated.ecommerce.paymentmethods.v2.ApiClient.buildWebClientBuilder()
                 .clientConnector(
                         new ReactorClientHttpConnector(httpClient)
-                ).baseUrl(ecommercePaymentMethodsUri).build();
+                )
+                .baseUrl(ecommercePaymentMethodsUri).build();
 
         it.pagopa.generated.ecommerce.paymentmethods.v2.ApiClient apiClient = new it.pagopa.generated.ecommerce.paymentmethods.v2.ApiClient(
                 webClient
@@ -220,7 +231,7 @@ public class WebClientsConfig {
         return new it.pagopa.generated.ecommerce.paymentmethods.v2.api.PaymentMethodsApi(apiClient);
     }
 
-    @Bean(name = "ecommercePaymentMethoHandlerdWebClientV1")
+    @Bean(name = "ecommercePaymentMethoHandlerWebClientV1")
     public it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi ecommercePaymentMethodHandlerWebClientV1(
                                                                                                                                         @Value(
                                                                                                                                             "${ecommercePaymentMethodsHandler.uri}"
@@ -236,7 +247,10 @@ public class WebClientsConfig {
                                                                                                                                         ) String apiKey
     ) {
         HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ecommercePaymentMethodsHandlerConnectionTimeout)
+                .option(
+                        ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                        ecommercePaymentMethodsHandlerConnectionTimeout
+                )
                 .doOnConnected(
                         connection -> connection.addHandlerLast(
                                 new ReadTimeoutHandler(
@@ -244,18 +258,22 @@ public class WebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                ).resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
+                )
+                .resolver(nameResolverSpec -> nameResolverSpec.ndots(1));
 
-        WebClient webClient = it.pagopa.generated.ecommerce.paymentmethods.v1.ApiClient.buildWebClientBuilder()
-                .clientConnector(
-                        new ReactorClientHttpConnector(httpClient)
-                ).baseUrl(ecommercePaymentMethodsHandlerUri).build();
+        WebClient webClient = it.pagopa.generated.ecommerce.paymentmethodshandler.v1.ApiClient
+                .buildWebClientBuilder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .baseUrl(ecommercePaymentMethodsHandlerUri)
+                .build();
 
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.ApiClient apiClient = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.ApiClient(
                 webClient
         ).setBasePath(ecommercePaymentMethodsHandlerUri);
         apiClient.setApiKey(apiKey);
-        return new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi(apiClient);
+        return new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi(
+                apiClient
+        );
     }
 
 }

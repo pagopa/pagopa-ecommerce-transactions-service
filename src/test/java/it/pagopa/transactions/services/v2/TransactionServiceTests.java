@@ -834,22 +834,23 @@ class TransactionServiceTests {
         RequestAuthorizationResponseDto requestAuthorizationResponse = new RequestAuthorizationResponseDto()
                 .authorizationUrl(stateResponseDto.getUrl());
 
-        Mockito.when(
-                ecommercePaymentMethodsClient.calculateFee(
-                        eq(authorizationRequest.getPaymentInstrumentId()),
-                        eq(transaction.getTransactionId()),
-                        any(),
-                        eq(Integer.MAX_VALUE)
-                )
-        ).thenReturn(
-                Mono.just(calculateFeeResponseDto)
-        );
-
-        Mockito.when(
+        when(
                 ecommercePaymentMethodsHandlerClient
                         .getPaymentMethod(eq(authorizationRequest.getPaymentInstrumentId()), any())
         )
                 .thenReturn(Mono.just(paymentMethod));
+
+        Mockito.when(
+                ecommercePaymentMethodsHandlerClient.calculateFee(
+                        eq(authorizationRequest.getPaymentInstrumentId()),
+                        any(),
+                        eq(Integer.MAX_VALUE),
+                        any(),
+                        any()
+                )
+        ).thenReturn(
+                Mono.just(calculateFeeResponseDto)
+        );
 
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(any()))
                 .thenReturn(
@@ -897,6 +898,11 @@ class TransactionServiceTests {
         verify(transactionRequestAuthorizationHandlerV2).handleWithCreationDate(commandArgumentCaptor.capture());
         verify(ecommercePaymentMethodsClient, times(0)).getPaymentMethod(any(), any());
         verify(ecommercePaymentMethodsHandlerClient, times(1)).getPaymentMethod(any(), any());
+        // handler-enabled path must use the handler's calculateFee, never the legacy
+        // client
+        verify(ecommercePaymentMethodsHandlerClient, times(1))
+                .calculateFee(any(), any(), any(), any(), any());
+        verify(ecommercePaymentMethodsClient, never()).calculateFee(any(), any(), any(), any());
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
