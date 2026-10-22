@@ -1,7 +1,6 @@
 package it.pagopa.transactions.controllers.v2;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
@@ -10,11 +9,9 @@ import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v2.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
-import it.pagopa.transactions.utils.TransactionsUtils;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
@@ -22,15 +19,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static it.pagopa.transactions.utils.TransactionsUtils.nodeErrorToV2TransactionsResponseEntityMapping;
 
@@ -42,16 +36,10 @@ public class TransactionsController implements V2Api {
     private TransactionsService transactionsService;
 
     @Autowired
-    private TransactionsUtils transactionsUtils;
-
-    @Autowired
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Autowired
     private it.pagopa.transactions.controllers.v1.TransactionsController transactionsControllerV1;
-
-    @Value("${security.apiKey.primary}")
-    private String primaryKey;
 
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
 
@@ -75,22 +63,6 @@ public class TransactionsController implements V2Api {
                                 ),
                                 ctx
                         )
-                )
-                .map(ResponseEntity::ok);
-    }
-
-    @Override
-    public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
-                                                                          ClientIdDto xClientId,
-                                                                          UUID correlationId,
-                                                                          Mono<NewTransactionRequestDto> newTransactionRequest,
-                                                                          UUID xUserId,
-                                                                          ServerWebExchange exchange
-    ) {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        return newTransactionRequest
-                .flatMap(
-                        ntr -> transactionsService.newTransaction(ntr, xClientId, correlationId, transactionId, xUserId)
                 )
                 .map(ResponseEntity::ok);
     }
@@ -464,37 +436,5 @@ public class TransactionsController implements V2Api {
                         error
                 )
         );
-    }
-
-    @Warmup
-    public void postNewTransactionWarmupMethod() {
-        IntStream.range(0, 3).forEach(
-                idx -> {
-                    NewTransactionResponseDto newTransactionResponseDto = WebClient
-                            .create()
-                            .post()
-                            .uri("http://localhost:8080/v2/transactions")
-                            .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
-                            .header("x-correlation-id", UUID.randomUUID().toString())
-                            .header("x-api-key", primaryKey)
-                            .bodyValue(transactionsUtils.buildWarmupRequestV2())
-                            .retrieve()
-                            .bodyToMono(NewTransactionResponseDto.class)
-                            .block(Duration.ofSeconds(30));
-                    WebClient
-                            .create()
-                            .get()
-                            .uri(
-                                    "http://localhost:8080/v2/transactions/{transactionId}",
-                                    newTransactionResponseDto.getTransactionId()
-                            )
-                            .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
-                            .header("x-api-key", primaryKey)
-                            .retrieve()
-                            .toBodilessEntity()
-                            .block(Duration.ofSeconds(30));
-                }
-        );
-
     }
 }
