@@ -176,17 +176,6 @@ public class TransactionsService {
     }
 
     @CircuitBreaker(name = "ecommerce-db")
-    @Retry(name = "getTransactionInfo")
-    public Mono<TransactionInfoDto> getTransactionInfo(
-                                                       String transactionId,
-                                                       UUID xUserId
-    ) {
-        return getBaseTransactionView(transactionId, xUserId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId)))
-                .map(this::buildTransactionInfoDtoFromView);
-    }
-
-    @CircuitBreaker(name = "ecommerce-db")
     @Retry(name = "getTransactionOutcome")
     public Mono<TransactionOutcomeInfoDto> getTransactionOutcome(
                                                                  String transactionId,
@@ -369,93 +358,6 @@ public class TransactionsService {
                 case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_25;
             };
             case null, default -> TransactionOutcomeInfoDto.OutcomeEnum.NUMBER_17;
-        };
-    }
-
-    private TransactionInfoDto buildTransactionInfoDtoFromView(BaseTransactionView baseTransactionView) {
-        return switch (baseTransactionView) {
-            case it.pagopa.ecommerce.commons.documents.v1.Transaction transaction -> new TransactionInfoDto()
-                    .transactionId(transaction.getTransactionId())
-                    .payments(
-                            transaction.getPaymentNotices().stream().map(
-                                    paymentNotice -> new PaymentInfoDto()
-                                            .amount(paymentNotice.getAmount())
-                                            .reason(paymentNotice.getDescription())
-                                            .paymentToken(paymentNotice.getPaymentToken())
-                                            .rptId(paymentNotice.getRptId())
-                                            .isAllCCP(paymentNotice.isAllCCP())
-                                            .transferList(
-                                                    paymentNotice.getTransferList().stream().map(
-                                                            notice -> new TransferDto()
-                                                                    .transferCategory(
-                                                                            notice.getTransferCategory()
-                                                                    )
-                                                                    .transferAmount(
-                                                                            notice.getTransferAmount()
-                                                                    ).digitalStamp(notice.getDigitalStamp())
-                                                                    .paFiscalCode(notice.getPaFiscalCode())
-                                                    ).toList()
-                                            )
-                            ).toList()
-                    )
-                    .feeTotal(transaction.getFeeTotal())
-                    .clientId(
-                            TransactionInfoDto.ClientIdEnum.valueOf(
-                                    transaction.getClientId().toString()
-                            )
-                    )
-                    .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
-                    .idCart(transaction.getIdCart())
-                    .gateway(transaction.getPaymentGateway())
-                    .sendPaymentResultOutcome(
-                            transaction.getSendPaymentResultOutcome() == null ? null
-                                    : TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                    .valueOf(transaction.getSendPaymentResultOutcome().name())
-                    )
-                    .authorizationCode(transaction.getAuthorizationCode())
-                    .errorCode(transaction.getAuthorizationErrorCode());
-            case Transaction transaction -> new TransactionInfoDto()
-                    .transactionId(transaction.getTransactionId())
-                    .payments(
-                            transaction.getPaymentNotices().stream().map(
-                                    paymentNotice -> new PaymentInfoDto()
-                                            .amount(paymentNotice.getAmount())
-                                            .reason(paymentNotice.getDescription())
-                                            .paymentToken(paymentNotice.getPaymentToken())
-                                            .rptId(paymentNotice.getRptId())
-                                            .isAllCCP(paymentNotice.isAllCCP())
-                                            .transferList(
-                                                    paymentNotice.getTransferList().stream().map(
-                                                            notice -> new TransferDto()
-                                                                    .transferCategory(
-                                                                            notice.getTransferCategory()
-                                                                    )
-                                                                    .transferAmount(
-                                                                            notice.getTransferAmount()
-                                                                    ).digitalStamp(notice.getDigitalStamp())
-                                                                    .paFiscalCode(notice.getPaFiscalCode())
-                                                    ).toList()
-                                            )
-                            ).toList()
-                    )
-                    .feeTotal(transaction.getFeeTotal())
-                    .clientId(
-                            TransactionInfoDto.ClientIdEnum.valueOf(
-                                    transaction.getClientId().getEffectiveClient().toString()
-                            )
-                    )
-                    .status(transactionsUtils.convertEnumerationV1(transaction.getStatus()))
-                    .idCart(transaction.getIdCart())
-                    .gateway(transaction.getPaymentGateway())
-                    .sendPaymentResultOutcome(
-                            transaction.getSendPaymentResultOutcome() == null ? null
-                                    : TransactionInfoDto.SendPaymentResultOutcomeEnum
-                                    .valueOf(transaction.getSendPaymentResultOutcome().name())
-                    )
-                    .authorizationCode(transaction.getAuthorizationCode())
-                    .errorCode(transaction.getAuthorizationErrorCode())
-                    .gatewayAuthorizationStatus(transaction.getGatewayAuthorizationStatus());
-            default -> throw new IllegalStateException("Unexpected value: " + baseTransactionView);
         };
     }
 
