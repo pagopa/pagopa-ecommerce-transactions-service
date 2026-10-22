@@ -5,7 +5,6 @@ import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.PaymentNotice;
 import it.pagopa.ecommerce.commons.documents.PaymentTransferInformation;
 import it.pagopa.ecommerce.commons.documents.v1.Transaction;
-import it.pagopa.ecommerce.commons.documents.v1.TransactionUserReceiptData;
 import it.pagopa.ecommerce.commons.documents.v2.ClosureErrorData;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
@@ -17,7 +16,6 @@ import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.*;
-import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -29,8 +27,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -88,9 +84,6 @@ class TransactionServiceTests {
     @Autowired
     @Qualifier(it.pagopa.transactions.services.v1.TransactionsService.QUALIFIER_NAME)
     private it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1;
-
-    @Autowired
-    private UUIDUtils uuidUtils;
 
     @MockitoBean
     private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
@@ -153,9 +146,6 @@ class TransactionServiceTests {
     @MockitoBean
     private it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2;
 
-    @Captor
-    private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
-
     @MockitoSpyBean
     private TransactionsUtils transactionsUtils;
 
@@ -184,124 +174,6 @@ class TransactionServiceTests {
     private ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
 
     final String TRANSACTION_ID = TransactionTestUtils.TRANSACTION_ID;
-
-    @Test
-    void getTransactionReturnsTransactionDataOriginProvided() {
-
-        final Transaction transaction = TransactionTestUtils.transactionDocument(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                ZonedDateTime.now()
-        );
-
-        transaction.setPaymentGateway("VPOS");
-        transaction.setSendPaymentResultOutcome(
-                TransactionUserReceiptData.Outcome.OK
-        );
-        transaction.setAuthorizationCode("00");
-        transaction.setAuthorizationErrorCode(null);
-
-        final TransactionInfoDto expected = new TransactionInfoDto()
-                .transactionId(TRANSACTION_ID)
-                .payments(
-                        transaction.getPaymentNotices().stream().map(
-                                p -> new PaymentInfoDto()
-                                        .paymentToken(p.getPaymentToken())
-                                        .rptId(p.getRptId())
-                                        .reason(p.getDescription())
-                                        .amount(p.getAmount())
-                                        .isAllCCP(p.isAllCCP())
-                                        .transferList(
-                                                p.getTransferList().stream().map(
-                                                        notice -> new TransferDto()
-                                                                .paFiscalCode(notice.getPaFiscalCode())
-                                                                .digitalStamp(notice.getDigitalStamp())
-                                                                .transferAmount(notice.getTransferAmount())
-                                                                .transferCategory(notice.getTransferCategory())
-                                                ).toList()
-                                        )
-                        ).toList()
-                )
-                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
-                .feeTotal(null)
-                .status(TransactionStatusDto.ACTIVATED)
-                .idCart("ecIdCart")
-                .gateway("VPOS")
-                .sendPaymentResultOutcome(TransactionInfoDto.SendPaymentResultOutcomeEnum.OK)
-                .authorizationCode("00")
-                .errorCode(null);
-
-        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
-                .assertNext(
-                        result -> assertEquals(expected, result)
-                )
-                .verifyComplete();
-    }
-
-    @Test
-    void getTransactionReturnsTransactionDataOriginProvidedNoAdditionalFields() {
-
-        final Transaction transaction = TransactionTestUtils.transactionDocument(
-                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.ACTIVATED,
-                ZonedDateTime.now()
-        );
-
-        transaction.setPaymentGateway(null);
-        transaction.setSendPaymentResultOutcome(null);
-        transaction.setAuthorizationCode(null);
-        transaction.setAuthorizationErrorCode(null);
-
-        final TransactionInfoDto expected = new TransactionInfoDto()
-                .transactionId(TRANSACTION_ID)
-                .payments(
-                        transaction.getPaymentNotices().stream().map(
-                                p -> new PaymentInfoDto()
-                                        .paymentToken(p.getPaymentToken())
-                                        .rptId(p.getRptId())
-                                        .reason(p.getDescription())
-                                        .amount(p.getAmount())
-                                        .isAllCCP(p.isAllCCP())
-                                        .transferList(
-                                                p.getTransferList().stream().map(
-                                                        notice -> new TransferDto()
-                                                                .paFiscalCode(notice.getPaFiscalCode())
-                                                                .digitalStamp(notice.getDigitalStamp())
-                                                                .transferAmount(notice.getTransferAmount())
-                                                                .transferCategory(notice.getTransferCategory())
-                                                ).toList()
-                                        )
-                        ).toList()
-                )
-                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
-                .feeTotal(null)
-                .status(TransactionStatusDto.ACTIVATED)
-                .idCart("ecIdCart")
-                .gateway(null)
-                .sendPaymentResultOutcome(null)
-                .authorizationCode(null)
-                .errorCode(null);
-
-        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.just(transaction));
-        assertEquals(
-                transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
-                expected
-        );
-
-        StepVerifier.create(transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null))
-                .expectNext(expected)
-                .verifyComplete();
-    }
-
-    @Test
-    void getTransactionThrowsOnTransactionNotFound() {
-        when(repository.findById(TRANSACTION_ID)).thenReturn(Mono.empty());
-
-        assertThrows(
-                TransactionNotFoundException.class,
-                () -> transactionsServiceV1.getTransactionInfo(TRANSACTION_ID, null).block(),
-                TRANSACTION_ID
-        );
-    }
 
     @Test
     void getPaymentTokenByTransactionNotFound() {
@@ -460,7 +332,6 @@ class TransactionServiceTests {
     @Test
     void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFoundWithPaymentMethodHandler() {
         TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new TransactionsService(
-                transactionActivateHandlerV2,
                 null, // requestAuthHandlerV2,
                 transactionUpdateAuthorizationHandlerV2,
                 null, // transactionSendClosureRequestHandler,
@@ -471,17 +342,13 @@ class TransactionServiceTests {
                 closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
                 transactionUserReceiptProjectionHandlerV2,
-                null, // transactionsActivationProjectionHandlerV2,
                 repository,
                 ecommercePaymentMethodsClient,
                 ecommercePaymentMethodsHandlerClient,
                 walletClient,
-                uuidUtils,
                 transactionsUtils,
                 transactionsEventStoreRepository,
-                15, // paymentTokenValidity,
                 null, // reactivePaymentRequestInfoRedisTemplateWrapper,
-                confidentialMailUtils,
                 updateTransactionStatusTracerUtils,
                 new HashMap<>(),
                 new HashSet<>(),
