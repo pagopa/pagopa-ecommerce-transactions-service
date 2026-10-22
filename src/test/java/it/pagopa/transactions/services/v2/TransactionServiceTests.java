@@ -754,7 +754,6 @@ class TransactionServiceTests {
         );
 
         it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new it.pagopa.transactions.services.v1.TransactionsService(
-                transactionActivateHandlerV2,
                 transactionRequestAuthorizationHandlerV2, // requestAuthHandlerV2,
                 transactionUpdateAuthorizationHandlerV2,
                 null, // transactionSendClosureRequestHandler,
@@ -765,17 +764,13 @@ class TransactionServiceTests {
                 closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
                 transactionUserReceiptProjectionHandlerV2,
-                null, // transactionsActivationProjectionHandlerV2,
                 repository,
                 ecommercePaymentMethodsClient,
                 ecommercePaymentMethodsHandlerClient,
                 walletClient,
-                uuidUtils,
                 transactionsUtils,
                 transactionsEventStoreRepository,
-                15, // paymentTokenValidity,
                 paymentRequestInfoRedisTemplateWrapper, // reactivePaymentRequestInfoRedisTemplateWrapper,
-                confidentialMailUtils,
                 updateTransactionStatusTracerUtils,
                 new HashMap<>(),
                 new HashSet<>(),
