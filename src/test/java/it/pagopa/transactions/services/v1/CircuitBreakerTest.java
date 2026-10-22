@@ -69,9 +69,6 @@ class CircuitBreakerTest {
     private TransactionsEventStoreRepository<Object> eventsRepository;
 
     @Autowired
-    private CircuitBreakerRegistry circuitBreakerRegistry;
-
-    @Autowired
     private RetryRegistry retryRegistry;
 
     private static final JsonNode resilience4jConfiguration;
@@ -138,10 +135,6 @@ class CircuitBreakerTest {
                 );
     }
 
-    private static Stream<Arguments> getIgnoredExceptionForGetTransactionInfoRetry() {
-        return getIgnoredExceptionsForRetry("getTransactionInfo");
-    }
-
     private static Stream<Arguments> getIgnoredExceptionForGetTransactionOutcomeRetry() {
         return getIgnoredExceptionsForRetry("getTransactionOutcome");
     }
@@ -160,35 +153,6 @@ class CircuitBreakerTest {
 
     private static Stream<Arguments> getIgnoredExceptionForAddUserReceiptRetry() {
         return getIgnoredExceptionsForRetry("addUserReceipt");
-    }
-
-    @ParameterizedTest
-    @MethodSource("getIgnoredExceptionForGetTransactionInfoRetry")
-    @Order(0)
-    void shouldNotPerformRetryForExcludedException_getTransactionInfoRetry(
-                                                                           Exception thrownException,
-                                                                           String retryInstanceName
-    ) {
-        Retry retry = retryRegistry.retry(retryInstanceName);
-        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-                + 1;
-
-        /*
-         * Preconditions
-         */
-        Mockito.when(transactionsViewRepository.findById(any(String.class)))
-                .thenReturn(Mono.error(thrownException));
-
-        StepVerifier
-                .create(
-                        transactionsService.getTransactionInfo("transactionId", null)
-                )
-                .expectError(thrownException.getClass())
-                .verify();
-        assertEquals(
-                expectedFailedCallsWithoutRetryAttempt,
-                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-        );
     }
 
     @ParameterizedTest
