@@ -26,7 +26,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -57,7 +56,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -105,33 +103,6 @@ class TransactionsControllerTest {
 
     @MockitoBean
     private ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
-
-    @Test
-    void shouldGetTransactionInfoGetPaymentToken() {
-
-        TransactionInfoDto response = new TransactionInfoDto();
-        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-        paymentInfoDto.setAmount(MOCK_AMOUNT);
-        paymentInfoDto.setReason("Reason");
-        paymentInfoDto.setPaymentToken("payment_token");
-        response.addPaymentsItem(paymentInfoDto);
-        response.setAuthToken("token");
-
-        String transactionId = new TransactionId(UUID.randomUUID()).value();
-
-        Mockito.lenient().when(transactionsService.getTransactionInfo(transactionId, null))
-                .thenReturn(Mono.just(response));
-
-        ResponseEntity<TransactionInfoDto> responseEntity = transactionsController
-                .getTransactionInfo(transactionId, null, mockExchange).block();
-
-        // Verify mock
-        verify(transactionsService, Mockito.times(1)).getTransactionInfo(transactionId, null);
-
-        // Verify status code and response
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(response, responseEntity.getBody());
-    }
 
     @Test
     void shouldCancelTransactionInfo() {
@@ -663,35 +634,6 @@ class TransactionsControllerTest {
                 "Invalid payment token received",
                 responseEntity.getBody().getDetail()
         );
-    }
-
-    @Test
-    void shouldGetTransactionInfoInAllStatuses() {
-
-        TransactionInfoDto response = new TransactionInfoDto()
-                .addPaymentsItem(
-                        new PaymentInfoDto()
-                                .amount(MOCK_AMOUNT)
-                                .reason("Reason")
-                                .paymentToken("payment_token")
-                ).authToken("token");
-
-        String transactionId = TransactionTestUtils.TRANSACTION_ID;
-
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
-                .values()) {
-            response.setStatus(TransactionStatusDto.fromValue(status.toString()));
-            Mockito.when(transactionsService.getTransactionInfo(transactionId, null))
-                    .thenReturn(Mono.just(response));
-            webTestClient.get()
-                    .uri("/transactions/{trnId}", Map.of("trnId", transactionId))
-                    .header("x-api-key", "primary-key")
-                    .exchange()
-                    .expectStatus()
-                    .isOk()
-                    .expectBody(TransactionInfoDto.class)
-                    .value(p -> assertEquals(status.toString(), p.getStatus().toString()));
-        }
     }
 
     @Test

@@ -15,12 +15,10 @@ import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDa
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
-import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,9 +45,6 @@ public class TransactionsController implements TransactionsApi {
     private TransactionsService transactionsService;
 
     @Autowired
-    private TransactionsUtils transactionsUtils;
-
-    @Autowired
     private UUIDUtils uuidUtils;
 
     @Autowired
@@ -63,30 +58,6 @@ public class TransactionsController implements TransactionsApi {
 
     private static final String TRANSACTION_NOT_FOUND_DESC = "Transaction not found";
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
-
-    @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(
-                                                                       String transactionId,
-                                                                       UUID xUserId,
-                                                                       ServerWebExchange exchange
-    ) {
-        return transactionsService.getTransactionInfo(transactionId, xUserId)
-                .doOnNext(
-                        t -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "GetTransactionInfo completed")
-                )
-                .contextWrite(
-                        ctx -> LogTracingUtils.enrichContextForEvent(
-                                Map.of(
-                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                        transactionId
-                                ),
-                                ctx
-                        )
-                )
-                .map(ResponseEntity::ok);
-    }
 
     @Override
     public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(
