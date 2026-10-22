@@ -29,7 +29,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,62 +103,8 @@ class TransactionsControllerTest {
     @Mock
     ServerWebExchange mockExchange;
 
-    @Mock
-    ServerHttpRequest mockRequest;
-
-    @Mock
-    HttpHeaders mockHeaders;
-
     @MockitoBean
     private ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
-    private final Integer paymentTokenValidityTime = 120;
-
-    @Test
-    void shouldGetOk() {
-        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
-        try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
-            uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
-            String RPTID = "77777777777302016723749670035";
-            String EMAIL = "mario.rossi@email.com";
-            ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-            NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-            newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
-            newTransactionRequestDto.setEmail(EMAIL);
-
-            NewTransactionResponseDto response = new NewTransactionResponseDto();
-
-            PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-            paymentInfoDto.setAmount(MOCK_AMOUNT);
-            paymentInfoDto.setReason("Reason");
-            paymentInfoDto.setPaymentToken("payment_token");
-            paymentInfoDto.setRptId(RPTID);
-
-            response.addPaymentsItem(paymentInfoDto);
-            response.setAuthToken("token");
-
-            Mockito.lenient()
-                    .when(
-                            transactionsService
-                                    .newTransaction(
-                                            newTransactionRequestDto,
-                                            clientIdDto,
-                                            transactionId
-                                    )
-                    )
-                    .thenReturn(Mono.just(response));
-
-            ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                    .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), mockExchange).block();
-
-            // Verify mock
-            verify(transactionsService, Mockito.times(1))
-                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId);
-
-            // Verify status code and response
-            assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-            assertEquals(response, responseEntity.getBody());
-        }
-    }
 
     @Test
     void shouldGetTransactionInfoGetPaymentToken() {
@@ -477,22 +422,6 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void shouldReturnProblemJsonWith400OnBadInput() {
-
-        webTestClient.post()
-                .uri("/transactions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("X-Client-Id", "CHECKOUT")
-                .header("x-api-key", "primary-key")
-                .body(BodyInserters.fromValue("{}"))
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody(ProblemJsonDto.class)
-                .value(p -> assertEquals(400, p.getStatus()));
-    }
-
-    @Test
     void shouldReturnErrorCircuitBreakerOpen() {
 
         ResponseEntity error = transactionsController.openStateHandler(
@@ -763,73 +692,6 @@ class TransactionsControllerTest {
                     .expectBody(TransactionInfoDto.class)
                     .value(p -> assertEquals(status.toString(), p.getStatus().toString()));
         }
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "foo@test.it",
-                    "FoO@TeSt.iT",
-                    "FOO@TEST.IT"
-            }
-    )
-    void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
-
-        Mockito.when(transactionsService.newTransaction(any(), any(), any()))
-                .thenReturn(Mono.just(new NewTransactionResponseDto()));
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeInfoDto()
-                                .rptId(TransactionTestUtils.RPT_ID)
-                                .amount(TransactionTestUtils.AMOUNT)
-                )
-                .email(email)
-                .idCart(TransactionTestUtils.ID_CART);
-        webTestClient.post()
-                .uri("/transactions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(newTransactionRequestDto)
-                .header("X-Client-Id", "CHECKOUT")
-                .header("x-api-key", "primary-key")
-                .exchange()
-                .expectStatus()
-                .isOk();
-    }
-
-    @Test
-    void shouldReturnBadRequestForInvalidMail() {
-
-        Mockito.when(transactionsService.newTransaction(any(), any(), any()))
-                .thenReturn(Mono.just(new NewTransactionResponseDto()));
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeInfoDto()
-                                .rptId(TransactionTestUtils.RPT_ID)
-                                .amount(TransactionTestUtils.AMOUNT)
-                )
-                .email("invalidMail")
-                .idCart(TransactionTestUtils.ID_CART);
-
-        webTestClient.post()
-                .uri("/transactions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(newTransactionRequestDto)
-                .header("X-Client-Id", "CHECKOUT")
-                .header("x-api-key", "primary-key")
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody(ProblemJsonDto.class)
-                .value(
-                        p -> {
-                            assertEquals(400, p.getStatus());
-                            assertTrue(
-                                    p.getDetail().contains(
-                                            "Field error in object 'newTransactionRequestDtoMono' on field 'email'"
-                                    )
-                            );
-                        }
-                );
     }
 
     @Test

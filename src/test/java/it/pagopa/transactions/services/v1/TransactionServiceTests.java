@@ -17,7 +17,6 @@ import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.*;
-import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -29,8 +28,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -152,9 +149,6 @@ class TransactionServiceTests {
 
     @MockitoBean
     private it.pagopa.transactions.projections.handlers.v2.CancellationRequestProjectionHandler cancellationRequestProjectionHandlerV2;
-
-    @Captor
-    private ArgumentCaptor<TransactionRequestAuthorizationCommand> commandArgumentCaptor;
 
     @MockitoSpyBean
     private TransactionsUtils transactionsUtils;
@@ -460,7 +454,6 @@ class TransactionServiceTests {
     @Test
     void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFoundWithPaymentMethodHandler() {
         TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new TransactionsService(
-                transactionActivateHandlerV2,
                 null, // requestAuthHandlerV2,
                 transactionUpdateAuthorizationHandlerV2,
                 null, // transactionSendClosureRequestHandler,
@@ -471,17 +464,13 @@ class TransactionServiceTests {
                 closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
                 transactionUserReceiptProjectionHandlerV2,
-                null, // transactionsActivationProjectionHandlerV2,
                 repository,
                 ecommercePaymentMethodsClient,
                 ecommercePaymentMethodsHandlerClient,
                 walletClient,
-                uuidUtils,
                 transactionsUtils,
                 transactionsEventStoreRepository,
-                15, // paymentTokenValidity,
                 null, // reactivePaymentRequestInfoRedisTemplateWrapper,
-                confidentialMailUtils,
                 updateTransactionStatusTracerUtils,
                 new HashMap<>(),
                 new HashSet<>(),
