@@ -11,10 +11,16 @@ import it.pagopa.ecommerce.commons.domain.v2.*;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionActivated;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManager;
 import it.pagopa.ecommerce.commons.utils.ConfidentialDataManagerTest;
+import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.transactions.v2.server.model.*;
+import it.pagopa.transactions.commands.handlers.v2.TransactionSendClosureRequestHandler;
+import it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NotImplementedException;
+import it.pagopa.transactions.projections.handlers.v2.AuthorizationUpdateProjectionHandler;
+import it.pagopa.transactions.projections.handlers.v2.ClosureRequestedProjectionHandler;
+import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
 import it.pagopa.transactions.utils.ConfidentialMailUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -46,15 +52,32 @@ import static org.mockito.ArgumentMatchers.any;
 
 @AutoConfigureDataRedis
 class TransactionServiceTest {
+    private final TransactionsUtils transactionsUtils = Mockito.mock(TransactionsUtils.class);
     private final TransactionsViewRepository transactionsViewRepository = Mockito
             .mock(TransactionsViewRepository.class);
-
-    private final TransactionsUtils transactionsUtils = Mockito.mock(TransactionsUtils.class);
+    private final TransactionsEventStoreRepository<Object> transactionsEventStoreRepository = Mockito
+            .mock(TransactionsEventStoreRepository.class);
+    private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils = Mockito
+            .mock(UpdateTransactionStatusTracerUtils.class);
+    private final TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandler = Mockito
+            .mock(TransactionUpdateAuthorizationHandler.class);
+    private final AuthorizationUpdateProjectionHandler authorizationUpdateProjectionHandler = Mockito
+            .mock(AuthorizationUpdateProjectionHandler.class);
+    private final TransactionSendClosureRequestHandler transactionSendClosureRequestHandler = Mockito
+            .mock(TransactionSendClosureRequestHandler.class);
+    private final ClosureRequestedProjectionHandler closureRequestedProjectionHandler = Mockito
+            .mock(ClosureRequestedProjectionHandler.class);
 
     @Autowired
     private final TransactionsService transactionsService = new TransactionsService(
             transactionsUtils,
-            transactionsViewRepository
+            transactionsViewRepository,
+            transactionsEventStoreRepository,
+            updateTransactionStatusTracerUtils,
+            transactionUpdateAuthorizationHandler,
+            authorizationUpdateProjectionHandler,
+            transactionSendClosureRequestHandler,
+            closureRequestedProjectionHandler
     );
 
     static Stream<Arguments> clientIdMapping() {

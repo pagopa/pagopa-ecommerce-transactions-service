@@ -28,6 +28,7 @@ import it.pagopa.generated.wallet.v1.dto.WalletAuthDataDto;
 import it.pagopa.transactions.client.*;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
+import it.pagopa.transactions.controllers.v2.TransactionsController;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentNoticeAllCCPMismatchException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -100,6 +101,10 @@ class TransactionServiceTests {
     @Autowired
     @Qualifier(it.pagopa.transactions.services.v1.TransactionsService.QUALIFIER_NAME)
     private it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1;
+
+    @Autowired
+    @Qualifier(it.pagopa.transactions.services.v2.TransactionsService.QUALIFIER_NAME)
+    private it.pagopa.transactions.services.v2.TransactionsService transactionsServiceV2;
 
     @MockitoBean
     private EcommercePaymentMethodsClient ecommercePaymentMethodsClient;
@@ -190,6 +195,9 @@ class TransactionServiceTests {
 
     @MockitoBean
     private ConfidentialMailUtils confidentialMailUtils;
+
+    @MockitoBean
+    private TransactionsController transactionsController;
 
     @MockitoBean
     private ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
@@ -559,13 +567,9 @@ class TransactionServiceTests {
 
         it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new it.pagopa.transactions.services.v1.TransactionsService(
                 transactionRequestAuthorizationHandlerV2, // requestAuthHandlerV2,
-                transactionUpdateAuthorizationHandlerV2,
                 null, // transactionSendClosureRequestHandler,
                 null, // transactionRequestUserReceiptHandlerV2,
-                transactionCancelHandlerV2,
                 authorizationRequestProjectionHandler, // authorizationProjectionHandlerV2,
-                authorizationUpdateProjectionHandlerV2,
-                closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
                 transactionUserReceiptProjectionHandlerV2,
                 repository,
@@ -575,7 +579,6 @@ class TransactionServiceTests {
                 transactionsUtils,
                 transactionsEventStoreRepository,
                 paymentRequestInfoRedisTemplateWrapper, // reactivePaymentRequestInfoRedisTemplateWrapper,
-                updateTransactionStatusTracerUtils,
                 new HashMap<>(),
                 new HashSet<>(),
                 new HashSet<>(),
@@ -771,10 +774,12 @@ class TransactionServiceTests {
                 TransactionTestUtils.USER_ID
         );
 
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+        it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequest = new it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new OutcomeNpgGatewayDto()
-                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                        new it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto()
+                                .operationResult(
+                                        it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                )
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -800,18 +805,18 @@ class TransactionServiceTests {
         TransactionClosureRequestedEvent closureSentEvent = TransactionTestUtils
                 .transactionClosureRequestedEvent();
 
-        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+        it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto expectedResponse = new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
                 .transactionId(transactionDocument.getTransactionId())
                 .payments(
                         transactionDocument.getPaymentNotices().stream().map(
-                                paymentNotice -> new PaymentInfoDto()
+                                paymentNotice -> new it.pagopa.generated.transactions.v2.server.model.PaymentInfoDto()
                                         .amount(paymentNotice.getAmount())
                                         .reason(paymentNotice.getDescription())
                                         .paymentToken(paymentNotice.getPaymentToken())
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.CLOSURE_REQUESTED);
+                .status(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.CLOSURE_REQUESTED);
 
         Transaction closedTransactionDocument = new Transaction(
                 transactionDocument.getTransactionId(),
@@ -858,7 +863,7 @@ class TransactionServiceTests {
                         )
                 );
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
+        it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto transactionInfoResponse = transactionsServiceV2
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -869,10 +874,12 @@ class TransactionServiceTests {
         TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
         UUID transactionIdDecoded = transactionId.uuid();
 
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+        it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequest = new it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new OutcomeNpgGatewayDto()
-                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                        new it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto()
+                                .operationResult(
+                                        it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                )
                 )
                 .timestampOperation(OffsetDateTime.now());
 
@@ -891,7 +898,7 @@ class TransactionServiceTests {
         /* test */
         StepVerifier
                 .create(
-                        transactionsServiceV1
+                        transactionsServiceV2
                                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest)
                 )
                 .expectErrorMatches(TransactionNotFoundException.class::isInstance)
@@ -1185,25 +1192,27 @@ class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+        it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequest = new it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new OutcomeNpgGatewayDto()
-                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                        new it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto()
+                                .operationResult(
+                                        it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                )
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+        it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto expectedResponse = new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
                 .transactionId(transactionDocument.getTransactionId())
                 .payments(
                         transactionDocument.getPaymentNotices().stream().map(
-                                paymentNotice -> new PaymentInfoDto()
+                                paymentNotice -> new it.pagopa.generated.transactions.v2.server.model.PaymentInfoDto()
                                         .amount(paymentNotice.getAmount())
                                         .reason(paymentNotice.getDescription())
                                         .paymentToken(paymentNotice.getPaymentToken())
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.CLOSURE_REQUESTED);
+                .status(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.CLOSURE_REQUESTED);
 
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
@@ -1267,7 +1276,7 @@ class TransactionServiceTests {
                 .thenReturn(Mono.just(transactionClosedEvent));
 
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
+        it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto transactionInfoResponse = transactionsServiceV2
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -1288,25 +1297,27 @@ class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+        it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequest = new it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new OutcomeNpgGatewayDto()
-                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                        new it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto()
+                                .operationResult(
+                                        it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                )
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+        it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto expectedResponse = new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
                 .transactionId(transactionDocument.getTransactionId())
                 .payments(
                         transactionDocument.getPaymentNotices().stream().map(
-                                paymentNotice -> new PaymentInfoDto()
+                                paymentNotice -> new it.pagopa.generated.transactions.v2.server.model.PaymentInfoDto()
                                         .amount(paymentNotice.getAmount())
                                         .reason(paymentNotice.getDescription())
                                         .paymentToken(paymentNotice.getPaymentToken())
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.CLOSED);
+                .status(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.CLOSED);
 
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
@@ -1347,7 +1358,7 @@ class TransactionServiceTests {
                 );
 
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
+        it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto transactionInfoResponse = transactionsServiceV2
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);
@@ -1368,25 +1379,27 @@ class TransactionServiceTests {
                 ZonedDateTime.now()
         );
 
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+        it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequest = new it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new OutcomeNpgGatewayDto()
-                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                        new it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto()
+                                .operationResult(
+                                        it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                )
                 )
                 .timestampOperation(OffsetDateTime.now());
 
-        TransactionInfoDto expectedResponse = new TransactionInfoDto()
+        it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto expectedResponse = new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
                 .transactionId(transactionDocument.getTransactionId())
                 .payments(
                         transactionDocument.getPaymentNotices().stream().map(
-                                paymentNotice -> new PaymentInfoDto()
+                                paymentNotice -> new it.pagopa.generated.transactions.v2.server.model.PaymentInfoDto()
                                         .amount(paymentNotice.getAmount())
                                         .reason(paymentNotice.getDescription())
                                         .paymentToken(paymentNotice.getPaymentToken())
                                         .rptId(paymentNotice.getRptId())
                         ).toList()
                 )
-                .status(TransactionStatusDto.CLOSURE_REQUESTED);
+                .status(it.pagopa.generated.transactions.v2.server.model.TransactionStatusDto.CLOSURE_REQUESTED);
 
         TransactionActivatedEvent transactionActivatedEvent = TransactionTestUtils.transactionActivateEvent();
         TransactionAuthorizationRequestedEvent transactionAuthorizationRequestedEvent = TransactionTestUtils
@@ -1442,7 +1455,7 @@ class TransactionServiceTests {
                         )
                 );
         /* test */
-        TransactionInfoDto transactionInfoResponse = transactionsServiceV1
+        it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto transactionInfoResponse = transactionsServiceV2
                 .updateTransactionAuthorization(transactionIdDecoded, updateAuthorizationRequest).block();
 
         assertEquals(expectedResponse, transactionInfoResponse);

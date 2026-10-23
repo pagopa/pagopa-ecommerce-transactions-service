@@ -4,8 +4,6 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
-import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
-import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
@@ -15,7 +13,6 @@ import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDa
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
-import it.pagopa.transactions.utils.UUIDUtils;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +28,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -45,16 +41,10 @@ public class TransactionsController implements TransactionsApi {
     private TransactionsService transactionsService;
 
     @Autowired
-    private UUIDUtils uuidUtils;
-
-    @Autowired
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @Autowired
     private OpenTelemetryUtils openTelemetryUtils;
-
-    @Autowired
-    private ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper;
 
     private static final String TRANSACTION_NOT_FOUND_DESC = "Transaction not found";
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
@@ -93,121 +83,6 @@ public class TransactionsController implements TransactionsApi {
                         )
                 )
                 .map(ResponseEntity::ok);
-    }
-
-    @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(
-                                                                                   String base64TransactionId,
-                                                                                   Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
-                                                                                   ServerWebExchange exchange
-    ) {
-        return uuidUtils.uuidFromBase64(base64TransactionId)
-                .fold(
-                        Mono::error,
-                        transactionIdDecoded -> updateAuthorizationRequestDto
-                                .flatMap(
-                                        updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
-                                                new TransactionId(transactionIdDecoded),
-                                                updateAuthorizationRequest,
-                                                exchange
-                                        )
-                                                .doOnNext(
-                                                        req -> LogTracingUtils.loggerTracingUtils()
-                                                                .success()
-                                                                .logInfo(log, "Transaction authorization updated")
-                                                )
-                                )
-                                .contextWrite(
-                                        ctx -> LogTracingUtils.enrichContextForEvent(
-                                                Map.of(
-                                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                                        transactionIdDecoded.toString()
-                                                ),
-                                                ctx
-                                        )
-                                )
-                                .map(ResponseEntity::ok)
-                );
-    }
-
-    public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
-                                                                     TransactionId domainTransactionId,
-                                                                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-                                                                     ServerWebExchange exchange
-    ) {
-        ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
-                "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
-                "transactions-service"
-        );
-        return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument)
-                .flatMap(lockAcquired -> {
-                    if (!lockAcquired) {
-                        return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
-                    }
-
-                    LogTracingUtils.loggerTracingUtils()
-                            .success()
-                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                            .details(
-                                    Map.of(
-                                            "document_id",
-                                            lockDocument.id()
-                                    )
-                            )
-                            .attributes(
-                                    Map.of(
-                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                            domainTransactionId.value()
-                                    )
-                            )
-                            .logInfo(log, "Lock acquired");
-
-                    return transactionsService.updateTransactionAuthorization(
-                            domainTransactionId.uuid(),
-                            updateAuthorizationRequestDto
-                    )
-                            .doFinally(
-                                    s -> reactiveExclusiveLockDocumentWrapper
-                                            .deleteById(lockDocument.id())
-                                            .subscribeOn(Schedulers.boundedElastic())
-                                            .doOnNext(
-                                                    deleted -> LogTracingUtils.loggerTracingUtils()
-                                                            .success()
-                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                                                            .attributes(
-                                                                    Map.of(
-                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                                                            domainTransactionId.value()
-                                                                    )
-                                                            )
-                                                            .details(
-                                                                    Map.of(
-                                                                            "lock_id",
-                                                                            lockDocument.id(),
-                                                                            "lock_deleted",
-                                                                            deleted.toString()
-                                                                    )
-                                                            )
-                                                            .logInfo(log, "Lock deleted")
-                                            )
-                                            .doOnError(
-                                                    error -> LogTracingUtils.loggerTracingUtils()
-                                                            .failure()
-                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                                                            .attributes(
-                                                                    Map.of(
-                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                                                            domainTransactionId.value()
-                                                                    )
-                                                            )
-                                                            .details(
-                                                                    Map.of("lock_id", lockDocument.id())
-                                                            )
-                                                            .logError(log, error, "Error on lock deletion")
-                                            )
-                                            .subscribe()
-                            );
-                });
     }
 
     @Override

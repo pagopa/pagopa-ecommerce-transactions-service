@@ -12,8 +12,6 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedA
 import it.pagopa.ecommerce.commons.domain.v2.Email;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
@@ -385,49 +383,6 @@ public class TransactionsUtils {
         return transactionStatusLookupMapV2_1.get(status);
     }
 
-    public NewTransactionRequestDto buildWarmupRequestV1() {
-        String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
-        int neededPadLength = 18 - noticeCode.length();
-        if (neededPadLength < 0) {
-            noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
-        } else {
-            String padBuilder = noticeCode +
-                    "0".repeat(neededPadLength);
-            noticeCode = padBuilder;
-        }
-        return new NewTransactionRequestDto()
-                .email("test@test.it")
-                .paymentNotices(
-                        Collections.singletonList(
-                                new PaymentNoticeInfoDto()
-                                        .rptId("77777777777%s".formatted(noticeCode))
-                                        .amount(100L)
-                        )
-                );
-    }
-
-    public it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto buildWarmupRequestV2() {
-        String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
-        int neededPadLength = 18 - noticeCode.length();
-        if (neededPadLength < 0) {
-            noticeCode = noticeCode.substring(0, noticeCode.length() + neededPadLength);
-        } else {
-            String padBuilder = noticeCode +
-                    "0".repeat(neededPadLength);
-            noticeCode = padBuilder;
-        }
-        return new it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto()
-                .email("test@test.it")
-                .orderId("orderId")
-                .paymentNotices(
-                        Collections.singletonList(
-                                new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto()
-                                        .rptId("77777777777%s".formatted(noticeCode))
-                                        .amount(100L)
-                        )
-                );
-    }
-
     public it.pagopa.generated.transactions.v2_1.server.model.NewTransactionRequestDto buildWarmupRequestV2_1() {
         String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
         int neededPadLength = 18 - noticeCode.length();
@@ -500,11 +455,6 @@ public class TransactionsUtils {
         return paymentNotices.get(idx).rptId().value();
     }
 
-    public List<String> getRptIds(BaseTransactionView baseTransactionView) {
-        List<PaymentNotice> paymentNotices = getPaymentNotices(baseTransactionView);
-        return paymentNotices.stream().map(PaymentNotice::getRptId).toList();
-    }
-
     public List<PaymentNotice> getPaymentNotices(BaseTransactionView baseTransactionView) {
         return switch (baseTransactionView) {
             case it.pagopa.ecommerce.commons.documents.v1.Transaction t -> t.getPaymentNotices();
@@ -571,26 +521,10 @@ public class TransactionsUtils {
         };
     }
 
-    public Optional<String> getPaymentMethodTypeCode(BaseTransaction transaction) {
-        return switch (transaction) {
-            case BaseTransactionWithRequestedAuthorization t ->
-                    Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
-            default -> Optional.empty();
-        };
-    }
-
     public Optional<String> getPaymentMethodTypeCode(it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction) {
         return switch (transaction) {
             case it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization t ->
                     Optional.of(t.getTransactionAuthorizationRequestData().getPaymentTypeCode());
-            default -> Optional.empty();
-        };
-    }
-
-    public Optional<Boolean> isWalletPayment(BaseTransaction transaction) {
-        return switch (transaction) {
-            case BaseTransactionWithRequestedAuthorization _t ->
-                    Optional.of(false); // v1 transactions don't support wallet authorization
             default -> Optional.empty();
         };
     }
@@ -605,6 +539,35 @@ public class TransactionsUtils {
                     };
             default -> Optional.empty();
         };
+    }
+
+    public static it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto mapUpdateAuthRequestV2ToV1(UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
+        UpdateAuthorizationRequestOutcomeGatewayDto requestOutcomeGateway = updateAuthorizationRequestDto.getOutcomeGateway();
+        it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto convertedOutcomeGateway = switch (requestOutcomeGateway) {
+            case OutcomeNpgGatewayDto o -> new it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto()
+                    .operationResult(it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto.OperationResultEnum.valueOf(o.getOperationResult().toString()))
+                    .orderId(o.getOrderId())
+                    .operationId(o.getOperationId())
+                    .authorizationCode(o.getAuthorizationCode())
+                    .errorCode(o.getErrorCode())
+                    .paymentEndToEndId(o.getPaymentEndToEndId())
+                    .rrn(o.getRrn())
+                    .validationServiceId(o.getValidationServiceId())
+                    .cardId4(o.getCardId4());
+            case OutcomeRedirectGatewayDto o ->
+                    new it.pagopa.generated.transactions.server.model.OutcomeRedirectGatewayDto()
+                            .paymentGatewayType(o.getPaymentGatewayType())
+                            .pspTransactionId(o.getPspTransactionId())
+                            .outcome(it.pagopa.generated.transactions.server.model.AuthorizationOutcomeDto.valueOf(o.getOutcome().toString()))
+                            .pspId(o.getPspId())
+                            .authorizationCode(o.getAuthorizationCode())
+                            .errorCode(o.getErrorCode());
+            default ->
+                    throw new NotImplementedException("Conversion from outcome gateway [%s] not implemented".formatted(requestOutcomeGateway.getPaymentGatewayType()));
+        };
+        return new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
+                .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
+                .outcomeGateway(convertedOutcomeGateway);
     }
 
 }

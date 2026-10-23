@@ -333,13 +333,9 @@ class TransactionServiceTests {
     void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFoundWithPaymentMethodHandler() {
         TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new TransactionsService(
                 null, // requestAuthHandlerV2,
-                transactionUpdateAuthorizationHandlerV2,
                 null, // transactionSendClosureRequestHandler,
                 null, // transactionRequestUserReceiptHandlerV2,
-                transactionCancelHandlerV2,
                 null, // authorizationProjectionHandlerV2,
-                authorizationUpdateProjectionHandlerV2,
-                closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
                 transactionUserReceiptProjectionHandlerV2,
                 repository,
@@ -349,7 +345,6 @@ class TransactionServiceTests {
                 transactionsUtils,
                 transactionsEventStoreRepository,
                 null, // reactivePaymentRequestInfoRedisTemplateWrapper,
-                updateTransactionStatusTracerUtils,
                 new HashMap<>(),
                 new HashSet<>(),
                 new HashSet<>(),

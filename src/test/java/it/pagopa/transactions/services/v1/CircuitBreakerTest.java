@@ -220,39 +220,6 @@ class CircuitBreakerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("getIgnoredExceptionForUpdateTransactionAuthorizationRetry")
-    @Order(0)
-    void shouldNotPerformRetryForExcludedException_updateTransactionAuthorizationRetry(
-                                                                                       Exception thrownException,
-                                                                                       String retryInstanceName
-    ) {
-        Retry retry = retryRegistry.retry(retryInstanceName);
-        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-                + 1;
-
-        /*
-         * Preconditions
-         */
-        Mockito.when(eventsRepository.findByTransactionIdOrderByCreationDateAsc(any()))
-                .thenReturn(Flux.empty());
-
-        Mockito.when(transactionsUtils.reduceEvents(any(), any(), any(), any()))
-                .thenReturn(Mono.error(thrownException));
-
-        StepVerifier
-                .create(
-                        transactionsService
-                                .updateTransactionAuthorization(UUID.randomUUID(), new UpdateAuthorizationRequestDto())
-                )
-                .expectError(thrownException.getClass())
-                .verify();
-        assertEquals(
-                expectedFailedCallsWithoutRetryAttempt,
-                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-        );
-    }
-
-    @ParameterizedTest
     @MethodSource("getIgnoredExceptionForCancelTransactionRetry")
     @Order(0)
     void shouldNotPerformRetryForExcludedException_cancelTransactionRetry(

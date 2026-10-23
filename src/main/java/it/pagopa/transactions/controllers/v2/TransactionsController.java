@@ -3,6 +3,8 @@ package it.pagopa.transactions.controllers.v2;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
+import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.v2.server.api.V2Api;
 import it.pagopa.generated.transactions.v2.server.model.*;
@@ -22,6 +24,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,7 +42,7 @@ public class TransactionsController implements V2Api {
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Autowired
-    private it.pagopa.transactions.controllers.v1.TransactionsController transactionsControllerV1;
+    private ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper;
 
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
 
@@ -73,23 +76,11 @@ public class TransactionsController implements V2Api {
                                                                                                Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
                                                                                                ServerWebExchange exchange
     ) {
-        /*
-         * v1 and v2 api version are the same, same input same logic -> same processing
-         * the mainly diff here is that the input transaction id is not base64 encoded
-         * in the v2 version. this fact is reflected in the below code too were, except
-         * for the input transaction id handling, there are no differences between v1
-         * and v2 versions, making v2 request be processed by v1 handler. Once migrated
-         * b.e. to v2 version the v1 can be deleted altogether (no one will call this
-         * api) and move all the logic from v1 service to the v2 referring only the v2
-         * api version beans
-         */
         return updateAuthorizationRequestDto
-                .map(this::mapUpdateAuthRequestV2ToV1)
                 .flatMap(
-                        updateAuthorizationRequest -> transactionsControllerV1.handleUpdateAuthorizationRequest(
+                        updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
                                 new TransactionId(transactionId),
-                                updateAuthorizationRequest,
-                                exchange
+                                updateAuthorizationRequest
                         )
                 )
                 .map(
@@ -108,33 +99,83 @@ public class TransactionsController implements V2Api {
                 .map(ResponseEntity::ok);
     }
 
-    private it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto mapUpdateAuthRequestV2ToV1(UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
-        UpdateAuthorizationRequestOutcomeGatewayDto requestOutcomeGateway = updateAuthorizationRequestDto.getOutcomeGateway();
-        it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto convertedOutcomeGateway = switch (requestOutcomeGateway) {
-            case OutcomeNpgGatewayDto o -> new it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto()
-                    .operationResult(it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto.OperationResultEnum.valueOf(o.getOperationResult().toString()))
-                    .orderId(o.getOrderId())
-                    .operationId(o.getOperationId())
-                    .authorizationCode(o.getAuthorizationCode())
-                    .errorCode(o.getErrorCode())
-                    .paymentEndToEndId(o.getPaymentEndToEndId())
-                    .rrn(o.getRrn())
-                    .validationServiceId(o.getValidationServiceId())
-                    .cardId4(o.getCardId4());
-            case OutcomeRedirectGatewayDto o ->
-                    new it.pagopa.generated.transactions.server.model.OutcomeRedirectGatewayDto()
-                            .paymentGatewayType(o.getPaymentGatewayType())
-                            .pspTransactionId(o.getPspTransactionId())
-                            .outcome(it.pagopa.generated.transactions.server.model.AuthorizationOutcomeDto.valueOf(o.getOutcome().toString()))
-                            .pspId(o.getPspId())
-                            .authorizationCode(o.getAuthorizationCode())
-                            .errorCode(o.getErrorCode());
-            default ->
-                    throw new NotImplementedException("Conversion from outcome gateway [%s] not implemented".formatted(requestOutcomeGateway.getPaymentGatewayType()));
-        };
-        return new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
-                .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
-                .outcomeGateway(convertedOutcomeGateway);
+    public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
+                                                                     TransactionId domainTransactionId,
+                                                                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+    ) {
+        ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
+                "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
+                "transactions-service"
+        );
+        return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument)
+                .flatMap(lockAcquired -> {
+                    if (Boolean.FALSE.equals(lockAcquired)) {
+                        return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
+                    }
+
+                    LogTracingUtils.loggerTracingUtils()
+                            .success()
+                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                            .details(
+                                    Map.of(
+                                            "document_id",
+                                            lockDocument.id()
+                                    )
+                            )
+                            .attributes(
+                                    Map.of(
+                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                            domainTransactionId.value()
+                                    )
+                            )
+                            .logInfo(log, "Lock acquired");
+
+                    return transactionsService.updateTransactionAuthorization(
+                            domainTransactionId.uuid(),
+                            updateAuthorizationRequestDto
+                    )
+                            .doFinally(
+                                    s -> reactiveExclusiveLockDocumentWrapper
+                                            .deleteById(lockDocument.id())
+                                            .subscribeOn(Schedulers.boundedElastic())
+                                            .doOnNext(
+                                                    deleted -> LogTracingUtils.loggerTracingUtils()
+                                                            .success()
+                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                                            .attributes(
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                                            domainTransactionId.value()
+                                                                    )
+                                                            )
+                                                            .details(
+                                                                    Map.of(
+                                                                            "lock_id",
+                                                                            lockDocument.id(),
+                                                                            "lock_deleted",
+                                                                            deleted.toString()
+                                                                    )
+                                                            )
+                                                            .logInfo(log, "Lock deleted")
+                                            )
+                                            .doOnError(
+                                                    error -> LogTracingUtils.loggerTracingUtils()
+                                                            .failure()
+                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                                            .attributes(
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                                            domainTransactionId.value()
+                                                                    )
+                                                            )
+                                                            .details(
+                                                                    Map.of("lock_id", lockDocument.id())
+                                                            )
+                                                            .logError(log, error, "Error on lock deletion")
+                                            )
+                                            .subscribe()
+                            );
+                });
     }
 
     @ExceptionHandler(ConflictStatusException.class)
