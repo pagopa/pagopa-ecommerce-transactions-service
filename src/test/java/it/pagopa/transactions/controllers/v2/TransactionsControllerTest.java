@@ -223,57 +223,6 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void shouldHandleGetTransactionSuccessfully() {
-        String transactionId = it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID;
-        TransactionInfoDto expectedResponse = new TransactionInfoDto()
-                .gatewayInfo(
-                        new TransactionInfoGatewayInfoDto()
-                                .gateway("NPG")
-                                .authorizationCode("authorizationCode")
-                                .authorizationStatus("authorizationStatus")
-                                .errorCode("errorCode")
-                )
-                .nodeInfo(
-                        new TransactionInfoNodeInfoDto()
-                                .closePaymentResultError(
-                                        new TransactionInfoNodeInfoClosePaymentResultErrorDto()
-                                                .description("errorDescription")
-                                                .statusCode(BigDecimal.valueOf(404))
-                                )
-                                .sendPaymentResultOutcome(TransactionInfoNodeInfoDto.SendPaymentResultOutcomeEnum.KO)
-                )
-                .transactionId(transactionId)
-                .idCart("idCart")
-                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
-                .feeTotal(200)
-                .status(TransactionStatusDto.CLOSED)
-                .addPaymentsItem(
-                        new PaymentInfoDto()
-                                .rptId("rptId")
-                );
-
-        Mockito.when(transactionsService.getTransactionInfo(any(), any()))
-                .thenReturn(Mono.just(expectedResponse));
-        webTestClient.get()
-                .uri("/v2/transactions/{transactionId}", Map.of("transactionId", transactionId))
-                .header("X-Client-Id", "CHECKOUT")
-                .header("x-correlation-id", UUID.randomUUID().toString())
-                .header("x-api-key", "primary-key")
-                .exchange()
-                .expectStatus()
-                .isEqualTo(HttpStatus.OK)
-                .expectBody(TransactionInfoDto.class)
-                .value(response -> {
-                    assertEquals(
-                            expectedResponse,
-                            response
-                    );
-                });
-        verify(transactionsService, times(1)).getTransactionInfo(transactionId, null);
-
-    }
-
-    @Test
     void shouldReturn422ForNoLockAcquiredOnPatchAuthRequest() {
         /* preconditions */
         TransactionId transactionId = new TransactionId(

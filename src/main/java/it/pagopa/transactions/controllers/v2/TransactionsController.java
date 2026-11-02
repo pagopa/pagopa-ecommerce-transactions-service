@@ -47,30 +47,6 @@ public class TransactionsController implements V2Api {
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
 
     @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(
-                                                                       String transactionId,
-                                                                       UUID xUserId,
-                                                                       ServerWebExchange exchange
-    ) {
-        return transactionsService.getTransactionInfo(transactionId, xUserId)
-                .doOnNext(
-                        t -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "GetTransactionInfo completed")
-                )
-                .contextWrite(
-                        ctx -> LogTracingUtils.enrichContextForEvent(
-                                Map.of(
-                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                        transactionId
-                                ),
-                                ctx
-                        )
-                )
-                .map(ResponseEntity::ok);
-    }
-
-    @Override
     public Mono<ResponseEntity<UpdateAuthorizationResponseDto>> updateTransactionAuthorization(
                                                                                                String transactionId,
                                                                                                Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,

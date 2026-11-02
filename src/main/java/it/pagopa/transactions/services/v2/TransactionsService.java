@@ -60,7 +60,6 @@ public class TransactionsService {
 
     public static final String QUALIFIER_NAME = "TransactionsServiceV2";
     private final TransactionsUtils transactionsUtils;
-    private final TransactionsViewRepository transactionsViewRepository;
     private final TransactionsEventStoreRepository<Object> eventsRepository;
     private final UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
     private final TransactionUpdateAuthorizationHandler transactionUpdateAuthorizationHandlerV2;
@@ -71,7 +70,6 @@ public class TransactionsService {
     @Autowired
     public TransactionsService(
             TransactionsUtils transactionsUtils,
-            TransactionsViewRepository transactionsViewRepository,
             TransactionsEventStoreRepository<Object> eventsRepository,
             UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils,
             @Qualifier(
@@ -84,7 +82,6 @@ public class TransactionsService {
             ClosureRequestedProjectionHandler closureRequestedProjectionHandler
     ) {
         this.transactionsUtils = transactionsUtils;
-        this.transactionsViewRepository = transactionsViewRepository;
         this.eventsRepository = eventsRepository;
         this.updateTransactionStatusTracerUtils = updateTransactionStatusTracerUtils;
         this.transactionUpdateAuthorizationHandlerV2 = transactionUpdateAuthorizationHandlerV2;
@@ -107,17 +104,6 @@ public class TransactionsService {
                             }
                         }
                 ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
-    }
-
-    @CircuitBreaker(name = "ecommerce-db")
-    @Retry(name = "getTransactionInfo")
-    public Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> getTransactionInfo(
-                                                                                                        String transactionId,
-                                                                                                        UUID xUserId
-    ) {
-        return getBaseTransactionView(transactionId, xUserId)
-                .switchIfEmpty(Mono.error(new TransactionNotFoundException(transactionId, xUserId)))
-                .map(this::buildTransactionInfoDtoFromView);
     }
 
     @Retry(name = "updateTransactionAuthorization")
@@ -439,92 +425,6 @@ public class TransactionsService {
                 )
                 .status(transactionsUtils.convertEnumerationV2(baseTransaction.getStatus()));
 
-    }
-
-    private Mono<BaseTransactionView> getBaseTransactionView(String transactionId, UUID xUserId) {
-        return transactionsViewRepository.findById(transactionId)
-                .doOnNext(transaction ->
-                    LogTracingUtils.loggerTracingUtils()
-                            .success()
-                            .dependency(LogTracingUtils.MONGO_DEPENDENCY)
-                            .logInfo(log, "Retrieved transaction document")
-                )
-                .filter(transactionDocument -> switch (transactionDocument) {
-                    case it.pagopa.ecommerce.commons.documents.v1.Transaction ignored -> xUserId == null;
-                    case it.pagopa.ecommerce.commons.documents.v2.Transaction t ->
-                            Optional.ofNullable(xUserId).map(UUID::toString).equals(Optional.ofNullable(t.getUserId()));
-                    default ->
-                            throw new NotImplementedException("Handling for transaction document version: [%s] not implemented yet".formatted(transactionDocument.getClass()));
-                });
-    }
-
-    private it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto buildTransactionInfoDtoFromView(
-                                                                                                                BaseTransactionView baseTransactionView
-    ) {
-        if (baseTransactionView instanceof it.pagopa.ecommerce.commons.documents.v2.Transaction transaction) {
-            List<PaymentInfoDto> payments = transaction.getPaymentNotices().stream().map(
-                    paymentNotice -> new it.pagopa.generated.transactions.v2.server.model.PaymentInfoDto()
-                            .amount(paymentNotice.getAmount())
-                            .reason(paymentNotice.getDescription())
-                            .paymentToken(paymentNotice.getPaymentToken())
-                            .rptId(paymentNotice.getRptId())
-                            .isAllCCP(paymentNotice.isAllCCP())
-                            .transferList(
-                                    paymentNotice.getTransferList().stream().map(
-                                            notice -> new it.pagopa.generated.transactions.v2.server.model.TransferDto()
-                                                    .transferCategory(
-                                                            notice.getTransferCategory()
-                                                    )
-                                                    .transferAmount(
-                                                            notice.getTransferAmount()
-                                                    ).digitalStamp(notice.getDigitalStamp())
-                                                    .paFiscalCode(notice.getPaFiscalCode())
-                                    ).toList()
-                            )
-            ).toList();
-            TransactionInfoGatewayInfoDto gatewayInfoDto = new TransactionInfoGatewayInfoDto()
-                    .gateway(transaction.getPaymentGateway())
-                    .authorizationCode(transaction.getAuthorizationCode())
-                    .authorizationStatus(transaction.getGatewayAuthorizationStatus())
-                    .errorCode(transaction.getAuthorizationErrorCode());
-            TransactionInfoNodeInfoClosePaymentResultErrorDto closePaymentResultErrorDto = null;
-            ClosureErrorData closureErrorData = transaction.getClosureErrorData();
-            if (closureErrorData != null) {
-                closePaymentResultErrorDto = new TransactionInfoNodeInfoClosePaymentResultErrorDto()
-                        .description(closureErrorData.getErrorDescription())
-                        .statusCode(
-                                Optional.ofNullable(closureErrorData.getHttpErrorCode())
-                                        .map(httpCode -> BigDecimal.valueOf(httpCode.value())).orElse(null)
-                        );
-            }
-            TransactionInfoNodeInfoDto nodeInfoDto = new TransactionInfoNodeInfoDto()
-                    .closePaymentResultError(closePaymentResultErrorDto)
-                    .sendPaymentResultOutcome(
-                            Optional
-                                    .ofNullable(transaction.getSendPaymentResultOutcome())
-                                    .map(TransactionUserReceiptData.Outcome::toString)
-                                    .map(TransactionInfoNodeInfoDto.SendPaymentResultOutcomeEnum::fromValue)
-                                    .orElse(null)
-                    );
-            return new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
-                    .transactionId(transaction.getTransactionId())
-                    .payments(payments)
-                    .feeTotal(transaction.getFeeTotal())
-                    .clientId(
-                            it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto.ClientIdEnum.valueOf(
-                                    transaction.getClientId().getEffectiveClient().toString()
-                            )
-                    )
-                    .status(transactionsUtils.convertEnumerationV2(transaction.getStatus()))
-                    .idCart(transaction.getIdCart())
-                    .gatewayInfo(gatewayInfoDto)
-                    .nodeInfo(nodeInfoDto);
-        }
-
-        throw new NotImplementedException(
-                "Handling for transaction document version: [%s] not implemented yet"
-                        .formatted(baseTransactionView.getClass())
-        );
     }
 
 }
