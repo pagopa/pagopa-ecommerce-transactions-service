@@ -113,7 +113,22 @@ public class EcommercePaymentMethodsHandlerClient {
                 maxOccurrences,
                 language != null ? language : "IT"
         )
-                .doOnNext(v -> logSuccess("Calculated payment method fees"))
+                .doOnNext(
+                        v -> LogTracingUtils.loggerTracingUtils()
+                                .dependency(LogTracingUtils.PAYMENT_METHODS_HANDLER_DEPENDENCY)
+                                .success()
+                                .details(
+                                        Map.of(
+                                                "psp_ids",
+                                                Objects.toString(calculateFeeRequestDto.getIdPspList()),
+                                                "is_all_ccp",
+                                                Objects.toString(calculateFeeRequestDto.getIsAllCCP()),
+                                                "touchpoint",
+                                                calculateFeeRequestDto.getTouchpoint()
+                                        )
+                                )
+                                .logInfo(log, "Retrieved calculated fees")
+                )
                 .map(mapper::fromHandlerFeeResponse)
                 .doOnError(
                         WebClientResponseException.class,
