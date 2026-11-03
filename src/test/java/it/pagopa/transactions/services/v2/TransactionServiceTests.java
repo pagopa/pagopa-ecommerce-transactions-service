@@ -781,6 +781,7 @@ class TransactionServiceTests {
                 new HashSet<>(),
                 new HashSet<>(),
                 true,
+                true,
                 openTelemetryUtils
         );
 
