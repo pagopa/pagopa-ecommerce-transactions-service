@@ -8,7 +8,6 @@ import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethods
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PatchSessionRequestDto;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.PaymentMethodResponseDto;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.SessionPaymentMethodResponseDto;
-import it.pagopa.transactions.client.mappers.PaymentMethodsHandlerMapper;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -26,17 +25,14 @@ import java.util.Objects;
 public class EcommercePaymentMethodsHandlerClient {
 
     private final PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1;
-    private final PaymentMethodsHandlerMapper mapper;
 
     @Autowired
     public EcommercePaymentMethodsHandlerClient(
             @Qualifier(
-                "ecommercePaymentMethoHandlerWebClientV1"
-            ) PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1,
-            PaymentMethodsHandlerMapper mapper
+                "ecommercePaymentMethodHandlerWebClientV1"
+            ) PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1
     ) {
         this.ecommercePaymentMethodsHandlerWebClientV1 = ecommercePaymentMethodsHandlerWebClientV1;
-        this.mapper = mapper;
     }
 
     public Mono<PaymentMethodResponseDto> getPaymentMethod(
@@ -72,80 +68,6 @@ public class EcommercePaymentMethodsHandlerClient {
                         EcommercePaymentMethodsHandlerClient::logWebClientException
                 )
                 .onErrorMap(err -> new InvalidRequestException("Error while invoke method retrieve card data"));
-    }
-
-    public Mono<Void> updateSession(
-                                    String paymentMethodId,
-                                    String orderId,
-                                    String transactionId,
-                                    String xClientId
-    ) {
-        String clientId = resolveSupportedClientId(xClientId);
-
-        return ecommercePaymentMethodsHandlerWebClientV1.updateSession(
-                paymentMethodId,
-                orderId,
-                clientId,
-                new PatchSessionRequestDto().transactionId(transactionId)
-        )
-                .doOnSuccess(v -> logSuccess("Updated session payment method"))
-                .doOnError(
-                        WebClientResponseException.class,
-                        EcommercePaymentMethodsHandlerClient::logWebClientException
-                )
-                .onErrorMap(err -> new InvalidRequestException("Error while invoke method update session"));
-    }
-
-    public Mono<CalculateFeeResponseDto> calculateFee(
-                                                      String paymentMethodId,
-                                                      CalculateFeeRequestDto calculateFeeRequestDto,
-                                                      Integer maxOccurrences,
-                                                      String xClientId,
-                                                      String language
-    ) {
-        String clientId = resolveSupportedClientId(xClientId);
-        var handlerRequest = mapper.toHandlerFeeRequest(calculateFeeRequestDto);
-
-        return ecommercePaymentMethodsHandlerWebClientV1.calculateFees(
-                paymentMethodId,
-                clientId,
-                handlerRequest,
-                maxOccurrences,
-                language != null ? language : "IT"
-        )
-                .doOnNext(
-                        v -> LogTracingUtils.loggerTracingUtils()
-                                .dependency(LogTracingUtils.PAYMENT_METHODS_HANDLER_DEPENDENCY)
-                                .success()
-                                .details(
-                                        Map.of(
-                                                "psp_ids",
-                                                Objects.toString(calculateFeeRequestDto.getIdPspList()),
-                                                "is_all_ccp",
-                                                Objects.toString(calculateFeeRequestDto.getIsAllCCP()),
-                                                "touchpoint",
-                                                calculateFeeRequestDto.getTouchpoint()
-                                        )
-                                )
-                                .logInfo(log, "Retrieved calculated fees")
-                )
-                .map(mapper::fromHandlerFeeResponse)
-                .doOnError(
-                        WebClientResponseException.class,
-                        EcommercePaymentMethodsHandlerClient::logWebClientException
-                )
-                .onErrorMap(
-                        err -> new InvalidRequestException("Error while invoke method for read psp list from handler")
-                );
-    }
-
-    /**
-     * Delegates to
-     * {@link PaymentMethodsHandlerMapper#mapPaymentTypeCodeToNpgServiceName(String)}
-     * for backward compatibility with existing callers.
-     */
-    public static String mapPaymentTypeCodeToNpgServiceName(String paymentTypeCode) {
-        return PaymentMethodsHandlerMapper.mapPaymentTypeCodeToNpgServiceName(paymentTypeCode);
     }
 
     /**

@@ -6,7 +6,6 @@ import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseD
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentNoticeDto;
 import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.TransferListItemDto;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.*;
-import it.pagopa.transactions.client.mappers.PaymentMethodsHandlerMapper;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -38,10 +37,8 @@ class EcommercePaymentMethodsHandlerClientTest {
     private final PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1 = mock(
             PaymentMethodsHandlerApi.class
     );
-    private final PaymentMethodsHandlerMapper mapper = spy(new PaymentMethodsHandlerMapper());
     private final EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient = new EcommercePaymentMethodsHandlerClient(
-            ecommercePaymentMethodsHandlerWebClientV1,
-            mapper
+            ecommercePaymentMethodsHandlerWebClientV1
     );
 
     @Test
@@ -256,8 +253,6 @@ class EcommercePaymentMethodsHandlerClientTest {
         assertThat(result.getBundles().get(0).getIdPsp()).isEqualTo("pspId");
         assertThat(result.getBundles().get(0).getTaxPayerFee()).isEqualTo(100L);
         assertThat(result.getBundles().get(0).getPspBusinessName()).isEqualTo("pspBusinessNameTest");
-        verify(mapper).toHandlerFeeRequest(feeRequest);
-        verify(mapper).fromHandlerFeeResponse(handlerResponse);
     }
 
     @Test

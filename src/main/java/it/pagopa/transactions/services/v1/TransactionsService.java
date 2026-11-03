@@ -891,31 +891,19 @@ public class TransactionsService {
 
         List<PaymentNotice> paymentNotices = transaction.getPaymentNotices();
 
-        CalculateFeeRequestDto feeRequest = createCalculateFeeRequest(
-                transaction,
-                authRequest,
-                paymentSessionData,
-                paymentNotices
-        );
-
-        String language = Objects.toString(authRequest.getLanguage(), "IT");
-
-        Mono<CalculateFeeResponseDto> feesMono = ecommercePaymentMethodsHandlerAuthFlowEnabled
-                ? ecommercePaymentMethodsHandlerClient.calculateFee(
-                        authRequest.getPaymentInstrumentId(),
-                        feeRequest,
-                        Integer.MAX_VALUE,
-                        transactionsUtils.getEffectiveClientId(transaction),
-                        language
-                )
-                : ecommercePaymentMethodsClient.calculateFee(
+        return ecommercePaymentMethodsClient
+                .calculateFee(
                         authRequest.getPaymentInstrumentId(),
                         transaction.getTransactionId().value(),
-                        feeRequest,
+                        createCalculateFeeRequest(
+                                transaction,
+                                authRequest,
+                                paymentSessionData,
+                                paymentNotices
+                        ),
                         Integer.MAX_VALUE
-                );
-
-        return feesMono.map(calculateFeeResponseDto -> Tuples.of(calculateFeeResponseDto, paymentSessionData));
+                )
+                .map(calculateFeeResponseDto -> Tuples.of(calculateFeeResponseDto, paymentSessionData));
     }
 
     /**
@@ -1640,7 +1628,7 @@ public class TransactionsService {
             case ApmAuthRequestDetailsDto ignore -> {
                 Mono<String> name =
                         ecommercePaymentMethodsHandlerEnabled ?
-                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> EcommercePaymentMethodsHandlerClient.mapPaymentTypeCodeToNpgServiceName(responseDto.getPaymentTypeCode())) :
+                                ecommercePaymentMethodsHandlerClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(responseDto -> responseDto.getName().get(RequestAuthorizationRequestDto.LanguageEnum.IT.toString())) :
                                 ecommercePaymentMethodsClient.getPaymentMethod(requestAuthorizationRequestDto.getPaymentInstrumentId(), clientId).map(PaymentMethodResponseDto::getName);
                 yield name.map(n -> PaymentSessionData.create(null, null, n, null, null));
             }
