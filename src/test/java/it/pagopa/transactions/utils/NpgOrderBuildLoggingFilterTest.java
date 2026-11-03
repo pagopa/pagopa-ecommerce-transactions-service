@@ -11,10 +11,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +33,8 @@ class NpgOrderBuildLoggingFilterTest {
     private static final String RESPONSE_BODY = """
             {"sessionId":"session-id","securityToken":"security-token","url":"https://npg/redirect"}""";
 
+    private static final String API_KEY = "npg-api-key-0123456789abcdef";
+
     private MockWebServer mockWebServer;
     private ListAppender<ILoggingEvent> logAppender;
     private WebClient webClient;
@@ -38,7 +46,11 @@ class NpgOrderBuildLoggingFilterTest {
         logAppender = new ListAppender<>();
         logAppender.start();
         ((Logger) LoggerFactory.getLogger(NpgOrderBuildLoggingFilter.class)).addAppender(logAppender);
+        HttpClient httpClient = HttpClient.create()
+                .doAfterRequest(NpgOrderBuildLoggingFilter::logWireRequest)
+                .doOnResponse(NpgOrderBuildLoggingFilter::logWireResponse);
         webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .baseUrl(mockWebServer.url("/").toString())
                 .filter(new NpgOrderBuildLoggingFilter())
                 .build();
@@ -56,6 +68,7 @@ class NpgOrderBuildLoggingFilterTest {
                 new MockResponse()
                         .setResponseCode(200)
                         .setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .setHeader("X-Npg-Trace", "npg-trace")
                         .setBody(RESPONSE_BODY)
         );
 
@@ -63,6 +76,7 @@ class NpgOrderBuildLoggingFilterTest {
                 webClient.post()
                         .uri("/api/phoenix-0.0/psp/api/v1/orders/build")
                         .header("Correlation-Id", "correlation-id")
+                        .header("X-API-KEY", API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .bodyValue(REQUEST_BODY)
                         .retrieve()
@@ -75,9 +89,32 @@ class NpgOrderBuildLoggingFilterTest {
         assertEquals(REQUEST_BODY, recordedRequest.getBody().readUtf8());
 
         List<String> logs = logAppender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
-        assertEquals(2, logs.size());
-        String requestLog = logs.get(0);
-        String responseLog = logs.get(1);
+        String expectedApiKeyFingerprint = NpgOrderBuildLoggingFilter.fingerprint(API_KEY);
+        String requestHeadersLog = findLog(logs, "NPG order/build request - correlationId: [correlation-id], method:");
+        String requestLog = findLog(logs, "NPG order/build request - correlationId: [correlation-id], body:");
+        String wireRequestLog = findLog(logs, "NPG order/build wire request - correlationId: [correlation-id]");
+        String wireResponseLog = findLog(logs, "NPG order/build wire response - correlationId: [correlation-id]");
+        String responseHeadersLog = findLog(
+                logs,
+                "NPG order/build response - correlationId: [correlation-id], status: [200], headers:"
+        );
+        String responseLog = findLog(
+                logs,
+                "NPG order/build response - correlationId: [correlation-id], status: [200], body:"
+        );
+        assertEquals(6, logs.size());
+        assertTrue(requestHeadersLog.contains("method: [POST]"));
+        assertTrue(requestHeadersLog.contains("/api/phoenix-0.0/psp/api/v1/orders/build"));
+        assertTrue(requestHeadersLog.contains("Correlation-Id: [correlation-id]"));
+        assertTrue(requestHeadersLog.contains("X-API-KEY: [" + expectedApiKeyFingerprint + "]"));
+        assertTrue(wireRequestLog.contains("X-API-KEY: " + expectedApiKeyFingerprint));
+        assertTrue(wireRequestLog.contains("host: "));
+        assertTrue(wireRequestLog.contains("user-agent: "));
+        assertTrue(wireRequestLog.contains("content-length: "));
+        assertTrue(wireResponseLog.contains("status: [200 OK]"));
+        assertTrue(wireResponseLog.contains("X-Npg-Trace: npg-trace"));
+        assertTrue(responseHeadersLog.contains("X-Npg-Trace: [npg-trace]"));
+        logs.forEach(log -> assertFalse(log.contains("npg-api-key-0123456789abcdef")));
         assertTrue(requestLog.startsWith("NPG order/build request - correlationId: [correlation-id]"));
         assertTrue(requestLog.contains("\"merchantUrl\":\"https://ecommerce.pagopa.it\""));
         assertTrue(requestLog.contains("sessionToken=***"));
@@ -113,6 +150,46 @@ class NpgOrderBuildLoggingFilterTest {
 
         assertEquals(REQUEST_BODY, mockWebServer.takeRequest().getBody().readUtf8());
         assertTrue(logAppender.list.isEmpty());
+    }
+
+    @Test
+    void shouldFingerprintSecretWithoutDisclosingIt() {
+        String fingerprint = NpgOrderBuildLoggingFilter.fingerprint(API_KEY);
+
+        assertTrue(fingerprint.startsWith("{length=28, first4=npg-, last4=cdef, sha256="));
+        assertTrue(fingerprint.contains("leadingOrTrailingWhitespace=false"));
+        assertTrue(fingerprint.contains("nonPrintableChars=false"));
+        assertTrue(fingerprint.contains("sha256=" + sha256Hex(API_KEY)));
+        assertFalse(fingerprint.contains("0123456789abcdef"));
+        assertTrue(
+                NpgOrderBuildLoggingFilter.fingerprint(" " + API_KEY + "\n")
+                        .contains("leadingOrTrailingWhitespace=true, nonPrintableChars=true")
+        );
+        assertEquals(
+                "{length=5, first4=***, last4=***, sha256=%s, leadingOrTrailingWhitespace=false, nonPrintableChars=false}"
+                        .formatted(sha256Hex("short")),
+                NpgOrderBuildLoggingFilter.fingerprint("short")
+        );
+    }
+
+    private static String findLog(
+                                  List<String> logs,
+                                  String prefix
+    ) {
+        return logs.stream()
+                .filter(log -> log.startsWith(prefix))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No log starting with: " + prefix + " in " + logs));
+    }
+
+    private static String sha256Hex(String value) {
+        try {
+            return HexFormat.of().formatHex(
+                    MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))
+            );
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Test

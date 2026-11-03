@@ -39,7 +39,9 @@ public class NpgWebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                );
+                )
+                .doAfterRequest(NpgOrderBuildLoggingFilter::logWireRequest)
+                .doOnResponse(NpgOrderBuildLoggingFilter::logWireResponse);
 
         WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)
