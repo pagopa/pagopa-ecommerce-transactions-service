@@ -70,6 +70,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
     private final EcommercePaymentMethodsHandlerClient paymentMethodsHandlerClient;
 
     private final boolean ecommercePaymentMethodsHandlerEnabled;
+    private final boolean ecommercePaymentMethodsHandlerAuthFlowEnabled;
 
     protected final TracingUtils tracingUtils;
     protected final OpenTelemetryUtils openTelemetryUtils;
@@ -94,6 +95,9 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
             EcommercePaymentMethodsClient paymentMethodsClient,
             EcommercePaymentMethodsHandlerClient paymentMethodsHandlerClient,
             @Value("${ecommercePaymentMethodsHandler.enabled}") boolean ecommercePaymentMethodsHandlerEnabled,
+            @Value(
+                "${ecommercePaymentMethodsHandlerAuthFlow.enabled}"
+            ) boolean ecommercePaymentMethodsHandlerAuthFlowEnabled,
             TransactionTemplateWrapper transactionTemplateWrapper,
             @Qualifier(
                 "transactionAuthorizationRequestedQueueAsyncClientV2"
@@ -132,6 +136,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         this.paymentMethodsClient = paymentMethodsClient;
         this.paymentMethodsHandlerClient = paymentMethodsHandlerClient;
         this.ecommercePaymentMethodsHandlerEnabled = ecommercePaymentMethodsHandlerEnabled;
+        this.ecommercePaymentMethodsHandlerAuthFlowEnabled = ecommercePaymentMethodsHandlerAuthFlowEnabled;
         this.tracingUtils = tracingUtils;
         this.openTelemetryUtils = openTelemetryUtils;
         this.transactionAuthorizationRequestedQueueAsyncClientV2 = transactionAuthorizationRequestedQueueAsyncClientV2;
@@ -540,7 +545,7 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         String paymentInstrumentId = command.getData().paymentInstrumentId();
         String orderId = authRequestDetails.getOrderId();
         String transactionId = command.getData().transactionId().value();
-        return ecommercePaymentMethodsHandlerEnabled
+        return ecommercePaymentMethodsHandlerAuthFlowEnabled
                 ? paymentMethodsHandlerClient.updateSession(
                         paymentInstrumentId,
                         orderId,
