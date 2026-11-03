@@ -1152,7 +1152,7 @@ public class TransactionsService {
                 )
                 .next()
                 .map(authRequestedEvent -> ZonedDateTime.parse(authRequestedEvent.getCreationDate()))
-                .switchIfEmpty(Mono.error(new AlreadyProcessedException(transactionId)));
+                .switchIfEmpty(Mono.error(new ConflictStatusException(transactionId)));
 
 
         Mono<Tuple2<it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction, ZonedDateTime>> transactionV2 = transactionsUtils
@@ -1643,7 +1643,7 @@ public class TransactionsService {
      */
     public static UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome exceptionToUpdateStatusOutcome(Throwable throwable) {
         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome outcome = switch (throwable) {
-            case AlreadyProcessedException ignored ->
+            case ConflictStatusException ignored ->
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS;
             case TransactionNotFoundException ignored ->
                     UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.TRANSACTION_NOT_FOUND;

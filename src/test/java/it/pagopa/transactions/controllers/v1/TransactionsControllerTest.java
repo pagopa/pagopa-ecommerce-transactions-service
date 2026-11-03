@@ -5,7 +5,6 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.ecommerce.commons.domain.v2.PaymentToken;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
@@ -343,7 +342,7 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void testAlreadyProcessedTransactionExceptionHandler() {
+    void testConflictStatusExceptionHandler() {
         final TransactionId transactionId = new TransactionId(UUID.randomUUID());
 
         ResponseEntity responseCheck = new ResponseEntity<>(
@@ -353,7 +352,7 @@ class TransactionsControllerTest {
                         .detail("Transaction for RPT id '' has been already processed"),
                 HttpStatus.CONFLICT
         );
-        AlreadyProcessedException exception = new AlreadyProcessedException(transactionId);
+        ConflictStatusException exception = new ConflictStatusException(transactionId);
 
         ResponseEntity<ProblemJsonDto> response = transactionsController.alreadyProcessedHandler(exception);
 
@@ -1041,7 +1040,7 @@ class TransactionsControllerTest {
         )
                 .thenReturn(
                         Mono.error(
-                                new AlreadyProcessedException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
+                                new ConflictStatusException(new TransactionId(TransactionTestUtils.TRANSACTION_ID))
                         )
                 );
 
@@ -1333,7 +1332,7 @@ class TransactionsControllerTest {
         return Stream.of(
                 Arguments.of(
                         UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.WRONG_TRANSACTION_STATUS,
-                        new AlreadyProcessedException(
+                        new ConflictStatusException(
                                 new TransactionId(TransactionTestUtils.TRANSACTION_ID),
                                 TransactionTestUtils.PSP_ID,
                                 TransactionTestUtils.PAYMENT_TYPE_CODE,

@@ -19,7 +19,7 @@ import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.handlers.TransactionRequestUserReceiptHandlerCommon;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -388,7 +388,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                                         String outcome
     ) {
         return Mono.error(
-                new AlreadyProcessedException(
+                new ConflictStatusException(
                         tx.getTransactionId(),
                         tx.getTransactionAuthorizationRequestData()
                                 .getPspId(),

@@ -27,7 +27,7 @@ import it.pagopa.generated.transactions.server.model.CardsAuthRequestDetailsDto;
 import it.pagopa.generated.transactions.server.model.WalletAuthRequestDetailsDto;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
 import it.pagopa.transactions.configurations.NpgSessionUrlConfig;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.NpgNotRetryableErrorException;
@@ -574,31 +574,40 @@ public class PaymentGatewayClient {
                                                     NodeForwarderClientException.class,
                                                     exception -> {
                                                         String pspId = authorizationData.pspId();
-                                                        Optional<HttpStatusCode> responseHttpStatus = Optional
+                                                        Optional<WebClientResponseException> response = Optional
                                                                 .ofNullable(exception.getCause())
                                                                 .filter(WebClientResponseException.class::isInstance)
-                                                                .map(
-                                                                        e -> ((WebClientResponseException) e)
-                                                                                .getStatusCode()
-                                                                );
+                                                                .map(WebClientResponseException.class::cast);
+                                                        Optional<HttpStatusCode> responseHttpStatus = response
+                                                                .map(WebClientResponseException::getStatusCode);
                                                         if (responseHttpStatus.isPresent()) {
                                                             HttpStatus httpStatus = HttpStatus
                                                                     .valueOf(responseHttpStatus.get().value());
+                                                            Optional<String> bodyResponseString = response
+                                                                    .map(
+                                                                            WebClientResponseException::getResponseBodyAsString
+                                                                    );
                                                             if (httpStatus.is4xxClientError()) {
-                                                                return new AlreadyProcessedException(
-                                                                        authorizationData.transactionId()
+                                                                return new ConflictStatusException(
+                                                                        authorizationData.transactionId(),
+                                                                        String.valueOf(httpStatus.value()),
+                                                                        bodyResponseString.orElse(null)
                                                                 );
                                                             } else if (httpStatus.is5xxServerError()) {
                                                                 return new BadGatewayException(
                                                                         "KO performing redirection URL api call for PSP: [%s]"
                                                                                 .formatted(pspId),
-                                                                        httpStatus
+                                                                        httpStatus,
+                                                                        String.valueOf(httpStatus.value()),
+                                                                        bodyResponseString.orElse(null)
                                                                 );
                                                             } else {
                                                                 return new BadGatewayException(
                                                                         "Unhandled error performing redirection URL api call for PSP: [%s]"
                                                                                 .formatted(pspId),
-                                                                        null
+                                                                        null,
+                                                                        String.valueOf(httpStatus.value()),
+                                                                        bodyResponseString.orElse(null)
                                                                 );
                                                             }
                                                         } else {

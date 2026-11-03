@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Builder
 @ResponseStatus(value = HttpStatus.CONFLICT)
-public class AlreadyProcessedException extends Exception implements TransactionContext {
+public class ConflictStatusException extends Exception implements TransactionContext {
     @NotNull
     private final TransactionId transactionId;
     @Nullable
@@ -27,9 +27,31 @@ public class AlreadyProcessedException extends Exception implements TransactionC
     private final UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult;
     @Nullable
     private final String transactionStatus;
+    @Nullable
+    private final String downstreamHttpStatus;
+    @Nullable
+    private final String downstreamResponseBody;
 
-    public AlreadyProcessedException(TransactionId transactionId) {
+    public ConflictStatusException(TransactionId transactionId) {
         this.transactionId = transactionId;
+        this.pspId = null;
+        this.paymentTypeCode = null;
+        this.clientId = null;
+        this.walletPayment = null;
+        this.gatewayOutcomeResult = null;
+        this.transactionStatus = null;
+        this.downstreamHttpStatus = null;
+        this.downstreamResponseBody = null;
+    }
+
+    public ConflictStatusException(
+            TransactionId transactionId,
+            String downstreamHttpStatus,
+            String downstreamResponseBody
+    ) {
+        this.transactionId = transactionId;
+        this.downstreamHttpStatus = downstreamHttpStatus;
+        this.downstreamResponseBody = downstreamResponseBody;
         this.pspId = null;
         this.paymentTypeCode = null;
         this.clientId = null;
@@ -38,7 +60,7 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         this.transactionStatus = null;
     }
 
-    public AlreadyProcessedException(
+    public ConflictStatusException(
             TransactionId transactionId,
             String pspId,
             String paymentTypeCode,
@@ -53,18 +75,22 @@ public class AlreadyProcessedException extends Exception implements TransactionC
                 clientId,
                 walletPayment,
                 gatewayOutcomeResult,
+                null,
+                null,
                 null
         );
     }
 
-    public AlreadyProcessedException(
+    public ConflictStatusException(
             TransactionId transactionId,
             String pspId,
             String paymentTypeCode,
             String clientId,
             Boolean walletPayment,
             UpdateTransactionStatusTracerUtils.GatewayOutcomeResult gatewayOutcomeResult,
-            String transactionStatus
+            String transactionStatus,
+            String downstreamHttpStatus,
+            String downstreamResponseBody
     ) {
         this.transactionId = transactionId;
         this.pspId = pspId;
@@ -73,6 +99,8 @@ public class AlreadyProcessedException extends Exception implements TransactionC
         this.walletPayment = walletPayment;
         this.gatewayOutcomeResult = gatewayOutcomeResult;
         this.transactionStatus = transactionStatus;
+        this.downstreamHttpStatus = downstreamHttpStatus;
+        this.downstreamResponseBody = downstreamResponseBody;
     }
 
     @Override
@@ -107,5 +135,13 @@ public class AlreadyProcessedException extends Exception implements TransactionC
 
     public Optional<String> transactionStatus() {
         return Optional.ofNullable(transactionStatus);
+    }
+
+    public Optional<String> downstreamHttpStatus() {
+        return Optional.ofNullable(downstreamHttpStatus);
+    }
+
+    public Optional<String> downstreamResponseBody() {
+        return Optional.ofNullable(downstreamResponseBody);
     }
 }

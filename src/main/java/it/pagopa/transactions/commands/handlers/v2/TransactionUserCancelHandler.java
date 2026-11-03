@@ -9,7 +9,7 @@ import it.pagopa.ecommerce.commons.queues.QueueEvent;
 import it.pagopa.ecommerce.commons.queues.TracingUtils;
 import it.pagopa.transactions.commands.TransactionUserCancelCommand;
 import it.pagopa.transactions.commands.handlers.TransactionUserCancelHandlerCommon;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,7 @@ public class TransactionUserCancelHandler extends TransactionUserCancelHandlerCo
 
         return transaction
                 .filter(tx -> tx.getStatus().equals(TransactionStatusDto.ACTIVATED))
-                .switchIfEmpty(Mono.error(new AlreadyProcessedException(command.getData())))
+                .switchIfEmpty(Mono.error(new ConflictStatusException(command.getData())))
                 .flatMap(
                         t -> {
                             it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent userCanceledEvent = new it.pagopa.ecommerce.commons.documents.v2.TransactionUserCanceledEvent(

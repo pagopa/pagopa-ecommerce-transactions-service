@@ -29,7 +29,7 @@ import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
 import it.pagopa.transactions.commands.data.AuthorizationRequestData;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.BadGatewayException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.LockNotAcquiredException;
@@ -1464,7 +1464,7 @@ class TransactionRequestAuthorizationHandlerTest {
 
         /* test */
         StepVerifier.create(requestAuthorizationHandler.handle(requestAuthorizationCommand))
-                .expectErrorMatches(error -> error instanceof AlreadyProcessedException)
+                .expectError(ConflictStatusException.class)
                 .verify();
 
         verify(transactionEventStoreRepository, times(0))

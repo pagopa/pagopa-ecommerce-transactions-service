@@ -100,8 +100,8 @@ public class TransactionsController implements V21Api {
                 .map(ResponseEntity::ok);
     }
 
-    @ExceptionHandler(AlreadyProcessedException.class)
-    ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(AlreadyProcessedException exception) {
+    @ExceptionHandler(ConflictStatusException.class)
+    ResponseEntity<ProblemJsonDto> alreadyProcessedHandler(ConflictStatusException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
                 .details(
@@ -111,7 +111,11 @@ public class TransactionsController implements V21Api {
                                 "is_wallet_payment",
                                 exception.walletPayment().orElse(false).toString(),
                                 "transaction_status",
-                                exception.transactionStatus().orElse("{transactionStatus-not-found}")
+                                exception.transactionStatus().orElse("{transactionStatus-not-found}"),
+                                "downstream_http_status",
+                                exception.downstreamHttpStatus().orElse("{httpStatus-not-found}"),
+                                "downstream_http_response_body",
+                                exception.downstreamResponseBody().orElse("{httpResponseBody-not-found}")
                         )
                 )
                 .attributes(
@@ -142,6 +146,14 @@ public class TransactionsController implements V21Api {
     ResponseEntity<ProblemJsonDto> badGatewayHandler(BadGatewayException exception) {
         LogTracingUtils.loggerTracingUtils()
                 .failure()
+                .details(
+                        Map.of(
+                                "downstream_http_status",
+                                exception.downstreamHttpStatus().orElse("{httpStatus-not-found}"),
+                                "downstream_http_response_body",
+                                exception.downstreamResponseBody().orElse("{httpResponseBody-not-found}")
+                        )
+                )
                 .logError(log, exception, BAD_GATEWAY_DESC);
 
         return new ResponseEntity<>(

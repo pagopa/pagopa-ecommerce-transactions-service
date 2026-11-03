@@ -19,7 +19,7 @@ import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestPaymentsInnerDto;
 import it.pagopa.transactions.commands.TransactionAddUserReceiptCommand;
 import it.pagopa.transactions.commands.data.AddUserReceiptData;
-import it.pagopa.transactions.exceptions.AlreadyProcessedException;
+import it.pagopa.transactions.exceptions.ConflictStatusException;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.ProcessingErrorException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -1081,7 +1081,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-                .expectErrorMatches(AlreadyProcessedException.class::isInstance)
+                .expectErrorMatches(ConflictStatusException.class::isInstance)
                 .verify();
 
         Mockito.verify(userReceiptDataEventRepository, Mockito.times(0))
@@ -1196,7 +1196,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(requestStatusCommand))
-                .expectErrorMatches(AlreadyProcessedException.class::isInstance)
+                .expectErrorMatches(ConflictStatusException.class::isInstance)
                 .verify();
 
         verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(
@@ -1387,7 +1387,7 @@ class TransactionRequestUserReceiptHandlerTest {
         );
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
-                .expectError(AlreadyProcessedException.class)
+                .expectError(ConflictStatusException.class)
                 .verify();
 
         verify(updateTransactionStatusTracerUtils, times(0)).traceStatusUpdateOperation(
@@ -1699,7 +1699,7 @@ class TransactionRequestUserReceiptHandlerTest {
 
         /* test */
         StepVerifier.create(updateStatusHandler.handle(addUserReceiptCommand))
-                .expectErrorMatches(AlreadyProcessedException.class::isInstance)
+                .expectErrorMatches(ConflictStatusException.class::isInstance)
                 .verify();
 
     }
