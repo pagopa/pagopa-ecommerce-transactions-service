@@ -124,7 +124,6 @@ class TransactionServiceTest {
             .of("AUTHORIZATION_COMPLETED", "CLOSURE_REQUESTED", "CLOSURE_ERROR");
 
     private final boolean enablePaymentMethodsHandler = false;
-    private final boolean enablePaymentMethodsHandlerAuthFlow = false;
 
     private final OpenTelemetryUtils openTelemetryUtils = mock(OpenTelemetryUtils.class);
 
@@ -156,7 +155,6 @@ class TransactionServiceTest {
             ecommerceFinalStates,
             ecommercePossibleFinalStates,
             enablePaymentMethodsHandler,
-            enablePaymentMethodsHandlerAuthFlow,
             openTelemetryUtils
     );
 
@@ -188,7 +186,6 @@ class TransactionServiceTest {
             ecommerceFinalStates,
             ecommercePossibleFinalStates,
             enablePaymentMethodsHandler,
-            enablePaymentMethodsHandlerAuthFlow,
             openTelemetryUtils
     );
 

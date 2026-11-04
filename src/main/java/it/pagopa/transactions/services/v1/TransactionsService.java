@@ -106,7 +106,6 @@ public class TransactionsService {
     private final Set<TransactionStatusDto> ecommerceFinalStates;
     private final Set<TransactionStatusDto> ecommercePossibleFinalState;
     private final boolean ecommercePaymentMethodsHandlerEnabled;
-    private final boolean ecommercePaymentMethodsHandlerAuthFlowEnabled;
 
     private final OpenTelemetryUtils openTelemetryUtils;
 
@@ -157,9 +156,6 @@ public class TransactionsService {
             @Value("${ecommerce.finalStates}") Set<String> ecommerceFinalStates,
             @Value("${ecommerce.possibleFinalStates}") Set<String> ecommercePossibleFinalStates,
             @Value("${ecommercePaymentMethodsHandler.enabled}") boolean ecommercePaymentMethodsHandlerEnabled,
-            @Value(
-                "${ecommercePaymentMethodsHandlerAuthFlow.enabled}"
-            ) boolean ecommercePaymentMethodsHandlerAuthFlowEnabled,
             OpenTelemetryUtils openTelemetryUtils
     ) {
         this.transactionActivateHandlerV2 = transactionActivateHandlerV2;
@@ -195,7 +191,6 @@ public class TransactionsService {
                 .collect(Collectors.toSet());
         this.ecommercePaymentMethodsHandlerClient = ecommercePaymentMethodsHandlerClient;
         this.ecommercePaymentMethodsHandlerEnabled = ecommercePaymentMethodsHandlerEnabled;
-        this.ecommercePaymentMethodsHandlerAuthFlowEnabled = ecommercePaymentMethodsHandlerAuthFlowEnabled;
         this.openTelemetryUtils = openTelemetryUtils;
     }
 
@@ -1606,7 +1601,7 @@ public class TransactionsService {
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsHandlerAuthFlowEnabled
+                    ecommercePaymentMethodsHandlerEnabled
                             ? ecommercePaymentMethodsHandlerClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId(), clientId)
                                     .map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null))
                             : ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId())
