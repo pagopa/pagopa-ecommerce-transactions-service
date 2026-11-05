@@ -1601,8 +1601,11 @@ public class TransactionsService {
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
         return switch (requestAuthorizationRequestDto.getDetails()) {
             case CardsAuthRequestDetailsDto cards ->
-                    ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId())
-                            .map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null));
+                    ecommercePaymentMethodsHandlerEnabled
+                            ? ecommercePaymentMethodsHandlerClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId(), clientId)
+                                    .map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null))
+                            : ecommercePaymentMethodsClient.retrieveCardData(requestAuthorizationRequestDto.getPaymentInstrumentId(), cards.getOrderId())
+                                    .map(response -> PaymentSessionData.create(response.getBin(), response.getSessionId(), response.getBrand(), null, null));
             case WalletAuthRequestDetailsDto wallet -> walletClient
                     .getWalletInfo(wallet.getWalletId())
                     .map(walletAuthDataDto -> {
