@@ -5,7 +5,10 @@ import io.github.resilience4j.retry.annotation.Retry;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.Confidential;
-import it.pagopa.ecommerce.commons.domain.v2.*;
+import it.pagopa.ecommerce.commons.domain.v2.PaymentNotice;
+import it.pagopa.ecommerce.commons.domain.v2.RptId;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionAmount;
+import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.commands.TransactionActivateCommand;
 import it.pagopa.transactions.commands.data.NewTransactionRequestData;
@@ -122,6 +125,7 @@ public class TransactionsService {
                                                 paymentNotice -> new PaymentInfoDto()
                                                         .amount(paymentNotice.transactionAmount().value())
                                                         .reason(paymentNotice.transactionDescription().value())
+                                                        .companyName(paymentNotice.companyName().value())
                                                         .rptId(paymentNotice.rptId().value())
                                                         .paymentToken(paymentNotice.paymentToken().value())
                                                         .isAllCCP(paymentNotice.isAllCCP())
