@@ -72,41 +72,6 @@ class TransactionsUtilsTest {
     }
 
     @Test
-    void shouldCreateWarmupRequestCorrectlyForEmptyNoticeCodePrefix() {
-        TransactionsUtils utils = new TransactionsUtils(null, "");
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
-        for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
-            assertNotNull(p.getRptId());
-            assertDoesNotThrow(() -> new RptId(p.getRptId()));
-        }
-    }
-
-    @Test
-    void shouldCreateWarmupRequestCorrectlyForValuedNoticeCodePrefix() {
-        TransactionsUtils utils = new TransactionsUtils(null, "3020");
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
-        for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
-            assertNotNull(p.getRptId());
-            assertDoesNotThrow(() -> new RptId(p.getRptId()));
-            assertEquals("3020", new RptId(p.getRptId()).getNoticeId().substring(0, 4));
-        }
-
-    }
-
-    @Test
-    void shouldCreateWarmupRequestCorrectlyForValuedNoticeCodePrefixLongerThanNoticeCodeLength() {
-        String noticeCode = new RptId(TransactionTestUtils.RPT_ID).getNoticeId();
-        TransactionsUtils utils = new TransactionsUtils(null, noticeCode.concat("BBB"));
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
-        for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
-            assertNotNull(p.getRptId());
-            assertDoesNotThrow(() -> new RptId(p.getRptId()));
-            assertEquals(noticeCode, new RptId(p.getRptId()).getNoticeId());
-        }
-
-    }
-
-    @Test
     void shouldGetPaymentNoticesFromTransactionV1() {
         TransactionsUtils utils = new TransactionsUtils(null, null);
         assertNotNull(

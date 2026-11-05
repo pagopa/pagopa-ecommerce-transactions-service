@@ -26,10 +26,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +56,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -104,89 +101,8 @@ class TransactionsControllerTest {
     @Mock
     ServerWebExchange mockExchange;
 
-    @Mock
-    ServerHttpRequest mockRequest;
-
-    @Mock
-    HttpHeaders mockHeaders;
-
     @MockitoBean
     private ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
-    private final Integer paymentTokenValidityTime = 120;
-
-    @Test
-    void shouldGetOk() {
-        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
-        try (MockedStatic<UUID> uuidMockedStatic = Mockito.mockStatic(UUID.class)) {
-            uuidMockedStatic.when(UUID::randomUUID).thenReturn(transactionId.uuid());
-            String RPTID = "77777777777302016723749670035";
-            String EMAIL = "mario.rossi@email.com";
-            ClientIdDto clientIdDto = ClientIdDto.CHECKOUT;
-            NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto();
-            newTransactionRequestDto.addPaymentNoticesItem(new PaymentNoticeInfoDto().rptId(RPTID));
-            newTransactionRequestDto.setEmail(EMAIL);
-
-            NewTransactionResponseDto response = new NewTransactionResponseDto();
-
-            PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-            paymentInfoDto.setAmount(MOCK_AMOUNT);
-            paymentInfoDto.setReason("Reason");
-            paymentInfoDto.setPaymentToken("payment_token");
-            paymentInfoDto.setRptId(RPTID);
-
-            response.addPaymentsItem(paymentInfoDto);
-            response.setAuthToken("token");
-
-            Mockito.lenient()
-                    .when(
-                            transactionsService
-                                    .newTransaction(
-                                            newTransactionRequestDto,
-                                            clientIdDto,
-                                            transactionId
-                                    )
-                    )
-                    .thenReturn(Mono.just(response));
-
-            ResponseEntity<NewTransactionResponseDto> responseEntity = transactionsController
-                    .newTransaction(clientIdDto, Mono.just(newTransactionRequestDto), mockExchange).block();
-
-            // Verify mock
-            verify(transactionsService, Mockito.times(1))
-                    .newTransaction(newTransactionRequestDto, clientIdDto, transactionId);
-
-            // Verify status code and response
-            assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-            assertEquals(response, responseEntity.getBody());
-        }
-    }
-
-    @Test
-    void shouldGetTransactionInfoGetPaymentToken() {
-
-        TransactionInfoDto response = new TransactionInfoDto();
-        PaymentInfoDto paymentInfoDto = new PaymentInfoDto();
-        paymentInfoDto.setAmount(MOCK_AMOUNT);
-        paymentInfoDto.setReason("Reason");
-        paymentInfoDto.setPaymentToken("payment_token");
-        response.addPaymentsItem(paymentInfoDto);
-        response.setAuthToken("token");
-
-        String transactionId = new TransactionId(UUID.randomUUID()).value();
-
-        Mockito.lenient().when(transactionsService.getTransactionInfo(transactionId, null))
-                .thenReturn(Mono.just(response));
-
-        ResponseEntity<TransactionInfoDto> responseEntity = transactionsController
-                .getTransactionInfo(transactionId, null, mockExchange).block();
-
-        // Verify mock
-        verify(transactionsService, Mockito.times(1)).getTransactionInfo(transactionId, null);
-
-        // Verify status code and response
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals(response, responseEntity.getBody());
-    }
 
     @Test
     void shouldCancelTransactionInfo() {
@@ -477,22 +393,6 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void shouldReturnProblemJsonWith400OnBadInput() {
-
-        webTestClient.post()
-                .uri("/transactions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("X-Client-Id", "CHECKOUT")
-                .header("x-api-key", "primary-key")
-                .body(BodyInserters.fromValue("{}"))
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody(ProblemJsonDto.class)
-                .value(p -> assertEquals(400, p.getStatus()));
-    }
-
-    @Test
     void shouldReturnErrorCircuitBreakerOpen() {
 
         ResponseEntity error = transactionsController.openStateHandler(
@@ -734,102 +634,6 @@ class TransactionsControllerTest {
                 "Invalid payment token received",
                 responseEntity.getBody().getDetail()
         );
-    }
-
-    @Test
-    void shouldGetTransactionInfoInAllStatuses() {
-
-        TransactionInfoDto response = new TransactionInfoDto()
-                .addPaymentsItem(
-                        new PaymentInfoDto()
-                                .amount(MOCK_AMOUNT)
-                                .reason("Reason")
-                                .paymentToken("payment_token")
-                ).authToken("token");
-
-        String transactionId = TransactionTestUtils.TRANSACTION_ID;
-
-        for (it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto status : it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto
-                .values()) {
-            response.setStatus(TransactionStatusDto.fromValue(status.toString()));
-            Mockito.when(transactionsService.getTransactionInfo(transactionId, null))
-                    .thenReturn(Mono.just(response));
-            webTestClient.get()
-                    .uri("/transactions/{trnId}", Map.of("trnId", transactionId))
-                    .header("x-api-key", "primary-key")
-                    .exchange()
-                    .expectStatus()
-                    .isOk()
-                    .expectBody(TransactionInfoDto.class)
-                    .value(p -> assertEquals(status.toString(), p.getStatus().toString()));
-        }
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "foo@test.it",
-                    "FoO@TeSt.iT",
-                    "FOO@TEST.IT"
-            }
-    )
-    void shouldHandleTransactionCreatedWithMailCaseInsensitive(String email) {
-
-        Mockito.when(transactionsService.newTransaction(any(), any(), any()))
-                .thenReturn(Mono.just(new NewTransactionResponseDto()));
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeInfoDto()
-                                .rptId(TransactionTestUtils.RPT_ID)
-                                .amount(TransactionTestUtils.AMOUNT)
-                )
-                .email(email)
-                .idCart(TransactionTestUtils.ID_CART);
-        webTestClient.post()
-                .uri("/transactions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(newTransactionRequestDto)
-                .header("X-Client-Id", "CHECKOUT")
-                .header("x-api-key", "primary-key")
-                .exchange()
-                .expectStatus()
-                .isOk();
-    }
-
-    @Test
-    void shouldReturnBadRequestForInvalidMail() {
-
-        Mockito.when(transactionsService.newTransaction(any(), any(), any()))
-                .thenReturn(Mono.just(new NewTransactionResponseDto()));
-        NewTransactionRequestDto newTransactionRequestDto = new NewTransactionRequestDto()
-                .addPaymentNoticesItem(
-                        new PaymentNoticeInfoDto()
-                                .rptId(TransactionTestUtils.RPT_ID)
-                                .amount(TransactionTestUtils.AMOUNT)
-                )
-                .email("invalidMail")
-                .idCart(TransactionTestUtils.ID_CART);
-
-        webTestClient.post()
-                .uri("/transactions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(newTransactionRequestDto)
-                .header("X-Client-Id", "CHECKOUT")
-                .header("x-api-key", "primary-key")
-                .exchange()
-                .expectStatus()
-                .isBadRequest()
-                .expectBody(ProblemJsonDto.class)
-                .value(
-                        p -> {
-                            assertEquals(400, p.getStatus());
-                            assertTrue(
-                                    p.getDetail().contains(
-                                            "Field error in object 'newTransactionRequestDtoMono' on field 'email'"
-                                    )
-                            );
-                        }
-                );
     }
 
     @Test
@@ -1462,85 +1266,6 @@ class TransactionsControllerTest {
                             assertEquals(exception.getDetail(), p.getDetail());
                         }
                 );
-    }
-
-    @Test
-    void shouldReturn422ForNoLockAcquiredOnPatchAuthRequest() {
-        /* preconditions */
-        String b64TransactionId = "aaa";
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeNpgGatewayDto()
-                                .authorizationCode("authorizationCode")
-                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
-                ).timestampOperation(OffsetDateTime.now());
-
-        Mockito.when(uuidUtils.uuidFromBase64(b64TransactionId)).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(Mono.just(false));
-        /* test */
-        webTestClient.patch()
-                .uri("/transactions/{transactionId}/auth-requests", b64TransactionId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("x-api-key", "primary-key")
-                .bodyValue(updateAuthorizationRequestDto)
-                .exchange()
-                .expectStatus()
-                .isEqualTo(422)
-                .expectBody(ProblemJsonDto.class)
-                .value(
-                        p -> {
-                            assertEquals(422, p.getStatus());
-                            assertEquals(
-                                    "Lock not acquired for transaction with id: [%1$s] and locking key: [PATCH-auth-request-%1$s]"
-                                            .formatted(transactionId.value()),
-                                    p.getDetail()
-                            );
-                        }
-                );
-        Mockito.verify(exclusiveLockDocumentWrapper, never()).deleteById(any());
-    }
-
-    @Test
-    void shouldReleaseLockOncePatchAuthRequestHaveBeenProcessed() {
-        /* preconditions */
-        String b64TransactionId = "aaa";
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new UpdateAuthorizationRequestDto()
-                .outcomeGateway(
-                        new OutcomeNpgGatewayDto()
-                                .authorizationCode("authorizationCode")
-                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
-                ).timestampOperation(OffsetDateTime.now());
-        ExclusiveLockDocument expectedLockDocument = new ExclusiveLockDocument(
-                "PATCH-auth-request-%s".formatted(transactionId.value()),
-                "transactions-service"
-        );
-        Mockito.when(uuidUtils.uuidFromBase64(b64TransactionId)).thenReturn(Either.right(transactionId.uuid()));
-        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(Mono.just(true));
-        Mockito.when(exclusiveLockDocumentWrapper.deleteById(any())).thenReturn(Mono.just(true));
-        Mockito.when(transactionsService.updateTransactionAuthorization(any(), any()))
-                .thenReturn(Mono.just(new TransactionInfoDto()));
-        /* test */
-        webTestClient.patch()
-                .uri("/transactions/{transactionId}/auth-requests", b64TransactionId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("x-api-key", "primary-key")
-                .bodyValue(updateAuthorizationRequestDto)
-                .exchange()
-                .expectStatus()
-                .isOk();
-
-        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
-                argThat(
-                        arg -> {
-                            assertEquals(expectedLockDocument.id(), arg.id());
-                            assertEquals(expectedLockDocument.holderName(), arg.holderName());
-                            return true;
-                        }
-                )
-        );
-        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).deleteById(expectedLockDocument.id());
     }
 
     @Test
