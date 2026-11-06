@@ -1,10 +1,6 @@
 package it.pagopa.transactions.client;
 
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
-import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeRequestDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.CalculateFeeResponseDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.PaymentNoticeDto;
-import it.pagopa.generated.ecommerce.paymentmethods.v2.dto.TransferListItemDto;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import it.pagopa.transactions.exceptions.PaymentMethodNotFoundException;
@@ -18,10 +14,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-
 import java.nio.charset.Charset;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
