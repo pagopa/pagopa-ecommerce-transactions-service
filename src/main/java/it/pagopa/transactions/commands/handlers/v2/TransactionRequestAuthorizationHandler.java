@@ -147,7 +147,9 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
         return handleWithCreationDate(command).map(Tuple2::getT1);
     }
 
-    public Mono<Tuple2<RequestAuthorizationResponseDto, TransactionAuthorizationRequestedEvent>> handleWithCreationDate(TransactionRequestAuthorizationCommand command) {
+    public Mono<Tuple2<RequestAuthorizationResponseDto, TransactionAuthorizationRequestedEvent>> handleWithCreationDate(
+                                                                                                                        TransactionRequestAuthorizationCommand command
+    ) {
         AuthorizationRequestData authorizationRequestData = command.getData();
         URI logo = getLogo(command.getData());
         Mono<BaseTransaction> transaction = transactionsUtils.reduceV2Events(
@@ -166,9 +168,9 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                         tx -> npgAuthRequestPipeline(
                                 authorizationRequestData,
                                 tx.getTransactionActivatedData()
-                                        .getTransactionGatewayActivationData() instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
-                                        ? transactionGatewayActivationData.getCorrelationId()
-                                        : null,
+                                        .getTransactionGatewayActivationData()instanceof NpgTransactionGatewayActivationData transactionGatewayActivationData
+                                                ? transactionGatewayActivationData.getCorrelationId()
+                                                : null,
                                 tx.getClientId().getEffectiveClient().name(),
                                 command.lang,
                                 Optional.ofNullable(tx.getTransactionActivatedData().getUserId())
@@ -219,67 +221,87 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                     // the payment token validity time in order to make this API call performable
                     // only once per transaction (further attempts will find the transaction in an
                     // expired status and return an error)
-                    return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(transactionIdLockDocument, Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds()))
-                            .doOnNext(lockAcquired ->
-                                            LogTracingUtils.loggerTracingUtils()
-                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                                                            .details(
-                                                                Map.of(
-                                                                    "transaction_lock_id", transactionIdLockDocument.id(),
-                                                                    "lock_acquired", lockAcquired.toString()
-                                                                )
-                                                            )
-                                                            .attributes(
-                                                                Map.of(
-                                                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, transactionId.value()
-                                                                )
-                                                            )
-                                                            .logInfo(log, "RequestTransactionAuthorization Transaction lock acquired")
+                    return reactiveExclusiveLockDocumentWrapper
+                            .saveIfAbsent(
+                                    transactionIdLockDocument,
+                                    Duration.ofSeconds(t.getTransactionActivatedData().getPaymentTokenValiditySeconds())
+                            )
+                            .doOnNext(
+                                    lockAcquired -> LogTracingUtils.loggerTracingUtils()
+                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                            .details(
+                                                    Map.of(
+                                                            "transaction_lock_id",
+                                                            transactionIdLockDocument.id(),
+                                                            "lock_acquired",
+                                                            lockAcquired.toString()
+                                                    )
+                                            )
+                                            .attributes(
+                                                    Map.of(
+                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                            transactionId.value()
+                                                    )
+                                            )
+                                            .logInfo(log, "RequestTransactionAuthorization Transaction lock acquired")
                             )
                             .flatMap(lockAcquired -> {
                                 if (Boolean.FALSE.equals(lockAcquired)) {
-                                    return Mono.error(new LockNotAcquiredException(transactionId, transactionIdLockDocument));
+                                    return Mono.error(
+                                            new LockNotAcquiredException(transactionId, transactionIdLockDocument)
+                                    );
                                 }
                                 return Mono.just(t);
                             });
                 })
                 .flatMap(t -> {
-                            String firstPaymentToken = t.getTransactionActivatedData().getPaymentNotices().stream().map(PaymentNotice::getPaymentToken).sorted().findFirst().orElseThrow();
-                            ExclusiveLockDocument paymentTokenLockDocument = new ExclusiveLockDocument(
-                                    "POST-auth-request-payment-token-%s".formatted(firstPaymentToken),
-                                    "transactions-service"
-                            );
+                    String firstPaymentToken = t.getTransactionActivatedData().getPaymentNotices().stream()
+                            .map(PaymentNotice::getPaymentToken).sorted().findFirst().orElseThrow();
+                    ExclusiveLockDocument paymentTokenLockDocument = new ExclusiveLockDocument(
+                            "POST-auth-request-payment-token-%s".formatted(firstPaymentToken),
+                            "transactions-service"
+                    );
 
-                            return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(paymentTokenLockDocument
-                                            ,Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds))
-                                    .doOnNext(lockAcquired ->
-                                                    LogTracingUtils.loggerTracingUtils()
-                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                                                            .details(
-                                                                Map.of(
-                                                                    "payment_token_lock_id", paymentTokenLockDocument.id(),
-                                                                    "lock_acquired", lockAcquired.toString()
-                                                                )
-                                                            )
-                                                            .attributes(
-                                                                Map.of(
-                                                                    LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID, t.getTransactionId().value(),
-                                                                    LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS, firstPaymentToken
-                                                                )
-                                                            )
-                                                            .logInfo(log, "RequestTransactionAuthorization PaymentToken lock acquired")
-                                    )
+                    return reactiveExclusiveLockDocumentWrapper
+                            .saveIfAbsent(
+                                    paymentTokenLockDocument,
+                                    Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds)
+                            )
+                            .doOnNext(
+                                    lockAcquired -> LogTracingUtils.loggerTracingUtils()
+                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
+                                            .details(
+                                                    Map.of(
+                                                            "payment_token_lock_id",
+                                                            paymentTokenLockDocument.id(),
+                                                            "lock_acquired",
+                                                            lockAcquired.toString()
+                                                    )
+                                            )
+                                            .attributes(
+                                                    Map.of(
+                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                            t.getTransactionId().value(),
+                                                            LogTracingUtils.AttributeKeys.CTX_PAYMENT_TOKENS,
+                                                            firstPaymentToken
+                                                    )
+                                            )
+                                            .logInfo(log, "RequestTransactionAuthorization PaymentToken lock acquired")
+                            )
                             .flatMap(lockAcquired -> {
                                 if (Boolean.FALSE.equals(lockAcquired)) {
-                                    return Mono.error(new LockNotAcquiredException(t.getTransactionId(), paymentTokenLockDocument));
+                                    return Mono.error(
+                                            new LockNotAcquiredException(t.getTransactionId(), paymentTokenLockDocument)
+                                    );
                                 }
                                 return Mono.just(t);
                             });
                 })
                 .flatMap(
-                        t -> gatewayAttempts.switchIfEmpty(Mono.error(new InvalidRequestException("No gateway matched")))
-                                .doOnSuccess(authOutput ->
-                                        traceAuthorizationRequestedOperation(
+                        t -> gatewayAttempts
+                                .switchIfEmpty(Mono.error(new InvalidRequestException("No gateway matched")))
+                                .doOnSuccess(
+                                        authOutput -> traceAuthorizationRequestedOperation(
                                                 authorizationRequestData,
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.OK,
                                                 new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
@@ -288,8 +310,8 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 ),
                                                 t.getClientId()
                                         )
-                                ).doOnError(exception ->
-                                        traceAuthorizationRequestedOperation(
+                                ).doOnError(
+                                        exception -> traceAuthorizationRequestedOperation(
                                                 authorizationRequestData,
                                                 UpdateTransactionStatusTracerUtils.UpdateTransactionStatusOutcome.PROCESSING_ERROR,
                                                 new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
@@ -313,31 +335,36 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                 authorizationRequestData
                                                         .authDetails() instanceof WalletAuthRequestDetailsDto
                                                         || authorizationRequestData
-                                                        .authDetails() instanceof ApmAuthRequestDetailsDto
-                                                        ? authorizationOutput.npgSessionId()
-                                                        .orElseThrow(
-                                                                () -> new InternalServerErrorException(
-                                                                        "Cannot retrieve session id for transaction"
-                                                                )
-                                                        ) // build session id
-                                                        : authorizationRequestData.sessionId()
-                                                        .orElseThrow(
-                                                                () -> new BadGatewayException(
-                                                                        "Cannot retrieve session id for transaction",
-                                                                        HttpStatus.INTERNAL_SERVER_ERROR
-                                                                )
-                                                        ),
+                                                                .authDetails() instanceof ApmAuthRequestDetailsDto
+                                                                        ? authorizationOutput.npgSessionId()
+                                                                                .orElseThrow(
+                                                                                        () -> new InternalServerErrorException(
+                                                                                                "Cannot retrieve session id for transaction"
+                                                                                        )
+                                                                                ) // build session id
+                                                                        : authorizationRequestData.sessionId()
+                                                                                .orElseThrow(
+                                                                                        () -> new BadGatewayException(
+                                                                                                "Cannot retrieve session id for transaction",
+                                                                                                HttpStatus.INTERNAL_SERVER_ERROR
+                                                                                        )
+                                                                                ),
                                                 authorizationOutput.npgConfirmSessionId().orElse(null),
                                                 authorizationRequestData
-                                                        .authDetails() instanceof WalletAuthRequestDetailsDto walletAuthRequestDetailsDto ?
-                                                        new WalletInfo(walletAuthRequestDetailsDto.getWalletId(), null) : null
+                                                        .authDetails()instanceof WalletAuthRequestDetailsDto walletAuthRequestDetailsDto
+                                                                ? new WalletInfo(
+                                                                        walletAuthRequestDetailsDto.getWalletId(),
+                                                                        null
+                                                                )
+                                                                : null
                                         );
                                         case REDIRECT -> new RedirectTransactionGatewayAuthorizationRequestedData(
                                                 logo,
                                                 authorizationOutput.authorizationTimeoutMillis().orElse(600000)
                                         );
-                                        default ->
-                                                throw new InvalidRequestException("Unhandled payment gateway: [%s]".formatted(paymentGateway));
+                                        default -> throw new InvalidRequestException(
+                                                "Unhandled payment gateway: [%s]".formatted(paymentGateway)
+                                        );
                                     };
                                     TransactionAuthorizationRequestedEvent authorizationEvent = new TransactionAuthorizationRequestedEvent(
                                             t.getTransactionId().value(),
@@ -361,7 +388,11 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                     command.getData().paymentMethodDescription(),
                                                     transactionGatewayAuthorizationRequestedData,
                                                     command.getData().idBundle(),
-                                                    command.getData().contextualOnboardDetails().map(ctx -> ctx.transactionId().equals(t.getTransactionId().value())).orElse(false)
+                                                    command.getData().contextualOnboardDetails()
+                                                            .map(
+                                                                    ctx -> ctx.transactionId()
+                                                                            .equals(t.getTransactionId().value())
+                                                            ).orElse(false)
                                             )
                                     );
 
@@ -373,22 +404,27 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                         .success()
                                                         .dependency(LogTracingUtils.MONGO_DEPENDENCY)
                                                         .attributes(
-                                                            Map.of(
-                                                                LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID, authorizationRequestId,
-                                                                LogTracingUtils.AttributeKeys.CTX_EVENT_CODE, e.getEventCode()
-                                                            )
+                                                                Map.of(
+                                                                        LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID,
+                                                                        authorizationRequestId,
+                                                                        LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                        e.getEventCode()
+                                                                )
                                                         )
                                                         .logInfo(log, "Saved domain event");
                                             })
-                                            .doOnError(e ->
-                                                    LogTracingUtils.loggerTracingUtils()
+                                            .doOnError(
+                                                    e -> LogTracingUtils.loggerTracingUtils()
                                                             .failure()
                                                             .dependency(LogTracingUtils.MONGO_DEPENDENCY)
                                                             .attributes(
-                                                                Map.of(
-                                                                    LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID, authorizationEvent.getData().getAuthorizationRequestId(),
-                                                                    LogTracingUtils.AttributeKeys.CTX_EVENT_CODE, authorizationEvent.getEventCode()
-                                                                )
+                                                                    Map.of(
+                                                                            LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID,
+                                                                            authorizationEvent.getData()
+                                                                                    .getAuthorizationRequestId(),
+                                                                            LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                            authorizationEvent.getEventCode()
+                                                                    )
                                                             )
                                                             .logError(log, e, "Error on save domain event")
                                             )
@@ -419,45 +455,63 @@ public class TransactionRequestAuthorizationHandler extends TransactionRequestAu
                                                             .doOnNext(
                                                                     event -> LogTracingUtils.loggerTracingUtils()
                                                                             .success()
-                                                                            .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
+                                                                            .dependency(
+                                                                                    LogTracingUtils.STORAGE_QUEUE_DEPENDENCY
+                                                                            )
                                                                             .attributes(
-                                                                                Map.of(
-                                                                                    LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID, authorizationEvent.getData().getAuthorizationRequestId(),
-                                                                                        LogTracingUtils.AttributeKeys.CTX_EVENT_CODE, authorizationEvent.getEventCode()
-                                                                                )
+                                                                                    Map.of(
+                                                                                            LogTracingUtils.AttributeKeys.CTX_AUTHORIZATION_REQUEST_ID,
+                                                                                            authorizationEvent.getData()
+                                                                                                    .getAuthorizationRequestId(),
+                                                                                            LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
+                                                                                            authorizationEvent
+                                                                                                    .getEventCode()
+                                                                                    )
                                                                             )
                                                                             .details(
-                                                                                Map.of(
-                                                                                        "send_reason",
-                                                                                        "New transaction authorization event",
-                                                                                        "visibility_timeout",
-                                                                                        Duration.ofSeconds(authRequestEventVisibilityTimeoutSeconds).toString(),
-                                                                                        "ttl",
-                                                                                        Duration.ofSeconds(transientQueuesTTLSeconds).toString()
-                                                                                )
+                                                                                    Map.of(
+                                                                                            "send_reason",
+                                                                                            "New transaction authorization event",
+                                                                                            "visibility_timeout",
+                                                                                            Duration.ofSeconds(
+                                                                                                    authRequestEventVisibilityTimeoutSeconds
+                                                                                            ).toString(),
+                                                                                            "ttl",
+                                                                                            Duration.ofSeconds(
+                                                                                                    transientQueuesTTLSeconds
+                                                                                            ).toString()
+                                                                                    )
                                                                             )
-                                                                            .logInfo(log, "Event successfully sent to queue")
+                                                                            .logInfo(
+                                                                                    log,
+                                                                                    "Event successfully sent to queue"
+                                                                            )
                                                             )
-                                                            .map(queueResponse -> Tuples.of(
-                                                                    new RequestAuthorizationResponseDto()
-                                                                            .authorizationUrl(
-                                                                                    authorizationOutput.authorizationUrl()
-                                                                            )
-                                                                            .authorizationRequestId(
-                                                                                    authorizationOutput.authorizationId()
-                                                                            ),
-                                                                    savedEvent
-                                                            ))
+                                                            .map(
+                                                                    queueResponse -> Tuples.of(
+                                                                            new RequestAuthorizationResponseDto()
+                                                                                    .authorizationUrl(
+                                                                                            authorizationOutput
+                                                                                                    .authorizationUrl()
+                                                                                    )
+                                                                                    .authorizationRequestId(
+                                                                                            authorizationOutput
+                                                                                                    .authorizationId()
+                                                                                    ),
+                                                                            savedEvent
+                                                                    )
+                                                            )
                                             );
                                 })
-                                .doOnError(e ->
-                                        LogTracingUtils.loggerTracingUtils()
+                                .doOnError(
+                                        e -> LogTracingUtils.loggerTracingUtils()
                                                 .failure()
                                                 .dependency(LogTracingUtils.STORAGE_QUEUE_DEPENDENCY)
                                                 .attributes(
                                                         Map.of(
                                                                 LogTracingUtils.AttributeKeys.CTX_EVENT_CODE,
-                                                                TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT.toString()
+                                                                TransactionEventCode.TRANSACTION_AUTHORIZATION_REQUESTED_EVENT
+                                                                        .toString()
                                                         )
                                                 )
                                                 .logError(log, e, "Error on queueing domain event")
