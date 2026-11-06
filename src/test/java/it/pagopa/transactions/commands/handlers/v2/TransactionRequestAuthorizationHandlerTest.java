@@ -25,6 +25,7 @@ import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
 import it.pagopa.generated.ecommerce.redirect.v1.dto.RedirectUrlResponseDto;
 import it.pagopa.generated.transactions.server.model.*;
 import it.pagopa.transactions.client.EcommercePaymentMethodsClient;
+import it.pagopa.transactions.client.EcommercePaymentMethodsHandlerClient;
 import it.pagopa.transactions.client.JwtTokenIssuerClient;
 import it.pagopa.transactions.client.PaymentGatewayClient;
 import it.pagopa.transactions.commands.TransactionRequestAuthorizationCommand;
@@ -102,6 +103,9 @@ class TransactionRequestAuthorizationHandlerTest {
     private EcommercePaymentMethodsClient paymentMethodsClient;
 
     @Mock
+    private EcommercePaymentMethodsHandlerClient paymentMethodsHandlerClient;
+
+    @Mock
     private TransactionTemplateWrapper transactionTemplateWrapper;
 
     @Captor
@@ -145,6 +149,8 @@ class TransactionRequestAuthorizationHandlerTest {
                 CHECKOUT_NPG_GDI_PATH,
                 CHECKOUT_OUTCOME_PATH,
                 paymentMethodsClient,
+                paymentMethodsHandlerClient,
+                false,
                 transactionTemplateWrapper,
                 transactionAuthorizationRequestedQueueAsyncClient,
                 transientQueueEventsTtlSeconds,
@@ -322,6 +328,169 @@ class TransactionRequestAuthorizationHandlerTest {
                 ),
                 () -> assertEquals(Duration.ofSeconds(exclusiveLockPaymentTokenTTLSeconds), capturedDurations.getLast())
         );
+    }
+
+    @Test
+    void shouldUpdateSessionUsingPaymentMethodsHandlerWhenHandlerEnabled() {
+        // handler with ecommercePaymentMethodsHandlerEnabled = true
+        TransactionRequestAuthorizationHandler requestAuthorizationHandlerHandlerEnabled = new TransactionRequestAuthorizationHandler(
+                paymentGatewayClient,
+                transactionEventStoreRepository,
+                transactionsUtils,
+                CHECKOUT_BASE_PATH,
+                CHECKOUT_NPG_GDI_PATH,
+                CHECKOUT_OUTCOME_PATH,
+                paymentMethodsClient,
+                paymentMethodsHandlerClient,
+                true,
+                transactionTemplateWrapper,
+                transactionAuthorizationRequestedQueueAsyncClient,
+                transientQueueEventsTtlSeconds,
+                authRequestEventVisibilityTimeoutSeconds,
+                tracingUtils,
+                openTelemetryUtils,
+                jwtTokenIssuerClient,
+                TOKEN_VALIDITY_TIME_SECONDS,
+                updateTransactionStatusTracerUtils,
+                exclusiveLockDocumentWrapper,
+                ECOMMERCE_ESITO_PATH,
+                ECOMMERCE_NPG_GDI_PATH,
+                PAYMENT_WALLET_NPG_GDI_PATH,
+                exclusiveLockPaymentTokenTTLSeconds
+        );
+
+        PaymentToken paymentToken = new PaymentToken("paymentToken");
+        RptId rptId = new RptId("77777777777111111111111111111");
+        TransactionDescription description = new TransactionDescription("description");
+        TransactionAmount amount = new TransactionAmount(MOCK_AMOUNT);
+        Confidential<Email> email = TransactionTestUtils.EMAIL;
+        PaymentContextCode nullPaymentContextCode = new PaymentContextCode(null);
+        String idCart = "idCart";
+        String orderId = "orderId";
+        String correlationId = UUID.randomUUID().toString();
+        TransactionActivated transaction = new TransactionActivated(
+                transactionId,
+                List.of(
+                        new PaymentNotice(
+                                paymentToken,
+                                rptId,
+                                amount,
+                                description,
+                                nullPaymentContextCode,
+                                new ArrayList<>(),
+                                false,
+                                new CompanyName(null),
+                                null
+                        )
+                ),
+                email,
+                null,
+                null,
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT,
+                idCart,
+                TransactionTestUtils.PAYMENT_TOKEN_VALIDITY_TIME_SEC,
+                TransactionTestUtils.npgTransactionGatewayActivationData(),
+                TransactionTestUtils.USER_ID
+        );
+
+        RequestAuthorizationRequestDto authorizationRequest = new RequestAuthorizationRequestDto()
+                .amount(MOCK_AMOUNT)
+                .fee(MOCK_FEE)
+                .paymentInstrumentId("paymentInstrumentId")
+                .pspId("PSP_CODE")
+                .language(RequestAuthorizationRequestDto.LanguageEnum.IT);
+
+        AuthorizationRequestData authorizationData = new AuthorizationRequestData(
+                transaction.getTransactionId(),
+                transaction.getPaymentNotices(),
+                transaction.getEmail(),
+                authorizationRequest.getFee(),
+                authorizationRequest.getPaymentInstrumentId(),
+                authorizationRequest.getPspId(),
+                "CP",
+                "brokerName",
+                "pspChannelCode",
+                "CARDS",
+                "paymentMethodDescription",
+                "pspBusinessName",
+                false,
+                "NPG",
+                Optional.of(UUID.randomUUID().toString()),
+                Optional.empty(),
+                "VISA",
+                new CardsAuthRequestDetailsDto().orderId(orderId),
+                "http://asset",
+                Optional.of(Map.of("VISA", "http://visaAsset")),
+                UUID.randomUUID().toString(),
+                Optional.empty()
+        );
+
+        TransactionRequestAuthorizationCommand requestAuthorizationCommand = new TransactionRequestAuthorizationCommand(
+                transaction.getPaymentNotices().stream().map(PaymentNotice::rptId).toList(),
+                null,
+                authorizationData,
+                List.of(
+                        TransactionTestUtils.transactionActivateEvent(
+                                new NpgTransactionGatewayActivationData(orderId, correlationId)
+                        )
+                )
+        );
+
+        StateResponseDto stateResponseDto = new StateResponseDto()
+                .state(WorkflowStateDto.REDIRECTED_TO_EXTERNAL_DOMAIN).url(NPG_URL_IFRAME);
+
+        /* preconditions */
+        when(paymentGatewayClient.requestNpgCardsAuthorization(authorizationData, correlationId))
+                .thenReturn(Mono.just(stateResponseDto));
+        when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
+                .thenReturn(
+                        (Flux) Flux.just(
+                                TransactionTestUtils.transactionActivateEvent(
+                                        new NpgTransactionGatewayActivationData(orderId, correlationId)
+                                )
+                        )
+                );
+        when(transactionEventStoreRepository.insert(eventStoreCaptor.capture()))
+                .thenAnswer(args -> Mono.just(args.getArguments()[0]));
+        // the handler-enabled branch calls updateSession with 4 args (including
+        // clientId)
+        when(
+                paymentMethodsHandlerClient.updateSession(
+                        authorizationData.paymentInstrumentId(),
+                        ((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId(),
+                        transactionId.value(),
+                        it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT.name()
+                )
+        ).thenReturn(Mono.empty());
+
+        when(
+                transactionAuthorizationRequestedQueueAsyncClient.sendMessageWithResponse(
+                        any(QueueEvent.class),
+                        any(),
+                        durationArgumentCaptor.capture()
+                )
+        )
+                .thenReturn(Queues.QUEUE_SUCCESSFUL_RESPONSE);
+        when(exclusiveLockDocumentWrapper.saveIfAbsent(any(), any())).thenReturn(Mono.just(true));
+
+        RequestAuthorizationResponseDto responseDto = new RequestAuthorizationResponseDto()
+                .authorizationRequestId(((CardsAuthRequestDetailsDto) authorizationData.authDetails()).getOrderId())
+                .authorizationUrl(NPG_URL_IFRAME);
+
+        /* test */
+        StepVerifier.create(requestAuthorizationHandlerHandlerEnabled.handle(requestAuthorizationCommand))
+                .expectNext(responseDto)
+                .verifyComplete();
+
+        // the payment-methods-handler must be used, not the legacy payment-methods
+        // client
+        verify(paymentMethodsHandlerClient, times(1)).updateSession(
+                authorizationData.paymentInstrumentId(),
+                orderId,
+                transactionId.value(),
+                it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId.CHECKOUT.name()
+        );
+        verify(paymentMethodsClient, times(0)).updateSession(any(), any(), any());
     }
 
     @Test
