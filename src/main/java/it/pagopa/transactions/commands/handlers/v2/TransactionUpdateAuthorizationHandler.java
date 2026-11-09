@@ -10,7 +10,7 @@ import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestCardDetailsDto;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
 import it.pagopa.transactions.client.WalletClient;
@@ -190,7 +190,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
         );
         UpdateAuthorizationRequestDto updateAuthorizationRequest = command.getData().updateAuthorizationRequest();
         AuthRequestDataUtils.AuthRequestData authRequestDataExtracted = extractAuthRequestData
-                .from(updateAuthorizationRequest, transactionId);
+                .from(updateAuthorizationRequest);
         TransactionStatusDto transactionStatus = TransactionStatusDto.valueOf(command.getData().transactionStatus());
 
         if (transactionStatus.equals(TransactionStatusDto.AUTHORIZATION_REQUESTED)) {

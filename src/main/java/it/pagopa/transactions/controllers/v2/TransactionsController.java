@@ -36,6 +36,9 @@ public class TransactionsController implements V2Api {
     private TransactionsService transactionsService;
 
     @Autowired
+    private it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1;
+
+    @Autowired
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Autowired
@@ -73,28 +76,16 @@ public class TransactionsController implements V2Api {
                                                                                                Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
                                                                                                ServerWebExchange exchange
     ) {
-        /*
-         * v1 and v2 api version are the same, same input same logic -> same processing
-         * the mainly diff here is that the input transaction id is not base64 encoded
-         * in the v2 version. this fact is reflected in the below code too were, except
-         * for the input transaction id handling, there are no differences between v1
-         * and v2 versions, making v2 request be processed by v1 handler. Once migrated
-         * b.e. to v2 version the v1 can be deleted altogether (no one will call this
-         * api) and move all the logic from v1 service to the v2 referring only the v2
-         * api version beans
-         */
         return updateAuthorizationRequestDto
-                .map(this::mapUpdateAuthRequestV2ToV1)
                 .flatMap(
-                        updateAuthorizationRequest -> transactionsControllerV1.handleUpdateAuthorizationRequest(
-                                new TransactionId(transactionId),
-                                updateAuthorizationRequest,
-                                exchange
+                        updateAuthorizationRequest -> transactionsServiceV1.updateTransactionAuthorization(
+                                new TransactionId(transactionId).uuid(),
+                                updateAuthorizationRequest
                         )
                 )
                 .map(
                         transactionInfo -> new UpdateAuthorizationResponseDto()
-                                .status(TransactionStatusDto.fromValue(transactionInfo.getStatus().getValue()))
+                                .status(transactionInfo.getStatus())
                 )
                 .contextWrite(
                         ctx -> LogTracingUtils.enrichContextForEvent(
@@ -106,35 +97,6 @@ public class TransactionsController implements V2Api {
                         )
                 )
                 .map(ResponseEntity::ok);
-    }
-
-    private it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto mapUpdateAuthRequestV2ToV1(UpdateAuthorizationRequestDto updateAuthorizationRequestDto) {
-        UpdateAuthorizationRequestOutcomeGatewayDto requestOutcomeGateway = updateAuthorizationRequestDto.getOutcomeGateway();
-        it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestOutcomeGatewayDto convertedOutcomeGateway = switch (requestOutcomeGateway) {
-            case OutcomeNpgGatewayDto o -> new it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto()
-                    .operationResult(it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto.OperationResultEnum.valueOf(o.getOperationResult().toString()))
-                    .orderId(o.getOrderId())
-                    .operationId(o.getOperationId())
-                    .authorizationCode(o.getAuthorizationCode())
-                    .errorCode(o.getErrorCode())
-                    .paymentEndToEndId(o.getPaymentEndToEndId())
-                    .rrn(o.getRrn())
-                    .validationServiceId(o.getValidationServiceId())
-                    .cardId4(o.getCardId4());
-            case OutcomeRedirectGatewayDto o ->
-                    new it.pagopa.generated.transactions.server.model.OutcomeRedirectGatewayDto()
-                            .paymentGatewayType(o.getPaymentGatewayType())
-                            .pspTransactionId(o.getPspTransactionId())
-                            .outcome(it.pagopa.generated.transactions.server.model.AuthorizationOutcomeDto.valueOf(o.getOutcome().toString()))
-                            .pspId(o.getPspId())
-                            .authorizationCode(o.getAuthorizationCode())
-                            .errorCode(o.getErrorCode());
-            default ->
-                    throw new NotImplementedException("Conversion from outcome gateway [%s] not implemented".formatted(requestOutcomeGateway.getPaymentGatewayType()));
-        };
-        return new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
-                .timestampOperation(updateAuthorizationRequestDto.getTimestampOperation())
-                .outcomeGateway(convertedOutcomeGateway);
     }
 
     @ExceptionHandler(ConflictStatusException.class)

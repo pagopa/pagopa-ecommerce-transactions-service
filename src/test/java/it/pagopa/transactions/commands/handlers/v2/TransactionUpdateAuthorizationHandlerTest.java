@@ -11,7 +11,7 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.generated.npg.v1.dto.OperationResultDto;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestCardDetailsDto;
 import it.pagopa.generated.wallet.v1.dto.WalletNotificationRequestDto;
 import it.pagopa.transactions.client.WalletClient;
@@ -23,7 +23,6 @@ import it.pagopa.transactions.exceptions.WalletErrorResponseException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.utils.AuthRequestDataUtils;
 import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,8 +57,6 @@ class TransactionUpdateAuthorizationHandlerTest {
             .mock(TransactionsEventStoreRepository.class);
     private TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
 
-    private final UUIDUtils mockUuidUtils = Mockito.mock(UUIDUtils.class);
-
     private final TransactionsUtils transactionsUtils = new TransactionsUtils(
             eventStoreRepository,
             "warmUpNoticeCodePrefix"
@@ -80,7 +77,7 @@ class TransactionUpdateAuthorizationHandlerTest {
 
     private final it.pagopa.transactions.commands.handlers.v2.TransactionUpdateAuthorizationHandler updateAuthorizationHandler = new TransactionUpdateAuthorizationHandler(
             transactionEventStoreRepository,
-            new AuthRequestDataUtils(mockUuidUtils),
+            new AuthRequestDataUtils(),
             transactionsUtils,
             walletClient,
             walletConfig
@@ -133,8 +130,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transactionEventStoreRepository
                         .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
         ).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
                 .expectNextMatches(authorizationStatusUpdatedEvent -> authorizationStatusUpdatedEvent.equals(event))
@@ -195,7 +190,7 @@ class TransactionUpdateAuthorizationHandlerTest {
         /* preconditions */
 
         AuthRequestDataUtils authRequestDataUtilsMock = Mockito.mock(AuthRequestDataUtils.class);
-        Mockito.when(authRequestDataUtilsMock.from(any(), any()))
+        Mockito.when(authRequestDataUtilsMock.from(any()))
                 .thenReturn(new AuthRequestDataUtils.AuthRequestData("", "", "", ""));
         TransactionUpdateAuthorizationHandler updateAuthHandler = new TransactionUpdateAuthorizationHandler(
                 transactionEventStoreRepository,
@@ -261,8 +256,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transactionEventStoreRepository
                         .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
         ).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
         Mockito.when(eventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(
                         Flux.fromIterable(
@@ -364,8 +357,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transactionEventStoreRepository
                         .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
         ).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
         Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(Mono.empty());
         /* test */
         StepVerifier.create(updateAuthorizationHandler.handle(requestAuthorizationCommand))
@@ -472,8 +463,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transactionEventStoreRepository
                         .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
         ).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
         Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(
                 Mono.error(error),
                 Mono.empty()
@@ -570,8 +559,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transactionEventStoreRepository
                         .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
         ).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
         Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(
                 Mono.error(
                         new WalletErrorResponseException(
@@ -673,8 +660,6 @@ class TransactionUpdateAuthorizationHandlerTest {
                 transactionEventStoreRepository
                         .insert(ArgumentMatchers.<BaseTransactionEvent<TransactionAuthorizationCompletedData>>any())
         ).thenReturn(Mono.just(event));
-        Mockito.when(mockUuidUtils.uuidToBase64(transactionId.uuid()))
-                .thenReturn(transactionId.uuid().toString());
         Mockito.when(walletClient.notifyWallet(any(), any(), any())).thenReturn(
                 Mono.error(
                         new WalletErrorResponseException(

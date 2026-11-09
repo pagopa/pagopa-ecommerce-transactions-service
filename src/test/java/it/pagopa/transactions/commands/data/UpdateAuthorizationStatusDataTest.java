@@ -6,9 +6,9 @@ import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequeste
 import it.pagopa.ecommerce.commons.documents.v2.authorization.RedirectTransactionGatewayAuthorizationRequestedData;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.v2.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.AuthorizationOutcomeDto;
-import it.pagopa.generated.transactions.server.model.OutcomeRedirectGatewayDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.transactions.v2.server.model.AuthorizationOutcomeDto;
+import it.pagopa.generated.transactions.v2.server.model.OutcomeRedirectGatewayDto;
+import it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 

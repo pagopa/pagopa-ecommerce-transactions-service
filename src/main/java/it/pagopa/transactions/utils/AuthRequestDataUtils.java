@@ -1,8 +1,7 @@
 package it.pagopa.transactions.utils;
 
-import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
-import it.pagopa.generated.transactions.server.model.*;
+import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,17 +14,10 @@ import java.util.Objects;
 @Slf4j
 public class AuthRequestDataUtils {
 
-    private final UUIDUtils uuidUtils;
-
     public static final String OUTCOME_OK = "OK";
-
     public static final String OUTCOME_KO = "KO";
 
-    @Autowired
-    public AuthRequestDataUtils(
-            UUIDUtils uuidUtils
-    ) {
-        this.uuidUtils = uuidUtils;
+    public AuthRequestDataUtils() {
     }
 
     public record AuthRequestData(
@@ -37,7 +29,7 @@ public class AuthRequestDataUtils {
 
     }
 
-    public AuthRequestData from(UpdateAuthorizationRequestDto updateAuthorizationRequest, TransactionId transactionId) {
+    public AuthRequestData from(UpdateAuthorizationRequestDto updateAuthorizationRequest) {
 
         String dependency;
         String authorizationOutcome;

@@ -880,9 +880,9 @@ public class TransactionsService {
     }
 
     @Retry(name = "updateTransactionAuthorization")
-    public Mono<TransactionInfoDto> updateTransactionAuthorization(
+    public Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> updateTransactionAuthorization(
             UUID decodedTransactionId,
-            UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+            it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
 
         TransactionId transactionId = new TransactionId(decodedTransactionId);
@@ -931,7 +931,7 @@ public class TransactionsService {
 
         Mono<Tuple2<UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger, UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext>> authUpdateContext = txData
                 .map(TupleUtils.function((pspId, paymentMethodTypeCode, clientId, isWalletPayment) -> switch (updateAuthorizationRequestDto.getOutcomeGateway()) {
-                    case OutcomeNpgGatewayDto outcome -> Tuples.of(
+                    case it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto outcome -> Tuples.of(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.NPG,
                             new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                                     pspId,
@@ -944,7 +944,7 @@ public class TransactionsService {
                                     isWalletPayment
                             )
                     );
-                    case OutcomeRedirectGatewayDto outcome -> Tuples.of(
+                    case it.pagopa.generated.transactions.v2.server.model.OutcomeRedirectGatewayDto outcome -> Tuples.of(
                             UpdateTransactionStatusTracerUtils.UpdateTransactionTrigger.REDIRECT,
                             new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdateContext(
                                     pspId,
@@ -961,7 +961,7 @@ public class TransactionsService {
                             throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
                 }));
 
-        Mono<TransactionInfoDto> v2Info =
+        Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> v2Info =
                 events
                         .collectList()
                         .zipWith(transactionV2)
@@ -1024,11 +1024,11 @@ public class TransactionsService {
                 });
     }
 
-    private Mono<TransactionInfoDto> updateTransactionAuthorizationStatusV2(
-                                                                            it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
-                                                                            UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-                                                                            ZonedDateTime authorizationRequestedTime,
-                                                                            List<? extends BaseTransactionEvent<?>> events
+    private Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> updateTransactionAuthorizationStatusV2(
+                                                                                                                             it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
+                                                                                                                             it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
+                                                                                                                             ZonedDateTime authorizationRequestedTime,
+                                                                                                                             List<? extends BaseTransactionEvent<?>> events
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
@@ -1173,7 +1173,7 @@ public class TransactionsService {
                 );
     }
 
-    private TransactionInfoDto buildTransactionInfoDtoV2(
+    private TransactionInfoDto buildTransactionInfoDtoV1(
                                                          it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
     ) {
         return new TransactionInfoDto()
@@ -1189,6 +1189,25 @@ public class TransactionsService {
                                 ).toList()
                 )
                 .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
+
+    }
+
+    private it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto buildTransactionInfoDtoV2(
+                                                                                                          it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
+    ) {
+        return new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
+                .transactionId(baseTransaction.getTransactionId().value())
+                .payments(
+                        baseTransaction.getPaymentNotices()
+                                .stream().map(
+                                        paymentNotice -> new it.pagopa.generated.transactions.v2.server.model.PaymentInfoDto()
+                                                .amount(paymentNotice.transactionAmount().value())
+                                                .reason(paymentNotice.transactionDescription().value())
+                                                .paymentToken(paymentNotice.paymentToken().value())
+                                                .rptId(paymentNotice.rptId().value())
+                                ).toList()
+                )
+                .status(transactionsUtils.convertEnumerationV2(baseTransaction.getStatus()));
 
     }
 
@@ -1241,7 +1260,7 @@ public class TransactionsService {
                                                                 )
                                                         )
                                         )
-                                        .map(this::buildTransactionInfoDtoV2)
+                                        .map(this::buildTransactionInfoDtoV1)
                         )
                 );
 
