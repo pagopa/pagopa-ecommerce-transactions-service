@@ -10,7 +10,7 @@ import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.services.v2.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
 import it.pagopa.transactions.utils.UUIDUtils;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -40,7 +39,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -58,10 +56,6 @@ class TransactionsControllerTest {
     @MockitoBean
     @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
-
-    @MockitoBean
-    @Qualifier(it.pagopa.transactions.services.v1.TransactionsService.QUALIFIER_NAME)
-    private it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -214,57 +208,6 @@ class TransactionsControllerTest {
         );
     }
 
-    @Test
-    void shouldHandleGetTransactionSuccessfully() {
-        String transactionId = it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID;
-        TransactionInfoDto expectedResponse = new TransactionInfoDto()
-                .gatewayInfo(
-                        new TransactionInfoGatewayInfoDto()
-                                .gateway("NPG")
-                                .authorizationCode("authorizationCode")
-                                .authorizationStatus("authorizationStatus")
-                                .errorCode("errorCode")
-                )
-                .nodeInfo(
-                        new TransactionInfoNodeInfoDto()
-                                .closePaymentResultError(
-                                        new TransactionInfoNodeInfoClosePaymentResultErrorDto()
-                                                .description("errorDescription")
-                                                .statusCode(BigDecimal.valueOf(404))
-                                )
-                                .sendPaymentResultOutcome(TransactionInfoNodeInfoDto.SendPaymentResultOutcomeEnum.KO)
-                )
-                .transactionId(transactionId)
-                .idCart("idCart")
-                .clientId(TransactionInfoDto.ClientIdEnum.CHECKOUT)
-                .feeTotal(200)
-                .status(TransactionStatusDto.CLOSED)
-                .addPaymentsItem(
-                        new PaymentInfoDto()
-                                .rptId("rptId")
-                );
-
-        Mockito.when(transactionsService.getTransactionInfo(any(), any()))
-                .thenReturn(Mono.just(expectedResponse));
-        webTestClient.get()
-                .uri("/v2/transactions/{transactionId}", Map.of("transactionId", transactionId))
-                .header("X-Client-Id", "CHECKOUT")
-                .header("x-correlation-id", UUID.randomUUID().toString())
-                .header("x-api-key", "primary-key")
-                .exchange()
-                .expectStatus()
-                .isEqualTo(HttpStatus.OK)
-                .expectBody(TransactionInfoDto.class)
-                .value(response -> {
-                    assertEquals(
-                            expectedResponse,
-                            response
-                    );
-                });
-        verify(transactionsService, times(1)).getTransactionInfo(transactionId, null);
-
-    }
-
     public static Stream<Arguments> patchAuthRequestProxyTestMethodSource() {
         return Stream.of(
                 Arguments.of(
@@ -317,7 +260,7 @@ class TransactionsControllerTest {
                 .status(TransactionStatusDto.CLOSURE_REQUESTED)
                 .transactionId(transactionId.value());
 
-        Mockito.when(transactionsServiceV1.updateTransactionAuthorization(any(), any()))
+        Mockito.when(transactionsService.updateTransactionAuthorization(any(), any()))
                 .thenReturn(Mono.just(transactionInfoDto));
         /* test */
         Hooks.onOperatorDebug();
@@ -331,7 +274,7 @@ class TransactionsControllerTest {
                 .isEqualTo(200)
                 .expectBody(UpdateAuthorizationResponseDto.class)
                 .value(r -> assertEquals(TransactionStatusDto.CLOSURE_REQUESTED, r.getStatus()));
-        verify(transactionsServiceV1, times(1))
+        verify(transactionsService, times(1))
                 .updateTransactionAuthorization(eq(transactionId.uuid()), eq(expectedRequest));
     }
 
@@ -354,7 +297,7 @@ class TransactionsControllerTest {
                                 )
                 ).timestampOperation(java.time.OffsetDateTime.now());
 
-        Mockito.when(transactionsServiceV1.updateTransactionAuthorization(any(), any()))
+        Mockito.when(transactionsService.updateTransactionAuthorization(any(), any()))
                 .thenReturn(Mono.error(new LockNotAcquiredException(transactionId, lockDocument)));
         /* test */
         webTestClient.patch()

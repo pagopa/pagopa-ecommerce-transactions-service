@@ -56,7 +56,6 @@ import static org.mockito.Mockito.*;
 @Import(
     {
             it.pagopa.transactions.services.v1.TransactionsService.class,
-            it.pagopa.transactions.services.v2.TransactionsService.class,
             it.pagopa.transactions.services.v2_1.TransactionsService.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionActivateHandler.class,
             it.pagopa.transactions.commands.handlers.v2.TransactionRequestAuthorizationHandler.class,

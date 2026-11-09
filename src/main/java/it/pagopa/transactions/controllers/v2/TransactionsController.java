@@ -7,11 +7,12 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.v2.server.api.V2Api;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.services.v2.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
@@ -32,43 +33,14 @@ import static it.pagopa.transactions.utils.TransactionsUtils.nodeErrorToV2Transa
 @Slf4j
 public class TransactionsController implements V2Api {
 
+    @Qualifier(TransactionsService.QUALIFIER_NAME)
     @Autowired
     private TransactionsService transactionsService;
 
     @Autowired
-    private it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1;
-
-    @Autowired
     private OpenTelemetryUtils openTelemetryUtils;
 
-    @Autowired
-    private it.pagopa.transactions.controllers.v1.TransactionsController transactionsControllerV1;
-
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
-
-    @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(
-                                                                       String transactionId,
-                                                                       UUID xUserId,
-                                                                       ServerWebExchange exchange
-    ) {
-        return transactionsService.getTransactionInfo(transactionId, xUserId)
-                .doOnNext(
-                        t -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "GetTransactionInfo completed")
-                )
-                .contextWrite(
-                        ctx -> LogTracingUtils.enrichContextForEvent(
-                                Map.of(
-                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                        transactionId
-                                ),
-                                ctx
-                        )
-                )
-                .map(ResponseEntity::ok);
-    }
 
     @Override
     public Mono<ResponseEntity<UpdateAuthorizationResponseDto>> updateTransactionAuthorization(
@@ -78,7 +50,7 @@ public class TransactionsController implements V2Api {
     ) {
         return updateAuthorizationRequestDto
                 .flatMap(
-                        updateAuthorizationRequest -> transactionsServiceV1.updateTransactionAuthorization(
+                        updateAuthorizationRequest -> transactionsService.updateTransactionAuthorization(
                                 new TransactionId(transactionId).uuid(),
                                 updateAuthorizationRequest
                         )
