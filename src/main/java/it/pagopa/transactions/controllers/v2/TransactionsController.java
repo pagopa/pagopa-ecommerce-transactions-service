@@ -6,18 +6,18 @@ import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.v2.server.api.V2Api;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.generated.transactions.v2_1.server.model.GatewayFaultPaymentProblemJsonDto;
 import it.pagopa.generated.transactions.v2_1.server.model.ValidationFaultPaymentDataErrorDto;
 import it.pagopa.generated.transactions.v2_1.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
-import it.pagopa.transactions.services.v2.TransactionsService;
+import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
@@ -39,11 +39,9 @@ import static it.pagopa.transactions.utils.TransactionsUtils.nodeErrorToV2Transa
 @Slf4j
 public class TransactionsController implements V2Api {
 
+    @Qualifier(TransactionsService.QUALIFIER_NAME)
     @Autowired
     private TransactionsService transactionsService;
-
-    @Autowired
-    private it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1;
 
     @Autowired
     private OpenTelemetryUtils openTelemetryUtils;
@@ -55,30 +53,6 @@ public class TransactionsController implements V2Api {
     private ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper;
 
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
-
-    @Override
-    public Mono<ResponseEntity<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto>> getTransactionInfo(
-                                                                                                                        String transactionId,
-                                                                                                                        UUID xUserId,
-                                                                                                                        ServerWebExchange exchange
-    ) {
-        return transactionsService.getTransactionInfo(transactionId, xUserId)
-                .doOnNext(
-                        t -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "GetTransactionInfo completed")
-                )
-                .contextWrite(
-                        ctx -> LogTracingUtils.enrichContextForEvent(
-                                Map.of(
-                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                        transactionId
-                                ),
-                                ctx
-                        )
-                )
-                .map(ResponseEntity::ok);
-    }
 
     @Override
     public Mono<ResponseEntity<UpdateAuthorizationResponseDto>> updateTransactionAuthorization(
@@ -140,7 +114,7 @@ public class TransactionsController implements V2Api {
                             )
                             .logInfo(log, "Lock acquired");
 
-                    return transactionsServiceV1.updateTransactionAuthorization(
+                    return transactionsService.updateTransactionAuthorization(
                             domainTransactionId.uuid(),
                             updateAuthorizationRequestDto
                     )

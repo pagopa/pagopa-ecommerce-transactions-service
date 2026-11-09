@@ -5,7 +5,6 @@ import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.v2_1.server.api.V21Api;
 import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.exceptions.*;
