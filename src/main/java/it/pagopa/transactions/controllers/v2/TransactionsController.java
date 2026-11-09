@@ -56,8 +56,8 @@ public class TransactionsController implements V2Api {
                         )
                 )
                 .map(
-                        transactionInfo -> new UpdateAuthorizationResponseDto()
-                                .status(transactionInfo.getStatus())
+                        transactionStatus -> new UpdateAuthorizationResponseDto()
+                                .status(TransactionStatusDto.fromValue(transactionStatus.toString()))
                 )
                 .contextWrite(
                         ctx -> LogTracingUtils.enrichContextForEvent(
@@ -253,34 +253,6 @@ public class TransactionsController implements V2Api {
         );
     }
 
-    @ExceptionHandler(NodoErrorException.class)
-    public ResponseEntity<?> nodoErrorHandler(NodoErrorException e) {
-        String faultCode = e.getFaultCode();
-
-        ResponseEntity<?> response = nodeErrorToV2TransactionsResponseEntityMapping.getOrDefault(
-                faultCode,
-                new ResponseEntity<>(
-                        new GatewayFaultPaymentProblemJsonDto()
-                                .title(BAD_GATEWAY_DESC)
-                                .faultCodeCategory(
-                                        GatewayFaultPaymentProblemJsonDto.FaultCodeCategoryEnum.GENERIC_ERROR
-                                )
-                                .faultCodeDetail(faultCode),
-                        HttpStatus.BAD_GATEWAY
-                )
-        );
-
-        LogTracingUtils.loggerTracingUtils()
-                .failure()
-                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                .details(
-                        Map.of("fault_code", e.getFaultCode())
-                )
-                .logError(log, e, "Error while interacting with NODO - ActivatePaymentNoticeV2");
-
-        return response;
-    }
-
     @ExceptionHandler(
         {
                 InvalidNodoResponseException.class,
@@ -302,29 +274,6 @@ public class TransactionsController implements V2Api {
                         .title(httpStatus.getReasonPhrase())
                         .detail(exception.getErrorDescription()),
                 httpStatus
-        );
-    }
-
-    @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
-    ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
-                                                                                                DigitalStampNotAllowedForClientException exception
-    ) {
-        LogTracingUtils.loggerTracingUtils()
-                .failure()
-                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                .attributes(
-                        Map.of(LogTracingUtils.AttributeKeys.CTX_CLIENT_ID, exception.getClientId())
-                )
-                .logError(log, exception, "This client can't pay notices with digital stamps");
-
-        return new ResponseEntity<>(
-                new ValidationFaultPaymentDataErrorProblemJsonDto()
-                        .title("Payment Status Fault")
-                        .faultCodeCategory(
-                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
-                        )
-                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
-                HttpStatus.NOT_FOUND
         );
     }
 

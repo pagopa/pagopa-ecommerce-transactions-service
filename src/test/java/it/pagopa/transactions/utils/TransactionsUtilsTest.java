@@ -11,8 +11,6 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
 import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -62,48 +60,6 @@ class TransactionsUtilsTest {
                                         .equals(transactionId.value().toString())
                 )
                 .verify();
-    }
-
-    @Test
-    void shouldConvertAllCommonsStatusCorrectly() {
-        for (TransactionStatusDto status : TransactionStatusDto.values()) {
-            assertEquals(status.toString(), transactionsUtils.convertEnumerationV1(status).toString());
-        }
-    }
-
-    @Test
-    void shouldCreateWarmupRequestCorrectlyForEmptyNoticeCodePrefix() {
-        TransactionsUtils utils = new TransactionsUtils(null, "");
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
-        for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
-            assertNotNull(p.getRptId());
-            assertDoesNotThrow(() -> new RptId(p.getRptId()));
-        }
-    }
-
-    @Test
-    void shouldCreateWarmupRequestCorrectlyForValuedNoticeCodePrefix() {
-        TransactionsUtils utils = new TransactionsUtils(null, "3020");
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
-        for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
-            assertNotNull(p.getRptId());
-            assertDoesNotThrow(() -> new RptId(p.getRptId()));
-            assertEquals("3020", new RptId(p.getRptId()).getNoticeId().substring(0, 4));
-        }
-
-    }
-
-    @Test
-    void shouldCreateWarmupRequestCorrectlyForValuedNoticeCodePrefixLongerThanNoticeCodeLength() {
-        String noticeCode = new RptId(TransactionTestUtils.RPT_ID).getNoticeId();
-        TransactionsUtils utils = new TransactionsUtils(null, noticeCode.concat("BBB"));
-        NewTransactionRequestDto warmupRequest = utils.buildWarmupRequestV1();
-        for (PaymentNoticeInfoDto p : warmupRequest.getPaymentNotices()) {
-            assertNotNull(p.getRptId());
-            assertDoesNotThrow(() -> new RptId(p.getRptId()));
-            assertEquals(noticeCode, new RptId(p.getRptId()).getNoticeId());
-        }
-
     }
 
     @Test

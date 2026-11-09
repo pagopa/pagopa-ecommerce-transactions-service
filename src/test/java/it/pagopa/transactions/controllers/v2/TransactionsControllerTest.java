@@ -129,26 +129,6 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void testDigitalStampNotAllowedForClientExceptionHandler() {
-        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> responseCheck = new ResponseEntity<>(
-                new ValidationFaultPaymentDataErrorProblemJsonDto()
-                        .title("Payment Status Fault")
-                        .faultCodeCategory(
-                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
-                        )
-                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
-                HttpStatus.NOT_FOUND
-        );
-        DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
-
-        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> response = transactionsController
-                .digitalStampNotAllowedHandler(exception);
-
-        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
-        assertEquals(responseCheck.getBody(), response.getBody());
-    }
-
-    @Test
     void shouldReturnErrorCircuitBreakerOpen() {
 
         ResponseEntity error = transactionsController.openStateHandler(
@@ -159,16 +139,6 @@ class TransactionsControllerTest {
 
         // Verify status code and response
         assertEquals(HttpStatus.BAD_GATEWAY, error.getStatusCode());
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithGenericGatewayFault() {
-        CtFaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
-        ResponseEntity<ProblemJsonDto> responseEntity = (ResponseEntity<ProblemJsonDto>) transactionsController
-                .nodoErrorHandler(new NodoErrorException(faultBean));
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
     }
 
     @Test
@@ -256,12 +226,12 @@ class TransactionsControllerTest {
                 it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID
         );
 
-        TransactionInfoDto transactionInfoDto = new TransactionInfoDto()
-                .status(TransactionStatusDto.CLOSURE_REQUESTED)
-                .transactionId(transactionId.value());
-
         Mockito.when(transactionsService.updateTransactionAuthorization(any(), any()))
-                .thenReturn(Mono.just(transactionInfoDto));
+                .thenReturn(
+                        Mono.just(
+                                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED
+                        )
+                );
         /* test */
         Hooks.onOperatorDebug();
         webTestClient.patch()

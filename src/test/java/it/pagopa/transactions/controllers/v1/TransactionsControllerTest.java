@@ -6,16 +6,14 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
-import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorDto;
-import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.TransactionsUtils;
@@ -58,7 +56,6 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -330,38 +327,9 @@ class TransactionsControllerTest {
     }
 
     @Test
-    void testDigitalStampNotAllowedForClientExceptionHandler() {
-        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> responseCheck = new ResponseEntity<>(
-                new ValidationFaultPaymentDataErrorProblemJsonDto()
-                        .title("Payment Status Fault")
-                        .faultCodeCategory(
-                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
-                        )
-                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
-                HttpStatus.NOT_FOUND
-        );
-        DigitalStampNotAllowedForClientException exception = new DigitalStampNotAllowedForClientException("IO");
-
-        ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> response = transactionsController
-                .digitalStampNotAllowedHandler(exception);
-
-        assertEquals(responseCheck.getStatusCode(), response.getStatusCode());
-        assertEquals(responseCheck.getBody(), response.getBody());
-    }
-
-    @Test
     void shouldReturnTransactionInfoOnCorrectNotify() {
         String paymentToken = UUID.randomUUID().toString();
         String transactionId = new TransactionId(UUID.randomUUID()).value();
-
-        TransactionInfoDto transactionInfo = new TransactionInfoDto()
-                .transactionId(transactionId)
-                .addPaymentsItem(
-                        new PaymentInfoDto()
-                                .amount(MOCK_AMOUNT)
-                                .paymentToken(paymentToken)
-                )
-                .status(TransactionStatusDto.NOTIFIED_OK);
 
         AddUserReceiptRequestDto addUserReceiptRequest = new AddUserReceiptRequestDto()
                 .outcome(AddUserReceiptRequestDto.OutcomeEnum.OK)
@@ -382,7 +350,7 @@ class TransactionsControllerTest {
 
         /* preconditions */
         Mockito.when(transactionsService.addUserReceipt(new TransactionId(transactionId), addUserReceiptRequest))
-                .thenReturn(Mono.just(transactionInfo));
+                .thenReturn(Mono.just(TransactionStatusDto.NOTIFIED_OK));
 
         /* test */
         ResponseEntity<AddUserReceiptResponseDto> response = transactionsController
@@ -403,109 +371,6 @@ class TransactionsControllerTest {
 
         // Verify status code and response
         assertEquals(HttpStatus.BAD_GATEWAY, error.getStatusCode());
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithPartyConfigurationFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue());
-        ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyConfigurationFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
-        assertEquals(
-                FaultCategoryDto.PAYMENT_UNAVAILABLE,
-                responseEntity.getBody().getFaultCodeCategory()
-        );
-        assertEquals(
-                PartyConfigurationFaultDto.PPT_DOMINIO_DISABILITATO.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithValidationFault() {
-        CtFaultBean faultBean = faultBeanWithCode(ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue());
-
-        ResponseEntity<ValidationFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<ValidationFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
-        assertEquals(FaultCategoryDto.PAYMENT_UNKNOWN, responseEntity.getBody().getFaultCodeCategory());
-        assertEquals(
-                ValidationFaultDto.PPT_DOMINIO_SCONOSCIUTO.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithGatewayFault() {
-        CtFaultBean faultBean = faultBeanWithCode(GatewayFaultDto.PAA_SYSTEM_ERROR.getValue());
-
-        ResponseEntity<GatewayFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<GatewayFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
-        assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
-        assertEquals(
-                GatewayFaultDto.PAA_SYSTEM_ERROR.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithPartyTimeoutFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue());
-        ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PartyTimeoutFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.GATEWAY_TIMEOUT, responseEntity.getStatusCode());
-        assertEquals(FaultCategoryDto.GENERIC_ERROR, responseEntity.getBody().getFaultCodeCategory());
-        assertEquals(
-                PartyTimeoutFaultDto.PPT_STAZIONE_INT_PA_IRRAGGIUNGIBILE.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithPaymentStatusFault() {
-        CtFaultBean faultBean = faultBeanWithCode(PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue());
-        ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto> responseEntity = (ResponseEntity<PaymentStatusFaultPaymentProblemJsonDto>) transactionsController
-                .nodoErrorHandler(
-                        new NodoErrorException(faultBean)
-                );
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
-        assertEquals(
-                FaultCategoryDto.PAYMENT_UNAVAILABLE,
-                responseEntity.getBody().getFaultCodeCategory()
-        );
-        assertEquals(
-                PaymentStatusFaultDto.PAA_PAGAMENTO_IN_CORSO.getValue(),
-                responseEntity.getBody().getFaultCodeDetail().getValue()
-        );
-    }
-
-    @Test
-    void shouldReturnResponseEntityWithGenericGatewayFault() {
-        CtFaultBean faultBean = faultBeanWithCode("UNKNOWN_ERROR");
-        ResponseEntity<ProblemJsonDto> responseEntity = (ResponseEntity<ProblemJsonDto>) transactionsController
-                .nodoErrorHandler(new NodoErrorException(faultBean));
-
-        assertEquals(Boolean.TRUE, responseEntity != null);
-        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
     }
 
     @Test
@@ -1022,15 +887,6 @@ class TransactionsControllerTest {
                 );
 
         TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        String paymentToken = "paymentToken";
-        TransactionInfoDto transactionInfo = new TransactionInfoDto()
-                .addPaymentsItem(
-                        new PaymentInfoDto()
-                                .amount(MOCK_AMOUNT)
-                                .paymentToken(paymentToken)
-                )
-                .authToken("authToken")
-                .status(TransactionStatusDto.AUTHORIZATION_COMPLETED);
 
         AddUserReceiptResponseDto addUserReceiptResponseDto = new AddUserReceiptResponseDto()
                 .outcome(AddUserReceiptResponseDto.OutcomeEnum.OK);
@@ -1039,7 +895,7 @@ class TransactionsControllerTest {
         Mockito.when(
                 transactionsService.addUserReceipt(transactionId, addUserReceiptRequestDto)
         )
-                .thenReturn(Mono.just(transactionInfo));
+                .thenReturn(Mono.just(TransactionStatusDto.AUTHORIZATION_COMPLETED));
         Mockito.when(uuidUtils.uuidFromBase64(transactionId.value())).thenReturn(Either.right(transactionId.uuid()));
         Hooks.onOperatorDebug();
         /* test */

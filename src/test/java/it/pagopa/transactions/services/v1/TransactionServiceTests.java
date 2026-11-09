@@ -251,38 +251,6 @@ class TransactionServiceTests {
         );
     }
 
-    @ParameterizedTest
-    @EnumSource(Transaction.ClientId.class)
-    void shouldConvertClientIdSuccessfully(Transaction.ClientId clientId) {
-        assertEquals(clientId.name(), transactionsServiceV1.convertClientId(clientId).toString());
-    }
-
-    @ParameterizedTest
-    @MethodSource("v2ClientIdMapping")
-    void shouldConvertV2ClientIdSuccessfully(
-                                             String expected,
-                                             it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId clientId
-    ) {
-        assertEquals(expected, transactionsServiceV1.convertClientId(clientId).toString());
-    }
-
-    @Test
-    void shouldRejectNullClientId() {
-        assertThrows(
-                InvalidRequestException.class,
-                () -> transactionsServiceV1
-                        .convertClientId((it.pagopa.ecommerce.commons.documents.v2.Transaction.ClientId) null)
-        );
-    }
-
-    @Test
-    void shouldThrowsInvalidRequestExceptionForInvalidClientID() {
-        it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId = Mockito
-                .mock(it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId.class);
-        Mockito.when(clientId.toString()).thenReturn("InvalidClientID");
-        assertThrows(InvalidRequestException.class, () -> transactionsServiceV1.convertClientId(clientId));
-    }
-
     @Test
     void shouldThrowPaymentMethodNotFoundExceptionForPaymentMethodNotFound() {
         Transaction transaction = TransactionTestUtils.transactionDocument(

@@ -8,8 +8,6 @@ import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorDto;
-import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
@@ -630,54 +628,6 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @ExceptionHandler({
-            NodoErrorException.class,
-    })
-    public ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
-        LogTracingUtils.loggerTracingUtils()
-                .failure()
-                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                .details(
-                        Map.of("fault_code", exception.getFaultCode())
-                )
-                .logError(log, exception, "Error while interacting with NODO - ActivatePaymentNoticeV2");
-
-        return switch (exception.getFaultCode()) {
-            case String s when Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PartyConfigurationFaultPaymentProblemJsonDto()
-                                    .title("EC error")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
-                                    .faultCodeDetail(PartyConfigurationFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s when Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new ValidationFaultPaymentProblemJsonDto()
-                                    .title("Validation Fault")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNKNOWN)
-                                    .faultCodeDetail(ValidationFaultDto.fromValue(s)), HttpStatus.NOT_FOUND);
-            case String s when Arrays.stream(GatewayFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new GatewayFaultPaymentProblemJsonDto()
-                                    .title("Payment unavailable")
-                                    .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                                    .faultCodeDetail(GatewayFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s when Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PartyTimeoutFaultPaymentProblemJsonDto()
-                                    .title("Gateway Timeout")
-                                    .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                                    .faultCodeDetail(PartyTimeoutFaultDto.fromValue(s)), HttpStatus.GATEWAY_TIMEOUT);
-            case String s when Arrays.stream(PaymentStatusFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PaymentStatusFaultPaymentProblemJsonDto()
-                                    .title("Payment Status Fault")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
-                                    .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.CONFLICT);
-            default -> new ResponseEntity<>(
-                    new ProblemJsonDto().title(BAD_GATEWAY_DESC), HttpStatus.BAD_GATEWAY);
-        };
-    }
-
     @ExceptionHandler(
         {
                 InvalidNodoResponseException.class,
@@ -699,29 +649,6 @@ public class TransactionsController implements TransactionsApi {
                         .title(httpStatus.getReasonPhrase())
                         .detail(exception.getErrorDescription()),
                 httpStatus
-        );
-    }
-
-    @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
-    public ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
-                                                                                                       DigitalStampNotAllowedForClientException exception
-    ) {
-        LogTracingUtils.loggerTracingUtils()
-                .failure()
-                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                .attributes(
-                        Map.of(LogTracingUtils.AttributeKeys.CTX_CLIENT_ID, exception.getClientId())
-                )
-                .logError(log, exception, "This client can't pay notices with digital stamps");
-
-        return new ResponseEntity<>(
-                new ValidationFaultPaymentDataErrorProblemJsonDto()
-                        .title("Payment Status Fault")
-                        .faultCodeCategory(
-                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
-                        )
-                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
-                HttpStatus.NOT_FOUND
         );
     }
 
