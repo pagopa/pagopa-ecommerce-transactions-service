@@ -31,7 +31,7 @@ public class EcommercePaymentMethodsHandlerClient {
     @Autowired
     public EcommercePaymentMethodsHandlerClient(
             @Qualifier(
-                "ecommercePaymentMethoHandlerWebClientV1"
+                "ecommercePaymentMethodHandlerWebClientV1"
             ) PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1,
             PaymentMethodsHandlerMapper mapper
     ) {
