@@ -7,6 +7,7 @@ import io.opentelemetry.api.trace.Tracer;
 import it.pagopa.ecommerce.commons.client.NpgClient;
 import it.pagopa.ecommerce.commons.generated.npg.v1.ApiClient;
 import it.pagopa.ecommerce.commons.generated.npg.v1.api.PaymentServicesApi;
+import it.pagopa.transactions.utils.NpgOrderBuildLoggingFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,11 +39,13 @@ public class NpgWebClientsConfig {
                                         TimeUnit.MILLISECONDS
                                 )
                         )
-                );
+                )
+                .doAfterRequest(NpgOrderBuildLoggingFilter::logWireRequest)
+                .doOnResponse(NpgOrderBuildLoggingFilter::logWireResponse);
 
         WebClient webClient = ApiClient.buildWebClientBuilder().clientConnector(
                 new ReactorClientHttpConnector(httpClient)
-        ).baseUrl(npgWebClientUri).build();
+        ).filter(new NpgOrderBuildLoggingFilter()).baseUrl(npgWebClientUri).build();
 
         return new PaymentServicesApi(new ApiClient(webClient).setBasePath(npgWebClientUri));
     }
