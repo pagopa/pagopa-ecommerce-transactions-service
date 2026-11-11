@@ -77,9 +77,7 @@ public class PaymentMethodsHandlerMapper {
                                                           it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto source
     ) {
         var response = new CalculateFeeResponseDto();
-        String paymentMethodName = source.getPaymentTypeCode() != null
-                ? mapPaymentTypeCodeToNpgServiceName(source.getPaymentTypeCode())
-                : mapPaymentMethodName(source.getPaymentMethodName());
+        String paymentMethodName = mapPaymentTypeCodeToNpgServiceName(source.getPaymentTypeCode());
 
         response.setPaymentMethodName(paymentMethodName);
         response.setPaymentMethodDescription(source.getPaymentMethodDescription());
@@ -108,9 +106,6 @@ public class PaymentMethodsHandlerMapper {
     }
 
     public static String mapPaymentTypeCodeToNpgServiceName(String paymentTypeCode) {
-        if (paymentTypeCode == null) {
-            return null;
-        }
         return PAYMENT_TYPE_CODE_TO_NPG.getOrDefault(paymentTypeCode, paymentTypeCode);
     }
 

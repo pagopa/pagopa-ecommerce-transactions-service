@@ -133,37 +133,6 @@ class PaymentMethodsHandlerMapperTest {
     }
 
     @Test
-    void shouldFallBackToLocalizedNameMappingWhenTypeCodeMissing() {
-        // No paymentTypeCode from the handler: fall back to mapping the localized name.
-        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
-                .paymentMethodName("Carte")
-                .paymentMethodDescription("Carte di credito")
-                .paymentMethodStatus(
-                        it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
-                )
-                .belowThreshold(false)
-                .asset("asset-url")
-                .bundles(
-                        List.of(
-                                new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.BundleDto()
-                                        .idPsp("pspId")
-                                        .onUs(false)
-                                        .paymentMethod("CP")
-                                        .taxPayerFee(100L)
-                                        .touchpoint("CHECKOUT")
-                        )
-                );
-
-        /* test */
-        CalculateFeeResponseDto result = mapper.fromHandlerFeeResponse(handlerResponse);
-
-        /* asserts */
-        assertThat(result).isNotNull();
-        // "Carte" is mapped to "CARDS" via the localized-name fallback mapping
-        assertThat(result.getPaymentMethodName()).isEqualTo("CARDS");
-    }
-
-    @Test
     void shouldHandleMaintenanceStatusByDefaultingToDisabled() {
         // Handler returns MAINTENANCE which has no equivalent in v2
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
@@ -286,6 +255,5 @@ class PaymentMethodsHandlerMapperTest {
                 .isEqualTo("GOOGLEPAY");
         assertThat(PaymentMethodsHandlerMapper.mapPaymentTypeCodeToNpgServiceName("UNKNOWN"))
                 .isEqualTo("UNKNOWN");
-        assertThat(PaymentMethodsHandlerMapper.mapPaymentTypeCodeToNpgServiceName(null)).isNull();
     }
 }
