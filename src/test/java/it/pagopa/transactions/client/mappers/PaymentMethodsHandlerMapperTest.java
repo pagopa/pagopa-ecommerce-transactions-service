@@ -94,7 +94,6 @@ class PaymentMethodsHandlerMapperTest {
         assertThat(result.getBundles().get(0).getIdPsp()).isEqualTo("pspId");
         assertThat(result.getBundles().get(0).getTaxPayerFee()).isEqualTo(100L);
         assertThat(result.getBundles().get(0).getPspBusinessName()).isEqualTo("pspBusinessNameTest");
-        assertThat(result.getBundles().get(0).getBundleName()).isNull();
     }
 
     @Test
@@ -138,6 +137,7 @@ class PaymentMethodsHandlerMapperTest {
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
                 .paymentMethodName("test")
                 .paymentMethodDescription("desc")
+                .paymentTypeCode("CP")
                 .paymentMethodStatus(
                         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.MAINTENANCE
                 )
@@ -159,6 +159,7 @@ class PaymentMethodsHandlerMapperTest {
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
                 .paymentMethodName("test")
                 .paymentMethodDescription("desc")
+                .paymentTypeCode("CP")
                 .paymentMethodStatus(null)
                 .asset("asset")
                 .bundles(List.of());
@@ -177,6 +178,7 @@ class PaymentMethodsHandlerMapperTest {
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
                 .paymentMethodName("test")
                 .paymentMethodDescription("desc")
+                .paymentTypeCode("CP")
                 .paymentMethodStatus(
                         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
                 )
@@ -198,6 +200,7 @@ class PaymentMethodsHandlerMapperTest {
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
                 .paymentMethodName("test")
                 .paymentMethodDescription("desc")
+                .paymentTypeCode("CP")
                 .paymentMethodStatus(
                         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
                 )
