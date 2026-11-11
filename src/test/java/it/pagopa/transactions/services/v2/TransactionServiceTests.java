@@ -841,11 +841,12 @@ class TransactionServiceTests {
                 .thenReturn(Mono.just(paymentMethod));
 
         Mockito.when(
-                ecommercePaymentMethodsClient.calculateFee(
+                ecommercePaymentMethodsHandlerClient.calculateFee(
                         eq(authorizationRequest.getPaymentInstrumentId()),
                         any(),
+                        eq(Integer.MAX_VALUE),
                         any(),
-                        eq(Integer.MAX_VALUE)
+                        any()
                 )
         ).thenReturn(
                 Mono.just(calculateFeeResponseDto)
@@ -897,8 +898,9 @@ class TransactionServiceTests {
         verify(transactionRequestAuthorizationHandlerV2).handleWithCreationDate(commandArgumentCaptor.capture());
         verify(ecommercePaymentMethodsClient, times(0)).getPaymentMethod(any(), any());
         verify(ecommercePaymentMethodsHandlerClient, times(1)).getPaymentMethod(any(), any());
-        // fee calculation always goes through the legacy payment-methods client
-        verify(ecommercePaymentMethodsClient, times(1)).calculateFee(any(), any(), any(), any());
+        // fee calculation goes through the payment-methods-handler client
+        verify(ecommercePaymentMethodsClient, times(0)).calculateFee(any(), any(), any(), any());
+        verify(ecommercePaymentMethodsHandlerClient, times(1)).calculateFee(any(), any(), any(), any(), any());
 
         AuthorizationRequestData captureData = commandArgumentCaptor.getValue().getData();
         assertEquals(calculateFeeResponseDto.getPaymentMethodDescription(), captureData.paymentMethodDescription());
