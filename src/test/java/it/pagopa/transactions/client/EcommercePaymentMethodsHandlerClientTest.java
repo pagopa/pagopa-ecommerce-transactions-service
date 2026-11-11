@@ -330,6 +330,7 @@ class EcommercePaymentMethodsHandlerClientTest {
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
                 .paymentMethodName("test")
                 .paymentMethodDescription("desc")
+                .paymentTypeCode("CP")
                 .paymentMethodStatus(
                         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
                 )
@@ -389,6 +390,7 @@ class EcommercePaymentMethodsHandlerClientTest {
         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto handlerResponse = new it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto()
                 .paymentMethodName("test")
                 .paymentMethodDescription("desc")
+                .paymentTypeCode("CP")
                 .paymentMethodStatus(
                         it.pagopa.generated.ecommerce.paymentmethodshandler.v1.dto.CalculateFeeResponseDto.PaymentMethodStatusEnum.ENABLED
                 )
