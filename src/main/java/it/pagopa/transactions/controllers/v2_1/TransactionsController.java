@@ -5,7 +5,6 @@ import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
-import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.v2_1.server.api.V21Api;
 import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.exceptions.*;
@@ -392,32 +391,17 @@ public class TransactionsController implements V21Api {
     @Warmup
     public void postNewTransactionWarmupMethod() {
         IntStream.range(0, 3).forEach(
-                idx -> {
-                    NewTransactionResponseDto newTransactionResponseDto = WebClient
-                            .create()
-                            .post()
-                            .uri("http://localhost:8080/v2.1/transactions")
-                            .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
-                            .header("x-correlation-id", UUID.randomUUID().toString())
-                            .header("x-api-key", primaryKey)
-                            .bodyValue(transactionsUtils.buildWarmupRequestV2_1())
-                            .retrieve()
-                            .bodyToMono(NewTransactionResponseDto.class)
-                            .block(Duration.ofSeconds(30));
-                    WebClient
-                            .create()
-                            .get()
-                            .uri(
-                                    "http://localhost:8080/transactions/{transactionId}",
-                                    newTransactionResponseDto.getTransactionId()
-                            )
-                            .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
-                            .header("x-api-key", primaryKey)
-                            .retrieve()
-                            .toBodilessEntity()
-                            .block(Duration.ofSeconds(30));
-                }
+                idx -> WebClient
+                        .create()
+                        .post()
+                        .uri("http://localhost:8080/v2.1/transactions")
+                        .header("X-Client-Id", NewTransactionResponseDto.ClientIdEnum.CHECKOUT.toString())
+                        .header("x-correlation-id", UUID.randomUUID().toString())
+                        .header("x-api-key", primaryKey)
+                        .bodyValue(transactionsUtils.buildWarmupRequestV2_1())
+                        .retrieve()
+                        .bodyToMono(NewTransactionResponseDto.class)
+                        .block(Duration.ofSeconds(30))
         );
-
     }
 }

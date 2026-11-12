@@ -3,7 +3,6 @@ package it.pagopa.transactions.services.v1;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
@@ -12,7 +11,7 @@ import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.generated.transactions.server.model.AddUserReceiptRequestDto;
 import it.pagopa.generated.transactions.server.model.RequestAuthorizationRequestDto;
-import it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto;
+import it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
 import it.pagopa.transactions.repositories.TransactionsViewRepository;
@@ -67,9 +66,6 @@ class CircuitBreakerTest {
 
     @MockitoBean
     private TransactionsEventStoreRepository<Object> eventsRepository;
-
-    @Autowired
-    private CircuitBreakerRegistry circuitBreakerRegistry;
 
     @Autowired
     private RetryRegistry retryRegistry;
@@ -138,10 +134,6 @@ class CircuitBreakerTest {
                 );
     }
 
-    private static Stream<Arguments> getIgnoredExceptionForGetTransactionInfoRetry() {
-        return getIgnoredExceptionsForRetry("getTransactionInfo");
-    }
-
     private static Stream<Arguments> getIgnoredExceptionForGetTransactionOutcomeRetry() {
         return getIgnoredExceptionsForRetry("getTransactionOutcome");
     }
@@ -160,35 +152,6 @@ class CircuitBreakerTest {
 
     private static Stream<Arguments> getIgnoredExceptionForAddUserReceiptRetry() {
         return getIgnoredExceptionsForRetry("addUserReceipt");
-    }
-
-    @ParameterizedTest
-    @MethodSource("getIgnoredExceptionForGetTransactionInfoRetry")
-    @Order(0)
-    void shouldNotPerformRetryForExcludedException_getTransactionInfoRetry(
-                                                                           Exception thrownException,
-                                                                           String retryInstanceName
-    ) {
-        Retry retry = retryRegistry.retry(retryInstanceName);
-        long expectedFailedCallsWithoutRetryAttempt = retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-                + 1;
-
-        /*
-         * Preconditions
-         */
-        Mockito.when(transactionsViewRepository.findById(any(String.class)))
-                .thenReturn(Mono.error(thrownException));
-
-        StepVerifier
-                .create(
-                        transactionsService.getTransactionInfo("transactionId", null)
-                )
-                .expectError(thrownException.getClass())
-                .verify();
-        assertEquals(
-                expectedFailedCallsWithoutRetryAttempt,
-                retry.getMetrics().getNumberOfFailedCallsWithoutRetryAttempt()
-        );
     }
 
     @ParameterizedTest

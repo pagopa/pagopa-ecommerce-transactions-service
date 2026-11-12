@@ -1,27 +1,19 @@
 package it.pagopa.transactions.controllers.v1;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
-import it.pagopa.ecommerce.commons.annotations.Warmup;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
-import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
-import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.UpdateTransactionStatusTracerUtils;
 import it.pagopa.generated.transactions.server.api.TransactionsApi;
 import it.pagopa.generated.transactions.server.model.*;
-import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorDto;
-import it.pagopa.generated.transactions.v2.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
-import it.pagopa.transactions.utils.TransactionsUtils;
-import it.pagopa.transactions.utils.UUIDUtils;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,17 +23,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @RestController("TransactionsControllerV1")
 @Slf4j
@@ -51,92 +39,13 @@ public class TransactionsController implements TransactionsApi {
     private TransactionsService transactionsService;
 
     @Autowired
-    private TransactionsUtils transactionsUtils;
-
-    @Autowired
-    private UUIDUtils uuidUtils;
-
-    @Autowired
     private UpdateTransactionStatusTracerUtils updateTransactionStatusTracerUtils;
 
     @Autowired
     private OpenTelemetryUtils openTelemetryUtils;
 
-    @Autowired
-    private ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper;
-
-    @Value("${security.apiKey.primary}")
-    private String primaryKey;
-
     private static final String TRANSACTION_NOT_FOUND_DESC = "Transaction not found";
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
-
-    @Override
-    public Mono<ResponseEntity<NewTransactionResponseDto>> newTransaction(
-                                                                          ClientIdDto xClientId,
-                                                                          Mono<NewTransactionRequestDto> newTransactionRequest,
-                                                                          ServerWebExchange exchange
-    ) {
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
-        return newTransactionRequest
-                .flatMap(
-                        ntr -> transactionsService
-                                .newTransaction(ntr, xClientId, transactionId)
-                                .doOnNext(
-                                        response -> LogTracingUtils.loggerTracingUtils()
-                                                .success()
-                                                .attributes(
-                                                        Map.of(
-                                                                LogTracingUtils.AttributeKeys.CTX_RPT_IDS,
-                                                                ntr.getPaymentNotices().stream()
-                                                                        .map(PaymentNoticeInfoDto::getRptId).toList()
-                                                                        .toString()
-                                                        )
-                                                )
-                                                .details(
-                                                        Map.of(
-                                                                "id_cart",
-                                                                Objects.toString(response.getIdCart())
-                                                        )
-                                                )
-                                                .logInfo(log, "New transaction created successfully")
-                                )
-                )
-                .contextWrite(
-                        ctx -> LogTracingUtils.enrichContextForEvent(
-                                Map.of(
-                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                        transactionId.value()
-                                ),
-                                ctx
-                        )
-                )
-                .map(ResponseEntity::ok);
-    }
-
-    @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> getTransactionInfo(
-                                                                       String transactionId,
-                                                                       UUID xUserId,
-                                                                       ServerWebExchange exchange
-    ) {
-        return transactionsService.getTransactionInfo(transactionId, xUserId)
-                .doOnNext(
-                        t -> LogTracingUtils.loggerTracingUtils()
-                                .success()
-                                .logInfo(log, "GetTransactionInfo completed")
-                )
-                .contextWrite(
-                        ctx -> LogTracingUtils.enrichContextForEvent(
-                                Map.of(
-                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                        transactionId
-                                ),
-                                ctx
-                        )
-                )
-                .map(ResponseEntity::ok);
-    }
 
     @Override
     public Mono<ResponseEntity<RequestAuthorizationResponseDto>> requestTransactionAuthorization(
@@ -172,121 +81,6 @@ public class TransactionsController implements TransactionsApi {
                         )
                 )
                 .map(ResponseEntity::ok);
-    }
-
-    @Override
-    public Mono<ResponseEntity<TransactionInfoDto>> updateTransactionAuthorization(
-                                                                                   String base64TransactionId,
-                                                                                   Mono<UpdateAuthorizationRequestDto> updateAuthorizationRequestDto,
-                                                                                   ServerWebExchange exchange
-    ) {
-        return uuidUtils.uuidFromBase64(base64TransactionId)
-                .fold(
-                        Mono::error,
-                        transactionIdDecoded -> updateAuthorizationRequestDto
-                                .flatMap(
-                                        updateAuthorizationRequest -> handleUpdateAuthorizationRequest(
-                                                new TransactionId(transactionIdDecoded),
-                                                updateAuthorizationRequest,
-                                                exchange
-                                        )
-                                                .doOnNext(
-                                                        req -> LogTracingUtils.loggerTracingUtils()
-                                                                .success()
-                                                                .logInfo(log, "Transaction authorization updated")
-                                                )
-                                )
-                                .contextWrite(
-                                        ctx -> LogTracingUtils.enrichContextForEvent(
-                                                Map.of(
-                                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                                        transactionIdDecoded.toString()
-                                                ),
-                                                ctx
-                                        )
-                                )
-                                .map(ResponseEntity::ok)
-                );
-    }
-
-    public Mono<TransactionInfoDto> handleUpdateAuthorizationRequest(
-                                                                     TransactionId domainTransactionId,
-                                                                     UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-                                                                     ServerWebExchange exchange
-    ) {
-        ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
-                "PATCH-auth-request-%s".formatted(domainTransactionId.value()),
-                "transactions-service"
-        );
-        return reactiveExclusiveLockDocumentWrapper.saveIfAbsent(lockDocument)
-                .flatMap(lockAcquired -> {
-                    if (!lockAcquired) {
-                        return Mono.error(new LockNotAcquiredException(domainTransactionId, lockDocument));
-                    }
-
-                    LogTracingUtils.loggerTracingUtils()
-                            .success()
-                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                            .details(
-                                    Map.of(
-                                            "document_id",
-                                            lockDocument.id()
-                                    )
-                            )
-                            .attributes(
-                                    Map.of(
-                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                            domainTransactionId.value()
-                                    )
-                            )
-                            .logInfo(log, "Lock acquired");
-
-                    return transactionsService.updateTransactionAuthorization(
-                            domainTransactionId.uuid(),
-                            updateAuthorizationRequestDto
-                    )
-                            .doFinally(
-                                    s -> reactiveExclusiveLockDocumentWrapper
-                                            .deleteById(lockDocument.id())
-                                            .subscribeOn(Schedulers.boundedElastic())
-                                            .doOnNext(
-                                                    deleted -> LogTracingUtils.loggerTracingUtils()
-                                                            .success()
-                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                                                            .attributes(
-                                                                    Map.of(
-                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                                                            domainTransactionId.value()
-                                                                    )
-                                                            )
-                                                            .details(
-                                                                    Map.of(
-                                                                            "lock_id",
-                                                                            lockDocument.id(),
-                                                                            "lock_deleted",
-                                                                            deleted.toString()
-                                                                    )
-                                                            )
-                                                            .logInfo(log, "Lock deleted")
-                                            )
-                                            .doOnError(
-                                                    error -> LogTracingUtils.loggerTracingUtils()
-                                                            .failure()
-                                                            .dependency(LogTracingUtils.REDIS_DEPENDENCY)
-                                                            .attributes(
-                                                                    Map.of(
-                                                                            LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
-                                                                            domainTransactionId.value()
-                                                                    )
-                                                            )
-                                                            .details(
-                                                                    Map.of("lock_id", lockDocument.id())
-                                                            )
-                                                            .logError(log, error, "Error on lock deletion")
-                                            )
-                                            .subscribe()
-                            );
-                });
     }
 
     @Override
@@ -834,54 +628,6 @@ public class TransactionsController implements TransactionsApi {
         );
     }
 
-    @ExceptionHandler({
-            NodoErrorException.class,
-    })
-    public ResponseEntity<?> nodoErrorHandler(NodoErrorException exception) {
-        LogTracingUtils.loggerTracingUtils()
-                .failure()
-                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                .details(
-                        Map.of("fault_code", exception.getFaultCode())
-                )
-                .logError(log, exception, "Error while interacting with NODO - ActivatePaymentNoticeV2");
-
-        return switch (exception.getFaultCode()) {
-            case String s when Arrays.stream(PartyConfigurationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PartyConfigurationFaultPaymentProblemJsonDto()
-                                    .title("EC error")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
-                                    .faultCodeDetail(PartyConfigurationFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s when Arrays.stream(ValidationFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new ValidationFaultPaymentProblemJsonDto()
-                                    .title("Validation Fault")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNKNOWN)
-                                    .faultCodeDetail(ValidationFaultDto.fromValue(s)), HttpStatus.NOT_FOUND);
-            case String s when Arrays.stream(GatewayFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new GatewayFaultPaymentProblemJsonDto()
-                                    .title("Payment unavailable")
-                                    .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                                    .faultCodeDetail(GatewayFaultDto.fromValue(s)), HttpStatus.BAD_GATEWAY);
-            case String s when Arrays.stream(PartyTimeoutFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PartyTimeoutFaultPaymentProblemJsonDto()
-                                    .title("Gateway Timeout")
-                                    .faultCodeCategory(FaultCategoryDto.GENERIC_ERROR)
-                                    .faultCodeDetail(PartyTimeoutFaultDto.fromValue(s)), HttpStatus.GATEWAY_TIMEOUT);
-            case String s when Arrays.stream(PaymentStatusFaultDto.values()).anyMatch(z -> z.getValue().equals(s)) ->
-                    new ResponseEntity<>(
-                            new PaymentStatusFaultPaymentProblemJsonDto()
-                                    .title("Payment Status Fault")
-                                    .faultCodeCategory(FaultCategoryDto.PAYMENT_UNAVAILABLE)
-                                    .faultCodeDetail(PaymentStatusFaultDto.fromValue(s)), HttpStatus.CONFLICT);
-            default -> new ResponseEntity<>(
-                    new ProblemJsonDto().title(BAD_GATEWAY_DESC), HttpStatus.BAD_GATEWAY);
-        };
-    }
-
     @ExceptionHandler(
         {
                 InvalidNodoResponseException.class,
@@ -903,29 +649,6 @@ public class TransactionsController implements TransactionsApi {
                         .title(httpStatus.getReasonPhrase())
                         .detail(exception.getErrorDescription()),
                 httpStatus
-        );
-    }
-
-    @ExceptionHandler(DigitalStampNotAllowedForClientException.class)
-    public ResponseEntity<ValidationFaultPaymentDataErrorProblemJsonDto> digitalStampNotAllowedHandler(
-                                                                                                       DigitalStampNotAllowedForClientException exception
-    ) {
-        LogTracingUtils.loggerTracingUtils()
-                .failure()
-                .dependency(LogTracingUtils.NODO_DEPENDENCY)
-                .attributes(
-                        Map.of(LogTracingUtils.AttributeKeys.CTX_CLIENT_ID, exception.getClientId())
-                )
-                .logError(log, exception, "This client can't pay notices with digital stamps");
-
-        return new ResponseEntity<>(
-                new ValidationFaultPaymentDataErrorProblemJsonDto()
-                        .title("Payment Status Fault")
-                        .faultCodeCategory(
-                                ValidationFaultPaymentDataErrorProblemJsonDto.FaultCodeCategoryEnum.PAYMENT_DATA_ERROR
-                        )
-                        .faultCodeDetail(ValidationFaultPaymentDataErrorDto.PPT_DOMINIO_SCONOSCIUTO),
-                HttpStatus.NOT_FOUND
         );
     }
 
@@ -1025,34 +748,6 @@ public class TransactionsController implements TransactionsApi {
                                 .formatted(error.getCausingCircuitBreakerName()),
                         error
                 )
-        );
-    }
-
-    @Warmup
-    public void postNewTransactionWarmupMethod() {
-        IntStream.range(0, 3).forEach(
-                idx -> {
-                    NewTransactionResponseDto newTransactionResponseDto = WebClient
-                            .create()
-                            .post()
-                            .uri("http://localhost:8080/transactions")
-                            .header("X-Client-Id", TransactionInfoDto.ClientIdEnum.CHECKOUT.toString())
-                            .header("x-api-key", primaryKey)
-                            .bodyValue(transactionsUtils.buildWarmupRequestV1())
-                            .retrieve()
-                            .bodyToMono(NewTransactionResponseDto.class)
-                            .block(Duration.ofSeconds(30));
-                    WebClient
-                            .create()
-                            .get()
-                            .uri(
-                                    "http://localhost:8080/transactions/{transactionId}",
-                                    newTransactionResponseDto.getTransactionId()
-                            ).header("x-api-key", primaryKey)
-                            .retrieve()
-                            .toBodilessEntity()
-                            .block(Duration.ofSeconds(30));
-                }
         );
     }
 }
