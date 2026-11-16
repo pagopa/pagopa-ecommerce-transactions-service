@@ -34,11 +34,12 @@ security:
 paths:
   /transactions/{transactionId}:
     get:
+      deprecated: true
       tags:
         - transactions
       operationId: getTransactionInfo
       summary: Get transaction information
-      description: Return information for the input specific transaction resource
+      description: Return information for the input specific transaction resource - Deprecated and marked for removal, use /transactions/{transactionId}/outcomes api
       parameters:
         - in: header
           name: x-user-id
