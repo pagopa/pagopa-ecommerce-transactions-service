@@ -6,7 +6,6 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
-import it.pagopa.ecommerce.commons.v1.TransactionTestUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.generated.transactions.v2.server.model.*;
@@ -18,12 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +29,6 @@ import org.springframework.http.*;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
@@ -65,6 +58,10 @@ class TransactionsControllerTest {
     @MockitoBean
     @Qualifier(TransactionsService.QUALIFIER_NAME)
     private TransactionsService transactionsService;
+
+    @MockitoBean
+    @Qualifier(it.pagopa.transactions.services.v1.TransactionsService.QUALIFIER_NAME)
+    private it.pagopa.transactions.services.v1.TransactionsService transactionsServiceV1;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -271,12 +268,13 @@ class TransactionsControllerTest {
     public static Stream<Arguments> patchAuthRequestProxyTestMethodSource() {
         return Stream.of(
                 Arguments.of(
-                        new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
+                        new UpdateAuthorizationRequestDto()
                                 .outcomeGateway(
-                                        new it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto()
+                                        new OutcomeNpgGatewayDto()
                                                 .authorizationCode("authorizationCode")
+                                                .paymentGatewayType("NPG")
                                                 .operationResult(
-                                                        it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                                        OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
                                                 )
                                                 .orderId("orderId")
                                                 .operationId("operationId")
@@ -288,13 +286,13 @@ class TransactionsControllerTest {
                                 ).timestampOperation(ZonedDateTime.now(ZoneOffset.UTC).toOffsetDateTime())
                 ),
                 Arguments.of(
-                        new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
+                        new UpdateAuthorizationRequestDto()
                                 .outcomeGateway(
-                                        new it.pagopa.generated.transactions.server.model.OutcomeRedirectGatewayDto()
+                                        new OutcomeRedirectGatewayDto()
                                                 .paymentGatewayType("REDIRECT")
                                                 .pspTransactionId("pspTransactionId")
                                                 .outcome(
-                                                        it.pagopa.generated.transactions.server.model.AuthorizationOutcomeDto.OK
+                                                        AuthorizationOutcomeDto.OK
                                                 )
                                                 .pspId("pspId")
                                                 .authorizationCode("authorizationCode")
@@ -307,18 +305,19 @@ class TransactionsControllerTest {
 
     @ParameterizedTest
     @MethodSource("patchAuthRequestProxyTestMethodSource")
-    void shouldProxyPatchAuthRequestToV1Controller(
-                                                   it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto expectedRequest
+    void shouldProxyPatchAuthRequestToV1Service(
+                                                it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto expectedRequest
     ) {
         /* preconditions */
         TransactionId transactionId = new TransactionId(
                 it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID
         );
 
-        it.pagopa.generated.transactions.server.model.TransactionInfoDto transactionInfoDto = new it.pagopa.generated.transactions.server.model.TransactionInfoDto()
-                .status(it.pagopa.generated.transactions.server.model.TransactionStatusDto.CLOSURE_REQUESTED)
+        TransactionInfoDto transactionInfoDto = new TransactionInfoDto()
+                .status(TransactionStatusDto.CLOSURE_REQUESTED)
                 .transactionId(transactionId.value());
-        Mockito.when(transactionsControllerV1.handleUpdateAuthorizationRequest(any(), any(), any()))
+
+        Mockito.when(transactionsServiceV1.updateTransactionAuthorization(any(), any()))
                 .thenReturn(Mono.just(transactionInfoDto));
         /* test */
         Hooks.onOperatorDebug();
@@ -332,8 +331,8 @@ class TransactionsControllerTest {
                 .isEqualTo(200)
                 .expectBody(UpdateAuthorizationResponseDto.class)
                 .value(r -> assertEquals(TransactionStatusDto.CLOSURE_REQUESTED, r.getStatus()));
-        verify(transactionsControllerV1, times(1))
-                .handleUpdateAuthorizationRequest(eq(transactionId), eq(expectedRequest), any());
+        verify(transactionsServiceV1, times(1))
+                .updateTransactionAuthorization(eq(transactionId.uuid()), eq(expectedRequest));
     }
 
     @Test
@@ -346,16 +345,16 @@ class TransactionsControllerTest {
                 "PATCH-auth-request-%s".formatted(transactionId.value()),
                 "transactions-service"
         );
-        it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new it.pagopa.generated.transactions.server.model.UpdateAuthorizationRequestDto()
+        UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
-                        new it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto()
+                        new OutcomeNpgGatewayDto()
                                 .authorizationCode("authorizationCode")
                                 .operationResult(
-                                        it.pagopa.generated.transactions.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                                        OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
                                 )
                 ).timestampOperation(java.time.OffsetDateTime.now());
 
-        Mockito.when(transactionsControllerV1.handleUpdateAuthorizationRequest(any(), any(), any()))
+        Mockito.when(transactionsServiceV1.updateTransactionAuthorization(any(), any()))
                 .thenReturn(Mono.error(new LockNotAcquiredException(transactionId, lockDocument)));
         /* test */
         webTestClient.patch()
