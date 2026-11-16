@@ -8,9 +8,6 @@ import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.generated.transactions.v2.server.api.V2Api;
 import it.pagopa.generated.transactions.v2.server.model.*;
-import it.pagopa.generated.transactions.v2_1.server.model.GatewayFaultPaymentProblemJsonDto;
-import it.pagopa.generated.transactions.v2_1.server.model.ValidationFaultPaymentDataErrorDto;
-import it.pagopa.generated.transactions.v2_1.server.model.ValidationFaultPaymentDataErrorProblemJsonDto;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
 import it.pagopa.transactions.utils.SpanLabelOpenTelemetry;
@@ -47,9 +44,6 @@ public class TransactionsController implements V2Api {
     private OpenTelemetryUtils openTelemetryUtils;
 
     @Autowired
-    private it.pagopa.transactions.controllers.v1.TransactionsController transactionsControllerV1;
-
-    @Autowired
     private ReactiveExclusiveLockDocumentWrapper reactiveExclusiveLockDocumentWrapper;
 
     private static final String BAD_GATEWAY_DESC = "Bad gateway";
@@ -83,9 +77,9 @@ public class TransactionsController implements V2Api {
                 .map(ResponseEntity::ok);
     }
 
-    public Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> handleUpdateAuthorizationRequest(
-                                                                                                                      TransactionId domainTransactionId,
-                                                                                                                      UpdateAuthorizationRequestDto updateAuthorizationRequestDto
+    public Mono<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto> handleUpdateAuthorizationRequest(
+                                                                                                                          TransactionId domainTransactionId,
+                                                                                                                          UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
         ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
                 "PATCH-auth-request-%s".formatted(domainTransactionId.value()),

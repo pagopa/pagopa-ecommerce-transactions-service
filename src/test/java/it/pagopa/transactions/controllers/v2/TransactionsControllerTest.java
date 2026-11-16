@@ -3,11 +3,14 @@ package it.pagopa.transactions.controllers.v2;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.vavr.control.Either;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
+import it.pagopa.ecommerce.commons.redis.reactivetemplatewrappers.ReactiveExclusiveLockDocumentWrapper;
 import it.pagopa.ecommerce.commons.utils.OpenTelemetryUtils;
 import it.pagopa.ecommerce.commons.utils.ReactiveUniqueIdUtils;
 import it.pagopa.generated.transactions.model.CtFaultBean;
 import it.pagopa.ecommerce.commons.repositories.ExclusiveLockDocument;
+import it.pagopa.generated.transactions.server.model.TransactionInfoDto;
 import it.pagopa.generated.transactions.v2.server.model.*;
 import it.pagopa.transactions.exceptions.*;
 import it.pagopa.transactions.services.v1.TransactionsService;
@@ -32,6 +35,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -40,18 +44,18 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@WebFluxTest(it.pagopa.transactions.controllers.v2.TransactionsController.class)
+@WebFluxTest(TransactionsController.class)
 @TestPropertySource(locations = "classpath:application-tests.properties")
 @AutoConfigureDataRedis
 class TransactionsControllerTest {
 
     @InjectMocks
-    private it.pagopa.transactions.controllers.v2.TransactionsController transactionsController = new it.pagopa.transactions.controllers.v2.TransactionsController();
+    private TransactionsController transactionsController = new TransactionsController();
 
     @MockitoBean
     @Qualifier(TransactionsService.QUALIFIER_NAME)
@@ -64,16 +68,10 @@ class TransactionsControllerTest {
     private TransactionsUtils transactionsUtils;
 
     @MockitoBean
-    private UUIDUtils uuidUtils;
-
-    @MockitoBean
-    private ReactiveUniqueIdUtils uniqueIdUtils;
-
-    @MockitoBean
     private OpenTelemetryUtils openTelemetryUtils;
 
     @MockitoBean
-    private it.pagopa.transactions.controllers.v1.TransactionsController transactionsControllerV1;
+    private ReactiveExclusiveLockDocumentWrapper exclusiveLockDocumentWrapper;
 
     private final CircuitBreakerRegistry circuitBreakerRegistry = CircuitBreakerRegistry.of(
             Map.of("circuit-breaker-test", CircuitBreakerConfig.ofDefaults())
@@ -232,6 +230,7 @@ class TransactionsControllerTest {
                                 it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED
                         )
                 );
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(Mono.just(true));
         /* test */
         Hooks.onOperatorDebug();
         webTestClient.patch()
@@ -254,21 +253,15 @@ class TransactionsControllerTest {
         TransactionId transactionId = new TransactionId(
                 it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID
         );
-        ExclusiveLockDocument lockDocument = new ExclusiveLockDocument(
-                "PATCH-auth-request-%s".formatted(transactionId.value()),
-                "transactions-service"
-        );
         UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(
                         new OutcomeNpgGatewayDto()
                                 .authorizationCode("authorizationCode")
-                                .operationResult(
-                                        OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
-                                )
-                ).timestampOperation(java.time.OffsetDateTime.now());
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                ).timestampOperation(OffsetDateTime.now());
 
-        Mockito.when(transactionsService.updateTransactionAuthorization(any(), any()))
-                .thenReturn(Mono.error(new LockNotAcquiredException(transactionId, lockDocument)));
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(Mono.just(false));
+        Mockito.when(exclusiveLockDocumentWrapper.deleteById(any())).thenReturn(Mono.just(true));
         /* test */
         webTestClient.patch()
                 .uri("/v2/transactions/{transactionId}/auth-requests", transactionId.value())
@@ -278,7 +271,7 @@ class TransactionsControllerTest {
                 .exchange()
                 .expectStatus()
                 .isEqualTo(422)
-                .expectBody(ProblemJsonDto.class)
+                .expectBody(it.pagopa.generated.transactions.server.model.ProblemJsonDto.class)
                 .value(
                         p -> {
                             assertEquals(422, p.getStatus());
@@ -289,11 +282,54 @@ class TransactionsControllerTest {
                             );
                         }
                 );
+        Mockito.verify(exclusiveLockDocumentWrapper, never()).deleteById(any());
     }
 
-    private static CtFaultBean faultBeanWithCode(String faultCode) {
-        CtFaultBean fault = new CtFaultBean();
-        fault.setFaultCode(faultCode);
-        return fault;
+    @Test
+    void shouldReleaseLockOncePatchAuthRequestHaveBeenProcessed() {
+        /* preconditions */
+        TransactionId transactionId = new TransactionId(
+                it.pagopa.ecommerce.commons.v2.TransactionTestUtils.TRANSACTION_ID
+        );
+        UpdateAuthorizationRequestDto updateAuthorizationRequestDto = new UpdateAuthorizationRequestDto()
+                .outcomeGateway(
+                        new OutcomeNpgGatewayDto()
+                                .authorizationCode("authorizationCode")
+                                .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
+                ).timestampOperation(OffsetDateTime.now());
+        ExclusiveLockDocument expectedLockDocument = new ExclusiveLockDocument(
+                "PATCH-auth-request-%s".formatted(transactionId.value()),
+                "transactions-service"
+        );
+
+        Mockito.when(exclusiveLockDocumentWrapper.saveIfAbsent(any())).thenReturn(Mono.just(true));
+        Mockito.when(exclusiveLockDocumentWrapper.deleteById(any())).thenReturn(Mono.just(true));
+        Mockito.when(transactionsService.updateTransactionAuthorization(any(), any()))
+                .thenReturn(
+                        Mono.just(
+                                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED
+                        )
+                );
+        /* test */
+        webTestClient.patch()
+                .uri("/v2/transactions/{transactionId}/auth-requests", transactionId.value())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("x-api-key", "primary-key")
+                .bodyValue(updateAuthorizationRequestDto)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).saveIfAbsent(
+                argThat(
+                        arg -> {
+                            assertEquals(expectedLockDocument.id(), arg.id());
+                            assertEquals(expectedLockDocument.holderName(), arg.holderName());
+                            return true;
+                        }
+                )
+        );
+        Mockito.verify(exclusiveLockDocumentWrapper, times(1)).deleteById(expectedLockDocument.id());
     }
+
 }
