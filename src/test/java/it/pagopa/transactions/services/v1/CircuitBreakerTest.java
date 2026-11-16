@@ -68,9 +68,6 @@ class CircuitBreakerTest {
     private TransactionsEventStoreRepository<Object> eventsRepository;
 
     @Autowired
-    private CircuitBreakerRegistry circuitBreakerRegistry;
-
-    @Autowired
     private RetryRegistry retryRegistry;
 
     private static final JsonNode resilience4jConfiguration;

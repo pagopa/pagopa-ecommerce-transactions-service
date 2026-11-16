@@ -195,20 +195,6 @@ class TransactionServiceTest {
                         ZonedDateTime.now()
                 );
 
-        TransactionInfoDto expected = new TransactionInfoDto()
-                .payments(
-                        closureRequestedTransaction.getPaymentNotices().stream().map(
-                                paymentNotice -> new PaymentInfoDto()
-                                        .amount(paymentNotice.getAmount())
-                                        .reason(paymentNotice.getDescription())
-                                        .paymentToken(paymentNotice.getPaymentToken())
-                                        .rptId(paymentNotice.getRptId())
-                        )
-                                .toList()
-                )
-                .transactionId(closureRequestedTransaction.getTransactionId())
-                .status(TransactionStatusDto.CLOSURE_REQUESTED);
-
         /* preconditions */
         Mockito.when(transactionsEventStoreRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value()))
                 .thenReturn(events);
@@ -251,7 +237,12 @@ class TransactionServiceTest {
                                 updateAuthorizationRequest
                         )
         )
-                .assertNext(actual -> assertEquals(expected, actual))
+                .assertNext(
+                        actual -> assertEquals(
+                                it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto.CLOSURE_REQUESTED,
+                                actual
+                        )
+                )
                 .verifyComplete();
 
         UpdateTransactionStatusTracerUtils.StatusUpdateInfo expectedStatusUpdateInfo = new UpdateTransactionStatusTracerUtils.PaymentGatewayStatusUpdate(

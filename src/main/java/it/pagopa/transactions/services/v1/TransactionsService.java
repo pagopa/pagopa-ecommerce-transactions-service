@@ -9,6 +9,7 @@ import it.pagopa.ecommerce.commons.documents.v2.*;
 import it.pagopa.ecommerce.commons.documents.v2.Transaction;
 import it.pagopa.ecommerce.commons.domain.v1.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.*;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
@@ -978,7 +979,7 @@ public class TransactionsService {
     }
 
     @Retry(name = "updateTransactionAuthorization")
-    public Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> updateTransactionAuthorization(
+    public Mono<TransactionStatusDto> updateTransactionAuthorization(
             UUID decodedTransactionId,
             it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequestDto
     ) {
@@ -1059,7 +1060,7 @@ public class TransactionsService {
                             throw new InvalidRequestException("Input outcomeGateway not map to any trigger: [%s]".formatted(updateAuthorizationRequestDto.getOutcomeGateway()));
                 }));
 
-        Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> v2Info =
+        Mono<TransactionStatusDto> v2Info =
                 events
                         .collectList()
                         .zipWith(transactionV2)
@@ -1122,11 +1123,11 @@ public class TransactionsService {
                 });
     }
 
-    private Mono<it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto> updateTransactionAuthorizationStatusV2(
-                                                                                                                             it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
-                                                                                                                             it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
-                                                                                                                             ZonedDateTime authorizationRequestedTime,
-                                                                                                                             List<? extends BaseTransactionEvent<?>> events
+    private Mono<TransactionStatusDto> updateTransactionAuthorizationStatusV2(
+                                                                              it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction transaction,
+                                                                              it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequestDto,
+                                                                              ZonedDateTime authorizationRequestedTime,
+                                                                              List<? extends BaseTransactionEvent<?>> events
     ) {
         UpdateAuthorizationStatusData updateAuthorizationStatusData = new UpdateAuthorizationStatusData(
                 transaction.getTransactionId(),
@@ -1203,15 +1204,15 @@ public class TransactionsService {
                 .flatMap(
                         t -> closePaymentV2(t.getT1(), t.getT2().stream().collect(Collectors.toUnmodifiableList()))
                 )
-                .map(this::buildTransactionInfoDtoV2)
+                .map(BaseTransaction::getStatus)
                 .switchIfEmpty(
-                        Mono.just(buildTransactionInfoDtoV2(transaction)).doOnNext(
-                                tr -> LogTracingUtils.loggerTracingUtils()
+                        Mono.just(transaction.getStatus()).doOnNext(
+                                ts -> LogTracingUtils.loggerTracingUtils()
                                         .success()
                                         .details(
                                                 Map.of(
                                                         "transaction_status",
-                                                        tr.getStatus().getValue()
+                                                        ts.toString()
                                                 )
                                         )
                                         .logInfo(
@@ -1271,48 +1272,10 @@ public class TransactionsService {
                 );
     }
 
-    private TransactionInfoDto buildTransactionInfoDtoV1(
-                                                         it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
-    ) {
-        return new TransactionInfoDto()
-                .transactionId(baseTransaction.getTransactionId().value())
-                .payments(
-                        baseTransaction.getPaymentNotices()
-                                .stream().map(
-                                        paymentNotice -> new PaymentInfoDto()
-                                                .amount(paymentNotice.transactionAmount().value())
-                                                .reason(paymentNotice.transactionDescription().value())
-                                                .paymentToken(paymentNotice.paymentToken().value())
-                                                .rptId(paymentNotice.rptId().value())
-                                ).toList()
-                )
-                .status(transactionsUtils.convertEnumerationV1(baseTransaction.getStatus()));
-
-    }
-
-    private it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto buildTransactionInfoDtoV2(
-                                                                                                          it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction baseTransaction
-    ) {
-        return new it.pagopa.generated.transactions.v2.server.model.TransactionInfoDto()
-                .transactionId(baseTransaction.getTransactionId().value())
-                .payments(
-                        baseTransaction.getPaymentNotices()
-                                .stream().map(
-                                        paymentNotice -> new it.pagopa.generated.transactions.v2.server.model.PaymentInfoDto()
-                                                .amount(paymentNotice.transactionAmount().value())
-                                                .reason(paymentNotice.transactionDescription().value())
-                                                .paymentToken(paymentNotice.paymentToken().value())
-                                                .rptId(paymentNotice.rptId().value())
-                                ).toList()
-                )
-                .status(transactionsUtils.convertEnumerationV2(baseTransaction.getStatus()));
-
-    }
-
     @Retry(name = "addUserReceipt")
-    public Mono<TransactionInfoDto> addUserReceipt(
-                                                   TransactionId transactionId,
-                                                   AddUserReceiptRequestDto addUserReceiptRequest
+    public Mono<it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto> addUserReceipt(
+                                                                                                        TransactionId transactionId,
+                                                                                                        AddUserReceiptRequestDto addUserReceiptRequest
     ) {
         return eventsRepository.findByTransactionIdOrderByCreationDateAsc(transactionId.value())
                 .collectList()
@@ -1358,41 +1321,10 @@ public class TransactionsService {
                                                                 )
                                                         )
                                         )
-                                        .map(this::buildTransactionInfoDtoV1)
+                                        .map(BaseTransaction::getStatus)
                         )
                 );
 
-    }
-
-    public NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                                  it.pagopa.ecommerce.commons.documents.v1.Transaction.ClientId clientId
-    ) {
-        return Optional.ofNullable(clientId)
-                .map(
-                        value -> {
-                            try {
-                                return NewTransactionResponseDto.ClientIdEnum.fromValue(value.name());
-                            } catch (IllegalArgumentException e) {
-                                throw new InvalidRequestException("Unknown input origin", e);
-                            }
-                        }
-                ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
-    }
-
-    public NewTransactionResponseDto.ClientIdEnum convertClientId(
-                                                                  Transaction.ClientId clientId
-    ) {
-        return Optional.ofNullable(clientId)
-                .map(
-                        value -> {
-                            try {
-                                return NewTransactionResponseDto.ClientIdEnum
-                                        .fromValue(value.getEffectiveClient().name());
-                            } catch (IllegalArgumentException e) {
-                                throw new InvalidRequestException("Unknown input origin", e);
-                            }
-                        }
-                ).orElseThrow(() -> new InvalidRequestException("Null value as input origin"));
     }
 
     private Mono<PaymentSessionData> retrieveInformationFromAuthorizationRequest(RequestAuthorizationRequestDto requestAuthorizationRequestDto, String clientId) {
