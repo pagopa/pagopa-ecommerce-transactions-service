@@ -62,7 +62,7 @@ resources:
     - repository: pagopaCheckoutTests
       type: github
       name: pagopa/pagopa-checkout-tests
-      ref: main
+      ref: CHK-5129-outcomes-polling
       endpoint: 'io-azure-devops-github-ro'
     - repository: pagopaEcommerceTests
       type: github
