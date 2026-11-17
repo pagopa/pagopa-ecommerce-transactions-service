@@ -3,9 +3,9 @@ variables:
   MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
   BRANCH_NAME: $[ replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '') ]
 trigger:
- branches:
-  include:
-    - main
+  branches:
+    include:
+      - main
 
 pool:
   vmImage: ubuntu-latest
@@ -15,138 +15,138 @@ resources:
     - repository: pagopaEcommerceLocal
       type: github
       name: pagopa/pagopa-ecommerce-local
-      ref: main
+      ref: cr_pipeline_fix
       endpoint: 'io-azure-devops-github-ro'
 
 stages:
   - stage: BuildEndUnitTest
-    jobs: 
-      - job: make_buildEndUnitTest 
+    jobs:
+      - job: make_buildEndUnitTest
         steps:
-        - task: Cache@2
-          inputs:
-            key: 'maven | "$(Agent.OS)" | pom.xml'
-            restoreKeys: |
-              maven | "$(Agent.OS)"
-              maven
-            path: $(MAVEN_CACHE_FOLDER)
-          displayName: Cache Maven local repo
+          - task: Cache@2
+            inputs:
+              key: 'maven | "$(Agent.OS)" | pom.xml'
+              restoreKeys: |
+                maven | "$(Agent.OS)"
+                maven
+              path: $(MAVEN_CACHE_FOLDER)
+            displayName: Cache Maven local repo
 
-        - task: SonarCloudPrepare@3
-          displayName: 'Prepare SonarCloud analysis configuration'
-          inputs:
-            SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
-            organization: '$(SONARCLOUD_ORG)'
-            scannerMode: Other
-            extraProperties: |
-              sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
-              sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
-              sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*,**/utils/soap/*,**/mdcutilities/*,**/PagopaEcommerceTransactionsApplication.java
-              sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
-              sonar.junit.reportPaths=target/surefire-reports/
+          - task: SonarCloudPrepare@3
+            displayName: 'Prepare SonarCloud analysis configuration'
+            inputs:
+              SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
+              organization: '$(SONARCLOUD_ORG)'
+              scannerMode: Other
+              extraProperties: |
+                sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
+                sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
+                sonar.coverage.exclusions=**/config/*,**/*Mock*,**/model/*,**/utils/soap/*,**/mdcutilities/*,**/PagopaEcommerceTransactionsApplication.java
+                sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
+                sonar.junit.reportPaths=target/surefire-reports/
 
-        # necessary step to make the authentication work
-        # removing it will cause the pipeline to fail when cache gets emptied
-        - task: Bash@3
-          displayName: 'Create Maven settings.xml'
-          inputs:
-            targetType: 'inline'
-            script: |
-              mkdir -p $(Pipeline.Workspace)/.m2
-              cat > $(Pipeline.Workspace)/.m2/settings.xml << EOF
-              <?xml version="1.0" encoding="UTF-8"?>
-              <settings>
-                <servers>
-                  <server>
-                    <id>github</id>
-                    <username>token</username>
-                    <password>${GITHUB_TOKEN}</password>
-                  </server>
-                </servers>
-              </settings>
-              EOF
-          env:
-            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
+          # necessary step to make the authentication work
+          # removing it will cause the pipeline to fail when cache gets emptied
+          - task: Bash@3
+            displayName: 'Create Maven settings.xml'
+            inputs:
+              targetType: 'inline'
+              script: |
+                mkdir -p $(Pipeline.Workspace)/.m2
+                cat > $(Pipeline.Workspace)/.m2/settings.xml << EOF
+                <?xml version="1.0" encoding="UTF-8"?>
+                <settings>
+                  <servers>
+                    <server>
+                      <id>github</id>
+                      <username>token</username>
+                      <password>${GITHUB_TOKEN}</password>
+                    </server>
+                  </servers>
+                </settings>
+                EOF
+            env:
+              GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
-        - task: Maven@4
-          inputs:
-            mavenPomFile: 'pom.xml'
-            mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
-            options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
-            javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '21'
-            jdkArchitectureOption: 'x64'
-            publishJUnitResults: false
-            testResultsFiles: '**/surefire-reports/TEST-*.xml'
-            goals: 'clean verify'
-            sonarQubeRunAnalysis: true
-          displayName: 'Maven clean verify'
-          env:
-            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
+          - task: Maven@4
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m $(MAVEN_OPTS)'
+              options: "-s $(Pipeline.Workspace)/.m2/settings.xml"
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '21'
+              jdkArchitectureOption: 'x64'
+              publishJUnitResults: false
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              goals: 'clean verify'
+              sonarQubeRunAnalysis: true
+            displayName: 'Maven clean verify'
+            env:
+              GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
 
-        - task: SonarCloudPublish@3
-          displayName: 'Publish SonarCloud results on build summary'
-          inputs:
-            pollingTimeoutSec: '300'
+          - task: SonarCloudPublish@3
+            displayName: 'Publish SonarCloud results on build summary'
+            inputs:
+              pollingTimeoutSec: '300'
 
-        - task: PublishCodeCoverageResults@2
-          inputs:
-            codeCoverageTool: 'JaCoCo'
-            summaryFileLocation: 'target/site/jacoco/jacoco.xml'
-            reportDirectory: 'target/site/jacoco'
-          displayName: 'Publish Code Coverage on Azure Devops'
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              codeCoverageTool: 'JaCoCo'
+              summaryFileLocation: 'target/site/jacoco/jacoco.xml'
+              reportDirectory: 'target/site/jacoco'
+            displayName: 'Publish Code Coverage on Azure Devops'
 
   - stage: IntegrationTest
-    dependsOn: []
-    jobs: 
-      - job: make_integration_test  
+    dependsOn: [ ]
+    jobs:
+      - job: make_integration_test
         steps:
-        - checkout: pagopaEcommerceLocal
-        - script: | 
-            echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
-            sed -i "s|^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$|ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)|" .env
-          displayName: 'Change transaction branch name ecommerce-local .env'
-        - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik azurite-init pagopa-psp-mock pagopa-jwt-issuer-mock -d
-          displayName: 'Run app with docker-compose'
-          env:
-            GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
-        - script: |
+          - checkout: pagopaEcommerceLocal
+          - script: |
+              echo "##[debug] Change placeholder for ecommerce-transaction-service set branch: $(BRANCH_NAME)"
+              sed -i "s|^ECOMMERCE_TRANSACTIONS_COMMIT_SHA=.*$|ECOMMERCE_TRANSACTIONS_COMMIT_SHA=$(BRANCH_NAME)|" .env
+            displayName: 'Change transaction branch name ecommerce-local .env'
+          - script: docker compose up pagopa-ecommerce-transactions-service pagopa-ecommerce-payment-methods-service pagopa-ecommerce-event-dispatcher-service mongo redis storage pagopa-pdv-mock pagopa-gec-mock pagopa-npg-mock pagopa-node-mock traefik azurite-init pagopa-psp-mock pagopa-jwt-issuer-mock -d
+            displayName: 'Run app with docker-compose'
+            env:
+              GITHUB_TOKEN: $(GITHUB_RO_TOKEN)
+          - script: |
               timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:8080/actuator/health/liveness)" != "200" ]]; do sleep 5; done' || exit 1
-          displayName: 'Health check'
-        - script: yarn global add newman
-          displayName: 'newman installation'
-        - script: newman run api-tests/transaction-service/npg/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/npg/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/NPG-api-TEST.xml
-          displayName: 'Run api test for NPG integration'
-        - script: newman run api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
-          displayName: 'Run api test for REDIRECT integration'
-          continueOnError: false
-        - script: newman run api-tests/transaction-service/misc/transaction_service_double_post_auth_request_same_payment_token_different_transactionId.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_double_post_auth_request_same_payment_token_different_transactionId.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
-          displayName: 'Run api test to prevent double POST auth request for same payment token and different transactionId'
-          continueOnError: false
-        - script: newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_error_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_ERROR-stuck-transaction-api-TEST.xml
-          displayName: 'Run api test for CLOSURE_ERROR add user receipt handling flow'
-          continueOnError: false
-          # WATCH OUT!! the test below stop event-dispatcher service in order to test for CLOSURE_REQUESTED status recover
-          # any test run after it will find event dispatcher component down so new tests should be added before this one if this behavior is not wanted
-        - script: |
-            #drop down event dispatcher container to test flow of transactions stuck in CLOSURE_REQUESTED status
-            docker compose down pagopa-ecommerce-event-dispatcher-service
-            newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_requested_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_REQUESTED-stuck-transaction-api-TEST.xml
-          displayName: 'Run api test for CLOSURE_REQUESTED add user receipt handling flow'
-          continueOnError: false
-        - task: PublishTestResults@2
-          inputs:
-            testResultsFormat: 'JUnit'
-            testResultsFiles: '**/*-TEST.xml' 
-            searchFolder: '$(System.DefaultWorkingDirectory)'
-        - script: |
-            echo "Printing logs for all running containers:"
-            for container in $(docker ps -q); do
-              name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\/\(.*\)/\1/')
-              echo "===== Logs for $name ====="
-              docker logs $container
-              echo "===== End of logs for $name ====="
-            done
-          condition: always()
-          displayName: 'Print Docker container logs'
+            displayName: 'Health check'
+          - script: yarn global add newman
+            displayName: 'newman installation'
+          - script: newman run api-tests/transaction-service/npg/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/npg/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/NPG-api-TEST.xml
+            displayName: 'Run api test for NPG integration'
+          - script: newman run api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_collection.json --environment=api-tests/transaction-service/redirect/transaction-service_ecommerce_local.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
+            displayName: 'Run api test for REDIRECT integration'
+            continueOnError: false
+          - script: newman run api-tests/transaction-service/misc/transaction_service_double_post_auth_request_same_payment_token_different_transactionId.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_double_post_auth_request_same_payment_token_different_transactionId.postman_environment.json --reporters cli,junit --reporter-junit-export Results/REDIRECT-api-TEST.xml
+            displayName: 'Run api test to prevent double POST auth request for same payment token and different transactionId'
+            continueOnError: false
+          - script: newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_error_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_ERROR-stuck-transaction-api-TEST.xml
+            displayName: 'Run api test for CLOSURE_ERROR add user receipt handling flow'
+            continueOnError: false
+            # WATCH OUT!! the test below stop event-dispatcher service in order to test for CLOSURE_REQUESTED status recover
+            # any test run after it will find event dispatcher component down so new tests should be added before this one if this behavior is not wanted
+          - script: |
+              #drop down event dispatcher container to test flow of transactions stuck in CLOSURE_REQUESTED status
+              docker compose down pagopa-ecommerce-event-dispatcher-service
+              newman run api-tests/transaction-service/misc/transaction_service_closure_error_recover_flow.postman_collection.json --environment=api-tests/transaction-service/misc/transaction_service_closure_requested_recover.postman_environment.json --reporters cli,junit --reporter-junit-export Results/CLOSURE_REQUESTED-stuck-transaction-api-TEST.xml
+            displayName: 'Run api test for CLOSURE_REQUESTED add user receipt handling flow'
+            continueOnError: false
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/*-TEST.xml'
+              searchFolder: '$(System.DefaultWorkingDirectory)'
+          - script: |
+              echo "Printing logs for all running containers:"
+              for container in $(docker ps -q); do
+                name=$(docker inspect --format='{{.Name}}' $container | sed 's/^\/\(.*\)/\1/')
+                echo "===== Logs for $name ====="
+                docker logs $container
+                echo "===== End of logs for $name ====="
+              done
+            condition: always()
+            displayName: 'Print Docker container logs'
 
