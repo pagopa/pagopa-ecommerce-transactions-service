@@ -15,6 +15,7 @@ microservice-chart:
       repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
       tag: "latest"
     envConfig:
+      JAVA_OPTS: "-XX:-UseBASE64Intrinsics"
       NODO_ECOMMERCE_CLIENT_ID: ecomm-blue
       TRANSACTION_EXPIRATION_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-expiration-queue-b
       TRANSACTION_CLOSE_PAYMENT_RETRY_QUEUE_NAME: pagopa-u-weu-ecommerce-transactions-close-payment-retry-queue-b
@@ -26,7 +27,7 @@ microservice-chart:
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-blue
   image:
     repository: pagopaucommonacr.azurecr.io/pagopaecommercetransactionsservice
-    tag: "3.25.0"
+    tag: "3.25.1"
     pullPolicy: Always
   livenessProbe:
     handlerType: httpGet
@@ -92,6 +93,7 @@ microservice-chart:
           scaleUp:
             stabilizationWindowSeconds: 60
   envConfig:
+    JAVA_OPTS: "-XX:-UseBASE64Intrinsics"
     ACTIVE_PROFILE: k8s
     MONGO_HOST: pagopa-u-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-u-weu-ecommerce-cosmos-account
