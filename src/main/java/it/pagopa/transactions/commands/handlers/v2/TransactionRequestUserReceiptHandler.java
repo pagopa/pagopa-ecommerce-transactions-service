@@ -2,6 +2,7 @@ package it.pagopa.transactions.commands.handlers.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionEvent;
+import it.pagopa.ecommerce.commons.documents.v2.TransactionAuthorizationRequestData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureData;
 import it.pagopa.ecommerce.commons.documents.v2.TransactionClosureSyntheticEvent;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionClosed;
@@ -9,6 +10,8 @@ import it.pagopa.ecommerce.commons.domain.v2.TransactionEventCode;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureError;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionWithClosureRequested;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransaction;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithClosureError;
+import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithPaymentToken;
 import it.pagopa.ecommerce.commons.domain.v2.pojos.BaseTransactionWithRequestedAuthorization;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
 import it.pagopa.ecommerce.commons.mdcutilities.LogTracingUtils;
@@ -179,7 +182,7 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                 )
                 .filter(this::isTransactionStatusValid)
                 .switchIfEmpty(alreadyProcessedError)
-                .cast(BaseTransactionWithRequestedAuthorization.class)
+                .cast(BaseTransactionWithPaymentToken.class)
                 .filterWhen(tx -> {
                     Set<String> eCommercePaymentTokens = tx.getPaymentNotices().stream()
                             .map(p -> p.paymentToken().value()).collect(Collectors.toSet());
@@ -189,6 +192,9 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                     boolean isOk = eCommercePaymentTokens.size() == addUserReceiptRequestPaymentTokens.size()
                             && eCommercePaymentTokens.containsAll(addUserReceiptRequestPaymentTokens);
                     if (!isOk) {
+                        Optional<TransactionAuthorizationRequestData> optTxWithData = getTransactionAuthorizationRequestData(
+                                tx
+                        );
                         return Mono.error(
                                 new InvalidRequestException(
                                         "eCommerce and Nodo payment tokens mismatch detected!%ntransactionId: %s,%neCommerce payment tokens: %s%nNodo send payment result payment tokens: %s"
@@ -198,8 +204,9 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                                                         addUserReceiptRequestPaymentTokens
                                                 ),
                                         tx.getTransactionId(),
-                                        tx.getTransactionAuthorizationRequestData().getPspId(),
-                                        tx.getTransactionAuthorizationRequestData().getPaymentTypeCode(),
+                                        optTxWithData.map(TransactionAuthorizationRequestData::getPspId).orElse(null),
+                                        optTxWithData.map(TransactionAuthorizationRequestData::getPaymentTypeCode)
+                                                .orElse(null),
                                         tx.getClientId().name(),
                                         transactionsUtils.isWalletPayment(tx).orElseThrow(),
                                         new UpdateTransactionStatusTracerUtils.GatewayOutcomeResult(
@@ -381,6 +388,21 @@ public class TransactionRequestUserReceiptHandler extends TransactionRequestUser
                         )
                 );
 
+    }
+
+    private Optional<TransactionAuthorizationRequestData> getTransactionAuthorizationRequestData(BaseTransactionWithPaymentToken tx) {
+        return Optional.of(tx)
+                .flatMap(t ->
+                    switch (t) {
+                        case BaseTransactionWithRequestedAuthorization transaction -> Optional.of(transaction.getTransactionAuthorizationRequestData());
+                        case TransactionWithClosureError transaction -> transaction.transactionAtPreviousState()
+                                .flatMap(trx -> trx.fold(
+                                        l -> Optional.empty(),
+                                        r -> Optional.of(r.getTransactionAuthorizationRequestData())
+                                ));
+                        default -> Optional.empty();
+                    }
+                );
     }
 
     private Mono<TransactionClosed> validateAndHandleTransactionClosure(
