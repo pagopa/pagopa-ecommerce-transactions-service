@@ -74,5 +74,7 @@ ENTRYPOINT ["java", \
     "-javaagent:opentelemetry-javaagent.jar", \
     "-Dspring.aot.enabled=true", \
     "-XX:SharedArchiveFile=cds.jsa", \
+    "-XX:-UseBASE64Intrinsics", \
+    "-XX:UseAVX=2", \
     "org.springframework.boot.loader.launch.JarLauncher"\
     ]
