@@ -15,6 +15,7 @@ microservice-chart:
       repository: pagopadcommonacr.azurecr.io/pagopaecommercetransactionsservice
       tag: "latest"
     envConfig:
+      JAVA_OPTS: "-XX:-UseBASE64Intrinsics"
       NODO_HOSTNAME: https://api.dev.platform.pagopa.it
       ECS_SERVICE_NAME: pagopa-ecommerce-transactions-service-beta
       CHECKOUT_BASE_PATH: "https://pagopa-d-checkout-cdn-endpoint.azureedge.net"
@@ -97,6 +98,7 @@ microservice-chart:
           metricAggregationType: Count
           targetValue: "30"
   envConfig:
+    JAVA_OPTS: "-XX:-UseBASE64Intrinsics"
     ACTIVE_PROFILE: k8s
     MONGO_HOST: pagopa-d-weu-ecommerce-cosmos-account.mongo.cosmos.azure.com
     MONGO_USERNAME: pagopa-d-weu-ecommerce-cosmos-account
