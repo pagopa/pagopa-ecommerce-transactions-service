@@ -220,7 +220,7 @@ public class WebClientsConfig {
         return new it.pagopa.generated.ecommerce.paymentmethods.v2.api.PaymentMethodsApi(apiClient);
     }
 
-    @Bean(name = "ecommercePaymentMethoHandlerdWebClientV1")
+    @Bean(name = "ecommercePaymentMethodHandlerWebClientV1")
     public it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi ecommercePaymentMethodHandlerWebClientV1(
                                                                                                                                         @Value(
                                                                                                                                             "${ecommercePaymentMethodsHandler.uri}"

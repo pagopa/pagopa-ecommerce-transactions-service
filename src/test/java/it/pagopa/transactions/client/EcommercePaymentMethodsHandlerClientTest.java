@@ -8,11 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi;
+import static org.mockito.Mockito.mock;
 
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -27,9 +28,9 @@ import static org.mockito.Mockito.when;
 
 class EcommercePaymentMethodsHandlerClientTest {
 
-    private final it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1 = Mockito
-            .mock(it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi.class);
-
+    private final PaymentMethodsHandlerApi ecommercePaymentMethodsHandlerWebClientV1 = mock(
+            PaymentMethodsHandlerApi.class
+    );
     private final EcommercePaymentMethodsHandlerClient ecommercePaymentMethodsHandlerClient = new EcommercePaymentMethodsHandlerClient(
             ecommercePaymentMethodsHandlerWebClientV1
     );
@@ -141,7 +142,10 @@ class EcommercePaymentMethodsHandlerClientTest {
         when(ecommercePaymentMethodsHandlerWebClientV1.getPaymentMethod(any(), any()))
                 .thenReturn(Mono.just(testPaymentMethodResponseDto));
 
-        assertThat(ecommercePaymentMethodsHandlerClient.getPaymentMethod(paymentMethodId, clientId.name()).block())
+        assertThat(
+                ecommercePaymentMethodsHandlerClient.getPaymentMethod(paymentMethodId, clientId.name())
+                        .block()
+        )
                 .satisfies(it -> assertThat(it.getId()).isEqualTo(paymentMethodId));
 
         final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
@@ -154,4 +158,109 @@ class EcommercePaymentMethodsHandlerClientTest {
             case CHECKOUT_CART, WISP_REDIRECT -> assertEquals("CHECKOUT_CART", clientIdCaptor.getValue());
         }
     }
+
+    @Test
+    void shouldRetrieveCardData() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String clientId = "CHECKOUT";
+
+        SessionPaymentMethodResponseDto response = new SessionPaymentMethodResponseDto()
+                .bin("12345678")
+                .sessionId("sessionId")
+                .brand("VISA")
+                .expiringDate("0226")
+                .lastFourDigits("1234");
+
+        /* preconditions */
+        when(
+                ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(
+                        paymentMethodId,
+                        orderId,
+                        clientId
+                )
+        )
+                .thenReturn(Mono.just(response));
+
+        /* test */
+        StepVerifier.create(
+                ecommercePaymentMethodsHandlerClient.retrieveCardData(
+                        paymentMethodId,
+                        orderId,
+                        clientId
+                )
+        )
+                .expectNext(response)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldThrowInvalidRequestExceptionOnRetrieveCardDataError() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String clientId = "CHECKOUT";
+
+        /* preconditions */
+        when(
+                ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(
+                        paymentMethodId,
+                        orderId,
+                        clientId
+                )
+        )
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        500,
+                                        "Internal Server Error",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
+                        )
+                );
+
+        /* test */
+        StepVerifier.create(
+                ecommercePaymentMethodsHandlerClient.retrieveCardData(
+                        paymentMethodId,
+                        orderId,
+                        clientId
+                )
+        )
+                .expectError(InvalidRequestException.class)
+                .verify();
+    }
+
+    @ParameterizedTest
+    @EnumSource(Transaction.ClientId.class)
+    void shouldMapClientIdCorrectlyOnRetrieveCardData(Transaction.ClientId clientId) {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+
+        SessionPaymentMethodResponseDto response = new SessionPaymentMethodResponseDto()
+                .bin("12345678")
+                .sessionId("sessionId")
+                .brand("VISA");
+
+        when(ecommercePaymentMethodsHandlerWebClientV1.getSessionPaymentMethod(any(), any(), any()))
+                .thenReturn(Mono.just(response));
+
+        /* test */
+        ecommercePaymentMethodsHandlerClient.retrieveCardData(paymentMethodId, orderId, clientId.name())
+                .block();
+
+        /* asserts */
+        final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ecommercePaymentMethodsHandlerWebClientV1)
+                .getSessionPaymentMethod(eq(paymentMethodId), eq(orderId), clientIdCaptor.capture());
+
+        switch (clientId) {
+            case CHECKOUT -> assertEquals("CHECKOUT", clientIdCaptor.getValue());
+            case IO -> assertEquals("IO", clientIdCaptor.getValue());
+            case CHECKOUT_CART, WISP_REDIRECT -> assertEquals("CHECKOUT_CART", clientIdCaptor.getValue());
+        }
+    }
+
 }
