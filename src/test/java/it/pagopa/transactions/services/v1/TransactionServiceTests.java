@@ -493,7 +493,6 @@ class TransactionServiceTests {
     @Test
     void shouldRetrieveCardDataFromPaymentMethodsHandlerWhenHandlerEnabled() {
         TransactionsService transactionsServiceV1paymentMethodHandlerEnabled = new TransactionsService(
-                transactionActivateHandlerV2,
                 null, // requestAuthHandlerV2,
                 transactionUpdateAuthorizationHandlerV2,
                 null, // transactionSendClosureRequestHandler,
@@ -504,17 +503,13 @@ class TransactionServiceTests {
                 closureRequestedProjectionHandler,
                 cancellationRequestProjectionHandlerV2,
                 transactionUserReceiptProjectionHandlerV2,
-                null, // transactionsActivationProjectionHandlerV2,
                 repository,
                 ecommercePaymentMethodsClient,
                 ecommercePaymentMethodsHandlerClient,
                 walletClient,
-                uuidUtils,
                 transactionsUtils,
                 transactionsEventStoreRepository,
-                15, // paymentTokenValidity,
                 null, // reactivePaymentRequestInfoRedisTemplateWrapper,
-                confidentialMailUtils,
                 updateTransactionStatusTracerUtils,
                 new HashMap<>(),
                 new HashSet<>(),
