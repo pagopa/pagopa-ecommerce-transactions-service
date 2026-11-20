@@ -308,6 +308,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                     WalletNotificationRequestDto.OperationResultEnum
                                             .fromValue(outcomeNpgGatewayDto.getOperationResult().toString())
                             )
+                            .operationType(toWalletOperationType(outcomeNpgGatewayDto.getOperationType()))
                             .errorCode(outcomeNpgGatewayDto.getErrorCode())
                             .details(
                                     // payment with contextual onboarding supported only for CARD method
@@ -326,6 +327,18 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                             request
                     ).thenReturn(Tuples.of(walletInfo, request));
                 });
+    }
+
+    private WalletNotificationRequestDto.OperationTypeEnum toWalletOperationType(String operationType) {
+        if (operationType == null) {
+            return null;
+        }
+        try {
+            return WalletNotificationRequestDto.OperationTypeEnum.fromValue(operationType);
+        } catch (IllegalArgumentException e) {
+            log.warn("Unhandled NPG operation type [{}], wallet will be notified without it", operationType);
+            return null;
+        }
     }
 
     private Optional<WalletInfo> extractWalletInfo(

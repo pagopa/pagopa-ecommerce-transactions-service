@@ -327,7 +327,8 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .operationResult(OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED)
                 .authorizationCode("1234")
                 .paymentEndToEndId("paymentEndToEndId")
-                .cardId4(cardId4);
+                .cardId4(cardId4)
+                .operationType("AUTHORIZATION");
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeNpgGatewayDto)
                 .timestampOperation(OffsetDateTime.now());
@@ -352,6 +353,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                         WalletNotificationRequestDto.OperationResultEnum
                                 .valueOf(outcomeNpgGatewayDto.getOperationResult().toString())
                 )
+                .operationType(WalletNotificationRequestDto.OperationTypeEnum.AUTHORIZATION)
                 .errorCode(outcomeNpgGatewayDto.getErrorCode())
                 .details(
                         new WalletNotificationRequestCardDetailsDto()
