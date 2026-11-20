@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
@@ -297,8 +298,21 @@ class TransactionUpdateAuthorizationHandlerTest {
         Mockito.verify(walletClient, Mockito.timeout(2000).times(0)).notifyWallet(any(), any(), any());
     }
 
-    @Test
-    void shouldPerformPostWalletNotificationCallForPaymentWithContextualOnboarding() {
+    private static Stream<Arguments> contextualOnboardingOperationTypeMethodSource() {
+        return Stream.of(
+                Arguments.of("AUTHORIZATION", WalletNotificationRequestDto.OperationTypeEnum.AUTHORIZATION),
+                Arguments.of("CARD_VERIFICATION", WalletNotificationRequestDto.OperationTypeEnum.CARD_VERIFICATION),
+                Arguments.of("UNKNOWN_OPERATION_TYPE", null),
+                Arguments.of(null, null)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("contextualOnboardingOperationTypeMethodSource")
+    void shouldPerformPostWalletNotificationCallForPaymentWithContextualOnboarding(
+                                                                                   String npgOperationType,
+                                                                                   WalletNotificationRequestDto.OperationTypeEnum expectedOperationType
+    ) {
         WalletInfo walletInfo = new WalletInfo(TransactionTestUtils.NPG_WALLET_ID, null);
         TransactionActivatedEvent activatedEvent = TransactionTestUtils.transactionActivateEvent();
         // authorization performed with a card wallet
@@ -321,7 +335,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                 .authorizationCode("1234")
                 .paymentEndToEndId("paymentEndToEndId")
                 .cardId4(cardId4)
-                .operationType("AUTHORIZATION");
+                .operationType(npgOperationType);
         UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeNpgGatewayDto)
                 .timestampOperation(OffsetDateTime.now());
@@ -346,7 +360,7 @@ class TransactionUpdateAuthorizationHandlerTest {
                         WalletNotificationRequestDto.OperationResultEnum
                                 .valueOf(outcomeNpgGatewayDto.getOperationResult().toString())
                 )
-                .operationType(WalletNotificationRequestDto.OperationTypeEnum.AUTHORIZATION)
+                .operationType(expectedOperationType)
                 .errorCode(outcomeNpgGatewayDto.getErrorCode())
                 .details(
                         new WalletNotificationRequestCardDetailsDto()
