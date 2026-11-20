@@ -1,4 +1,3 @@
-package it.pagopa.transactions.services.v2;
 
 import it.pagopa.ecommerce.commons.client.QueueAsyncClient;
 import it.pagopa.ecommerce.commons.documents.BaseTransactionView;

@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public abstract sealed class TransactionsCommand<T> permits TransactionClosureSendCommand,TransactionActivateCommand,TransactionRequestAuthorizationCommand,TransactionUpdateAuthorizationCommand,TransactionAddUserReceiptCommand,TransactionUserCancelCommand,TransactionClosureRequestCommand {
+public abstract sealed class TransactionsCommand<T> permits TransactionActivateCommand,TransactionRequestAuthorizationCommand,TransactionUpdateAuthorizationCommand,TransactionAddUserReceiptCommand,TransactionUserCancelCommand,TransactionClosureRequestCommand {
     protected final List<RptId> rptIds;
     protected final TransactionsCommandCode code;
     protected final T data;

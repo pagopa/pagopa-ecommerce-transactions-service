@@ -12,9 +12,10 @@ import it.pagopa.ecommerce.commons.domain.v1.pojos.BaseTransactionWithRequestedA
 import it.pagopa.ecommerce.commons.domain.v2.Email;
 import it.pagopa.ecommerce.commons.domain.v2.TransactionId;
 import it.pagopa.ecommerce.commons.generated.server.model.TransactionStatusDto;
-import it.pagopa.generated.transactions.server.model.NewTransactionRequestDto;
-import it.pagopa.generated.transactions.server.model.PaymentNoticeInfoDto;
+import it.pagopa.generated.transactions.v2_1.server.model.NewTransactionRequestDto;
+import it.pagopa.generated.transactions.v2_1.server.model.PaymentNoticeInfoDto;
 import it.pagopa.generated.transactions.v2.server.model.*;
+import it.pagopa.generated.transactions.v2_1.server.model.*;
 import it.pagopa.transactions.exceptions.NotImplementedException;
 import it.pagopa.transactions.exceptions.TransactionNotFoundException;
 import it.pagopa.transactions.repositories.TransactionsEventStoreRepository;
@@ -94,16 +95,6 @@ public class TransactionsUtils {
          *
          * @formatter:on
          */
-        if (!commonsStatuses.equals(transactionsStatusesV1)) {
-            Set<String> unknownTransactionsStatuses = transactionsStatusesV1.stream()
-                    .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
-            Set<String> unknownCommonStatuses = commonsStatuses.stream()
-                    .filter(Predicate.not(transactionsStatusesV1::contains)).collect(Collectors.toSet());
-            throw new IllegalArgumentException(
-                    "Mismatched transaction status enumerations%nUnhandled commons statuses: %s%nUnhandled transaction statuses: %s"
-                            .formatted(unknownCommonStatuses, unknownTransactionsStatuses)
-            );
-        }
         if (!commonsStatuses.equals(transactionsStatusesV2)) {
             Set<String> unknownTransactionsStatuses = transactionsStatusesV2.stream()
                     .filter(Predicate.not(commonsStatuses::contains)).collect(Collectors.toSet());
@@ -396,7 +387,7 @@ public class TransactionsUtils {
             noticeCode = padBuilder;
         }
         return new NewTransactionRequestDto()
-                .email("test@test.it")
+                .emailToken(UUID.randomUUID().toString())
                 .paymentNotices(
                         Collections.singletonList(
                                 new PaymentNoticeInfoDto()
@@ -406,7 +397,7 @@ public class TransactionsUtils {
                 );
     }
 
-    public it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto buildWarmupRequestV2() {
+    public it.pagopa.generated.transactions.v2_1.server.model.NewTransactionRequestDto buildWarmupRequestV2() {
         String noticeCode = warmUpNoticeCodePrefix.concat(String.valueOf(System.currentTimeMillis()));
         int neededPadLength = 18 - noticeCode.length();
         if (neededPadLength < 0) {
@@ -416,12 +407,12 @@ public class TransactionsUtils {
                     "0".repeat(neededPadLength);
             noticeCode = padBuilder;
         }
-        return new it.pagopa.generated.transactions.v2.server.model.NewTransactionRequestDto()
-                .email("test@test.it")
+        return new it.pagopa.generated.transactions.v2_1.server.model.NewTransactionRequestDto()
+                .emailToken(UUID.randomUUID().toString())
                 .orderId("orderId")
                 .paymentNotices(
                         Collections.singletonList(
-                                new it.pagopa.generated.transactions.v2.server.model.PaymentNoticeInfoDto()
+                                new it.pagopa.generated.transactions.v2_1.server.model.PaymentNoticeInfoDto()
                                         .rptId("77777777777%s".formatted(noticeCode))
                                         .amount(100L)
                         )
