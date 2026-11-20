@@ -14,7 +14,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import it.pagopa.generated.ecommerce.paymentmethodshandler.v1.api.PaymentMethodsHandlerApi;
 import static org.mockito.Mockito.mock;
-
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.UUID;
@@ -263,4 +262,106 @@ class EcommercePaymentMethodsHandlerClientTest {
         }
     }
 
+    @Test
+    void shouldUpdateSession() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String transactionId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
+
+        /* preconditions */
+        when(
+                ecommercePaymentMethodsHandlerWebClientV1.updateSession(
+                        paymentMethodId,
+                        orderId,
+                        clientId,
+                        new PatchSessionRequestDto().transactionId(transactionId)
+                )
+        )
+                .thenReturn(Mono.empty());
+
+        /* test */
+        StepVerifier
+                .create(
+                        ecommercePaymentMethodsHandlerClient
+                                .updateSession(
+                                        paymentMethodId,
+                                        orderId,
+                                        transactionId,
+                                        clientId
+                                )
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldThrowInvalidRequestExceptionOnUpdateSessionError() {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String transactionId = UUID.randomUUID().toString();
+        String clientId = "CHECKOUT";
+
+        /* preconditions */
+        when(
+                ecommercePaymentMethodsHandlerWebClientV1.updateSession(
+                        paymentMethodId,
+                        orderId,
+                        clientId,
+                        new PatchSessionRequestDto().transactionId(transactionId)
+                )
+        )
+                .thenReturn(
+                        Mono.error(
+                                WebClientResponseException.create(
+                                        500,
+                                        "Internal Server Error",
+                                        HttpHeaders.EMPTY,
+                                        null,
+                                        Charset.defaultCharset(),
+                                        null
+                                )
+                        )
+                );
+
+        /* test */
+        StepVerifier
+                .create(
+                        ecommercePaymentMethodsHandlerClient
+                                .updateSession(
+                                        paymentMethodId,
+                                        orderId,
+                                        transactionId,
+                                        clientId
+                                )
+                )
+                .expectError(InvalidRequestException.class)
+                .verify();
+    }
+
+    @ParameterizedTest
+    @EnumSource(Transaction.ClientId.class)
+    void shouldMapClientIdCorrectlyOnUpdateSession(Transaction.ClientId clientId) {
+        String paymentMethodId = UUID.randomUUID().toString();
+        String orderId = "orderId";
+        String transactionId = UUID.randomUUID().toString();
+
+        when(ecommercePaymentMethodsHandlerWebClientV1.updateSession(any(), any(), any(), any()))
+                .thenReturn(Mono.empty());
+
+        /* test */
+        ecommercePaymentMethodsHandlerClient
+                .updateSession(paymentMethodId, orderId, transactionId, clientId.name())
+                .block();
+
+        /* asserts */
+        final var clientIdCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ecommercePaymentMethodsHandlerWebClientV1)
+                .updateSession(eq(paymentMethodId), eq(orderId), clientIdCaptor.capture(), any());
+
+        switch (clientId) {
+            case CHECKOUT -> assertEquals("CHECKOUT", clientIdCaptor.getValue());
+            case IO -> assertEquals("IO", clientIdCaptor.getValue());
+            case CHECKOUT_CART, WISP_REDIRECT -> assertEquals("CHECKOUT_CART", clientIdCaptor.getValue());
+        }
+    }
 }

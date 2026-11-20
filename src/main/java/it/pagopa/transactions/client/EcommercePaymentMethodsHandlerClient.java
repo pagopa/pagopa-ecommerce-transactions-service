@@ -70,6 +70,28 @@ public class EcommercePaymentMethodsHandlerClient {
                 .onErrorMap(err -> new InvalidRequestException("Error while invoke method retrieve card data"));
     }
 
+    public Mono<Void> updateSession(
+                                    String paymentMethodId,
+                                    String orderId,
+                                    String transactionId,
+                                    String xClientId
+    ) {
+        String clientId = resolveSupportedClientId(xClientId);
+
+        return ecommercePaymentMethodsHandlerWebClientV1.updateSession(
+                paymentMethodId,
+                orderId,
+                clientId,
+                new PatchSessionRequestDto().transactionId(transactionId)
+        )
+                .doOnSuccess(v -> logSuccess("Updated session payment method"))
+                .doOnError(
+                        WebClientResponseException.class,
+                        EcommercePaymentMethodsHandlerClient::logWebClientException
+                )
+                .onErrorMap(err -> new InvalidRequestException("Error while invoke method update session"));
+    }
+
     /**
      * The payment-methods-handler only supports CHECKOUT_CART, CHECKOUT, and IO.
      * Maps WISP_REDIRECT to CHECKOUT_CART.
