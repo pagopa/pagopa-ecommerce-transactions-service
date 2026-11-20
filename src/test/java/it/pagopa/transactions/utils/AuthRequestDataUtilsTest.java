@@ -14,25 +14,23 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AuthRequestDataUtilsTest {
 
-    private final UUIDUtils uuidUtils = Mockito.mock(UUIDUtils.class);
-    private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils(uuidUtils);
-
-    private static final String TRANSACTION_ID_ENCODED = "transactionIdEncoded";
+    private final AuthRequestDataUtils authRequestDataUtils = new AuthRequestDataUtils();
 
     @ParameterizedTest
-    @EnumSource(OutcomeNpgGatewayDto.OperationResultEnum.class)
+    @EnumSource(it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.class)
     void shouldExtractNpgInformation(
-                                     OutcomeNpgGatewayDto.OperationResultEnum operationResultEnum
+                                     it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum operationResultEnum
     ) {
-        String expectedOutcome = operationResultEnum == OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED ? "OK" : "KO";
-        TransactionId transactionId = new TransactionId(UUID.randomUUID());
+        String expectedOutcome = operationResultEnum == it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto.OperationResultEnum.EXECUTED
+                ? "OK"
+                : "KO";
         String orderId = "orderId";
         String operationId = "operationId";
         String paymentEndToEndId = "paymentEndToEndId";
         String authorizationCode = "authorizationCode";
         String errorCode = "errorCode";
         String rrn = "rrn";
-        OutcomeNpgGatewayDto outcomeNpgGatewayDto = new OutcomeNpgGatewayDto()
+        it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto outcomeNpgGatewayDto = new it.pagopa.generated.transactions.v2.server.model.OutcomeNpgGatewayDto()
                 .paymentGatewayType("NPG")
                 .orderId(orderId)
                 .operationId(operationId)
@@ -41,10 +39,10 @@ class AuthRequestDataUtilsTest {
                 .authorizationCode(authorizationCode)
                 .errorCode(errorCode)
                 .rrn(rrn);
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+        it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequest = new it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeNpgGatewayDto);
         AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
-                .from(updateAuthorizationRequest, transactionId);
+                .from(updateAuthorizationRequest);
         assertEquals(authorizationCode, authRequestData.authorizationCode());
         assertEquals(expectedOutcome, authRequestData.outcome());
         assertEquals(rrn, authRequestData.rrn());
@@ -52,27 +50,30 @@ class AuthRequestDataUtilsTest {
     }
 
     @ParameterizedTest
-    @EnumSource(AuthorizationOutcomeDto.class)
-    void shouldExtractRedirectInformation(AuthorizationOutcomeDto authorizationOutcomeDto) {
+    @EnumSource(it.pagopa.generated.transactions.v2.server.model.AuthorizationOutcomeDto.class)
+    void shouldExtractRedirectInformation(
+                                          it.pagopa.generated.transactions.v2.server.model.AuthorizationOutcomeDto authorizationOutcomeDto
+    ) {
         // pre-condition
         String pspTransactionId = TransactionTestUtils.AUTHORIZATION_REQUEST_ID;
         String pspId = TransactionTestUtils.PSP_ID;
-        TransactionId transactionId = new TransactionId(TransactionTestUtils.TRANSACTION_ID);
-        String expectedOutcome = authorizationOutcomeDto == AuthorizationOutcomeDto.OK ? "OK" : "KO";
+        String expectedOutcome = authorizationOutcomeDto == it.pagopa.generated.transactions.v2.server.model.AuthorizationOutcomeDto.OK
+                ? "OK"
+                : "KO";
         String errorCode = "errorCode";
         String authorizationCode = "authorizationCode";
-        OutcomeRedirectGatewayDto outcomeRedirectGatewayDto = new OutcomeRedirectGatewayDto()
+        it.pagopa.generated.transactions.v2.server.model.OutcomeRedirectGatewayDto outcomeRedirectGatewayDto = new it.pagopa.generated.transactions.v2.server.model.OutcomeRedirectGatewayDto()
                 .paymentGatewayType("REDIRECT")
                 .outcome(authorizationOutcomeDto)
                 .pspTransactionId(pspTransactionId)
                 .errorCode(errorCode)
                 .authorizationCode(authorizationCode)
                 .pspId(pspId);
-        UpdateAuthorizationRequestDto updateAuthorizationRequest = new UpdateAuthorizationRequestDto()
+        it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto updateAuthorizationRequest = new it.pagopa.generated.transactions.v2.server.model.UpdateAuthorizationRequestDto()
                 .outcomeGateway(outcomeRedirectGatewayDto);
         // test
         AuthRequestDataUtils.AuthRequestData authRequestData = authRequestDataUtils
-                .from(updateAuthorizationRequest, transactionId);
+                .from(updateAuthorizationRequest);
         // assertions
         assertEquals(expectedOutcome, authRequestData.outcome());
         assertEquals(errorCode, authRequestData.errorCode());
