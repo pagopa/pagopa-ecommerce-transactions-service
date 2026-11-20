@@ -65,6 +65,9 @@ public class TransactionUserReceiptProjectionHandler
         TransactionStatusDto newStatus = TransactionStatusDto.NOTIFICATION_REQUESTED;
         transactionDocument.setStatus(newStatus);
         transactionDocument.setSendPaymentResultOutcome(data.getData().getResponseOutcome());
+        // unset closure error data since Nodo send add user receipt only when have
+        // processed close payment successfully
+        transactionDocument.setClosureErrorData(null);
         transactionDocument.setLastProcessedEventAt(
                 ZonedDateTime.parse(data.getCreationDate()).toInstant().toEpochMilli()
         );
