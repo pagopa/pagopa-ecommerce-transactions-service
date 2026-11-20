@@ -221,6 +221,25 @@ class TransactionsControllerTest {
     }
 
     @Test
+    void testGenericExceptionHandler() {
+        ResponseEntity<ProblemJsonDto> responseCheck = new ResponseEntity<>(
+                new ProblemJsonDto()
+                        .status(500)
+                        .title("Internal Server Error")
+                        .detail(null),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+
+        ResponseEntity<ProblemJsonDto> responseRuntime = transactionsController
+                .genericException(new RuntimeException());
+        ResponseEntity<ProblemJsonDto> responseNpe = transactionsController
+                .genericException(new NullPointerException());
+
+        assertEquals(responseCheck.getStatusCode(), responseRuntime.getStatusCode());
+        assertEquals(responseCheck.getStatusCode(), responseNpe.getStatusCode());
+    }
+
+    @Test
     void shouldReturnProblemJsonWith400OnBadInput() {
         HashMap<String, String> map = new HashMap<>();
         Mockito.when(
