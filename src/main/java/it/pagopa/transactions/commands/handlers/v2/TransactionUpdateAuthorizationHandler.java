@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
-import reactor.util.function.Tuple2;
+import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 import reactor.util.retry.Retry;
 
@@ -150,10 +150,17 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                         TupleUtils.consumer(
                                 (
                                  walletInfo,
-                                 walletNotificationRequest
+                                 walletNotificationRequest,
+                                 command
                                 ) -> LogTracingUtils.loggerTracingUtils()
                                         .success()
                                         .dependency(LogTracingUtils.WALLET_DEPENDENCY)
+                                        .attributes(
+                                                Map.of(
+                                                        LogTracingUtils.AttributeKeys.CTX_TRANSACTION_ID,
+                                                        command.getData().transactionId().value()
+                                                )
+                                        )
                                         .details(
                                                 Map.of(
                                                         WALLET_ID,
@@ -161,7 +168,17 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                                         "npg_operation_id",
                                                         Objects.toString(walletNotificationRequest.getOperationId()),
                                                         "npg_operation_result",
-                                                        Objects.toString(walletNotificationRequest.getOperationResult())
+                                                        Objects.toString(
+                                                                walletNotificationRequest.getOperationResult()
+                                                        ),
+                                                        "npg_operation_type",
+                                                        Objects.toString(
+                                                                ((OutcomeNpgGatewayDto) command.getData()
+                                                                        .updateAuthorizationRequest()
+                                                                        .getOutcomeGateway()).getOperationType()
+                                                        ),
+                                                        "wallet_operation_type",
+                                                        Objects.toString(walletNotificationRequest.getOperationType())
                                                 )
                                         )
                                         .logInfo(log, "Post wallet notification performed successfully")
@@ -282,8 +299,8 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
 
     }
 
-    private Mono<Tuple2<WalletInfo, WalletNotificationRequestDto>> notifyWalletForContextualOnboarding(
-                                                                                                       TransactionUpdateAuthorizationCommand command
+    private Mono<Tuple3<WalletInfo, WalletNotificationRequestDto, TransactionUpdateAuthorizationCommand>> notifyWalletForContextualOnboarding(
+                                                                                                                                              TransactionUpdateAuthorizationCommand command
     ) {
         Mono<BaseTransaction> transaction = transactionsUtils.reduceV2Events(command.getEvents());
         UpdateAuthorizationRequestDto updateAuthRequest = command.getData().updateAuthorizationRequest();
@@ -308,6 +325,7 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                                     WalletNotificationRequestDto.OperationResultEnum
                                             .fromValue(outcomeNpgGatewayDto.getOperationResult().toString())
                             )
+                            .operationType(toWalletOperationType(outcomeNpgGatewayDto.getOperationType()))
                             .errorCode(outcomeNpgGatewayDto.getErrorCode())
                             .details(
                                     // payment with contextual onboarding supported only for CARD method
@@ -324,8 +342,20 @@ public class TransactionUpdateAuthorizationHandler extends TransactionUpdateAuth
                             walletId,
                             orderId,
                             request
-                    ).thenReturn(Tuples.of(walletInfo, request));
+                    ).thenReturn(Tuples.of(walletInfo, request, command));
                 });
+    }
+
+    private WalletNotificationRequestDto.OperationTypeEnum toWalletOperationType(String operationType) {
+        if (operationType == null) {
+            return null;
+        }
+        try {
+            return WalletNotificationRequestDto.OperationTypeEnum.fromValue(operationType);
+        } catch (IllegalArgumentException e) {
+            // unhandled values are traced in the wallet notification log details
+            return null;
+        }
     }
 
     private Optional<WalletInfo> extractWalletInfo(
